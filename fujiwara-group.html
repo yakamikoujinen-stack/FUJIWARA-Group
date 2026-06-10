@@ -267,15 +267,19 @@ table{min-width:360px;}
         <p class="page-sub">今回の持出し数・在庫確認</p>
         <div id="inv-lock"></div>
         <div id="inv-content">
-          <div class="inv-cat-tabs" id="inv-cat-tabs"></div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+            <select id="inv-cat-select" onchange="setInvCatFromSelect()" style="flex:1;padding:8px 12px;font-size:13px">
+              <option value="すべて">すべてのカテゴリ</option>
+            </select>
+            <button class="btn btn-outline btn-sm" id="btn-add-inv-item" onclick="openInvItemForm(null)">＋ 品目追加</button>
+          </div>
           <div class="scroll-x">
             <table class="inv-table">
               <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th></th></tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table>
           </div>
-          <div style="margin-top:14px;display:flex;gap:8px">
-            <button class="btn btn-outline btn-sm" id="btn-add-inv-item" onclick="openInvItemForm(null)">＋ 品目追加</button>
+          <div style="margin-top:14px">
             <button class="btn btn-green btn-sm" onclick="toast('✅ 持出し数を確定しました')">✅ 持出し確定</button>
           </div>
         </div>
@@ -407,9 +411,10 @@ table{min-width:360px;}
     </div>
     <input type="hidden" id="iif-id">
     <div class="fg"><label>品目名 *</label><input type="text" id="iif-name" placeholder="例: 麺"></div>
-    <div class="fg2">
-      <div class="fg"><label>カテゴリ</label>
-        <select id="iif-cat"><option>やきそば</option><option>串</option><option>水・ドリンク</option><option>共通備品</option><option>その他</option></select>
+      <div class="fg2">
+      <div class="fg"><label>カテゴリ（自由入力）</label>
+        <input type="text" id="iif-cat" placeholder="例: やきそば・串・かき氷など" list="cat-datalist">
+        <datalist id="cat-datalist"></datalist>
       </div>
       <div class="fg"><label>単位</label><input type="text" id="iif-unit" placeholder="袋 / 本 / kg"></div>
     </div>
@@ -558,10 +563,10 @@ var state = {
     { id:'8', name:'豚串',    cat:'串',       unit:'本', stock:100, hakobi:50 },
     { id:'9', name:'鳥串',    cat:'串',       unit:'本', stock:200, hakobi:100 },
     { id:'10',name:'容器',    cat:'串',       unit:'個', stock:300, hakobi:200 },
-    { id:'11',name:'氷',      cat:'水・ドリンク', unit:'袋', stock:5,   hakobi:0 },
-    { id:'12',name:'カップ',  cat:'水・ドリンク', unit:'個', stock:500, hakobi:300 },
-    { id:'13',name:'いちご',  cat:'水・ドリンク', unit:'パック', stock:10, hakobi:2 },
-    { id:'14',name:'メロン',  cat:'水・ドリンク', unit:'個', stock:8,   hakobi:2 },
+    { id:'11',name:'氷',      cat:'かき氷', unit:'袋', stock:5,   hakobi:0 },
+    { id:'12',name:'カップ',  cat:'かき氷', unit:'個', stock:500, hakobi:300 },
+    { id:'13',name:'いちご',  cat:'かき氷', unit:'パック', stock:10, hakobi:2 },
+    { id:'14',name:'メロン',  cat:'かき氷', unit:'個', stock:8,   hakobi:2 },
   ],
   notices: [
     { time:'今日', text:'6/14 Aゾーン・Bゾーンで同日出店です ⚠️ 人員配置を確認してください' },
@@ -932,17 +937,28 @@ function deleteEvent() {
 // ════ INVENTORY ════
 function renderInventory() {
   if(role==='user') return;
+
+  // カテゴリ一覧を収集
   var cats=['すべて'];
-  state.invItems.forEach(function(i){ if(cats.indexOf(i.cat)<0) cats.push(i.cat); });
-  document.getElementById('inv-cat-tabs').innerHTML=cats.map(function(c){
-    return '<button class="inv-cat-tab'+(invCatFilter===c?' active':'')+'" onclick="setInvCat(\''+c+'\')">'+c+'</button>';
+  state.invItems.forEach(function(i){ if(i.cat && cats.indexOf(i.cat)<0) cats.push(i.cat); });
+
+  // ドロップダウンを更新
+  var sel = document.getElementById('inv-cat-select');
+  if(sel){
+    sel.innerHTML = cats.map(function(c){
+      return '<option value="'+c+'"'+(c===invCatFilter?' selected':'')+'>'+(c==='すべて'?'すべてのカテゴリ':c)+'</option>';
+    }).join('');
+  }
+
+  // datalist更新（品目追加フォームのカテゴリ候補）
+  var dl = document.getElementById('cat-datalist');
+  if(dl) dl.innerHTML = cats.filter(function(c){ return c!=='すべて'; }).map(function(c){
+    return '<option value="'+c+'">';
   }).join('');
 
   var items=invCatFilter==='すべて'?state.invItems:state.invItems.filter(function(i){ return i.cat===invCatFilter; });
   var canEdit=role==='leader'||role==='staff';
   document.getElementById('inv-tbody').innerHTML=items.map(function(item){
-    var ratio=Math.min(1,item.hakobi/Math.max(item.stock,1));
-    var color=item.stock<5?'#e94560':ratio<.5?'#f5a623':'#00d4aa';
     var editBtns='';
     if(canEdit) editBtns='<button class="btn btn-icon btn-ghost" onclick="openStockModal(\''+item.id+'\')">±</button>';
     if(role==='leader') editBtns+='<button class="btn btn-icon btn-ghost" onclick="openInvItemForm(\''+item.id+'\')" style="margin-top:2px">✏️</button>';
@@ -955,6 +971,7 @@ function renderInventory() {
 }
 
 function setInvCat(c){ invCatFilter=c; renderInventory(); }
+function setInvCatFromSelect(){ invCatFilter=document.getElementById('inv-cat-select').value; renderInventory(); }
 
 function openStockModal(id) {
   var item=null;
