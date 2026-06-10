@@ -1336,6 +1336,9 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       place:ev.place||'',
       status:ev.status||'planned',
       memo:ev.memo||'',
+      itemsText:ev.itemsText||'',
+      bsLeader:ev.bsLeader||'',
+      bsHelper:ev.bsHelper||'',
       staff:Array.isArray(ev.staff)?ev.staff:(ev.staff?Object.values(ev.staff):[]),
       items:Array.isArray(ev.items)?ev.items:(ev.items?Object.values(ev.items):[]),
       sales:ev.sales||null
