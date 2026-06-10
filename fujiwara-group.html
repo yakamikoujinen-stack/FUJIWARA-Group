@@ -909,7 +909,7 @@ function renderEventList(dateFilter) {
     const zClass=ev.zone==='B'?'zone-b':'zone-a';
     const sClass=ev.status==='active'?'s-active':ev.status==='done'?'s-done':'s-planned';
     const sLabel=ev.status==='active'?'開催中':ev.status==='done'?'終了':'予定';
-    return `<div class="ev-card" style="border-left-color:${ev.zone==='B'?'var(--green)':'var(--gold)'}" onclick="openBSheet(${ev.id})">
+    return `<div class="ev-card" style="border-left-color:${ev.zone==='B'?'var(--green)':'var(--gold)'};cursor:pointer" onclick="openBSheet('${ev.id}')">
       <div class="ev-card-row">
         <div>
           <div class="ev-name">${ev.name}</div>
@@ -918,12 +918,15 @@ function renderEventList(dateFilter) {
           <span class="ev-zone ${zClass}">${ev.zone}ゾーン</span>
           ${ev.memo?`<span class="ev-zone" style="background:rgba(119,119,160,.1);color:var(--text2);border-color:var(--border)">📝 ${ev.memo}</span>`:''}
         </div>
-        <span class="status-badge ${sClass}">${sLabel}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="status-badge ${sClass}">${sLabel}</span>
+          <span style="font-size:10px;color:var(--gold)">📋 タップで詳細</span>
+        </div>
       </div>
       ${canEdit?`<div class="ev-actions" onclick="event.stopPropagation()">
-        <button class="btn btn-sm btn-ghost" onclick="openEventForm(${ev.id})">✏️ 編集</button>
-        <button class="btn btn-sm btn-ghost" onclick="quickStatus(${ev.id})">🔄 状態変更</button>
-        ${role==='leader'?`<button class="btn btn-sm btn-outline" onclick="openSalesEdit(${ev.id})">📊 売上入力</button>`:''}
+        <button class="btn btn-sm btn-ghost" onclick="openEventForm('${ev.id}')">✏️ 編集</button>
+        <button class="btn btn-sm btn-ghost" onclick="quickStatus('${ev.id}')">🔄 状態変更</button>
+        ${role==='leader'?`<button class="btn btn-sm btn-outline" onclick="openSalesEdit('${ev.id}')">📊 売上入力</button>`:''}
       </div>`:''}
     </div>`;
   }).join('');
@@ -931,12 +934,13 @@ function renderEventList(dateFilter) {
 
 // ── BSHEET ──
 function openBSheet(id) {
-  const ev = state.events.find(e=>e.id===id);
+  const ev = state.events.find(e=>String(e.id)===String(id));
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
   document.getElementById('bsheet-title').textContent = `📋 Bシート｜${ev.name}`;
   const items = ev.items && ev.items.length
-    ? state.invItems.filter(i=>ev.items.includes(i.id)).map(i=>i.name).join('・')
+    ? state.invItems.filter(i=>ev.items.map(String).includes(String(i.id))).map(i=>i.name).join('・')
     : '未設定';
-  const staff = ev.staff.length ? ev.staff.join('・') : '未設定';
+  const staff = ev.staff && ev.staff.length ? ev.staff.join('・') : '未設定';
   document.getElementById('bsheet-body').innerHTML = `
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;min-width:320px;font-size:13px">
