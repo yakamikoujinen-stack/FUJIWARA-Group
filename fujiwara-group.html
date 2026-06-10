@@ -914,7 +914,7 @@ function renderEventList(dateFilter) {
         <div>
           <div class="ev-name">${ev.name}</div>
           <div class="ev-meta">📅 ${ev.date}　📍 ${ev.place}</div>
-          <div class="ev-meta">👥 ${ev.staff.join('・')}</div>
+          <div class="ev-meta">👥 ${Array.isArray(ev.staff)?ev.staff.join('・'):'未設定'}</div>
           <span class="ev-zone ${zClass}">${ev.zone}ゾーン</span>
           ${ev.memo?`<span class="ev-zone" style="background:rgba(119,119,160,.1);color:var(--text2);border-color:var(--border)">📝 ${ev.memo}</span>`:''}
         </div>
@@ -976,7 +976,8 @@ function openBSheet(id) {
 }
 
 function quickStatus(id){
-  const ev=state.events.find(e=>e.id===id);
+  const ev=state.events.find(e=>String(e.id)===String(id));
+  if(!ev)return;
   const nxt={planned:'active',active:'done',done:'planned'};
   ev.status=nxt[ev.status];
   renderCalendar();
@@ -986,7 +987,7 @@ function quickStatus(id){
 // ── EVENT FORM ──
 function openEventForm(id) {
   if(role==='user'){toast('⛔ 権限がありません');return;}
-  const ev=id?state.events.find(e=>e.id===id):null;
+  const ev=id?state.events.find(e=>String(e.id)===String(id)):null;
   document.getElementById('ef-title').textContent=ev?'イベント編集':'イベント追加';
   document.getElementById('ef-id').value=ev?ev.id:'';
   document.getElementById('ef-name').value=ev?ev.name:'';
@@ -1349,10 +1350,31 @@ function loadFromFirebase() {
   onValue(ref(db, 'fujiwara'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      if (data.events)    state.events    = data.events;
-      if (data.invItems)  state.invItems  = data.invItems;
-      if (data.notices)   state.notices   = data.notices;
-      if (data.staffList) state.staffList = data.staffList;
+      if (data.events) {
+        // 配列またはオブジェクト形式どちらでも対応
+        const evArr = Array.isArray(data.events)
+          ? data.events
+          : Object.values(data.events);
+        // データを正規化（staff・itemsが必ず配列になるよう）
+        state.events = evArr.map(ev => ({
+          ...ev,
+          id: String(ev.id),
+          staff: Array.isArray(ev.staff) ? ev.staff : (ev.staff ? Object.values(ev.staff) : []),
+          items: Array.isArray(ev.items) ? ev.items : (ev.items ? Object.values(ev.items) : []),
+          memo: ev.memo || '',
+          zone: ev.zone || 'A',
+          place: ev.place || '',
+          status: ev.status || 'planned',
+        }));
+      }
+      if (data.invItems) {
+        const invArr = Array.isArray(data.invItems)
+          ? data.invItems
+          : Object.values(data.invItems);
+        state.invItems = invArr.map(i => ({...i, id: String(i.id)}));
+      }
+      if (data.notices)   state.notices   = Array.isArray(data.notices) ? data.notices : Object.values(data.notices);
+      if (data.staffList) state.staffList = Array.isArray(data.staffList) ? data.staffList : Object.values(data.staffList);
       // 画面を再描画
       renderCalendar();
       renderInventory();
