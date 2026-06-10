@@ -273,8 +273,8 @@ table{min-width:360px;}
 /* ════════════════════════════
    MODAL
 ════════════════════════════ */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:flex-end;justify-content:center;}
-.modal-overlay.open{display:flex;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:flex-end;justify-content:center;pointer-events:none;}
+.modal-overlay.open{display:flex;pointer-events:all;}
 .modal{
   background:var(--surface);border-radius:18px 18px 0 0;
   width:100%;max-width:480px;max-height:92vh;overflow-y:auto;
