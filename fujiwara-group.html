@@ -138,11 +138,12 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:14px;}
 .cal-dlabel{text-align:center;font-size:12px;color:#ccccee;padding:6px 0;font-weight:900;letter-spacing:.5px;}
 .cal-day{
-  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:flex-start;padding:4px 2px;border-radius:8px;
-  cursor:pointer;transition:background .12s;font-size:13px;
+  min-height:52px;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;padding:3px 2px;border-radius:8px;
+  cursor:pointer;transition:background .12s;font-size:12px;
   border:1px solid #2a2a48;
   background:var(--surface);
+  overflow:hidden;
 }
 .cal-day:hover{background:#222238;border-color:#44446a;}
 .cal-day.today{background:rgba(200,168,75,.18);border:2px solid var(--gold);}
@@ -596,6 +597,18 @@ table{min-width:360px;}
   </div>
 </div>
 
+<!-- BSHEET MODAL -->
+<div class="modal-overlay" id="modal-bsheet">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <h2 class="modal-title" id="bsheet-title">📋 Bシート</h2>
+      <button class="modal-close-btn" onclick="closeModal('modal-bsheet')">✕</button>
+    </div>
+    <div id="bsheet-body"></div>
+  </div>
+</div>
+
 <!-- NOTICE -->
 <div class="modal-overlay" id="modal-notice">
   <div class="modal">
@@ -757,7 +770,7 @@ function initApp() {
   renderSettings();
   renderHome();
 
-  showPage(role==='user' ? 'home' : 'calendar');
+  showPage('calendar');
 }
 
 function applyPermissions() {
@@ -861,11 +874,13 @@ function renderCalendar() {
     const isSel=selDate===ds;
     const evs=byDate[ds]||[];
     const isConf=evs.length>1;
-    const dots=evs.slice(0,3).map((_,i)=>
-      `<div class="cdot" style="background:${isConf?'#d94040':_?.zone==='B'?'#2ecc8a':'#c8a84b'}"></div>`).join('');
+    // イベント名を表示（最大2件）
+    const evNames=evs.slice(0,2).map(ev=>
+      `<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 3px;border-radius:3px;background:${ev.zone==='B'?'rgba(46,204,138,.25)':'rgba(200,168,75,.25)'};color:${ev.zone==='B'?'#2ecc8a':'#e8c86a'};overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%">${ev.name}</div>`
+    ).join('');
     html+=`<div class="cal-day${isToday?' today':''}${isSel?' selected':''}" onclick="selectDate('${ds}')">
       <span class="cdate">${d}</span>
-      <div class="cdots">${dots}</div>
+      ${evNames}
     </div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
@@ -894,7 +909,7 @@ function renderEventList(dateFilter) {
     const zClass=ev.zone==='B'?'zone-b':'zone-a';
     const sClass=ev.status==='active'?'s-active':ev.status==='done'?'s-done':'s-planned';
     const sLabel=ev.status==='active'?'開催中':ev.status==='done'?'終了':'予定';
-    return `<div class="ev-card" style="border-left-color:${ev.zone==='B'?'var(--green)':'var(--gold)'}">
+    return `<div class="ev-card" style="border-left-color:${ev.zone==='B'?'var(--green)':'var(--gold)'}" onclick="openBSheet(${ev.id})">
       <div class="ev-card-row">
         <div>
           <div class="ev-name">${ev.name}</div>
@@ -905,13 +920,55 @@ function renderEventList(dateFilter) {
         </div>
         <span class="status-badge ${sClass}">${sLabel}</span>
       </div>
-      ${canEdit?`<div class="ev-actions">
+      ${canEdit?`<div class="ev-actions" onclick="event.stopPropagation()">
         <button class="btn btn-sm btn-ghost" onclick="openEventForm(${ev.id})">✏️ 編集</button>
         <button class="btn btn-sm btn-ghost" onclick="quickStatus(${ev.id})">🔄 状態変更</button>
         ${role==='leader'?`<button class="btn btn-sm btn-outline" onclick="openSalesEdit(${ev.id})">📊 売上入力</button>`:''}
       </div>`:''}
     </div>`;
   }).join('');
+}
+
+// ── BSHEET ──
+function openBSheet(id) {
+  const ev = state.events.find(e=>e.id===id);
+  document.getElementById('bsheet-title').textContent = `📋 Bシート｜${ev.name}`;
+  const items = ev.items && ev.items.length
+    ? state.invItems.filter(i=>ev.items.includes(i.id)).map(i=>i.name).join('・')
+    : '未設定';
+  const staff = ev.staff.length ? ev.staff.join('・') : '未設定';
+  document.getElementById('bsheet-body').innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:320px;font-size:13px">
+        <thead>
+          <tr style="background:rgba(200,168,75,.15)">
+            <th style="padding:10px 8px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--gold)">日付</th>
+            <th style="padding:10px 8px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--gold)">イベント名</th>
+            <th style="padding:10px 8px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--gold)">出店アイテム</th>
+            <th style="padding:10px 8px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--gold)">担当者</th>
+            <th style="padding:10px 8px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--gold)">協力スタッフ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px 8px;border:1px solid var(--border)">${ev.date}</td>
+            <td style="padding:10px 8px;border:1px solid var(--border);font-weight:700">${ev.name}</td>
+            <td style="padding:10px 8px;border:1px solid var(--border)">${items}</td>
+            <td style="padding:10px 8px;border:1px solid var(--border)">藤原</td>
+            <td style="padding:10px 8px;border:1px solid var(--border)">${staff}</td>
+          </tr>
+          <tr style="background:rgba(255,255,255,.02)">
+            <td style="padding:10px 8px;border:1px solid var(--border);color:var(--text2);font-size:11px">メモ</td>
+            <td colspan="3" style="padding:10px 8px;border:1px solid var(--border)">${ev.memo||'なし'}</td>
+            <td style="padding:10px 8px;border:1px solid var(--border);color:var(--gold)">${ev.memo&&ev.memo.includes('集合')?ev.memo:'8:00集合'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-bsheet')">閉じる</button>
+    </div>`;
+  openModal('modal-bsheet');
 }
 
 function quickStatus(id){
