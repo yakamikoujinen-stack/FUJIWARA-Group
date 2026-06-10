@@ -369,7 +369,10 @@ table{min-width:360px;}
     <input type="hidden" id="ef-id">
     <div class="fg"><label>イベント名 *</label><input type="text" id="ef-name" placeholder="例: 春の文化祭"></div>
     <div class="fg2">
-      <div class="fg"><label>日付 *</label><input type="date" id="ef-date"></div>
+      <div class="fg"><label>開始日 *</label><input type="date" id="ef-date"></div>
+      <div class="fg"><label>終了日（複数日の場合）</label><input type="date" id="ef-date-end"></div>
+    </div>
+    <div class="fg2">
       <div class="fg"><label>ゾーン</label>
         <select id="ef-zone"><option value="A">Aゾーン</option><option value="B">Bゾーン</option><option value="両方">両方</option></select>
       </div>
@@ -767,8 +770,10 @@ function renderCalendar() {
       var cl=ev.zone==='B'?'#2ecc8a':'#e8c86a';
       return '<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 2px;border-radius:3px;background:'+bg+';color:'+cl+';overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%">'+ev.name+'</div>';
     }).join('');
+    // 件数バッジ（2件以上の場合）
+    var countBadge=evs.length>1?'<span style="position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:900;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1">'+evs.length+'</span>':'';
     var cls=(isToday?' today':'')+(isSel?' selected':'');
-    html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')"><span class="cdate">'+d+'</span>'+evNames+'</div>';
+    html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')" style="position:relative"><span class="cdate">'+d+'</span>'+evNames+countBadge+'</div>';
   }
   document.getElementById('cal-grid').innerHTML=html;
   renderEventList(selDate);
@@ -811,7 +816,7 @@ function renderEventList(dateFilter) {
     return '<div class="ev-card" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+ev.name+'</div>'
-      +'<div class="ev-meta">📅 '+ev.date+'　📍 '+ev.place+'</div>'
+      +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
       +'<div class="ev-meta">👥 '+staffStr+'</div>'
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
@@ -903,6 +908,7 @@ function openEventForm(id) {
   document.getElementById('ef-status').value=ev?ev.status:'planned';
   document.getElementById('ef-memo').value=ev?ev.memo:'';
   document.getElementById('ef-items-text').value=ev?ev.itemsText||'':'';
+  document.getElementById('ef-date-end').value=ev?ev.dateEnd||'':'';
   document.getElementById('ef-del-btn').style.display=ev?'':'none';
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
     var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
@@ -920,6 +926,7 @@ function saveEventForm() {
   var rawId=document.getElementById('ef-id').value;
   var data={
     name:name, date:date,
+    dateEnd:document.getElementById('ef-date-end').value||'',
     zone:document.getElementById('ef-zone').value,
     place:document.getElementById('ef-place').value,
     status:document.getElementById('ef-status').value,
@@ -931,10 +938,13 @@ function saveEventForm() {
     for(var i=0;i<state.events.length;i++){
       if(String(state.events[i].id)===String(rawId)){
         var old=state.events[i];
-        data.bsLeader=old.bsLeader||'';
-        data.bsHelper=old.bsHelper||'';
-        data.sales=old.sales||null;
-        Object.assign(state.events[i],data); break;
+        state.events[i]=Object.assign({}, old, data, {
+          id:old.id,
+          sales:old.sales||null,
+          bsLeader:old.bsLeader||'',
+          bsHelper:old.bsHelper||''
+        });
+        break;
       }
     }
     toast('✅ イベントを更新しました');
@@ -1274,14 +1284,27 @@ function openProfileModal() {
   var labels={leader:'👑 リーダー',staff:'🏷️ 担当者',user:'👤 一般'};
   var cls={leader:'rb-leader',staff:'rb-staff',user:'rb-user'};
   document.getElementById('profile-body').innerHTML=
-    '<div style="text-align:center;padding:12px 0 20px">'
+    '<div style="text-align:center;padding:12px 0 16px">'
     +'<div class="avatar" style="width:56px;height:56px;font-size:22px;margin:0 auto 10px">'+userName.charAt(0)+'</div>'
     +'<div style="font-size:17px;font-weight:700">'+userName+'</div>'
     +'<div style="margin-top:6px"><span class="role-badge '+cls[role]+'">'+labels[role]+'</span></div>'
     +'</div>'
     +'<div class="divider"></div>'
+    +'<div class="fg"><label>名前を変更する</label>'
+    +'<input type="text" id="profile-name-input" value="'+userName+'" placeholder="名前を入力"></div>'
+    +'<button class="btn btn-gold btn-full" onclick="saveProfileName()" style="margin-bottom:10px">名前を保存</button>'
     +'<button class="btn btn-danger btn-full" onclick="doLogout();closeModal(\'modal-profile\')">🚪 ログアウト</button>';
   openModal('modal-profile');
+}
+
+function saveProfileName() {
+  var newName = document.getElementById('profile-name-input').value.trim();
+  if(!newName){ toast('⚠️ 名前を入力してください'); return; }
+  userName = newName;
+  document.getElementById('user-avatar').textContent = userName.charAt(0);
+  closeModal('modal-profile');
+  renderHome();
+  toast('✅ 名前を変更しました');
 }
 
 // ════ MODAL HELPERS ════
