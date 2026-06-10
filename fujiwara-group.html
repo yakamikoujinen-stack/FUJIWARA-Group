@@ -318,6 +318,11 @@ table{min-width:360px;}
               <span style="color:var(--text2)">›</span>
             </div>
           </div>
+
+          <!-- スタッフ管理 -->
+          <div class="sec-title" style="margin-bottom:10px">👥 スタッフ管理</div>
+          <div class="settings-group" id="staff-list-area"></div>
+          <button class="btn btn-outline btn-sm btn-full" style="margin-bottom:16px" onclick="openStaffForm(null)">＋ スタッフを追加</button>
           <div class="settings-group">
             <div class="settings-row">
               <div class="sr-left"><span style="font-size:17px">📅</span>イベント数</div>
@@ -463,6 +468,23 @@ table{min-width:360px;}
       <div id="se-labor-inputs"></div>
     </div>
     <button class="btn btn-gold btn-full" onclick="saveSalesEdit()">保存する</button>
+  </div>
+</div>
+
+<!-- STAFF FORM -->
+<div class="modal-overlay" id="modal-staff-form">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <h2 class="modal-title" id="staff-form-title">スタッフ追加</h2>
+      <button class="modal-close-btn" onclick="closeModal('modal-staff-form')">✕</button>
+    </div>
+    <input type="hidden" id="sff-old-name">
+    <div class="fg"><label>スタッフ名 *</label><input type="text" id="sff-name" placeholder="例: 田中 花子"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gold" style="flex:1" onclick="saveStaffForm()">保存する</button>
+      <button class="btn btn-danger btn-sm" id="sff-del-btn" onclick="deleteStaff()" style="display:none">削除</button>
+    </div>
   </div>
 </div>
 
@@ -1114,6 +1136,66 @@ function renderSettings() {
   if(role!=='leader') return;
   document.getElementById('st-ev-count').textContent=state.events.length+'件';
   document.getElementById('st-item-count').textContent=state.invItems.length+'品目';
+  renderStaffList();
+}
+
+function renderStaffList() {
+  var el = document.getElementById('staff-list-area');
+  if(!el) return;
+  if(!state.staffList.length){
+    el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">スタッフ未登録</div>';
+    return;
+  }
+  el.innerHTML = state.staffList.map(function(name){
+    return '<div class="settings-row">'
+      +'<div class="sr-left"><span style="font-size:17px">👤</span>'+name+'</div>'
+      +'<button class="btn btn-sm btn-ghost" onclick="openStaffForm(\''+name+'\')">✏️ 編集</button>'
+      +'</div>';
+  }).join('');
+}
+
+function openStaffForm(name) {
+  document.getElementById('staff-form-title').textContent = name ? 'スタッフ編集' : 'スタッフ追加';
+  document.getElementById('sff-old-name').value = name || '';
+  document.getElementById('sff-name').value = name || '';
+  document.getElementById('sff-del-btn').style.display = name ? '' : 'none';
+  openModal('modal-staff-form');
+}
+
+function saveStaffForm() {
+  var newName = document.getElementById('sff-name').value.trim();
+  var oldName = document.getElementById('sff-old-name').value;
+  if(!newName){ toast('⚠️ スタッフ名は必須です'); return; }
+  if(oldName) {
+    // 編集：名前を置き換え
+    var idx = state.staffList.indexOf(oldName);
+    if(idx >= 0) state.staffList[idx] = newName;
+    // イベントのスタッフ名も更新
+    state.events.forEach(function(ev){
+      if(Array.isArray(ev.staff)){
+        var si = ev.staff.indexOf(oldName);
+        if(si >= 0) ev.staff[si] = newName;
+      }
+    });
+    toast('✅ スタッフ名を更新しました');
+  } else {
+    if(state.staffList.indexOf(newName) >= 0){ toast('⚠️ 同じ名前が既に登録されています'); return; }
+    state.staffList.push(newName);
+    toast('✅ スタッフを追加しました');
+  }
+  closeModal('modal-staff-form');
+  renderSettings();
+  fbSave();
+}
+
+function deleteStaff() {
+  var name = document.getElementById('sff-old-name').value;
+  if(!confirm(name+' を削除しますか？')) return;
+  state.staffList = state.staffList.filter(function(s){ return s !== name; });
+  closeModal('modal-staff-form');
+  renderSettings();
+  fbSave();
+  toast('🗑️ '+name+' を削除しました');
 }
 
 function openChangePw(r) {
