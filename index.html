@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理</title>
+<title>FUJIWARA GROUP 販売管理 v1.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -217,13 +217,15 @@ table{min-width:360px;}
       <button class="role-tab" onclick="setLoginRole('staff')">🏷️ 担当者</button>
       <button class="role-tab" onclick="setLoginRole('user')">👤 一般</button>
     </div>
-    <div class="fg"><label>名前</label><input type="text" id="login-name" placeholder="名前を入力" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="saved-login-box" style="display:none;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);border-radius:9px;padding:9px 11px;margin-bottom:12px;font-size:11px;color:var(--gold);line-height:1.6"></div>
+    <div class="fg"><label>名前</label><input type="text" id="login-name" placeholder="初回だけ名前を入力" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="fg" id="pw-wrap">
       <label>パスワード</label>
       <input type="password" id="login-pw" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')doLogin()">
       <div class="pw-note" id="pw-note">🔑 リーダー専用パスワードが必要です</div>
     </div>
-    <button class="btn btn-gold btn-full" onclick="doLogin()" style="margin-top:4px">ログイン →</button>
+    <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()" style="margin-top:4px">初回登録してログイン →</button>
+    <button class="btn btn-ghost btn-full" id="clear-device-btn" onclick="clearDeviceRegistration()" style="margin-top:8px;display:none">この端末の登録を解除</button>
     <div class="login-err" id="login-err">❌ パスワードが違います</div>
   </div>
 </div>
@@ -634,7 +636,83 @@ var NAV = {
   ],
 };
 
-// ════ LOGIN ════
+// ════ LOGIN / 初回登録 ════
+var LOGIN_PROFILE_KEY = 'fg_login_profile_v15';
+var manualLogout = false;
+
+function roleLabel(r){ return r==='leader'?'リーダー':(r==='staff'?'担当者':'一般'); }
+
+function getSavedLoginProfile(){
+  try{
+    var raw = localStorage.getItem(LOGIN_PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function saveLoginProfile(name, r){
+  try{
+    localStorage.setItem(LOGIN_PROFILE_KEY, JSON.stringify({
+      name:name,
+      role:r,
+      savedAt:new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function clearDeviceRegistration(){
+  if(!confirm('この端末に保存した名前・権限を解除しますか？')) return;
+  try{ localStorage.removeItem(LOGIN_PROFILE_KEY); }catch(e){}
+  userName='';
+  role='leader';
+  manualLogout=true;
+  setLoginRole('leader');
+  document.getElementById('login-name').value='';
+  document.getElementById('login-pw').value='';
+  refreshSavedLoginBox();
+  toast('✅ この端末の登録を解除しました');
+}
+
+function refreshSavedLoginBox(){
+  var box=document.getElementById('saved-login-box');
+  var btn=document.getElementById('login-btn');
+  var clearBtn=document.getElementById('clear-device-btn');
+  if(!box || !btn || !clearBtn) return;
+
+  var saved=getSavedLoginProfile();
+  if(saved && saved.name){
+    box.style.display='';
+    box.innerHTML='✅ この端末は登録済みです<br><b>'+saved.name+'</b>（'+roleLabel(saved.role)+'）';
+    btn.textContent='登録済みでログイン →';
+    clearBtn.style.display='';
+  } else {
+    box.style.display='none';
+    btn.textContent='初回登録してログイン →';
+    clearBtn.style.display='none';
+  }
+}
+
+function applySavedLoginToForm(){
+  var saved=getSavedLoginProfile();
+  if(!saved || !saved.name) { refreshSavedLoginBox(); return; }
+  role=saved.role || 'user';
+  setLoginRole(role);
+  document.getElementById('login-name').value=saved.name || '';
+  refreshSavedLoginBox();
+}
+
+function finishLogin(name, r, detail){
+  role = r || role;
+  userName = name;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  initApp();
+
+  if(typeof addAudit === 'function'){
+    addAudit('ログイン', detail || (roleLabel(role)+'でログインしました'));
+  }
+  if(typeof fbSave === 'function'){ fbSave(); }
+}
+
 function setLoginRole(r) {
   role = r;
   document.querySelectorAll('.role-tab').forEach(function(t,i){
@@ -651,26 +729,59 @@ function setLoginRole(r) {
 }
 
 function doLogin() {
-  var name = document.getElementById('login-name').value.trim() || 'ゲスト';
+  var saved=getSavedLoginProfile();
+  var name = document.getElementById('login-name').value.trim();
   var pw   = document.getElementById('login-pw').value;
-  if(role!=='user' && pw!==PW[role]){
-    document.getElementById('login-err').style.display='block';
+  var err  = document.getElementById('login-err');
+
+  // 登録済み端末は、保存された名前・権限でログイン
+  if(saved && saved.name && !name){
+    name=saved.name;
+    role=saved.role || 'user';
+  }
+
+  if(!name){
+    err.textContent='⚠️ 名前を入力してください';
+    err.style.display='block';
+    return;
+  }
+
+  // 初回登録時だけ、担当者・リーダーはパスワード確認
+  if(!(saved && saved.name) && role!=='user' && pw!==PW[role]){
+    err.textContent='❌ パスワードが違います';
+    err.style.display='block';
     document.getElementById('login-pw').value='';
     return;
   }
-  userName = name;
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').style.display='flex';
-  initApp();
+
+  saveLoginProfile(name, role);
+  refreshSavedLoginBox();
+  finishLogin(name, role, (saved && saved.name) ? '登録済み端末からログインしました' : '初回登録してログインしました');
 }
 
 function doLogout() {
+  manualLogout=true;
+  if(typeof addAudit === 'function'){
+    addAudit('ログアウト', roleLabel(role)+'がログアウトしました');
+    if(typeof fbSave === 'function'){ fbSave(); }
+  }
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-pw').value='';
-  document.getElementById('login-name').value='';
+  applySavedLoginToForm();
   closeAllModals();
 }
+
+// ページを開いた時、登録済み端末なら自動ログイン
+(function(){
+  setTimeout(function(){
+    applySavedLoginToForm();
+    var saved=getSavedLoginProfile();
+    if(saved && saved.name && !manualLogout){
+      finishLogin(saved.name, saved.role || 'user', '登録済み端末から自動ログインしました');
+    }
+  }, 200);
+})();
 
 // ════ INIT ════
 function initApp() {
@@ -1377,6 +1488,7 @@ function openProfileModal() {
     +'<div class="fg"><label>名前を変更する</label>'
     +'<input type="text" id="profile-name-input" value="'+userName+'" placeholder="名前を入力"></div>'
     +'<button class="btn btn-gold btn-full" onclick="saveProfileName()" style="margin-bottom:10px">名前を保存</button>'
+    +'<button class="btn btn-ghost btn-full" onclick="clearDeviceRegistration();closeModal(\'modal-profile\')" style="margin-bottom:10px">この端末の登録を解除</button>'
     +'<button class="btn btn-danger btn-full" onclick="doLogout();closeModal(\'modal-profile\')">🚪 ログアウト</button>';
   openModal('modal-profile');
 }
@@ -1384,11 +1496,16 @@ function openProfileModal() {
 function saveProfileName() {
   var newName = document.getElementById('profile-name-input').value.trim();
   if(!newName){ toast('⚠️ 名前を入力してください'); return; }
+  var oldName=userName;
   userName = newName;
+  saveLoginProfile(userName, role);
   document.getElementById('user-avatar').textContent = userName.charAt(0);
+  if(typeof addAudit === 'function'){ addAudit('名前変更', oldName+' → '+userName); }
   closeModal('modal-profile');
   renderHome();
+  renderSettings();
   toast('✅ 名前を変更しました');
+  if(typeof fbSave === 'function'){ fbSave(); }
 }
 
 // ════ MODAL HELPERS ════
