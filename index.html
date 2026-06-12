@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v1.6</title>
+<title>FUJIWARA GROUP 販売管理 v1.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -936,10 +936,10 @@ function renderCalendar() {
   var visibleEvents = state.events.filter(function(ev){
     // 公開イベントは常に表示
     if(!ev.secret){ return true; }
-    // リーダーはすべて表示
-    if(role === 'leader'){ return true; }
-    // 自分が担当者に含まれている場合のみ表示
-    return Array.isArray(ev.staff) && ev.staff.indexOf(userName) >= 0;
+    // リーダー・担当者はシークレットイベントをすべて表示
+    if(role === 'leader' || role === 'staff'){ return true; }
+    // 一般ユーザーにはシークレットイベントを非表示
+    return false;
   });
   var byDate={};
   visibleEvents.forEach(function(ev){
@@ -1008,8 +1008,10 @@ function renderEventList(dateFilter) {
   // シークレットイベントを閲覧権限に応じてフィルタリング
   var visibleEvents = state.events.filter(function(ev){
     if(!ev.secret){ return true; }
-    if(role === 'leader'){ return true; }
-    return Array.isArray(ev.staff) && ev.staff.indexOf(userName) >= 0;
+    // リーダー・担当者はシークレットイベントをすべて表示
+    if(role === 'leader' || role === 'staff'){ return true; }
+    // 一般ユーザーにはシークレットイベントを非表示
+    return false;
   });
   var evs = dateFilter
     ? visibleEvents.filter(function(e){ return e.date===dateFilter; })
@@ -1059,6 +1061,10 @@ function openBSheet(id) {
     if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; }
   }
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  if(ev.secret && !(role === 'leader' || role === 'staff')){
+    toast('⛔ このシークレットイベントは閲覧できません');
+    return;
+  }
 
   var itemNames=ev.itemsText||'未設定';
   var leader=ev.bsLeader||'未設定';
@@ -1642,6 +1648,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   };
   firebase.initializeApp(config);
   var db = firebase.database();
+  window._fgFirebaseReady = false;
 
   function showSync(msg){
     var el=document.getElementById('sync-status');
@@ -1670,6 +1677,11 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   }
 
   window._fbSave = function(){
+    // Firebaseの読み込み前に保存すると、初期データで上書きしてしまうため停止
+    if(!window._fgFirebaseReady){
+      console.log('Firebase読み込み前の保存をスキップしました');
+      return;
+    }
     showSync('🔄 保存中...');
     db.ref('fujiwara').set({
       events:state.events,
@@ -1683,6 +1695,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
 
   db.ref('fujiwara').on('value', function(snapshot){
     var data=snapshot.val();
+    window._fgFirebaseReady = true;
     if(!data) return;
     if(data.events){
       var arr=Array.isArray(data.events)?data.events:Object.values(data.events);
