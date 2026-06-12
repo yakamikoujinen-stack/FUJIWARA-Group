@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v1.8</title>
+<title>FUJIWARA GROUP 販売管理 v1.9</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -986,7 +986,21 @@ function renderCalendar() {
       var bg=ev.zone==='B'?'rgba(46,204,138,.25)':'rgba(200,168,75,.25)';
       var cl=ev.zone==='B'?'#2ecc8a':'#e8c86a';
       var prefix = ev.secret ? '🔒 ' : '';
-      return '<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 2px;border-radius:3px;background:'+bg+';color:'+cl+';overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%">'+prefix+ev.name+'</div>';
+
+      // 連日イベント表示
+      // 初日：▶、途中：↔、最終日：◀
+      var spanMark = '';
+      if(ev.dateEnd && ev.dateEnd > ev.date){
+        if(ds === ev.date){
+          spanMark = '▶ ';
+        } else if(ds === ev.dateEnd){
+          spanMark = '◀ ';
+        } else {
+          spanMark = '↔ ';
+        }
+      }
+
+      return '<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 2px;border-radius:3px;background:'+bg+';color:'+cl+';overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%">'+spanMark+prefix+ev.name+'</div>';
     }).join('');
     // 件数バッジ（2件以上の場合）
     var countBadge=evs.length>1?'<span style="position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:900;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1">'+evs.length+'</span>':'';
