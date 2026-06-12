@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v1.5</title>
+<title>FUJIWARA GROUP 販売管理 v1.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -352,6 +352,14 @@ table{min-width:360px;}
               <span class="sr-val" id="st-item-count"></span>
             </div>
           </div>
+
+          <div class="sec-title" style="margin:16px 0 10px">📝 足あと・操作履歴</div>
+          <div class="settings-group" id="audit-log-area"></div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="renderAuditLogs()">更新</button>
+            <button class="btn btn-danger btn-sm" style="flex:1" onclick="clearAuditLogs()">履歴削除</button>
+          </div>
+
           <button class="btn btn-danger btn-full" style="margin-top:4px" onclick="doLogout()">🚪 ログアウト</button>
         </div>
       </div>
@@ -614,6 +622,7 @@ var state = {
     { time:'2日前', text:'7月のイベントが新たに登録されました 📅' },
   ],
   staffList: ['Aさん','Bさん','Cさん','Dさん','Eさん'],
+  auditLogs: [],
 };
 
 // ════ NAV ════
@@ -641,6 +650,57 @@ var LOGIN_PROFILE_KEY = 'fg_login_profile_v15';
 var manualLogout = false;
 
 function roleLabel(r){ return r==='leader'?'リーダー':(r==='staff'?'担当者':'一般'); }
+
+function nowText(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+
+function addAudit(action, detail){
+  if(!state.auditLogs) state.auditLogs=[];
+  state.auditLogs.unshift({
+    id:String(Date.now()),
+    time:nowText(),
+    user:userName||'未入力',
+    role:role,
+    action:action||'操作',
+    detail:detail||''
+  });
+  if(state.auditLogs.length>200) state.auditLogs=state.auditLogs.slice(0,200);
+}
+
+function renderAuditLogs(){
+  var el=document.getElementById('audit-log-area');
+  if(!el) return;
+  var logs=state.auditLogs||[];
+  if(!logs.length){
+    el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">まだ足あと・操作履歴はありません</div>';
+    return;
+  }
+  el.innerHTML=logs.slice(0,50).map(function(l){
+    var icon='📝';
+    if((l.action||'').indexOf('ログイン')>=0) icon='🚪';
+    if((l.action||'').indexOf('在庫')>=0 || (l.action||'').indexOf('品目')>=0) icon='📦';
+    if((l.action||'').indexOf('イベント')>=0) icon='📅';
+    if((l.action||'').indexOf('売上')>=0) icon='📊';
+    return '<div class="settings-row" style="align-items:flex-start;cursor:default">'
+      +'<div class="sr-left" style="align-items:flex-start">'
+      +'<span style="font-size:17px">'+icon+'</span>'
+      +'<div><div style="font-size:12px;font-weight:700">'+(l.action||'操作')+'</div>'
+      +'<div style="font-size:10px;color:var(--text2);margin-top:3px">'+(l.time||'')+'　'+(l.user||'未入力')+'（'+roleLabel(l.role)+'）</div>'
+      +(l.detail?'<div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">'+l.detail+'</div>':'')
+      +'</div></div></div>';
+  }).join('');
+}
+
+function clearAuditLogs(){
+  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  if(!confirm('足あと・操作履歴を削除しますか？')) return;
+  state.auditLogs=[];
+  renderAuditLogs();
+  toast('🗑️ 履歴を削除しました');
+  fbSave();
+}
 
 function getSavedLoginProfile(){
   try{
@@ -1118,11 +1178,13 @@ function saveEventForm() {
         break;
       }
     }
+    addAudit('イベント編集', name);
     toast('✅ イベントを更新しました');
   } else {
     data.id=String(Date.now()); data.sales=null;
     data.bsLeader=''; data.bsHelper='';
     state.events.push(data);
+    addAudit('イベント追加', name);
     toast('✅ イベントを追加しました');
   }
   closeModal('modal-event-form');
@@ -1134,7 +1196,10 @@ function saveEventForm() {
 function deleteEvent() {
   var id=document.getElementById('ef-id').value;
   if(!confirm('このイベントを削除しますか？')) return;
+  var delName='';
+  state.events.forEach(function(e){ if(String(e.id)===String(id)) delName=e.name||''; });
   state.events=state.events.filter(function(e){ return String(e.id)!==String(id); });
+  addAudit('イベント削除', delName);
   closeModal('modal-event-form');
   renderCalendar();
   renderSalesPage();
@@ -1199,6 +1264,7 @@ function quickAddItem(){
   if(!name){ toast('⚠️ 品目名を入力してください'); return; }
   var cat=invCatFilter==='すべて'?'その他':invCatFilter;
   state.invItems.push({id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0});
+  addAudit('在庫品目追加', name+'（'+cat+'）');
   document.getElementById('quick-item-name').value='';
   renderInventory();
   toast('✅ 「'+name+'」を追加しました');
@@ -1221,8 +1287,11 @@ function saveStockAdjust() {
   var item=null;
   for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(id)){ item=state.invItems[i]; break; } }
   if(!item) return;
+  var oldHakobi=item.hakobi||0;
+  var oldStock=item.stock||0;
   item.hakobi=parseInt(document.getElementById('stock-hakobi').value)||0;
   item.stock=parseInt(document.getElementById('stock-stock').value)||0;
+  addAudit('在庫数量修正', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock);
   closeModal('modal-stock');
   renderInventory();
   toast('✅ '+item.name+' を更新しました');
@@ -1250,10 +1319,12 @@ function saveInvItemForm() {
   var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
     for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); break; } }
+    addAudit('在庫品目編集', name);
     toast('✅ 品目を更新しました');
   } else {
     data.id=String(Date.now());
     state.invItems.push(data);
+    addAudit('在庫品目追加', name);
     toast('✅ 品目を追加しました');
   }
   closeModal('modal-inv-item');
@@ -1264,7 +1335,10 @@ function saveInvItemForm() {
 function deleteInvItem() {
   var id=document.getElementById('iif-id').value;
   if(!confirm('この品目を削除しますか？')) return;
+  var delItemName='';
+  state.invItems.forEach(function(i){ if(String(i.id)===String(id)) delItemName=i.name||''; });
   state.invItems=state.invItems.filter(function(i){ return String(i.id)!==String(id); });
+  addAudit('在庫品目削除', delItemName);
   closeModal('modal-inv-item');
   renderInventory();
   toast('🗑️ 品目を削除しました');
@@ -1356,6 +1430,7 @@ function saveSalesEdit() {
     other:parseInt(document.getElementById('se-other').value)||0,
     labor:labor
   };
+  addAudit('売上入力・修正', ev.name+'｜売上合計 ¥'+((ev.sales.total||0).toLocaleString()));
   closeModal('modal-sales-edit');
   renderSalesPage();
   toast('✅ 売上データを保存しました');
@@ -1384,6 +1459,7 @@ function renderSettings() {
   document.getElementById('st-ev-count').textContent=state.events.length+'件';
   document.getElementById('st-item-count').textContent=state.invItems.length+'品目';
   renderStaffList();
+  renderAuditLogs();
 }
 
 function renderStaffList() {
@@ -1424,10 +1500,12 @@ function saveStaffForm() {
         if(si >= 0) ev.staff[si] = newName;
       }
     });
+    addAudit('スタッフ名編集', oldName+' → '+newName);
     toast('✅ スタッフ名を更新しました');
   } else {
     if(state.staffList.indexOf(newName) >= 0){ toast('⚠️ 同じ名前が既に登録されています'); return; }
     state.staffList.push(newName);
+    addAudit('スタッフ追加', newName);
     toast('✅ スタッフを追加しました');
   }
   closeModal('modal-staff-form');
@@ -1439,6 +1517,7 @@ function deleteStaff() {
   var name = document.getElementById('sff-old-name').value;
   if(!confirm(name+' を削除しますか？')) return;
   state.staffList = state.staffList.filter(function(s){ return s !== name; });
+  addAudit('スタッフ削除', name);
   closeModal('modal-staff-form');
   renderSettings();
   fbSave();
@@ -1463,6 +1542,7 @@ function saveChangePw() {
   if(nw.length<4){ err.textContent='⚠️ 4文字以上で設定してください'; err.style.display='block'; return; }
   if(nw!==cf){ err.textContent='⚠️ 確認パスワードが一致しません'; err.style.display='block'; return; }
   PW[r]=nw; err.style.display='none';
+  addAudit('パスワード変更', roleLabel(r)+'パスワードを変更');
   closeModal('modal-change-pw');
   toast('✅ パスワードを変更しました');
 }
@@ -1574,6 +1654,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       id:String(ev.id||''),
       name:ev.name||'',
       date:ev.date||'',
+      dateEnd:ev.dateEnd||'',
       zone:ev.zone||'A',
       place:ev.place||'',
       status:ev.status||'planned',
@@ -1583,7 +1664,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       bsHelper:ev.bsHelper||'',
       staff:Array.isArray(ev.staff)?ev.staff:(ev.staff?Object.values(ev.staff):[]),
       items:Array.isArray(ev.items)?ev.items:(ev.items?Object.values(ev.items):[]),
-      sales:ev.sales||null
+      sales:ev.sales||null,
+      secret:!!ev.secret
     };
   }
 
@@ -1593,7 +1675,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       events:state.events,
       invItems:state.invItems,
       notices:state.notices,
-      staffList:state.staffList
+      staffList:state.staffList,
+      auditLogs:state.auditLogs||[]
     }).then(function(){ showSync('✅ 同期完了'); })
       .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
   };
@@ -1611,6 +1694,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     }
     if(data.notices) state.notices=Array.isArray(data.notices)?data.notices:Object.values(data.notices);
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
+    if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
       renderInventory();
