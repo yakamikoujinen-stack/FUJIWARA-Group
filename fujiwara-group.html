@@ -225,12 +225,6 @@ table{min-width:360px;}
     </div>
     <button class="btn btn-gold btn-full" onclick="doLogin()" style="margin-top:4px">ログイン →</button>
     <div class="login-err" id="login-err">❌ パスワードが違います</div>
-
-    <div class="pw-note" id="device-profile-box" style="margin-top:14px;line-height:1.7">
-      この端末にはまだ名前が登録されていません。
-    </div>
-    <button class="btn btn-outline btn-full" onclick="saveDeviceProfile()" style="margin-top:8px">📲 この端末に名前を登録</button>
-    <button class="btn btn-ghost btn-full" onclick="clearDeviceProfile()" style="margin-top:8px">登録を解除</button>
   </div>
 </div>
 
@@ -356,11 +350,6 @@ table{min-width:360px;}
               <span class="sr-val" id="st-item-count"></span>
             </div>
           </div>
-
-          <!-- 足あと・操作履歴 -->
-          <div class="sec-title" style="margin:16px 0 10px">📝 足あと・操作履歴</div>
-          <div class="settings-group" id="audit-log-area"></div>
-
           <button class="btn btn-danger btn-full" style="margin-top:4px" onclick="doLogout()">🚪 ログアウト</button>
         </div>
       </div>
@@ -622,7 +611,6 @@ var state = {
     { time:'昨日', text:'持出し数が確定しました ✅' },
     { time:'2日前', text:'7月のイベントが新たに登録されました 📅' },
   ],
-  auditLogs: [],
   staffList: ['Aさん','Bさん','Cさん','Dさん','Eさん'],
 };
 
@@ -645,96 +633,6 @@ var NAV = {
     {id:'home',     icon:'🏠', label:'ホーム'},
   ],
 };
-
-// ════ 足あと・操作履歴 ════
-function roleLabel(r){ return r==='leader'?'リーダー':(r==='staff'?'担当者':'一般ユーザー'); }
-function nowText(){
-  var d=new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-}
-function addAudit(action, detail){
-  if(!state.auditLogs) state.auditLogs=[];
-  state.auditLogs.unshift({
-    id:String(Date.now()),
-    time:nowText(),
-    user:userName||'未入力',
-    role:role,
-    action:action,
-    detail:detail||''
-  });
-  if(state.auditLogs.length>100) state.auditLogs=state.auditLogs.slice(0,100);
-}
-function renderAuditLogs(){
-  var el=document.getElementById('audit-log-area');
-  if(!el) return;
-  var logs=state.auditLogs||[];
-  if(!logs.length){
-    el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">まだ履歴はありません</div>';
-    return;
-  }
-  el.innerHTML=logs.slice(0,30).map(function(l){
-    return '<div class="settings-row" style="align-items:flex-start">'
-      +'<div><div style="font-size:12px;font-weight:700">'+(l.action||'操作')+'</div>'
-      +'<div style="font-size:10px;color:var(--text2);margin-top:3px">'+(l.time||'')+'　'+(l.user||'')+'（'+roleLabel(l.role)+'）</div>'
-      +(l.detail?'<div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">'+l.detail+'</div>':'')
-      +'</div></div>';
-  }).join('');
-}
-
-// 保存済みの名前・権限をログイン画面へ反映
-function getDeviceProfile(){
-  try{ return JSON.parse(localStorage.getItem('fg_deviceProfile')||'null'); }catch(e){ return null; }
-}
-function updateDeviceProfileBox(){
-  var box=document.getElementById('device-profile-box');
-  if(!box) return;
-  var p=getDeviceProfile();
-  if(p && p.name){
-    box.innerHTML='✅ この端末の登録名：<b>'+p.name+'</b><br>権限：'+roleLabel(p.role||'user')+'<br><span style="font-size:10px;color:var(--text2)">次回から名前と権限が自動で入ります</span>';
-  } else {
-    box.innerHTML='この端末にはまだ名前が登録されていません。<br><span style="font-size:10px;color:var(--text2)">初回だけ名前・権限を選んで「この端末に名前を登録」を押してください</span>';
-  }
-}
-function applyDeviceProfile(){
-  var p=getDeviceProfile();
-  if(p && p.name){
-    if(document.getElementById('login-name')) document.getElementById('login-name').value=p.name;
-    if(p.role){ setLoginRole(p.role); }
-  } else {
-    try{
-      var savedName=localStorage.getItem('fg_userName')||'';
-      if(savedName && document.getElementById('login-name')) document.getElementById('login-name').value=savedName;
-    }catch(e){}
-  }
-  updateDeviceProfileBox();
-}
-function saveDeviceProfile(){
-  var name=document.getElementById('login-name').value.trim();
-  var pw=document.getElementById('login-pw').value;
-  if(!name){ toast('⚠️ 名前を入力してください'); return; }
-  if(role!=='user' && pw!==PW[role]){
-    document.getElementById('login-err').style.display='block';
-    document.getElementById('login-pw').value='';
-    toast('⚠️ パスワードが違うため登録できません');
-    return;
-  }
-  try{
-    localStorage.setItem('fg_userName', name);
-    localStorage.setItem('fg_deviceProfile', JSON.stringify({name:name, role:role, savedAt:nowText()}));
-  }catch(e){}
-  userName=name;
-  document.getElementById('login-err').style.display='none';
-  updateDeviceProfileBox();
-  toast('✅ この端末に登録しました');
-}
-function clearDeviceProfile(){
-  try{ localStorage.removeItem('fg_deviceProfile'); localStorage.removeItem('fg_userName'); }catch(e){}
-  document.getElementById('login-name').value='';
-  document.getElementById('login-pw').value='';
-  updateDeviceProfileBox();
-  toast('🗑️ 端末登録を解除しました');
-}
-try{ applyDeviceProfile(); }catch(e){}
 
 // ════ LOGIN ════
 function setLoginRole(r) {
@@ -761,28 +659,16 @@ function doLogin() {
     return;
   }
   userName = name;
-  try{
-    localStorage.setItem('fg_userName', userName);
-    var dp=getDeviceProfile();
-    if(dp && dp.name){
-      localStorage.setItem('fg_deviceProfile', JSON.stringify({name:userName, role:role, savedAt:dp.savedAt||nowText()}));
-      updateDeviceProfileBox();
-    }
-  }catch(e){}
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   initApp();
-  addAudit('ログイン', roleLabel(role)+'でログインしました');
-  fbSave();
 }
 
 function doLogout() {
-  if(userName){ addAudit('ログアウト', roleLabel(role)+'がログアウトしました'); fbSave(); }
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-pw').value='';
-  // 名前は次回入力しやすいように残します
-  try{ document.getElementById('login-name').value=localStorage.getItem('fg_userName')||userName||''; }catch(e){}
+  document.getElementById('login-name').value='';
   closeAllModals();
 }
 
@@ -879,10 +765,10 @@ function renderCalendar() {
   var visibleEvents = state.events.filter(function(ev){
     // 公開イベントは常に表示
     if(!ev.secret){ return true; }
-    // リーダー・担当者はすべて表示
-    if(role === 'leader' || role === 'staff'){ return true; }
-    // 一般ユーザーにはシークレットイベントを非表示
-    return false;
+    // リーダーはすべて表示
+    if(role === 'leader'){ return true; }
+    // 自分が担当者に含まれている場合のみ表示
+    return Array.isArray(ev.staff) && ev.staff.indexOf(userName) >= 0;
   });
   var byDate={};
   visibleEvents.forEach(function(ev){
@@ -951,8 +837,8 @@ function renderEventList(dateFilter) {
   // シークレットイベントを閲覧権限に応じてフィルタリング
   var visibleEvents = state.events.filter(function(ev){
     if(!ev.secret){ return true; }
-    if(role === 'leader' || role === 'staff'){ return true; }
-    return false;
+    if(role === 'leader'){ return true; }
+    return Array.isArray(ev.staff) && ev.staff.indexOf(userName) >= 0;
   });
   var evs = dateFilter
     ? visibleEvents.filter(function(e){ return e.date===dateFilter; })
@@ -1202,7 +1088,6 @@ function quickAddItem(){
   if(!name){ toast('⚠️ 品目名を入力してください'); return; }
   var cat=invCatFilter==='すべて'?'その他':invCatFilter;
   state.invItems.push({id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0});
-  addAudit('在庫品目追加', '「'+name+'」をカテゴリ「'+cat+'」に追加');
   document.getElementById('quick-item-name').value='';
   renderInventory();
   toast('✅ 「'+name+'」を追加しました');
@@ -1225,10 +1110,8 @@ function saveStockAdjust() {
   var item=null;
   for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(id)){ item=state.invItems[i]; break; } }
   if(!item) return;
-  var oldHakobi=item.hakobi, oldStock=item.stock;
   item.hakobi=parseInt(document.getElementById('stock-hakobi').value)||0;
   item.stock=parseInt(document.getElementById('stock-stock').value)||0;
-  addAudit('在庫数変更', item.name+'：持出 '+oldHakobi+'→'+item.hakobi+'、在庫 '+oldStock+'→'+item.stock);
   closeModal('modal-stock');
   renderInventory();
   toast('✅ '+item.name+' を更新しました');
@@ -1255,12 +1138,11 @@ function saveInvItemForm() {
   var rawId=document.getElementById('iif-id').value;
   var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
-    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ var oldName=state.invItems[i].name; Object.assign(state.invItems[i],data); addAudit('在庫品目編集', '「'+oldName+'」を「'+data.name+'」に更新'); break; } }
+    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); break; } }
     toast('✅ 品目を更新しました');
   } else {
     data.id=String(Date.now());
     state.invItems.push(data);
-    addAudit('在庫品目追加', '「'+data.name+'」を追加');
     toast('✅ 品目を追加しました');
   }
   closeModal('modal-inv-item');
@@ -1271,10 +1153,7 @@ function saveInvItemForm() {
 function deleteInvItem() {
   var id=document.getElementById('iif-id').value;
   if(!confirm('この品目を削除しますか？')) return;
-  var delName='';
-  state.invItems.forEach(function(i){ if(String(i.id)===String(id)) delName=i.name; });
   state.invItems=state.invItems.filter(function(i){ return String(i.id)!==String(id); });
-  addAudit('在庫品目削除', '「'+delName+'」を削除');
   closeModal('modal-inv-item');
   renderInventory();
   toast('🗑️ 品目を削除しました');
@@ -1394,7 +1273,6 @@ function renderSettings() {
   document.getElementById('st-ev-count').textContent=state.events.length+'件';
   document.getElementById('st-item-count').textContent=state.invItems.length+'品目';
   renderStaffList();
-  renderAuditLogs();
 }
 
 function renderStaffList() {
@@ -1506,22 +1384,11 @@ function openProfileModal() {
 function saveProfileName() {
   var newName = document.getElementById('profile-name-input').value.trim();
   if(!newName){ toast('⚠️ 名前を入力してください'); return; }
-  var oldName = userName;
   userName = newName;
-  try{
-    localStorage.setItem('fg_userName', userName);
-    var dp=getDeviceProfile();
-    if(dp && dp.name){ localStorage.setItem('fg_deviceProfile', JSON.stringify({name:userName, role:dp.role||role, savedAt:dp.savedAt||nowText()})); }
-    document.getElementById('login-name').value=userName;
-    updateDeviceProfileBox();
-  }catch(e){}
   document.getElementById('user-avatar').textContent = userName.charAt(0);
-  addAudit('名前変更', oldName+' → '+userName);
   closeModal('modal-profile');
   renderHome();
-  renderSettings();
   toast('✅ 名前を変更しました');
-  fbSave();
 }
 
 // ════ MODAL HELPERS ════
@@ -1590,7 +1457,6 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       id:String(ev.id||''),
       name:ev.name||'',
       date:ev.date||'',
-      dateEnd:ev.dateEnd||'',
       zone:ev.zone||'A',
       place:ev.place||'',
       status:ev.status||'planned',
@@ -1600,8 +1466,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       bsHelper:ev.bsHelper||'',
       staff:Array.isArray(ev.staff)?ev.staff:(ev.staff?Object.values(ev.staff):[]),
       items:Array.isArray(ev.items)?ev.items:(ev.items?Object.values(ev.items):[]),
-      sales:ev.sales||null,
-      secret:!!ev.secret
+      sales:ev.sales||null
     };
   }
 
@@ -1611,7 +1476,6 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       events:state.events,
       invItems:state.invItems,
       notices:state.notices,
-      auditLogs:state.auditLogs||[],
       staffList:state.staffList
     }).then(function(){ showSync('✅ 同期完了'); })
       .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
@@ -1629,7 +1493,6 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       state.invItems=arr2.filter(Boolean).map(function(i){ return Object.assign({},i,{id:String(i.id)}); });
     }
     if(data.notices) state.notices=Array.isArray(data.notices)?data.notices:Object.values(data.notices);
-    if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
