@@ -225,6 +225,12 @@ table{min-width:360px;}
     </div>
     <button class="btn btn-gold btn-full" onclick="doLogin()" style="margin-top:4px">ログイン →</button>
     <div class="login-err" id="login-err">❌ パスワードが違います</div>
+
+    <div class="pw-note" id="device-profile-box" style="margin-top:14px;line-height:1.7">
+      この端末にはまだ名前が登録されていません。
+    </div>
+    <button class="btn btn-outline btn-full" onclick="saveDeviceProfile()" style="margin-top:8px">📲 この端末に名前を登録</button>
+    <button class="btn btn-ghost btn-full" onclick="clearDeviceProfile()" style="margin-top:8px">登録を解除</button>
   </div>
 </div>
 
@@ -675,11 +681,60 @@ function renderAuditLogs(){
   }).join('');
 }
 
-// 保存済みの名前をログイン画面へ反映
-try{
-  var savedName=localStorage.getItem('fg_userName')||'';
-  if(savedName && document.getElementById('login-name')) document.getElementById('login-name').value=savedName;
-}catch(e){}
+// 保存済みの名前・権限をログイン画面へ反映
+function getDeviceProfile(){
+  try{ return JSON.parse(localStorage.getItem('fg_deviceProfile')||'null'); }catch(e){ return null; }
+}
+function updateDeviceProfileBox(){
+  var box=document.getElementById('device-profile-box');
+  if(!box) return;
+  var p=getDeviceProfile();
+  if(p && p.name){
+    box.innerHTML='✅ この端末の登録名：<b>'+p.name+'</b><br>権限：'+roleLabel(p.role||'user')+'<br><span style="font-size:10px;color:var(--text2)">次回から名前と権限が自動で入ります</span>';
+  } else {
+    box.innerHTML='この端末にはまだ名前が登録されていません。<br><span style="font-size:10px;color:var(--text2)">初回だけ名前・権限を選んで「この端末に名前を登録」を押してください</span>';
+  }
+}
+function applyDeviceProfile(){
+  var p=getDeviceProfile();
+  if(p && p.name){
+    if(document.getElementById('login-name')) document.getElementById('login-name').value=p.name;
+    if(p.role){ setLoginRole(p.role); }
+  } else {
+    try{
+      var savedName=localStorage.getItem('fg_userName')||'';
+      if(savedName && document.getElementById('login-name')) document.getElementById('login-name').value=savedName;
+    }catch(e){}
+  }
+  updateDeviceProfileBox();
+}
+function saveDeviceProfile(){
+  var name=document.getElementById('login-name').value.trim();
+  var pw=document.getElementById('login-pw').value;
+  if(!name){ toast('⚠️ 名前を入力してください'); return; }
+  if(role!=='user' && pw!==PW[role]){
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-pw').value='';
+    toast('⚠️ パスワードが違うため登録できません');
+    return;
+  }
+  try{
+    localStorage.setItem('fg_userName', name);
+    localStorage.setItem('fg_deviceProfile', JSON.stringify({name:name, role:role, savedAt:nowText()}));
+  }catch(e){}
+  userName=name;
+  document.getElementById('login-err').style.display='none';
+  updateDeviceProfileBox();
+  toast('✅ この端末に登録しました');
+}
+function clearDeviceProfile(){
+  try{ localStorage.removeItem('fg_deviceProfile'); localStorage.removeItem('fg_userName'); }catch(e){}
+  document.getElementById('login-name').value='';
+  document.getElementById('login-pw').value='';
+  updateDeviceProfileBox();
+  toast('🗑️ 端末登録を解除しました');
+}
+try{ applyDeviceProfile(); }catch(e){}
 
 // ════ LOGIN ════
 function setLoginRole(r) {
@@ -706,7 +761,14 @@ function doLogin() {
     return;
   }
   userName = name;
-  try{ localStorage.setItem('fg_userName', userName); }catch(e){}
+  try{
+    localStorage.setItem('fg_userName', userName);
+    var dp=getDeviceProfile();
+    if(dp && dp.name){
+      localStorage.setItem('fg_deviceProfile', JSON.stringify({name:userName, role:role, savedAt:dp.savedAt||nowText()}));
+      updateDeviceProfileBox();
+    }
+  }catch(e){}
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   initApp();
@@ -1446,7 +1508,13 @@ function saveProfileName() {
   if(!newName){ toast('⚠️ 名前を入力してください'); return; }
   var oldName = userName;
   userName = newName;
-  try{ localStorage.setItem('fg_userName', userName); document.getElementById('login-name').value=userName; }catch(e){}
+  try{
+    localStorage.setItem('fg_userName', userName);
+    var dp=getDeviceProfile();
+    if(dp && dp.name){ localStorage.setItem('fg_deviceProfile', JSON.stringify({name:userName, role:dp.role||role, savedAt:dp.savedAt||nowText()})); }
+    document.getElementById('login-name').value=userName;
+    updateDeviceProfileBox();
+  }catch(e){}
   document.getElementById('user-avatar').textContent = userName.charAt(0);
   addAudit('名前変更', oldName+' → '+userName);
   closeModal('modal-profile');
