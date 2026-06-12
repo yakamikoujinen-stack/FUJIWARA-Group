@@ -401,6 +401,13 @@ table{min-width:360px;}
     <div class="fg"><label>担当スタッフ</label>
       <div id="ef-staff-checks" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
     </div>
+    <!-- シークレットイベントチェック -->
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="ef-secret" style="width:auto;margin:0;">
+        🔒 シークレットイベント
+      </label>
+    </div>
     <div class="fg"><label>メモ・備考</label><textarea id="ef-memo" placeholder="備考など"></textarea></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-gold" style="flex:1" onclick="saveEventForm()">保存する</button>
@@ -754,8 +761,17 @@ function renderCalendar() {
   var dim=new Date(calYear,calMonth+1,0).getDate();
   var today=new Date();
 
+  // シークレットイベントを閲覧権限に応じてフィルタリング
+  var visibleEvents = state.events.filter(function(ev){
+    // 公開イベントは常に表示
+    if(!ev.secret){ return true; }
+    // リーダーはすべて表示
+    if(role === 'leader'){ return true; }
+    // 自分が担当者に含まれている場合のみ表示
+    return Array.isArray(ev.staff) && ev.staff.indexOf(userName) >= 0;
+  });
   var byDate={};
-  state.events.forEach(function(ev){
+  visibleEvents.forEach(function(ev){
     // 開始日
     if(!byDate[ev.date]) byDate[ev.date]=[];
     byDate[ev.date].push(ev);
@@ -798,7 +814,8 @@ function renderCalendar() {
     var evNames=evs.slice(0,2).map(function(ev){
       var bg=ev.zone==='B'?'rgba(46,204,138,.25)':'rgba(200,168,75,.25)';
       var cl=ev.zone==='B'?'#2ecc8a':'#e8c86a';
-      return '<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 2px;border-radius:3px;background:'+bg+';color:'+cl+';overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%">'+ev.name+'</div>';
+      var prefix = ev.secret ? '🔒 ' : '';
+      return '<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 2px;border-radius:3px;background:'+bg+';color:'+cl+';overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%">'+prefix+ev.name+'</div>';
     }).join('');
     // 件数バッジ（2件以上の場合）
     var countBadge=evs.length>1?'<span style="position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:900;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1">'+evs.length+'</span>':'';
@@ -817,9 +834,15 @@ function selectDate(d){
 function renderEventList(dateFilter) {
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
   var label=document.getElementById('ev-list-label');
-  var evs=dateFilter
-    ? state.events.filter(function(e){ return e.date===dateFilter; })
-    : state.events.filter(function(e){ return e.date.startsWith(ym); });
+  // シークレットイベントを閲覧権限に応じてフィルタリング
+  var visibleEvents = state.events.filter(function(ev){
+    if(!ev.secret){ return true; }
+    if(role === 'leader'){ return true; }
+    return Array.isArray(ev.staff) && ev.staff.indexOf(userName) >= 0;
+  });
+  var evs = dateFilter
+    ? visibleEvents.filter(function(e){ return e.date===dateFilter; })
+    : visibleEvents.filter(function(e){ return e.date.startsWith(ym); });
   label.textContent=dateFilter
     ? dateFilter.slice(5).replace('-','/')+' のイベント（'+evs.length+'件）'
     : '今月のイベント（'+evs.length+'件）';
@@ -845,7 +868,7 @@ function renderEventList(dateFilter) {
     }
     return '<div class="ev-card" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
       +'<div class="ev-card-row">'
-      +'<div><div class="ev-name">'+ev.name+'</div>'
+      +'<div><div class="ev-name">'+(ev.secret?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
       +'<div class="ev-meta">👥 '+staffStr+'</div>'
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
@@ -940,6 +963,9 @@ function openEventForm(id) {
   document.getElementById('ef-items-text').value=ev?ev.itemsText||'':'';
   document.getElementById('ef-date-end').value=ev?ev.dateEnd||'':'';
   document.getElementById('ef-del-btn').style.display=ev?'':'none';
+  // シークレットイベントの状態を反映
+  var secretChk=document.getElementById('ef-secret');
+  if(secretChk){ secretChk.checked = ev ? !!ev.secret : false; }
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
     var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
     return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' style="width:auto;margin:0"> '+s+'</label>';
@@ -955,14 +981,18 @@ function saveEventForm() {
   document.querySelectorAll('#ef-staff-checks input:checked').forEach(function(c){ staff.push(c.value); });
   var rawId=document.getElementById('ef-id').value;
   var data={
-    name:name, date:date,
+    name:name,
+    date:date,
     dateEnd:document.getElementById('ef-date-end').value||'',
     zone:document.getElementById('ef-zone').value,
     place:document.getElementById('ef-place').value,
     status:document.getElementById('ef-status').value,
     memo:document.getElementById('ef-memo').value,
     itemsText:document.getElementById('ef-items-text').value.trim(),
-    staff:staff, items:[]
+    staff:staff,
+    items:[],
+    // シークレットイベント設定
+    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
