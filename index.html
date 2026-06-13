@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v2.3</title>
+<title>FUJIWARA GROUP 販売管理 v2.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1458,6 +1458,37 @@ function renderSalesDetail() {
     +'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>';
 }
 
+
+// 出店アイテム文字列を売上入力用の品目リストに変換
+function getEventSalesItems(ev){
+  var raw = (ev && ev.itemsText ? ev.itemsText : '').trim();
+  if(!raw){ return ['売上']; }
+  return raw
+    .split(/\r?\n|、|,|・|／|\/|　/)
+    .map(function(s){ return s.trim(); })
+    .filter(function(s,idx,arr){ return s && arr.indexOf(s)===idx; });
+}
+function salesItemKey(name){
+  return 'item_' + encodeURIComponent(name).replace(/%/g,'_');
+}
+function getSalesItemValue(s, name){
+  if(!s) return '';
+  if(s.items && typeof s.items[name] !== 'undefined') return s.items[name];
+  var key=salesItemKey(name);
+  if(typeof s[key] !== 'undefined') return s[key];
+  return '';
+}
+function renderSalesItemsRows(ev){
+  var s=ev.sales||{};
+  var rows='';
+  var names=getEventSalesItems(ev);
+  names.forEach(function(name){
+    var v=getSalesItemValue(s,name)||0;
+    rows += '<div class="sales-row"><span>'+name+'</span><span class="mono">¥'+(parseInt(v)||0).toLocaleString()+'</span></div>';
+  });
+  return rows;
+}
+
 function openSalesEdit(id) {
   if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
   var ev=null;
@@ -1467,9 +1498,26 @@ function openSalesEdit(id) {
   document.getElementById('se-title').textContent='📊 '+ev.name+' 売上入力';
   document.getElementById('se-ev-id').value=id;
   document.getElementById('se-total').value=s.total||'';
-  document.getElementById('se-yakisoba').value=s.yakisoba||'';
-  document.getElementById('se-kushi').value=s.kushi||'';
-  document.getElementById('se-mizu').value=s.mizu||'';
+
+  // 出店アイテムと売上入力欄を連動
+  var salesItems=getEventSalesItems(ev);
+  var itemHtml=salesItems.map(function(item){
+    var val=getSalesItemValue(s,item);
+    return '<div class="fg"><label>'+item+'（円）</label>'
+      +'<input type="number" class="sales-item-input" data-name="'+item+'" placeholder="0" min="0" value="'+(val||'')+'"></div>';
+  }).join('');
+  var box=document.getElementById('se-item-inputs');
+  if(box){
+    box.innerHTML=itemHtml;
+  } else {
+    var laborBox=document.getElementById('se-labor-inputs');
+    if(laborBox && !document.getElementById('se-item-inputs')){
+      laborBox.insertAdjacentHTML('beforebegin','<div id="se-item-inputs">'+itemHtml+'</div>');
+    }
+  }
+
+  ['se-yakisoba','se-kushi','se-mizu'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
+
   document.getElementById('se-basho').value=s.basho||'';
   document.getElementById('se-shiire').value=s.shiire||'';
   document.getElementById('se-kotsu').value=s.kotsu||'';
@@ -1489,11 +1537,24 @@ function saveSalesEdit() {
   if(!ev) return;
   var labor={};
   document.querySelectorAll('.labor-input').forEach(function(inp){ if(inp.value) labor[inp.dataset.name]=parseInt(inp.value)||0; });
+
+  var items={};
+  var itemTotal=0;
+  document.querySelectorAll('.sales-item-input').forEach(function(inp){
+    var v=parseInt(inp.value)||0;
+    items[inp.dataset.name]=v;
+    itemTotal+=v;
+  });
+
+  var totalInput=parseInt(document.getElementById('se-total').value)||0;
+  var finalTotal=totalInput || itemTotal;
+
   ev.sales={
-    total:parseInt(document.getElementById('se-total').value)||0,
-    yakisoba:parseInt(document.getElementById('se-yakisoba').value)||0,
-    kushi:parseInt(document.getElementById('se-kushi').value)||0,
-    mizu:parseInt(document.getElementById('se-mizu').value)||0,
+    total:finalTotal,
+    items:items,
+    yakisoba:items['やきそば']||0,
+    kushi:items['串']||items['牛串']||0,
+    mizu:items['水・ドリンク']||items['ドリンク']||0,
     basho:parseInt(document.getElementById('se-basho').value)||0,
     shiire:parseInt(document.getElementById('se-shiire').value)||0,
     kotsu:parseInt(document.getElementById('se-kotsu').value)||0,
