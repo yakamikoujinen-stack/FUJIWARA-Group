@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v2.1</title>
+<title>FUJIWARA GROUP 販売管理 v2.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -641,7 +641,6 @@ var NAV = {
   ],
   user:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
-    {id:'inventory',icon:'📦', label:'在庫'},
     {id:'home',     icon:'🏠', label:'ホーム'},
   ],
 };
@@ -871,13 +870,14 @@ function initApp() {
 
 function applyPermissions() {
   if(role==='user'){
-    show('inv-content');
-    document.getElementById('inv-lock').innerHTML='';
+    lockSection('inv-lock','在庫管理はリーダー・担当者のみ閲覧できます');
+    hide('inv-content');
   } else {
     show('inv-content');
     document.getElementById('inv-lock').innerHTML='';
   }
-  show('btn-add-inv-item');
+  if(role==='user') hide('btn-add-inv-item');
+  else show('btn-add-inv-item');
   if(role!=='leader'){
     lockSection('sales-lock','売上・損益データはリーダーのみ閲覧できます');
     hide('sales-content');
@@ -912,6 +912,10 @@ function buildNav() {
 }
 
 function showPage(id) {
+  if(role==='user' && id==='inventory'){
+    toast('⛔ 在庫管理はリーダー・担当者のみ閲覧できます');
+    id='calendar';
+  }
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var p = document.getElementById('page-'+id);
@@ -1286,6 +1290,7 @@ function setInvCatFromSelect(){
 }
 
 function quickAddItem(){
+  if(role==='user'){ toast('⛔ 在庫管理はリーダー・担当者のみ操作できます'); return; }
   var name=document.getElementById('quick-item-name').value.trim();
   if(!name){ toast('⚠️ 品目名を入力してください'); return; }
   var cat=invCatFilter==='すべて'?'その他':invCatFilter;
@@ -1298,6 +1303,7 @@ function quickAddItem(){
 }
 
 function openStockModal(id) {
+  if(role==='user'){ toast('⛔ 在庫管理はリーダー・担当者のみ操作できます'); return; }
   var item=null;
   for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(id)){ item=state.invItems[i]; break; } }
   if(!item) return;
@@ -1325,6 +1331,7 @@ function saveStockAdjust() {
 }
 
 function openInvItemForm(id) {
+  if(role==='user'){ toast('⛔ 在庫管理はリーダー・担当者のみ操作できます'); return; }
   var item=null;
   if(id){ for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(id)){ item=state.invItems[i]; break; } } }
   document.getElementById('iif-title').textContent=item?'品目編集':'品目追加';
@@ -1359,6 +1366,7 @@ function saveInvItemForm() {
 }
 
 function deleteInvItem() {
+  if(role==='user'){ toast('⛔ 在庫管理はリーダー・担当者のみ操作できます'); return; }
   var id=document.getElementById('iif-id').value;
   if(!confirm('この品目を削除しますか？')) return;
   var delItemName='';
