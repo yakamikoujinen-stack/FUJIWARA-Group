@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v1.9</title>
+<title>FUJIWARA GROUP 販売管理 v2.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -408,6 +408,7 @@ table{min-width:360px;}
     <div class="fg"><label>出店アイテム（自由入力）</label>
       <textarea id="ef-items-text" placeholder="例: やきそば・串・かき氷"></textarea>
     </div>
+    <div class="fg"><label>当日体制（必要人数）</label><input type="number" id="ef-required-staff" min="0" placeholder="例: 6"></div>
     <div class="fg"><label>担当スタッフ</label>
       <div id="ef-staff-checks" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
     </div>
@@ -741,8 +742,9 @@ function refreshSavedLoginBox(){
   var saved=getSavedLoginProfile();
   if(saved && saved.name){
     box.style.display='';
-    box.innerHTML='✅ この端末は登録済みです<br><b>'+saved.name+'</b>（'+roleLabel(saved.role)+'）';
-    btn.textContent='登録済みでログイン →';
+    var extra = (saved.role==='leader' || saved.role==='staff') ? '<br>※リーダー・担当者は毎回パスワードが必要です' : '<br>※一般は自動ログインできます';
+    box.innerHTML='✅ この端末は登録済みです<br><b>'+saved.name+'</b>（'+roleLabel(saved.role)+'）'+extra;
+    btn.textContent='ログイン →';
     clearBtn.style.display='';
   } else {
     box.style.display='none';
@@ -794,7 +796,7 @@ function doLogin() {
   var pw   = document.getElementById('login-pw').value;
   var err  = document.getElementById('login-err');
 
-  // 登録済み端末は、保存された名前・権限でログイン
+  // 登録済み端末は、保存された名前・権限をフォームに使う
   if(saved && saved.name && !name){
     name=saved.name;
     role=saved.role || 'user';
@@ -806,8 +808,8 @@ function doLogin() {
     return;
   }
 
-  // 初回登録時だけ、担当者・リーダーはパスワード確認
-  if(!(saved && saved.name) && role!=='user' && pw!==PW[role]){
+  // リーダー・担当者は毎回パスワード必須
+  if(role!=='user' && pw!==PW[role]){
     err.textContent='❌ パスワードが違います';
     err.style.display='block';
     document.getElementById('login-pw').value='';
@@ -837,8 +839,10 @@ function doLogout() {
   setTimeout(function(){
     applySavedLoginToForm();
     var saved=getSavedLoginProfile();
-    if(saved && saved.name && !manualLogout){
-      finishLogin(saved.name, saved.role || 'user', '登録済み端末から自動ログインしました');
+    // 一般ユーザーだけ自動ログイン
+    // リーダー・担当者は登録済みでも毎回パスワード入力が必要
+    if(saved && saved.name && !manualLogout && (saved.role || 'user') === 'user'){
+      finishLogin(saved.name, 'user', '登録済み端末から自動ログインしました');
     }
   }, 200);
 })();
@@ -1057,7 +1061,7 @@ function renderEventList(dateFilter) {
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(ev.secret?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
-      +'<div class="ev-meta">👥 '+staffStr+'</div>'
+      +'<div class="ev-meta">👥 担当 '+staffStr+(ev.requiredStaff?'　🧑‍🍳 体制 '+ev.requiredStaff+'人':'')+'</div>'
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
       +'<span class="status-badge '+sClass+'">'+sLabel+'</span>'
@@ -1093,13 +1097,14 @@ function openBSheet(id) {
     '<div class="scroll-x">'
     +'<table class="bsheet-table">'
     +'<thead><tr>'
-    +'<th>日付</th><th>イベント名</th><th>出店アイテム</th><th>責任者</th><th>補助者</th>'
+    +'<th>日付</th><th>イベント名</th><th>出店アイテム</th><th>体制</th><th>責任者</th><th>補助者</th>'
     +'</tr></thead>'
     +'<tbody>'
     +'<tr>'
     +'<td>'+ev.date+'</td>'
     +'<td style="font-weight:700">'+ev.name+'</td>'
     +'<td>'+itemNames+'</td>'
+    +'<td>'+(ev.requiredStaff?ev.requiredStaff+'人':'未設定')+'</td>'
     +'<td style="font-weight:700;color:var(--gold)">'+leader+'</td>'
     +'<td>'+helper+'</td>'
     +'</tr>'
@@ -1178,6 +1183,7 @@ function saveEventForm() {
     zone:document.getElementById('ef-zone').value,
     place:document.getElementById('ef-place').value,
     status:document.getElementById('ef-status').value,
+    requiredStaff: parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0) || 0,
     memo:document.getElementById('ef-memo').value,
     itemsText:document.getElementById('ef-items-text').value.trim(),
     staff:staff,
@@ -1198,13 +1204,13 @@ function saveEventForm() {
         break;
       }
     }
-    addAudit('イベント編集', name);
+    addAudit('イベント編集', name+(data.requiredStaff?'｜体制 '+data.requiredStaff+'人':''));
     toast('✅ イベントを更新しました');
   } else {
     data.id=String(Date.now()); data.sales=null;
     data.bsLeader=''; data.bsHelper='';
     state.events.push(data);
-    addAudit('イベント追加', name);
+    addAudit('イベント追加', name+(data.requiredStaff?'｜体制 '+data.requiredStaff+'人':''));
     toast('✅ イベントを追加しました');
   }
   closeModal('modal-event-form');
@@ -1679,6 +1685,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       zone:ev.zone||'A',
       place:ev.place||'',
       status:ev.status||'planned',
+      requiredStaff: parseInt(ev.requiredStaff)||0,
       memo:ev.memo||'',
       itemsText:ev.itemsText||'',
       bsLeader:ev.bsLeader||'',
