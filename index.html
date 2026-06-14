@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v2.4</title>
+<title>FUJIWARA GROUP 販売管理 v2.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -503,11 +503,17 @@ table{min-width:360px;}
     </div>
     <input type="hidden" id="se-ev-id">
     <div class="fg"><label>売上合計（円）</label><input type="number" id="se-total" placeholder="200000" min="0"></div>
+    <div class="fg" style="background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px;padding:12px;margin-top:8px">
+      <label style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">個別売上（出店アイテム別）</label>
+      <div id="se-item-inputs"></div>
+    </div>
     <div style="border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:13px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:700">個別売上</div>
-      <div class="fg"><label>やきそば（円）</label><input type="number" id="se-yakisoba" placeholder="100000" min="0"></div>
+      <div style="display:none">
+    <div class="fg"><label>やきそば（円）</label><input type="number" id="se-yakisoba" placeholder="100000" min="0"></div>
       <div class="fg"><label>串（円）</label><input type="number" id="se-kushi" placeholder="50000" min="0"></div>
       <div class="fg"><label>水・ドリンク（円）</label><input type="number" id="se-mizu" placeholder="50000" min="0"></div>
+    </div>
     </div>
     <div style="border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:13px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:700">経費</div>
@@ -1509,11 +1515,6 @@ function openSalesEdit(id) {
   var box=document.getElementById('se-item-inputs');
   if(box){
     box.innerHTML=itemHtml;
-  } else {
-    var laborBox=document.getElementById('se-labor-inputs');
-    if(laborBox && !document.getElementById('se-item-inputs')){
-      laborBox.insertAdjacentHTML('beforebegin','<div id="se-item-inputs">'+itemHtml+'</div>');
-    }
   }
 
   ['se-yakisoba','se-kushi','se-mizu'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
