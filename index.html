@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.3</title>
+<title>FUJIWARA GROUP 販売管理 v3.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1118,6 +1118,17 @@ function saveAvailability(eventId, val){
 }
 
 
+
+function scrollToEventCards(){
+  setTimeout(function(){
+    var el=document.getElementById('ev-list-label') || document.getElementById('event-list');
+    if(el && el.scrollIntoView){
+      el.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }, 80);
+}
+
+
 function renderCalendar() {
   var mNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   document.getElementById('cal-month-label').textContent=calYear+'年 '+mNames[calMonth];
@@ -2068,7 +2079,7 @@ function deleteNotice(id){
 function openNoticeModal() {
   var editor=document.getElementById('notice-editor');
   if(editor) editor.style.display = role==='leader' ? '' : 'none';
-  var notices=getActiveNotices();
+  var notices=(typeof getActiveNotices==='function') ? getActiveNotices() : (state.notices||[]);
   document.getElementById('all-notices').innerHTML=notices.length ? notices.map(function(n){
     var del=role==='leader'?'<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="deleteNotice(\''+(n.id||'')+'\')">削除</button>':'';
     return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'　'+(n.author?'投稿: '+n.author:'')+'</div>'+n.text+del+'</div>';
