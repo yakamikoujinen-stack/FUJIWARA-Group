@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.1</title>
+<title>FUJIWARA GROUP 販売管理 v3.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -198,12 +198,17 @@ table{min-width:360px;}
 .secret-check-row{display:flex;align-items:center;gap:8px;margin-bottom:13px;}
 .secret-check-row input[type=checkbox]{width:auto;margin:0;}
 .secret-check-row label{font-size:13px;color:var(--text);margin:0;} 
+
+/* QUICK ATTENDANCE */
+#quick-attendance-btn{display:none;position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:160;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;border:none;border-radius:24px;padding:9px 18px;font-size:12px;font-weight:900;box-shadow:0 4px 18px rgba(0,0,0,.45);}
+
 </style>
 </head>
 <body>
 
 <!-- SYNC STATUS BAR -->
 <div id="sync-status">🔄 同期中...</div>
+<button id="quick-attendance-btn" onclick="openQuickAttendance()">⭕ 出勤回答</button>
 
 <!-- LOGIN -->
 <div id="login-screen">
@@ -561,6 +566,19 @@ table{min-width:360px;}
     <div class="fg"><label>新しいパスワード（確認）</label><input type="password" id="cpw-confirm"></div>
     <div class="pw-err" id="cpw-err"></div>
     <button class="btn btn-gold btn-full" onclick="saveChangePw()">変更する</button>
+  </div>
+</div>
+
+
+<!-- QUICK ATTENDANCE MODAL -->
+<div class="modal-overlay" id="modal-quick-attendance">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <h2 class="modal-title">⭕ 出勤回答</h2>
+      <button class="modal-close-btn" onclick="closeModal('modal-quick-attendance')">✕</button>
+    </div>
+    <div id="quick-attendance-body"></div>
   </div>
 </div>
 
@@ -1039,6 +1057,51 @@ function renderAvailabilitySummary(ev){
     +'<span style="font-size:10px;color:var(--gold2);font-weight:900">△'+c.maybe+'</span> '
     +'<span style="font-size:10px;color:var(--red);font-weight:900">❌'+c.no+'</span>';
 }
+
+function eventsOnDateForAttendance(ds){
+  var list=[];
+  (state.events||[]).forEach(function(ev){
+    if(ev.secret && !(role==='leader'||role==='staff')) return;
+    var dates=dateListForEvent ? dateListForEvent(ev) : [ev.date];
+    if(dates.indexOf(ds)>=0) list.push(ev);
+  });
+  return list;
+}
+function refreshQuickAttendanceButton(){
+  var btn=document.getElementById('quick-attendance-btn');
+  if(!btn) return;
+  if(role==='leader'){
+    btn.style.display='none';
+    return;
+  }
+  var ds=selDate || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
+  var evs=eventsOnDateForAttendance(ds);
+  btn.style.display=evs.length ? '' : 'none';
+  btn.textContent='⭕ 出勤回答';
+}
+function openQuickAttendance(){
+  if(role==='leader'){ return; }
+  var ds=selDate || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
+  var evs=eventsOnDateForAttendance(ds);
+  var body=document.getElementById('quick-attendance-body');
+  if(!evs.length){
+    body.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>この日のイベントはありません</p></div>';
+  } else {
+    body.innerHTML='<div class="notice-card"><b>📅 '+ds+'</b><br><span class="muted">出勤可否をイベントごとに選んでください</span></div>'
+      +evs.map(function(ev){
+        return '<div class="notice-card">'
+          +'<div style="font-size:14px;font-weight:900;margin-bottom:5px">'+ev.name+'</div>'
+          +'<div class="ev-meta">現在：'+availabilityMark(getMyAvailability(ev))+' '+availabilityLabel(getMyAvailability(ev))+'</div>'
+          +'<div class="ev-actions" style="margin-top:10px">'
+          +'<button class="btn btn-green btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'ok\');openQuickAttendance()">⭕ 出勤可</button>'
+          +'<button class="btn btn-outline btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'maybe\');openQuickAttendance()">△ 未定</button>'
+          +'<button class="btn btn-danger btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'no\');openQuickAttendance()">❌ 不可</button>'
+          +'</div></div>';
+      }).join('');
+  }
+  openModal('modal-quick-attendance');
+}
+
 function saveAvailability(eventId, val){
   var ev=null;
   for(var i=0;i<state.events.length;i++){
@@ -1211,6 +1274,7 @@ function renderEventList(dateFilter) {
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
       +'<span class="status-badge '+sClass+'">'+sLabel+'</span>'
+      +(role==='leader'?'<span style="font-size:10px;font-weight:900">'+renderAvailabilitySummary(ev)+'</span>':'')
       +'<span style="font-size:10px;color:var(--gold)">📋 詳細</span>'
       +'</div></div>'
       +availabilityHtml
