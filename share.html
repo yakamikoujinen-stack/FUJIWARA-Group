@@ -17,8 +17,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Aria
 <div class="tabs"><button id="tcal" class="tab active" onclick="tab('cal')">カレンダー</button><button id="tstock" class="tab" onclick="tab('stock')">在庫</button></div><br>
 <section id="calbox" class="card"><div class="calhead"><button class="gray" onclick="moveMonth(-1)">前月</button><div id="month" class="month"></div><button class="gray" onclick="moveMonth(1)">次月</button></div><br><div class="week"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div><div id="days" class="days"></div></section>
 <section id="detail" class="card"><h3 id="detailTitle">日付を選んでください</h3><div id="events" class="list"></div><div id="adminEvent" class="hide"><hr><h3>予定を追加・編集</h3><label>日付</label><input id="evDate" type="date"><label>会場名</label><input id="evPlace" placeholder="例：A会場"><label>内容</label><textarea id="evMemo" placeholder="例：カステラ、牛串、からあげ\n集合時間、持ち物など"></textarea><div class="actions"><button class="green" onclick="saveEvent()">保存</button><button class="gray" onclick="clearEvent()">入力を消す</button></div></div></section>
-<section id="stockbox" class="card hide"><h2>在庫</h2><p class="muted">売上・経費は表示しません。</p><div id="stocks" class="list"></div><div id="adminStock" class="hide"><hr><h3>在庫を追加・編集</h3><div class="row"><div><label>商品名</label><input id="stName"></div><div><label>数量</label><input id="stQty" type="number"></div></div><div class="row"><div><label>単位</label><input id="stUnit" placeholder="袋・本・kg"></div><div><label>注意数量</label><input id="stMin" type="number"></div></div><label>メモ</label><input id="stMemo"><div class="actions"><button class="green" onclick="saveStock()">保存</button><button class="gray" onclick="clearStock()">入力を消す</button></div></div></section>
-<div class="card notice"><b>連絡</b><br>予定や在庫の変更が必要な場合は、管理者へ連絡してください。</div>
+<section id="stockbox" class="card hide"><h2>在庫</h2><p class="muted">売上・経費は表示しません。在庫はログインした人が更新できます。</p><div id="stocks" class="list"></div><div id="adminStock" class="hide"><hr><h3>在庫を追加・編集</h3><div class="row"><div><label>商品名</label><input id="stName"></div><div><label>数量</label><input id="stQty" type="number"></div></div><div class="row"><div><label>単位</label><input id="stUnit" placeholder="袋・本・kg"></div><div><label>注意数量</label><input id="stMin" type="number"></div></div><label>メモ</label><input id="stMemo"><div class="actions"><button class="green" onclick="saveStock()">保存</button><button class="gray" onclick="clearStock()">入力を消す</button></div></div></section>
+<div class="card notice"><b>連絡</b><br>予定の変更は管理者へ連絡してください。在庫は必要に応じて更新してください。</div>
 </section>
 </main>
 <script>
@@ -27,9 +27,10 @@ let role='',user='',cal=new Date(),sel='';
 let ev=JSON.parse(localStorage.getItem('share_events_v2')||'[]');
 let st=JSON.parse(localStorage.getItem('share_stocks_v2')||'[]');
 if(!st.length){st=[{name:'カステラ材料',qty:10,unit:'袋',min:3,memo:''},{name:'牛串',qty:80,unit:'本',min:20,memo:''},{name:'からあげ材料',qty:6,unit:'kg',min:2,memo:''},{name:'りんご飴材料',qty:30,unit:'個分',min:10,memo:''}];saveAll()}
+function canEditStock(){return role==='admin'||role==='staff'}
 function saveAll(){localStorage.setItem('share_events_v2',JSON.stringify(ev));localStorage.setItem('share_stocks_v2',JSON.stringify(st))}
 function login(){user=loginName.value.trim();let p=loginPass.value.trim();if(!user){msg.textContent='名前を入力してください';return}if(p===ADMIN_PASS)role='admin';else if(p===STAFF_PASS)role='staff';else{msg.textContent='パスワードが違います';return}sessionStorage.share_user=user;sessionStorage.share_role=role;boot()}
-function boot(){loginBox.classList.add('hide');app.classList.remove('hide');hello.textContent=user+' さん';adminEvent.classList.toggle('hide',role!=='admin');adminStock.classList.toggle('hide',role!=='admin');renderCal();renderStock()}
+function boot(){loginBox.classList.add('hide');app.classList.remove('hide');hello.textContent=user+' さん';adminEvent.classList.toggle('hide',role!=='admin');adminStock.classList.toggle('hide',!canEditStock());renderCal();renderStock()}
 function logout(){sessionStorage.clear();location.reload()}
 function tab(x){calbox.classList.toggle('hide',x!=='cal');detail.classList.toggle('hide',x!=='cal');stockbox.classList.toggle('hide',x!=='stock');tcal.classList.toggle('active',x==='cal');tstock.classList.toggle('active',x==='stock')}
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -40,10 +41,10 @@ function saveEvent(){if(role!=='admin')return;let date=evDate.value,place=evPlac
 function editEvent(id){let e=ev.find(x=>x.id===id);evDate.value=e.date;evPlace.value=e.place;evMemo.value=e.memo;evDate.dataset.id=id}
 function delEvent(id){if(confirm('削除しますか？')){ev=ev.filter(e=>e.id!==id);saveAll();renderCal();selectDate(sel)}}
 function clearEvent(){evDate.value=sel||'';evPlace.value='';evMemo.value='';delete evDate.dataset.id}
-function renderStock(){stocks.innerHTML=st.map((s,i)=>'<div class="item"><b>'+esc(s.name)+'</b><span class="pill">数量：'+s.qty+' '+esc(s.unit)+'</span> '+(Number(s.qty)<=Number(s.min)?'<span class="danger">少なめ</span>':'<span class="ok">OK</span>')+'<div class="muted">注意数量：'+s.min+' '+esc(s.unit)+'</div>'+(s.memo?'<div>'+esc(s.memo)+'</div>':'')+(role==='admin'?'<div class="actions"><button class="gray" onclick="editStock('+i+')">編集</button><button class="red" onclick="delStock('+i+')">削除</button></div>':'')+'</div>').join('')}
-function saveStock(){if(role!=='admin')return;let o={name:stName.value.trim(),qty:Number(stQty.value||0),unit:stUnit.value.trim(),min:Number(stMin.value||0),memo:stMemo.value.trim()};if(!o.name){alert('商品名を入力してください');return}let i=stName.dataset.i;if(i!==undefined)st[Number(i)]=o;else st.push(o);saveAll();clearStock();renderStock()}
-function editStock(i){let s=st[i];stName.value=s.name;stQty.value=s.qty;stUnit.value=s.unit;stMin.value=s.min;stMemo.value=s.memo;stName.dataset.i=i}
-function delStock(i){if(confirm('削除しますか？')){st.splice(i,1);saveAll();renderStock()}}
+function renderStock(){stocks.innerHTML=st.map((s,i)=>'<div class="item"><b>'+esc(s.name)+'</b><span class="pill">数量：'+s.qty+' '+esc(s.unit)+'</span> '+(Number(s.qty)<=Number(s.min)?'<span class="danger">少なめ</span>':'<span class="ok">OK</span>')+'<div class="muted">注意数量：'+s.min+' '+esc(s.unit)+'</div>'+(s.memo?'<div>'+esc(s.memo)+'</div>':'')+(canEditStock()?'<div class="actions"><button class="gray" onclick="editStock('+i+')">編集</button><button class="red" onclick="delStock('+i+')">削除</button></div>':'')+'</div>').join('')}
+function saveStock(){if(!canEditStock())return;let o={name:stName.value.trim(),qty:Number(stQty.value||0),unit:stUnit.value.trim(),min:Number(stMin.value||0),memo:stMemo.value.trim()};if(!o.name){alert('商品名を入力してください');return}let i=stName.dataset.i;if(i!==undefined)st[Number(i)]=o;else st.push(o);saveAll();clearStock();renderStock()}
+function editStock(i){if(!canEditStock())return;let s=st[i];stName.value=s.name;stQty.value=s.qty;stUnit.value=s.unit;stMin.value=s.min;stMemo.value=s.memo;stName.dataset.i=i}
+function delStock(i){if(!canEditStock())return;if(confirm('削除しますか？')){st.splice(i,1);saveAll();renderStock()}}
 function clearStock(){stName.value='';stQty.value='';stUnit.value='';stMin.value='';stMemo.value='';delete stName.dataset.i}
 function esc(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 function nl(s){return esc(s).replace(/\n/g,'<br>')}
