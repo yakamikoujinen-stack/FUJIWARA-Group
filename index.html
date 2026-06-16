@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v2.9</title>
+<title>FUJIWARA GROUP 販売管理 v3.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -572,6 +572,10 @@ table{min-width:360px;}
       <h2 class="modal-title">🔔 お知らせ</h2>
       <button class="modal-close-btn" onclick="closeModal('modal-notice')">✕</button>
     </div>
+    <div id="notice-editor" style="display:none;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div class="fg"><label>お知らせ内容（7日間表示）</label><textarea id="notice-text-input" placeholder="全員に表示したい内容を入力"></textarea></div>
+      <button class="btn btn-gold btn-full" onclick="saveNotice()">お知らせを追加</button>
+    </div>
     <div id="all-notices"></div>
   </div>
 </div>
@@ -994,6 +998,63 @@ function getStaffShortage(ev){
   return Math.max(required-getAssignedStaffCount(ev),0);
 }
 
+
+function getEventAvailability(ev){
+  if(!ev.availability) ev.availability={};
+  return ev.availability;
+}
+function getMyAvailability(ev){
+  var av=getEventAvailability(ev);
+  return av[userName] || '';
+}
+function setMyAvailability(ev, val){
+  var av=getEventAvailability(ev);
+  av[userName]=val;
+}
+function countAvailability(ev){
+  var av=getEventAvailability(ev);
+  var r={ok:0, maybe:0, no:0};
+  Object.keys(av).forEach(function(k){
+    if(av[k]==='ok') r.ok++;
+    else if(av[k]==='maybe') r.maybe++;
+    else if(av[k]==='no') r.no++;
+  });
+  return r;
+}
+function availabilityMark(v){
+  if(v==='ok') return '⭕';
+  if(v==='maybe') return '△';
+  if(v==='no') return '❌';
+  return '未';
+}
+function availabilityLabel(v){
+  if(v==='ok') return '出勤できます';
+  if(v==='maybe') return '未定';
+  if(v==='no') return '出勤できません';
+  return '未回答';
+}
+function renderAvailabilitySummary(ev){
+  var c=countAvailability(ev);
+  return '<span style="font-size:10px;color:var(--green);font-weight:900">⭕'+c.ok+'</span> '
+    +'<span style="font-size:10px;color:var(--gold2);font-weight:900">△'+c.maybe+'</span> '
+    +'<span style="font-size:10px;color:var(--red);font-weight:900">❌'+c.no+'</span>';
+}
+function saveAvailability(eventId, val){
+  var ev=null;
+  for(var i=0;i<state.events.length;i++){
+    if(String(state.events[i].id)===String(eventId)){ ev=state.events[i]; break; }
+  }
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  setMyAvailability(ev, val);
+  if(typeof addAudit==='function') addAudit('出勤可否登録', ev.name+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
+  renderCalendar();
+  renderEventList(selDate);
+  renderHome();
+  toast('✅ 出勤可否を保存しました');
+  fbSave();
+}
+
+
 function renderCalendar() {
   var mNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   document.getElementById('cal-month-label').textContent=calYear+'年 '+mNames[calMonth];
@@ -1085,7 +1146,7 @@ function renderCalendar() {
         }
       }
 
-      var titleText=statusPrefix+spanMark+prefix+ev.name;
+      var titleText=statusPrefix+spanMark+prefix+ev.name+(role==='leader'?' ⭕'+countAvailability(ev).ok:'');
       if(required && shortage>0){ titleText+=' あと'+shortage+'人'; }
 
       return '<div style="font-size:8px;line-height:1.2;margin-top:1px;padding:1px 2px;border-radius:3px;background:'+bg+';color:'+cl+';font-weight:900;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%" title="必要 '+required+'人 / 配置 '+assigned+'人">'+titleText+'</div>';
@@ -1146,11 +1207,13 @@ function renderEventList(dateFilter) {
       +'<div><div class="ev-name">'+(ev.secret?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
       +'<div class="ev-meta">👥 担当 '+staffStr+(ev.requiredStaff?'　🧑‍🍳 体制 '+ev.requiredStaff+'人':'')+'</div>'
+      +'<div class="ev-meta">出勤回答 '+renderAvailabilitySummary(ev)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailability(ev)):'')+'</div>'
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
       +'<span class="status-badge '+sClass+'">'+sLabel+'</span>'
       +'<span style="font-size:10px;color:var(--gold)">📋 詳細</span>'
       +'</div></div>'
+      +availabilityHtml
       +actionsHtml
       +'</div>';
   }).join('');
@@ -1224,6 +1287,10 @@ function openBSheet(id) {
     +'<tr style="background:rgba(255,255,255,.02)">'
     +'<td style="color:var(--text2);font-size:11px">担当者</td>'
     +'<td colspan="7">'+staffHtml+'</td>'
+    +'</tr>'
+    +'<tr style="background:rgba(255,255,255,.02)">'
+    +'<td style="color:var(--text2);font-size:11px">出勤回答</td>'
+    +'<td colspan="7">⭕ '+(Object.keys(ev.availability||{}).filter(function(n){return ev.availability[n]==='ok';}).join('、')||'なし')+'<br>△ '+(Object.keys(ev.availability||{}).filter(function(n){return ev.availability[n]==='maybe';}).join('、')||'なし')+'<br>❌ '+(Object.keys(ev.availability||{}).filter(function(n){return ev.availability[n]==='no';}).join('、')||'なし')+'</td>'
     +'</tr>'
     +'<tr style="background:rgba(255,255,255,.02)">'
     +'<td style="color:var(--text2);font-size:11px">メモ</td>'
@@ -1769,8 +1836,8 @@ function renderHome() {
       +shortageEvents.map(function(ev){ return '<div style="margin-top:4px"><b>'+ev.name+'</b>　あと'+getStaffShortage(ev)+'人</div>'; }).join('')
       +'</div>'
     : '';
-  document.getElementById('home-notices').innerHTML=shortageHtml+state.notices.map(function(n){
-    return '<div class="notice-card"><div class="notice-time">'+n.time+'</div>'+n.text+'</div>';
+  document.getElementById('home-notices').innerHTML=shortageHtml+getActiveNotices().map(function(n){
+    return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'</div>'+n.text+'</div>';
   }).join('');
 }
 
@@ -1868,11 +1935,62 @@ function saveChangePw() {
   toast('✅ パスワードを変更しました');
 }
 
+
+function addDaysISO(days){
+  var d=new Date();
+  d.setDate(d.getDate()+days);
+  return d.toISOString();
+}
+function isNoticeActive(n){
+  if(!n) return false;
+  if(!n.expiresAt) return true;
+  return new Date(n.expiresAt).getTime() >= Date.now();
+}
+function getActiveNotices(){
+  var arr=Array.isArray(state.notices)?state.notices:[];
+  return arr.filter(isNoticeActive);
+}
+function saveNotice(){
+  if(role!=='leader'){ toast('⛔ リーダーのみ編集できます'); return; }
+  var input=document.getElementById('notice-text-input');
+  var textVal=(input.value||'').trim();
+  if(!textVal){ toast('⚠️ お知らせ内容を入力してください'); return; }
+  state.notices.unshift({
+    id:String(Date.now()),
+    time:(typeof nowText==='function') ? nowText() : '今日',
+    text:textVal,
+    author:userName||'リーダー',
+    createdAt:new Date().toISOString(),
+    expiresAt:addDaysISO(7)
+  });
+  input.value='';
+  if(typeof addAudit==='function') addAudit('お知らせ追加', textVal);
+  openNoticeModal();
+  renderHome();
+  toast('✅ お知らせを追加しました');
+  fbSave();
+}
+function deleteNotice(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ削除できます'); return; }
+  if(!confirm('このお知らせを削除しますか？')) return;
+  state.notices=(state.notices||[]).filter(function(n){ return String(n.id)!==String(id); });
+  if(typeof addAudit==='function') addAudit('お知らせ削除', id);
+  openNoticeModal();
+  renderHome();
+  toast('🗑️ お知らせを削除しました');
+  fbSave();
+}
+
+
 // ════ NOTICE / PROFILE ════
 function openNoticeModal() {
-  document.getElementById('all-notices').innerHTML=state.notices.map(function(n){
-    return '<div class="notice-card"><div class="notice-time">'+n.time+'</div>'+n.text+'</div>';
-  }).join('');
+  var editor=document.getElementById('notice-editor');
+  if(editor) editor.style.display = role==='leader' ? '' : 'none';
+  var notices=getActiveNotices();
+  document.getElementById('all-notices').innerHTML=notices.length ? notices.map(function(n){
+    var del=role==='leader'?'<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="deleteNotice(\''+(n.id||'')+'\')">削除</button>':'';
+    return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'　'+(n.author?'投稿: '+n.author:'')+'</div>'+n.text+del+'</div>';
+  }).join('') : '<div class="empty-state"><div class="ei">📭</div><p>表示中のお知らせはありません</p></div>';
   openModal('modal-notice');
 }
 
@@ -1987,6 +2105,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       bsHelper:ev.bsHelper||'',
       staff:Array.isArray(ev.staff)?ev.staff:(ev.staff?Object.values(ev.staff):[]),
       items:Array.isArray(ev.items)?ev.items:(ev.items?Object.values(ev.items):[]),
+      availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret
     };
@@ -2021,7 +2140,11 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       var arr2=Array.isArray(data.invItems)?data.invItems:Object.values(data.invItems);
       state.invItems=arr2.filter(Boolean).map(function(i){ return Object.assign({},i,{id:String(i.id)}); });
     }
-    if(data.notices) state.notices=Array.isArray(data.notices)?data.notices:Object.values(data.notices);
+    if(data.notices){
+      state.notices=(Array.isArray(data.notices)?data.notices:Object.values(data.notices)).filter(Boolean).map(function(n){
+        return Object.assign({id:String(Date.now()+Math.random()), time:n.time||'今日', text:n.text||'', createdAt:n.createdAt||new Date().toISOString(), expiresAt:n.expiresAt||addDaysISO(7)}, n);
+      }).filter(isNoticeActive);
+    }
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
     if(document.getElementById('app').style.display!=='none'){
