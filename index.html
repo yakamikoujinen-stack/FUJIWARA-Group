@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.4</title>
+<title>FUJIWARA GROUP 販売管理 v3.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -592,7 +592,7 @@ table{min-width:360px;}
     </div>
     <div id="notice-editor" style="display:none;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px;padding:12px;margin-bottom:12px">
       <div class="fg"><label>お知らせ内容（7日間表示）</label><textarea id="notice-text-input" placeholder="全員に表示したい内容を入力"></textarea></div>
-      <button class="btn btn-gold btn-full" onclick="saveNotice()">お知らせを追加</button>
+      <button class="btn btn-gold btn-full" onclick="saveNotice()">お知らせを保存</button><button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="cancelNoticeEdit()">編集取消</button>
     </div>
     <div id="all-notices"></div>
   </div>
@@ -1117,6 +1117,23 @@ function saveAvailability(eventId, val){
   fbSave();
 }
 
+
+
+
+function openDateEventDirect(ds){
+  selDate=ds;
+  renderEventList(ds);
+  var evs=(state.events||[]).filter(function(ev){
+    if(ev.secret && !(role==='leader'||role==='staff')) return false;
+    var dates=(typeof dateListForEvent==='function') ? dateListForEvent(ev) : [ev.date];
+    return dates.indexOf(ds)>=0;
+  });
+  if(evs.length===1){
+    openBSheet(evs[0].id);
+  } else {
+    scrollToEventCards();
+  }
+}
 
 
 function scrollToEventCards(){
@@ -2048,19 +2065,35 @@ function saveNotice(){
   var input=document.getElementById('notice-text-input');
   var textVal=(input.value||'').trim();
   if(!textVal){ toast('⚠️ お知らせ内容を入力してください'); return; }
-  state.notices.unshift({
-    id:String(Date.now()),
-    time:(typeof nowText==='function') ? nowText() : '今日',
-    text:textVal,
-    author:userName||'リーダー',
-    createdAt:new Date().toISOString(),
-    expiresAt:addDaysISO(7)
-  });
+  var editId=input.dataset.editId||'';
+  if(editId){
+    for(var i=0;i<(state.notices||[]).length;i++){
+      if(String(state.notices[i].id)===String(editId)){
+        state.notices[i].text=textVal;
+        state.notices[i].time=(typeof nowText==='function') ? nowText() : '今日';
+        state.notices[i].author=userName||'リーダー';
+        state.notices[i].expiresAt=addDaysISO(7);
+        break;
+      }
+    }
+    input.dataset.editId='';
+    if(typeof addAudit==='function') addAudit('お知らせ編集', textVal);
+    toast('✅ お知らせを更新しました');
+  } else {
+    state.notices.unshift({
+      id:String(Date.now()),
+      time:(typeof nowText==='function') ? nowText() : '今日',
+      text:textVal,
+      author:userName||'リーダー',
+      createdAt:new Date().toISOString(),
+      expiresAt:addDaysISO(7)
+    });
+    if(typeof addAudit==='function') addAudit('お知らせ追加', textVal);
+    toast('✅ お知らせを追加しました');
+  }
   input.value='';
-  if(typeof addAudit==='function') addAudit('お知らせ追加', textVal);
   openNoticeModal();
   renderHome();
-  toast('✅ お知らせを追加しました');
   fbSave();
 }
 function deleteNotice(id){
@@ -2074,6 +2107,29 @@ function deleteNotice(id){
   fbSave();
 }
 
+function editNotice(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ編集できます'); return; }
+  var n=null;
+  for(var i=0;i<(state.notices||[]).length;i++){
+    if(String(state.notices[i].id)===String(id)){ n=state.notices[i]; break; }
+  }
+  if(!n){ toast('⚠️ お知らせが見つかりません'); return; }
+  var input=document.getElementById('notice-text-input');
+  if(input){
+    input.value=n.text||'';
+    input.dataset.editId=id;
+  }
+  toast('✏️ 内容を修正して保存してください');
+}
+function cancelNoticeEdit(){
+  var input=document.getElementById('notice-text-input');
+  if(input){
+    input.value='';
+    input.dataset.editId='';
+  }
+  toast('編集を取り消しました');
+}
+
 
 // ════ NOTICE / PROFILE ════
 function openNoticeModal() {
@@ -2081,7 +2137,7 @@ function openNoticeModal() {
   if(editor) editor.style.display = role==='leader' ? '' : 'none';
   var notices=(typeof getActiveNotices==='function') ? getActiveNotices() : (state.notices||[]);
   document.getElementById('all-notices').innerHTML=notices.length ? notices.map(function(n){
-    var del=role==='leader'?'<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="deleteNotice(\''+(n.id||'')+'\')">削除</button>':'';
+    var del=role==='leader'?'<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-outline btn-sm" onclick="editNotice(\''+(n.id||'')+'\')">編集</button><button class="btn btn-danger btn-sm" onclick="deleteNotice(\''+(n.id||'')+'\')">削除</button></div>':'';
     return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'　'+(n.author?'投稿: '+n.author:'')+'</div>'+n.text+del+'</div>';
   }).join('') : '<div class="empty-state"><div class="ei">📭</div><p>表示中のお知らせはありません</p></div>';
   openModal('modal-notice');
