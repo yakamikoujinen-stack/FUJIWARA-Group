@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.2</title>
+<title>FUJIWARA GROUP 販売管理 v3.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1062,7 +1062,7 @@ function eventsOnDateForAttendance(ds){
   var list=[];
   (state.events||[]).forEach(function(ev){
     if(ev.secret && !(role==='leader'||role==='staff')) return;
-    var dates=dateListForEvent ? dateListForEvent(ev) : [ev.date];
+    var dates=(typeof dateListForEvent==='function') ? dateListForEvent(ev) : [ev.date];
     if(dates.indexOf(ds)>=0) list.push(ev);
   });
   return list;
@@ -1111,7 +1111,7 @@ function saveAvailability(eventId, val){
   setMyAvailability(ev, val);
   if(typeof addAudit==='function') addAudit('出勤可否登録', ev.name+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
   renderCalendar();
-  renderEventList(selDate);
+  renderEventList();
   renderHome();
   toast('✅ 出勤可否を保存しました');
   fbSave();
@@ -1220,7 +1220,7 @@ function renderCalendar() {
     html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')" style="position:relative"><span class="cdate">'+d+'</span>'+evNames+countBadge+'</div>';
   }
   document.getElementById('cal-grid').innerHTML=html;
-  renderEventList(selDate);
+  renderEventList();
 }
 
 function selectDate(d){
@@ -1231,20 +1231,18 @@ function selectDate(d){
 function renderEventList(dateFilter) {
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
   var label=document.getElementById('ev-list-label');
+
   // シークレットイベントを閲覧権限に応じてフィルタリング
   var visibleEvents = state.events.filter(function(ev){
     if(!ev.secret){ return true; }
-    // リーダー・担当者はシークレットイベントをすべて表示
     if(role === 'leader' || role === 'staff'){ return true; }
-    // 一般ユーザーにはシークレットイベントを非表示
     return false;
   });
-  var evs = dateFilter
-    ? visibleEvents.filter(function(e){ return e.date===dateFilter; })
-    : visibleEvents.filter(function(e){ return e.date.startsWith(ym); });
-  label.textContent=dateFilter
-    ? dateFilter.slice(5).replace('-','/')+' のイベント（'+evs.length+'件）'
-    : '今月のイベント（'+evs.length+'件）';
+
+  // 通常は今月分を一覧表示。日付クリック時だけdateFilterが入った場合も、
+  // 一覧が空になりすぎないよう今月表示に戻す。
+  var evs = visibleEvents.filter(function(e){ return e.date && e.date.startsWith(ym); });
+  label.textContent='今月のイベント（'+evs.length+'件）';
 
   var canEdit=role==='leader'||role==='staff';
   var container=document.getElementById('event-list');
@@ -1257,6 +1255,7 @@ function renderEventList(dateFilter) {
     var borderColor=ev.zone==='B'?'var(--green)':'var(--gold)';
     var staffStr=Array.isArray(ev.staff)?ev.staff.join('・'):'未設定';
     var memoHtml=ev.memo?'<span class="ev-zone" style="background:rgba(119,119,160,.1);color:var(--text2);border-color:var(--border)">📝 '+ev.memo+'</span>':'';
+
     var actionsHtml='';
     if(canEdit){
       actionsHtml='<div class="ev-actions" onclick="event.stopPropagation()">'
@@ -1265,6 +1264,25 @@ function renderEventList(dateFilter) {
         +(role==='leader'?'<button class="btn btn-sm btn-outline" onclick="openSalesEdit(\''+ev.id+'\')">📊 売上入力</button>':'')
         +'</div>';
     }
+
+    var availabilityHtml='';
+    if(role!=='leader'){
+      availabilityHtml='<div class="ev-actions" onclick="event.stopPropagation()" style="margin-top:8px">'
+        +'<button class="btn btn-green btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'ok\')">⭕ 出勤可</button>'
+        +'<button class="btn btn-outline btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'maybe\')">△ 未定</button>'
+        +'<button class="btn btn-danger btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'no\')">❌ 不可</button>'
+        +'</div>';
+    } else {
+      var av=ev.availability||{};
+      var ok=[], maybe=[], no=[];
+      Object.keys(av).forEach(function(n){
+        if(av[n]==='ok') ok.push(n);
+        else if(av[n]==='maybe') maybe.push(n);
+        else if(av[n]==='no') no.push(n);
+      });
+      availabilityHtml='<div class="ev-meta" style="margin-top:8px">→ 出勤可: '+(ok.join('、')||'なし')+'<br>→ 未定: '+(maybe.join('、')||'なし')+'<br>→ 不可: '+(no.join('、')||'なし')+'</div>';
+    }
+
     return '<div class="ev-card" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(ev.secret?'🔒 ':'')+ev.name+'</div>'
