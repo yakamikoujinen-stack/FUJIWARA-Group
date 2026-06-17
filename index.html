@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.7</title>
+<title>FUJIWARA GROUP 販売管理 v3.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -201,6 +201,115 @@ table{min-width:360px;}
 
 /* QUICK ATTENDANCE */
 #quick-attendance-btn{display:none;position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:160;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;border:none;border-radius:24px;padding:9px 18px;font-size:12px;font-weight:900;box-shadow:0 4px 18px rgba(0,0,0,.45);}
+
+
+/* ===== v3.8 明るく読みやすい画面調整 ===== */
+:root{
+  --bg:#f7f1df;
+  --surface:#fffaf0;
+  --surface2:#fff3d6;
+  --surface3:#ffffff;
+  --gold:#b8860b;
+  --gold2:#d6a634;
+  --gold-dim:rgba(184,134,11,.16);
+  --red:#d64242;
+  --green:#168a58;
+  --text:#241900;
+  --text2:#6d5a2b;
+  --border:#dec98d;
+  --shadow:0 4px 20px rgba(80,55,0,.18);
+}
+body{
+  background:linear-gradient(180deg,#fff8e8,#f4ead0);
+  color:var(--text);
+}
+.top-bar,.bottom-nav{
+  background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+  border-color:rgba(184,134,11,.45);
+}
+.page-title{font-size:22px;color:#1d1400;}
+.page-sub,.ev-meta,.muted,label{color:var(--text2);}
+.cal-grid{gap:5px;}
+.cal-dlabel{
+  color:#4d3a00;
+  font-size:13px;
+  font-weight:900;
+}
+.cal-day{
+  min-height:76px;
+  padding:6px 4px;
+  background:#fffdfa;
+  border:1.5px solid #d8bf75;
+  box-shadow:0 2px 8px rgba(80,55,0,.08);
+}
+.cal-day:hover{background:#fff1c7;}
+.cal-day.today{
+  background:#ffe9a8;
+  border:2.5px solid var(--gold);
+}
+.cal-day.selected{
+  background:#ffde78;
+  border:3px solid #9c6b00;
+}
+.cal-day.other-month{
+  opacity:.35;
+  background:#f5ead0;
+}
+.cdate{
+  font-size:22px;
+  color:#1d1400;
+  text-shadow:none;
+}
+.ev-card,.settings-group,.stat-card,.chart-box,.sales-table-box,.notice-card,.home-hero,.modal{
+  background:#fffdfa;
+  border-color:#d8bf75;
+  box-shadow:0 3px 14px rgba(80,55,0,.10);
+}
+.ev-name{
+  font-size:16px;
+  color:#1d1400;
+}
+.btn-ghost{
+  background:#fffaf0;
+  color:#6d5a2b;
+}
+input,select,textarea{
+  background:#ffffff;
+  color:#1d1400;
+  border-color:#d8bf75;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#b8860b;
+  box-shadow:0 0 0 3px rgba(184,134,11,.12);
+}
+.login-card{
+  background:#fffaf0;
+  color:#1d1400;
+}
+#login-screen{
+  background:linear-gradient(135deg,#fff8e8,#ffe9a8,#fff8e8);
+}
+.toast{
+  background:#fff8e8;
+  color:#1d1400;
+  border-color:#d8bf75;
+}
+.nav-item{
+  color:#5f512e;
+  font-size:10px;
+}
+.nav-item .ni{
+  font-size:22px;
+}
+.nav-item.active{
+  color:#9c6b00;
+  font-weight:900;
+}
+#quick-attendance-btn{
+  bottom:calc(62px + env(safe-area-inset-bottom));
+  font-size:13px;
+  padding:11px 22px;
+}
 
 </style>
 </head>
@@ -418,14 +527,10 @@ table{min-width:360px;}
       <div id="ef-staff-checks" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
     </div>
     <!-- シークレットイベントチェック -->
-    <div class="fg"  style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointe;margin:0;">
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="ef-secret" style="width:auto;margin:0;">
         🔒 シークレットイベント
-      </label>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;white-space:nowrap;min-width:150px;">
-        <input type="checkbox" id="ef-share" style="width:aut;margtin:0;">
-        サブアプリへ共有
       </label>
     </div>
     <div class="fg"><label>メモ・備考</label><textarea id="ef-memo" placeholder="備考など"></textarea></div>
@@ -1499,9 +1604,7 @@ function saveEventForm() {
     staff:staff,
     items:[],
     // シークレットイベント設定
-    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false,
-    share: document.getElementById('ef-share')
-      ? document.getElementById('ef-share').checked : false
+    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
