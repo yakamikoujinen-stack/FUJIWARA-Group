@@ -1499,7 +1499,9 @@ function saveEventForm() {
     staff:staff,
     items:[],
     // シークレットイベント設定
-    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
+    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false,
+    share: document.getElementById('ef-share')
+      ? document.getElementById('ef-share').checked : false
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
