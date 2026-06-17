@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.6</title>
+<title>FUJIWARA GROUP 販売管理 v3.7</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1248,12 +1248,13 @@ function renderCalendar() {
     html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')" style="position:relative"><span class="cdate">'+d+'</span>'+evNames+countBadge+'</div>';
   }
   document.getElementById('cal-grid').innerHTML=html;
-  renderEventList();
+  if(selDate){ renderEventList(selDate); } else { renderEventList(); }
 }
 
 function selectDate(d){
   selDate=selDate===d?null:d;
   renderCalendar();
+  if(selDate){ scrollToEventCards(); }
 }
 
 function renderEventList(dateFilter) {
