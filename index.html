@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.8</title>
+<title>FUJIWARA GROUP 販売管理 v3.9</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -311,6 +311,61 @@ input:focus,select:focus,textarea:focus{
   padding:11px 22px;
 }
 
+
+/* ===== v3.9 カレンダー視認性・家紋調整 ===== */
+.cal-day div[style*="font-size:8px"]{
+  color:#111 !important;
+  background:#fff7cf !important;
+  border:1px solid rgba(120,80,0,.25) !important;
+  font-size:9.5px !important;
+  font-weight:900 !important;
+}
+.cal-day{
+  min-height:82px !important;
+  border-radius:10px !important;
+}
+.cdate{
+  color:#111 !important;
+  font-size:23px !important;
+  font-weight:900 !important;
+}
+.cal-day.today{
+  background:#fff0a8 !important;
+  border:3px solid #b8860b !important;
+}
+.cal-day.selected{
+  background:#ffdd73 !important;
+  border:3px solid #6f4b00 !important;
+}
+.ev-card{
+  background:#fffdf6 !important;
+  color:#111 !important;
+}
+.ev-name{
+  color:#111 !important;
+  font-size:17px !important;
+  font-weight:900 !important;
+}
+.ev-meta{
+  color:#4b3a10 !important;
+}
+.page-title,.sec-title{
+  color:#111 !important;
+}
+.top-bar .tb-brand,.login-brand{
+  color:#111 !important;
+}
+.login-logo img{
+  opacity:.88 !important;
+  filter:contrast(1.12) brightness(.96) !important;
+}
+[class*="logo"] img,[class*="kamon"],[class*="watermark"]{
+  opacity:.88;
+}
+body::before,#app::before,.page::before{
+  opacity:.12 !important;
+}
+
 </style>
 </head>
 <body>
@@ -532,10 +587,6 @@ input:focus,select:focus,textarea:focus{
         <input type="checkbox" id="ef-secret" style="width:auto;margin:0;">
         🔒 シークレットイベント
       </label>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;">
-　　　　<input type="checkbox" id="ef-share" style="width:auto;margin:0;">
-        ✅サブアプリへ共有
-       </label>
     </div>
     <div class="fg"><label>メモ・備考</label><textarea id="ef-memo" placeholder="備考など"></textarea></div>
     <div style="display:flex;gap:8px">
@@ -1322,17 +1373,17 @@ function renderCalendar() {
       var assigned=getAssignedStaffCount(ev);
 
       var bg=ev.zone==='B'?'rgba(46,204,138,.25)':'rgba(200,168,75,.25)';
-      var cl=ev.zone==='B'?'#2ecc8a':'#e8c86a';
+      var cl='#111';
       var statusPrefix='';
 
       // 人員不足は赤、充足は緑、未設定は通常色
       if(required && shortage>0){
         bg='rgba(224,85,85,.22)';
-        cl='var(--red)';
+        cl='#111';
         statusPrefix='⚠ ';
       } else if(required && shortage<=0){
         bg='rgba(46,204,138,.20)';
-        cl='var(--green)';
+        cl='#111';
         statusPrefix='✓ ';
       }
 
