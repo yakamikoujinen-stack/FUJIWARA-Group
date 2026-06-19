@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v3.9</title>
+<title>FUJIWARA GROUP 販売管理 v4.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -45,7 +45,7 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
   background:radial-gradient(ellipse at 30% 20%,rgba(200,168,75,.3) 0%,transparent 55%),linear-gradient(135deg,#1c1600,#3a2c00,#1c1600);padding:20px;}
 .login-card{width:100%;max-width:360px;background:rgba(28,22,0,.97);border:2px solid rgba(200,168,75,.5);border-radius:18px;padding:36px 28px;box-shadow:0 8px 40px rgba(200,168,75,.15),var(--shadow);}
 .login-logo{text-align:center;margin-bottom:28px;}
-・login-logo img{width:200px;}
+.login-logo img{width:200px;}
 .login-brand{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .login-sub{font-size:11px;color:var(--text2);letter-spacing:2px;margin-top:4px;}
 .login-line{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:10px auto;}
@@ -366,6 +366,72 @@ body::before,#app::before,.page::before{
   opacity:.12 !important;
 }
 
+
+/* ===== v4.1 持ち物チェック・バックアップ調整 ===== */
+.checklist-box{
+  background:#fffdf6 !important;
+  border:1.5px solid #d8bf75 !important;
+  border-radius:12px;
+  padding:12px;
+  margin-top:12px;
+  box-shadow:0 3px 12px rgba(80,55,0,.08);
+}
+.checklist-title{
+  font-size:14px;
+  font-weight:900;
+  color:#111;
+  margin-bottom:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.checklist-row{
+  display:grid;
+  grid-template-columns:44px 1fr;
+  gap:8px;
+  align-items:center;
+  padding:9px 0;
+  border-top:1px solid #ead8a8;
+}
+.checklist-row:first-of-type{border-top:none;}
+.check-btn{
+  width:38px;
+  height:34px;
+  border-radius:9px;
+  border:1.5px solid #d8bf75;
+  background:#fffaf0;
+  font-size:18px;
+  font-weight:900;
+}
+.check-btn.done{
+  background:#dff5e8;
+  border-color:#168a58;
+}
+.check-name{
+  font-size:13px;
+  font-weight:900;
+  color:#111;
+}
+.check-meta{
+  font-size:10px;
+  color:#5f4a16;
+  margin-top:2px;
+  line-height:1.5;
+}
+.backup-box{
+  background:#fffdf6 !important;
+  border:1.5px solid #d8bf75 !important;
+  border-radius:12px;
+  padding:12px;
+  margin:12px 0 16px;
+}
+
+/* ===== v4.1 持ち物チェック表 ===== */
+.belonging-owner{display:inline-block;font-size:10px;font-weight:900;color:#6f4b00;background:#fff3d6;border:1px solid #d8bf75;border-radius:999px;padding:2px 8px;margin-left:6px;}
+.belonging-missing{color:#d64242!important;font-weight:900;}
+.belonging-ok{color:#168a58!important;font-weight:900;}
+.belonging-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+
 </style>
 </head>
 <body>
@@ -522,7 +588,20 @@ body::before,#app::before,.page::before{
             </div>
           </div>
 
-          <div class="sec-title" style="margin:16px 0 10px">📝 足あと・操作履歴</div>
+          
+          <div class="sec-title" style="margin:16px 0 10px">💾 バックアップ</div>
+          <div class="backup-box">
+            <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
+              万が一に備えて、イベント・在庫・売上・スタッフ情報を保存できます。
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-gold btn-sm" style="flex:1" onclick="downloadBackup()">💾 保存</button>
+              <button class="btn btn-outline btn-sm" style="flex:1" onclick="openBackupRestore()">📂 復元</button>
+            </div>
+            <input type="file" id="backup-file-input" accept=".json,application/json" style="display:none" onchange="restoreBackupFile(event)">
+          </div>
+
+<div class="sec-title" style="margin:16px 0 10px">📝 足あと・操作履歴</div>
           <div class="settings-group" id="audit-log-area"></div>
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button class="btn btn-ghost btn-sm" style="flex:1" onclick="renderAuditLogs()">更新</button>
@@ -1579,9 +1658,229 @@ function openBSheet(id) {
     +'<td style="color:var(--text2);font-size:11px">メモ</td>'
     +'<td colspan="7">'+(ev.memo||'なし')+'　<span style="color:var(--gold)">'+collectTime+'</span></td>'
     +'</tr>'
-    +'</tbody></table></div>';
+    +'</tbody></table></div>'
+    +renderEventChecklist(ev);
   openModal('modal-bsheet');
 }
+
+
+function ensureEventChecklist(ev){
+  if(!ev.checklist || !Array.isArray(ev.checklist) || ev.checklist.length===0){
+    ev.checklist=[
+      {id:'gen_'+Date.now()+'_1', text:'発電機', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_2', text:'テント', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_3', text:'延長コード', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_4', text:'釣り銭', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_5', text:'のぼり', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_6', text:'ガス・火器', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_7', text:'商品・食材', owner:'', done:false, by:'', at:''},
+      {id:'gen_'+Date.now()+'_8', text:'クーラーボックス', owner:'', done:false, by:'', at:''}
+    ];
+  }
+  ev.checklist.forEach(function(x){
+    if(!x.id) x.id='item_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    if(typeof x.owner==='undefined') x.owner='';
+    if(typeof x.done==='undefined') x.done=false;
+    if(typeof x.by==='undefined') x.by='';
+    if(typeof x.at==='undefined') x.at='';
+  });
+  return ev.checklist;
+}
+function getStaffOptionsHtml(selected){
+  var names=Array.isArray(state.staffList)?state.staffList:[];
+  return names.map(function(n){return '<option value="'+n+'" '+(n===selected?'selected':'')+'>'+n+'</option>';}).join('');
+}
+function renderEventChecklist(ev){
+  if(role==='user'){ return ''; }
+  var list=ensureEventChecklist(ev);
+  var doneCount=list.filter(function(x){return !!x.done;}).length;
+  var missing=list.filter(function(x){return !x.done;});
+  var html='<div class="checklist-box">'
+    +'<div class="checklist-title"><span>✅ 持ち物チェック</span><span class="'+(missing.length?'belonging-missing':'belonging-ok')+'">'+doneCount+'/'+list.length+'</span></div>'
+    +'<div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px">担当者がチェックすると、誰が押したか・時間が残ります。一般ユーザーには表示されません。</div>';
+  if(missing.length){
+    html+='<div class="notice-card" style="border-color:rgba(214,66,66,.35);background:rgba(214,66,66,.06)!important"><b class="belonging-missing">⚠️ 未確認 '+missing.length+'件</b><br>'+missing.map(function(x){return '・'+x.text+(x.owner?'（'+x.owner+'）':'');}).join('<br>')+'</div>';
+  }else{
+    html+='<div class="notice-card" style="border-color:rgba(22,138,88,.35);background:rgba(22,138,88,.06)!important"><b class="belonging-ok">✅ 持ち物確認完了</b></div>';
+  }
+  html+=list.map(function(x){
+    var meta=x.done ? 'チェック：'+(x.by||'不明')+'｜'+(x.at||'') : '未チェック';
+    var owner=x.owner ? '<span class="belonging-owner">担当：'+x.owner+'</span>' : '<span class="belonging-owner">担当未設定</span>';
+    return '<div class="checklist-row">'
+      +'<button class="check-btn '+(x.done?'done':'')+'" onclick="toggleEventCheck(\''+ev.id+'\',\''+x.id+'\')">'+(x.done?'✅':'□')+'</button>'
+      +'<div><div class="check-name">'+x.text+owner+'</div><div class="check-meta">'+meta+'</div>'
+      +(role==='leader'?'<div class="belonging-tools"><button class="btn btn-ghost btn-sm" onclick="editEventCheckItem(\''+ev.id+'\',\''+x.id+'\')">✏️ 修正</button><button class="btn btn-danger btn-sm" onclick="deleteEventCheckItem(\''+ev.id+'\',\''+x.id+'\')">削除</button></div>':'')
+      +'</div></div>';
+  }).join('');
+  if(role==='leader'){
+    html+='<div class="divider"></div>'
+      +'<div class="fg"><label>持ち物項目</label><input id="new-check-item-'+ev.id+'" type="text" placeholder="例：発電機・釣り銭・のぼり"></div>'
+      +'<div class="fg"><label>担当者</label><select id="new-check-owner-'+ev.id+'"><option value="">担当未設定</option>'+getStaffOptionsHtml('')+'</select></div>'
+      +'<div class="belonging-tools"><button class="btn btn-outline btn-sm" onclick="addEventCheckItem(\''+ev.id+'\')">＋ 項目追加</button><button class="btn btn-ghost btn-sm" onclick="shareBelongingLineText(\''+ev.id+'\')">LINE文作成</button></div>';
+  }else{
+    html+='<div class="belonging-tools"><button class="btn btn-ghost btn-sm" onclick="shareBelongingLineText(\''+ev.id+'\')">LINE文作成</button></div>';
+  }
+  html+='</div>';
+  return html;
+}
+function toggleEventCheck(eventId, itemId){
+  if(!(role==='leader'||role==='staff')){ toast('⛔ 担当者・リーダーのみチェックできます'); return; }
+  var ev=(state.events||[]).find(function(e){return String(e.id)===String(eventId);});
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  var list=ensureEventChecklist(ev);
+  var item=list.find(function(x){return String(x.id)===String(itemId);});
+  if(!item){ return; }
+  item.done=!item.done;
+  if(item.done){
+    item.by=userName||roleLabel(role)||'担当者';
+    item.at=(typeof nowText==='function') ? nowText() : new Date().toLocaleString('ja-JP');
+  }else{
+    item.by='';
+    item.at='';
+  }
+  if(typeof addAudit==='function') addAudit('持ち物チェック', ev.name+'｜'+item.text+'｜'+(item.done?'✅ '+item.by:'解除'));
+  fbSave();
+  openBSheet(eventId);
+  toast(item.done?'✅ チェックしました':'チェックを解除しました');
+}
+function addEventCheckItem(eventId){
+  if(role!=='leader'){ toast('⛔ リーダーのみ追加できます'); return; }
+  var ev=(state.events||[]).find(function(e){return String(e.id)===String(eventId);});
+  if(!ev){ return; }
+  var input=document.getElementById('new-check-item-'+eventId);
+  var owner=document.getElementById('new-check-owner-'+eventId);
+  var val=(input&&input.value?input.value:'').trim();
+  var own=(owner&&owner.value?owner.value:'').trim();
+  if(!val){ toast('⚠️ 項目名を入力してください'); return; }
+  ensureEventChecklist(ev).push({id:'custom_'+Date.now(), text:val, owner:own, done:false, by:'', at:''});
+  if(typeof addAudit==='function') addAudit('持ち物項目追加', ev.name+'｜'+val+(own?'｜担当 '+own:''));
+  fbSave();
+  openBSheet(eventId);
+  toast('✅ 持ち物項目を追加しました');
+}
+function editEventCheckItem(eventId, itemId){
+  if(role!=='leader'){ toast('⛔ リーダーのみ修正できます'); return; }
+  var ev=(state.events||[]).find(function(e){return String(e.id)===String(eventId);});
+  if(!ev){ return; }
+  var item=ensureEventChecklist(ev).find(function(x){return String(x.id)===String(itemId);});
+  if(!item){ return; }
+  var text=prompt('持ち物名を修正', item.text);
+  if(text===null) return;
+  text=text.trim();
+  if(!text){ toast('⚠️ 持ち物名を入力してください'); return; }
+  var owner=prompt('担当者名を入力（空白で未設定）', item.owner||'');
+  if(owner===null) return;
+  item.text=text;
+  item.owner=(owner||'').trim();
+  if(typeof addAudit==='function') addAudit('持ち物項目修正', ev.name+'｜'+text);
+  fbSave();
+  openBSheet(eventId);
+  toast('✅ 修正しました');
+}
+function deleteEventCheckItem(eventId, itemId){
+  if(role!=='leader'){ toast('⛔ リーダーのみ削除できます'); return; }
+  var ev=(state.events||[]).find(function(e){return String(e.id)===String(eventId);});
+  if(!ev){ return; }
+  var list=ensureEventChecklist(ev);
+  var item=list.find(function(x){return String(x.id)===String(itemId);});
+  if(!item){ return; }
+  if(!confirm('「'+item.text+'」を削除しますか？')) return;
+  ev.checklist=list.filter(function(x){return String(x.id)!==String(itemId);});
+  if(typeof addAudit==='function') addAudit('持ち物項目削除', ev.name+'｜'+item.text);
+  fbSave();
+  openBSheet(eventId);
+  toast('削除しました');
+}
+function buildBelongingLineText(ev){
+  var list=ensureEventChecklist(ev);
+  var missing=list.filter(function(x){return !x.done;});
+  var done=list.filter(function(x){return !!x.done;});
+  var lines=[];
+  lines.push('【持ち物チェック】');
+  lines.push(ev.date+(ev.dateEnd?'〜'+ev.dateEnd:'')+' '+ev.name);
+  lines.push('');
+  lines.push('未確認 '+missing.length+'件');
+  if(missing.length){ missing.forEach(function(x){ lines.push('・'+x.text+(x.owner?'（担当：'+x.owner+'）':'')); }); }
+  else { lines.push('✅ 全て確認済み'); }
+  lines.push('');
+  lines.push('確認済 '+done.length+'件');
+  done.forEach(function(x){ lines.push('✅ '+x.text+'｜'+(x.by||'不明')); });
+  return lines.join('\n');
+}
+function shareBelongingLineText(eventId){
+  if(role==='user'){ toast('⛔ 一般ユーザーは利用できません'); return; }
+  var ev=(state.events||[]).find(function(e){return String(e.id)===String(eventId);});
+  if(!ev){ return; }
+  var text=buildBelongingLineText(ev);
+  if(navigator.share){
+    navigator.share({text:text}).catch(function(){ copyTextFallback(text); });
+  }else{
+    copyTextFallback(text);
+  }
+}
+function copyTextFallback(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('📋 LINE用の文をコピーしました'); });
+  }else{
+    prompt('LINEに貼り付けて送ってください', text);
+  }
+}
+
+function makeBackupData(){
+  return {
+    app:'FUJIWARA GROUP 販売管理',
+    version:'v4.1',
+    exportedAt:new Date().toISOString(),
+    state:state,
+    passwords:PW
+  };
+}
+function downloadBackup(){
+  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  var data=JSON.stringify(makeBackupData(), null, 2);
+  var blob=new Blob([data], {type:'application/json'});
+  var a=document.createElement('a');
+  var d=new Date();
+  var name='fujiwara-backup-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.json';
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  if(typeof addAudit==='function') addAudit('バックアップ作成', name);
+  toast('💾 バックアップを作成しました');
+}
+function openBackupRestore(){
+  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  var input=document.getElementById('backup-file-input');
+  if(input) input.click();
+}
+function restoreBackupFile(e){
+  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  var file=e.target.files&&e.target.files[0];
+  if(!file){ return; }
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var data=JSON.parse(reader.result);
+      var nextState=data.state||data;
+      if(!nextState || !Array.isArray(nextState.events)){ throw new Error('invalid'); }
+      if(!confirm('バックアップから復元しますか？現在のデータは上書きされます。')) return;
+      state=nextState;
+      if(data.passwords){ PW=data.passwords; }
+      fbSave();
+      renderCalendar(); renderInventory(); renderSalesPage(); renderHome(); renderSettings();
+      if(typeof addAudit==='function') addAudit('バックアップ復元', file.name);
+      toast('✅ バックアップを復元しました');
+    }catch(err){
+      toast('⚠️ 復元できないファイルです');
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+
 
 function saveBSheet() {
   var id=document.getElementById('bs-ev-id').value;
