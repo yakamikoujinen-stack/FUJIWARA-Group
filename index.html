@@ -2717,6 +2717,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       bsHelper:ev.bsHelper||'',
       staff:Array.isArray(ev.staff)?ev.staff:(ev.staff?Object.values(ev.staff):[]),
       items:Array.isArray(ev.items)?ev.items:(ev.items?Object.values(ev.items):[]),
+      checklist:Array.isArray(ev.checklist)?ev.checklist:(ev.checklist?Object.values(ev.checklist):null),
       availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret
