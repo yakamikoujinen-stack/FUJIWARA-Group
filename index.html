@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.2</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -96,17 +96,6 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .cal-day.other-month{opacity:.25;background:transparent;border-color:#1a1a2a;}
 .cdate{font-size:16px;font-weight:900;color:#fff;line-height:1;margin-bottom:2px;text-shadow:0 0 8px rgba(255,255,255,.3);}
 .conflict-strip{background:rgba(217,64,64,.1);border:1px solid rgba(217,64,64,.3);border-radius:9px;padding:9px 13px;margin-bottom:13px;display:flex;align-items:center;gap:9px;font-size:12px;}
-
-
-/* ===== v4.3.2 カレンダー土日祝カラー ===== */
-.cal-dlabel.sun-label{color:#e00000 !important;}
-.cal-dlabel.sat-label{color:#0057d9 !important;}
-.cal-day.sun-day .cdate,
-.cal-day.holiday-day .cdate{color:#e00000 !important;}
-.cal-day.sat-day .cdate{color:#0057d9 !important;}
-.cal-day.holiday-day{background:#fff8f0 !important;}
-.holiday-name{font-size:9px;color:#e00000;font-weight:900;line-height:1.1;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-.checklist-empty-note{font-size:12px;color:#6d5a2b;background:#fff8e8;border:1px dashed #d8bf75;border-radius:10px;padding:10px;margin-top:8px;line-height:1.6;}
 
 /* EVENT CARD */
 .ev-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:9px;border-left:3px solid var(--gold);cursor:pointer;transition:transform .12s;-webkit-tap-highlight-color:rgba(200,168,75,.2);}
@@ -582,6 +571,15 @@ body::before,#app::before,.page::before{
           <div class="sec-title" style="margin-bottom:10px">👥 スタッフ管理</div>
           <div class="settings-group" id="staff-list-area"></div>
           <button class="btn btn-outline btn-sm btn-full" style="margin-bottom:16px" onclick="openStaffForm(null)">＋ スタッフを追加</button>
+
+          <!-- リーダー専用：イベント参加スタッフ一覧 -->
+          <div class="sec-title" style="margin:16px 0 10px">👥 イベント参加スタッフ一覧</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">
+            イベントごとの参加予定スタッフ・出勤回答・未回答をリーダーだけ確認できます。
+          </div>
+          <div class="settings-group" id="leader-event-staff-area"></div>
+          <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:16px" onclick="renderLeaderEventStaffList()">一覧を更新</button>
+
           <div class="settings-group">
             <div class="settings-row">
               <div class="sr-left"><span style="font-size:17px">📅</span>イベント数</div>
@@ -1418,35 +1416,6 @@ function scrollToEventCards(){
 }
 
 
-
-// ===== v4.3.2 日本の祝日（固定＋ハッピーマンデー＋春分/秋分目安） =====
-function nthMonday(year, monthIndex, nth){
-  var d=new Date(year, monthIndex, 1);
-  var add=(8-d.getDay())%7;
-  d.setDate(1+add+(nth-1)*7);
-  return d.getDate();
-}
-function vernalEquinoxDay(year){ return Math.floor(20.8431 + 0.242194*(year-1980) - Math.floor((year-1980)/4)); }
-function autumnEquinoxDay(year){ return Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4)); }
-function getHolidayName(ds){
-  var parts=String(ds||'').split('-');
-  if(parts.length<3) return '';
-  var y=parseInt(parts[0],10), m=parseInt(parts[1],10), d=parseInt(parts[2],10);
-  if(!y||!m||!d) return '';
-  var md=String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-  var fixed={
-    '01-01':'元日','02-11':'建国記念の日','02-23':'天皇誕生日','04-29':'昭和の日','05-03':'憲法記念日','05-04':'みどりの日','05-05':'こどもの日','08-11':'山の日','11-03':'文化の日','11-23':'勤労感謝の日'
-  };
-  if(fixed[md]) return fixed[md];
-  if(m===1 && d===nthMonday(y,0,2)) return '成人の日';
-  if(m===7 && d===nthMonday(y,6,3)) return '海の日';
-  if(m===9 && d===nthMonday(y,8,3)) return '敬老の日';
-  if(m===10 && d===nthMonday(y,9,2)) return 'スポーツの日';
-  if(m===3 && d===vernalEquinoxDay(y)) return '春分の日';
-  if(m===9 && d===autumnEquinoxDay(y)) return '秋分の日';
-  return '';
-}
-
 function renderCalendar() {
   var mNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   document.getElementById('cal-month-label').textContent=calYear+'年 '+mNames[calMonth];
@@ -1494,7 +1463,7 @@ function renderCalendar() {
   } else strip.style.display='none';
 
   var days=['日','月','火','水','木','金','土'];
-  var html=days.map(function(d,idx){ var dc=(idx===0?' sun-label':(idx===6?' sat-label':'')); return '<div class="cal-dlabel'+dc+'">'+d+'</div>'; }).join('');
+  var html=days.map(function(d){ return '<div class="cal-dlabel">'+d+'</div>'; }).join('');
 
   for(var i=0;i<first;i++){
     html+='<div class="cal-day other-month"><span class="cdate">'+new Date(calYear,calMonth,1-first+i).getDate()+'</span></div>';
@@ -1504,10 +1473,6 @@ function renderCalendar() {
     var isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
     var isSel=selDate===ds;
     var evs=byDate[ds]||[];
-    var dow=new Date(calYear,calMonth,d).getDay();
-    var holidayName=getHolidayName(ds);
-    var dayClass=(dow===0?' sun-day':(dow===6?' sat-day':''))+(holidayName?' holiday-day':'');
-    var holidayHtml=holidayName?'<div class="holiday-name">'+holidayName+'</div>':'';
     var evNames=evs.slice(0,2).map(function(ev){
       var shortage=getStaffShortage(ev);
       var required=parseInt(ev.requiredStaff)||0;
@@ -1549,8 +1514,8 @@ function renderCalendar() {
     }).join('');
     // 件数バッジ（2件以上の場合）
     var countBadge=evs.length>1?'<span style="position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:900;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1">'+evs.length+'</span>':'';
-    var cls=(isToday?' today':'')+(isSel?' selected':'')+dayClass;
-    html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')" style="position:relative"><span class="cdate">'+d+'</span>'+holidayHtml+evNames+countBadge+'</div>';
+    var cls=(isToday?' today':'')+(isSel?' selected':'');
+    html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')" style="position:relative"><span class="cdate">'+d+'</span>'+evNames+countBadge+'</div>';
   }
   document.getElementById('cal-grid').innerHTML=html;
   if(selDate){ renderEventList(selDate); } else { renderEventList(); }
@@ -1728,11 +1693,15 @@ function openBSheet(id) {
 
 function ensureEventChecklist(ev){
   if(!ev.checklist || !Array.isArray(ev.checklist)){
-    ev.checklist=[];
+    ev.checklist=[
+      {id:'tent', text:'テント', done:false, by:'', at:''},
+      {id:'generator', text:'発電機', done:false, by:'', at:''},
+      {id:'extension', text:'延長コード', done:false, by:'', at:''},
+      {id:'change_money', text:'釣り銭', done:false, by:'', at:''},
+      {id:'nobori', text:'のぼり', done:false, by:'', at:''},
+      {id:'cash_register', text:'レジ・決済端末', done:false, by:'', at:''}
+    ];
   }
-  // v4.3.2：最初から入っていた共通項目は削除。現場ごとに必要項目を自分で追加する運用に変更。
-  var defaultIds={tent:true,generator:true,extension:true,change_money:true,nobori:true,cash_register:true};
-  ev.checklist=ev.checklist.filter(function(x){ return !defaultIds[String(x.id||'')]; });
   return ev.checklist;
 }
 function renderEventChecklist(ev){
@@ -1743,9 +1712,6 @@ function renderEventChecklist(ev){
   var html='<div class="checklist-box">'
     +'<div class="checklist-title"><span>📝 忘れ物リスト</span><span>'+doneCount+'/'+list.length+'</span></div>'
     +'<div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px">担当者・リーダーがチェックできます。誰がチェックしたか名前と時間が残ります。</div>';
-  if(!list.length){
-    html+='<div class="checklist-empty-note">まだ項目はありません。リーダーがこの現場に必要な持ち物・確認項目を追加してください。</div>';
-  }
   html+=list.map(function(x){
     var meta=x.done ? '確認：'+(x.by||'不明')+'｜'+(x.at||'') : '未確認';
     var click=editable ? 'onclick="toggleEventCheck(\''+ev.id+'\',\''+x.id+'\')"' : '';
@@ -2463,7 +2429,61 @@ function renderSettings() {
   document.getElementById('st-ev-count').textContent=state.events.length+'件';
   document.getElementById('st-item-count').textContent=state.invItems.length+'品目';
   renderStaffList();
+  renderLeaderEventStaffList();
   renderAuditLogs();
+}
+
+
+function escHtml(s){
+  return String(s||'').replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function renderLeaderEventStaffList(){
+  if(role!=='leader') return;
+  var el=document.getElementById('leader-event-staff-area');
+  if(!el) return;
+  var events=(state.events||[]).slice().sort(function(a,b){
+    return String(a.date||'').localeCompare(String(b.date||''));
+  });
+  if(!events.length){
+    el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">イベント未登録</div>';
+    return;
+  }
+  el.innerHTML=events.map(function(ev){
+    var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
+    if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
+    if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
+    var av=ev.availability||{};
+    var ok=[], maybe=[], no=[], unanswered=[];
+    staff.forEach(function(name){
+      if(av[name]==='ok') ok.push(name);
+      else if(av[name]==='maybe') maybe.push(name);
+      else if(av[name]==='no') no.push(name);
+      else unanswered.push(name);
+    });
+    var required=parseInt(ev.requiredStaff)||0;
+    var shortage=required ? Math.max(required-staff.length,0) : 0;
+    var dateText=String(ev.date||'').slice(5).replace('-','/');
+    var endText=ev.dateEnd ? '〜'+String(ev.dateEnd).slice(5).replace('-','/') : '';
+    var staffText=staff.length ? staff.map(escHtml).join('・') : '<span style="color:var(--red);font-weight:900">未設定</span>';
+    var unansweredText=unanswered.length ? unanswered.map(escHtml).join('・') : 'なし';
+    return '<div style="padding:12px 14px;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
+        +'<div>'
+          +'<div style="font-size:14px;font-weight:900;color:#111">'+escHtml(dateText+endText)+'　'+escHtml(ev.name||'名称未設定')+'</div>'
+          +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📍 '+escHtml(ev.place||'場所未設定')+'　発注先：'+escHtml(ev.zone||'未設定')+'</div>'
+        +'</div>'
+        +(shortage>0?'<span class="status-badge" style="background:rgba(214,66,66,.12);color:var(--red);border:1px solid rgba(214,66,66,.25)">人員不足 '+shortage+'人</span>':'<span class="status-badge" style="background:rgba(22,138,88,.12);color:var(--green);border:1px solid rgba(22,138,88,.25)">人員OK</span>')
+      +'</div>'
+      +'<div style="margin-top:8px;font-size:12px;line-height:1.8">'
+        +'<div><b>参加スタッフ：</b>'+staffText+'</div>'
+        +'<div><b>出勤回答：</b><span style="color:var(--green);font-weight:900">⭕ '+ok.length+'</span>　<span style="color:var(--gold);font-weight:900">△ '+maybe.length+'</span>　<span style="color:var(--red);font-weight:900">❌ '+no.length+'</span>　未回答 '+unanswered.length+'</div>'
+        +'<div style="font-size:11px;color:'+(unanswered.length?'var(--red)':'var(--text2)')+'"><b>未回答：</b>'+unansweredText+'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
 }
 
 function renderStaffList() {
