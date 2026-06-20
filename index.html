@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.1</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -96,6 +96,17 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .cal-day.other-month{opacity:.25;background:transparent;border-color:#1a1a2a;}
 .cdate{font-size:16px;font-weight:900;color:#fff;line-height:1;margin-bottom:2px;text-shadow:0 0 8px rgba(255,255,255,.3);}
 .conflict-strip{background:rgba(217,64,64,.1);border:1px solid rgba(217,64,64,.3);border-radius:9px;padding:9px 13px;margin-bottom:13px;display:flex;align-items:center;gap:9px;font-size:12px;}
+
+
+/* ===== v4.3.2 カレンダー土日祝カラー ===== */
+.cal-dlabel.sun-label{color:#e00000 !important;}
+.cal-dlabel.sat-label{color:#0057d9 !important;}
+.cal-day.sun-day .cdate,
+.cal-day.holiday-day .cdate{color:#e00000 !important;}
+.cal-day.sat-day .cdate{color:#0057d9 !important;}
+.cal-day.holiday-day{background:#fff8f0 !important;}
+.holiday-name{font-size:9px;color:#e00000;font-weight:900;line-height:1.1;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.checklist-empty-note{font-size:12px;color:#6d5a2b;background:#fff8e8;border:1px dashed #d8bf75;border-radius:10px;padding:10px;margin-top:8px;line-height:1.6;}
 
 /* EVENT CARD */
 .ev-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:9px;border-left:3px solid var(--gold);cursor:pointer;transition:transform .12s;-webkit-tap-highlight-color:rgba(200,168,75,.2);}
@@ -426,24 +437,6 @@ body::before,#app::before,.page::before{
   margin:12px 0 16px;
 }
 
-
-/* ===== v4.3.1 カレンダー土日祝カラー・忘れ物リスト微調整 ===== */
-.cal-dlabel.sun{color:#e60012 !important;}
-.cal-dlabel.sat{color:#0066cc !important;}
-.cal-day.sun .cdate,
-.cal-day.holiday .cdate{color:#e60012 !important;}
-.cal-day.sat .cdate{color:#0066cc !important;}
-.cal-day.holiday{border-color:#f0a0a0 !important;background:#fff7f0 !important;}
-.cal-day.sat{border-color:#9fc4ee !important;}
-.cal-day.other-month .cdate{opacity:.45;}
-.cal-day.other-month.sun .cdate,
-.cal-day.other-month.holiday .cdate{color:#e60012 !important;opacity:.45;}
-.cal-day.other-month.sat .cdate{color:#0066cc !important;opacity:.45;}
-.holiday-name{font-size:8px;line-height:1;margin-top:1px;color:#e60012;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-.check-meta.done-meta{color:#168a58;font-weight:800;}
-.check-meta.pending-meta{color:#d64242;font-weight:800;}
-.belongings-note{background:#fff8e8;border:1px solid #ead8a8;border-radius:10px;padding:9px 10px;}
-
 </style>
 </head>
 <body>
@@ -633,7 +626,7 @@ body::before,#app::before,.page::before{
         <p class="page-sub">イベント別の持ち物確認・忘れ物チェック</p>
         <div id="belongings-lock"></div>
         <div id="belongings-content">
-          <div class="belongings-note" style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px">
             リーダーは項目追加・削除、担当者はチェック可能。一般ユーザーには表示されません。
           </div>
           <div id="belongings-list"></div>
@@ -1426,69 +1419,32 @@ function scrollToEventCards(){
 
 
 
-// v4.3.1 日本の祝日判定（土日祝カラー用）
-var JP_HOLIDAY_CACHE={};
-function pad2(n){ return String(n).padStart(2,'0'); }
-function dateKeyYMD(y,m,d){ return y+'-'+pad2(m)+'-'+pad2(d); }
-function nthMonday(year, month, nth){
-  var d=new Date(year, month-1, 1);
+// ===== v4.3.2 日本の祝日（固定＋ハッピーマンデー＋春分/秋分目安） =====
+function nthMonday(year, monthIndex, nth){
+  var d=new Date(year, monthIndex, 1);
   var add=(8-d.getDay())%7;
-  return 1+add+(nth-1)*7;
+  d.setDate(1+add+(nth-1)*7);
+  return d.getDate();
 }
-function vernalEquinoxDay(year){
-  if(year<=2099) return Math.floor(20.8431 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
-  return 20;
-}
-function autumnEquinoxDay(year){
-  if(year<=2099) return Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
-  return 23;
-}
-function addHoliday(map,y,m,d,name){ map[dateKeyYMD(y,m,d)]=name; }
-function buildJapaneseHolidays(year){
-  var map={};
-  addHoliday(map,year,1,1,'元日');
-  addHoliday(map,year,1,nthMonday(year,1,2),'成人の日');
-  addHoliday(map,year,2,11,'建国記念の日');
-  addHoliday(map,year,2,23,'天皇誕生日');
-  addHoliday(map,year,3,vernalEquinoxDay(year),'春分の日');
-  addHoliday(map,year,4,29,'昭和の日');
-  addHoliday(map,year,5,3,'憲法記念日');
-  addHoliday(map,year,5,4,'みどりの日');
-  addHoliday(map,year,5,5,'こどもの日');
-  addHoliday(map,year,7,nthMonday(year,7,3),'海の日');
-  addHoliday(map,year,8,11,'山の日');
-  addHoliday(map,year,9,nthMonday(year,9,3),'敬老の日');
-  addHoliday(map,year,9,autumnEquinoxDay(year),'秋分の日');
-  addHoliday(map,year,10,nthMonday(year,10,2),'スポーツの日');
-  addHoliday(map,year,11,3,'文化の日');
-  addHoliday(map,year,11,23,'勤労感謝の日');
-
-  // 振替休日：祝日が日曜の場合、次の平日へ
-  Object.keys(Object.assign({},map)).sort().forEach(function(k){
-    var dt=new Date(k+'T00:00:00');
-    if(dt.getDay()===0){
-      var sub=new Date(dt); sub.setDate(sub.getDate()+1);
-      while(map[dateKeyYMD(sub.getFullYear(),sub.getMonth()+1,sub.getDate())]) sub.setDate(sub.getDate()+1);
-      map[dateKeyYMD(sub.getFullYear(),sub.getMonth()+1,sub.getDate())]='振替休日';
-    }
-  });
-  // 国民の休日：祝日に挟まれた平日
-  var start=new Date(year,0,1), end=new Date(year,11,31);
-  for(var cur=new Date(start); cur<=end; cur.setDate(cur.getDate()+1)){
-    var key=dateKeyYMD(cur.getFullYear(),cur.getMonth()+1,cur.getDate());
-    if(map[key] || cur.getDay()===0) continue;
-    var prev=new Date(cur); prev.setDate(prev.getDate()-1);
-    var next=new Date(cur); next.setDate(next.getDate()+1);
-    var pk=dateKeyYMD(prev.getFullYear(),prev.getMonth()+1,prev.getDate());
-    var nk=dateKeyYMD(next.getFullYear(),next.getMonth()+1,next.getDate());
-    if(map[pk] && map[nk]) map[key]='国民の休日';
-  }
-  return map;
-}
-function getJapaneseHolidayName(ds){
-  var y=parseInt(ds.slice(0,4),10);
-  if(!JP_HOLIDAY_CACHE[y]) JP_HOLIDAY_CACHE[y]=buildJapaneseHolidays(y);
-  return JP_HOLIDAY_CACHE[y][ds] || '';
+function vernalEquinoxDay(year){ return Math.floor(20.8431 + 0.242194*(year-1980) - Math.floor((year-1980)/4)); }
+function autumnEquinoxDay(year){ return Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4)); }
+function getHolidayName(ds){
+  var parts=String(ds||'').split('-');
+  if(parts.length<3) return '';
+  var y=parseInt(parts[0],10), m=parseInt(parts[1],10), d=parseInt(parts[2],10);
+  if(!y||!m||!d) return '';
+  var md=String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  var fixed={
+    '01-01':'元日','02-11':'建国記念の日','02-23':'天皇誕生日','04-29':'昭和の日','05-03':'憲法記念日','05-04':'みどりの日','05-05':'こどもの日','08-11':'山の日','11-03':'文化の日','11-23':'勤労感謝の日'
+  };
+  if(fixed[md]) return fixed[md];
+  if(m===1 && d===nthMonday(y,0,2)) return '成人の日';
+  if(m===7 && d===nthMonday(y,6,3)) return '海の日';
+  if(m===9 && d===nthMonday(y,8,3)) return '敬老の日';
+  if(m===10 && d===nthMonday(y,9,2)) return 'スポーツの日';
+  if(m===3 && d===vernalEquinoxDay(y)) return '春分の日';
+  if(m===9 && d===autumnEquinoxDay(y)) return '秋分の日';
+  return '';
 }
 
 function renderCalendar() {
@@ -1538,26 +1494,20 @@ function renderCalendar() {
   } else strip.style.display='none';
 
   var days=['日','月','火','水','木','金','土'];
-  var html=days.map(function(d,idx){
-    var wc=idx===0?' sun':(idx===6?' sat':'');
-    return '<div class="cal-dlabel'+wc+'">'+d+'</div>';
-  }).join('');
+  var html=days.map(function(d,idx){ var dc=(idx===0?' sun-label':(idx===6?' sat-label':'')); return '<div class="cal-dlabel'+dc+'">'+d+'</div>'; }).join('');
 
   for(var i=0;i<first;i++){
-    var od=new Date(calYear,calMonth,1-first+i);
-    var ods=od.getFullYear()+'-'+String(od.getMonth()+1).padStart(2,'0')+'-'+String(od.getDate()).padStart(2,'0');
-    var ow=od.getDay();
-    var oh=getJapaneseHolidayName(ods);
-    var oc=(ow===0?' sun':'')+(ow===6?' sat':'')+(oh?' holiday':'');
-    html+='<div class="cal-day other-month'+oc+'"><span class="cdate">'+od.getDate()+'</span></div>';
+    html+='<div class="cal-day other-month"><span class="cdate">'+new Date(calYear,calMonth,1-first+i).getDate()+'</span></div>';
   }
   for(var d=1;d<=dim;d++){
     var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
     var isSel=selDate===ds;
-    var dow=new Date(calYear,calMonth,d).getDay();
-    var holidayName=getJapaneseHolidayName(ds);
     var evs=byDate[ds]||[];
+    var dow=new Date(calYear,calMonth,d).getDay();
+    var holidayName=getHolidayName(ds);
+    var dayClass=(dow===0?' sun-day':(dow===6?' sat-day':''))+(holidayName?' holiday-day':'');
+    var holidayHtml=holidayName?'<div class="holiday-name">'+holidayName+'</div>':'';
     var evNames=evs.slice(0,2).map(function(ev){
       var shortage=getStaffShortage(ev);
       var required=parseInt(ev.requiredStaff)||0;
@@ -1599,8 +1549,7 @@ function renderCalendar() {
     }).join('');
     // 件数バッジ（2件以上の場合）
     var countBadge=evs.length>1?'<span style="position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:900;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1">'+evs.length+'</span>':'';
-    var cls=(isToday?' today':'')+(isSel?' selected':'')+(dow===0?' sun':'')+(dow===6?' sat':'')+(holidayName?' holiday':'');
-    var holidayHtml=holidayName?'<div class="holiday-name">'+holidayName+'</div>':'';
+    var cls=(isToday?' today':'')+(isSel?' selected':'')+dayClass;
     html+='<div class="cal-day'+cls+'" onclick="selectDate(\''+ds+'\')" style="position:relative"><span class="cdate">'+d+'</span>'+holidayHtml+evNames+countBadge+'</div>';
   }
   document.getElementById('cal-grid').innerHTML=html;
@@ -1779,15 +1728,11 @@ function openBSheet(id) {
 
 function ensureEventChecklist(ev){
   if(!ev.checklist || !Array.isArray(ev.checklist)){
-    ev.checklist=[
-      {id:'tent', text:'テント', done:false, by:'', at:''},
-      {id:'generator', text:'発電機', done:false, by:'', at:''},
-      {id:'extension', text:'延長コード', done:false, by:'', at:''},
-      {id:'change_money', text:'釣り銭', done:false, by:'', at:''},
-      {id:'nobori', text:'のぼり', done:false, by:'', at:''},
-      {id:'cash_register', text:'レジ・決済端末', done:false, by:'', at:''}
-    ];
+    ev.checklist=[];
   }
+  // v4.3.2：最初から入っていた共通項目は削除。現場ごとに必要項目を自分で追加する運用に変更。
+  var defaultIds={tent:true,generator:true,extension:true,change_money:true,nobori:true,cash_register:true};
+  ev.checklist=ev.checklist.filter(function(x){ return !defaultIds[String(x.id||'')]; });
   return ev.checklist;
 }
 function renderEventChecklist(ev){
@@ -1798,13 +1743,15 @@ function renderEventChecklist(ev){
   var html='<div class="checklist-box">'
     +'<div class="checklist-title"><span>📝 忘れ物リスト</span><span>'+doneCount+'/'+list.length+'</span></div>'
     +'<div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px">担当者・リーダーがチェックできます。誰がチェックしたか名前と時間が残ります。</div>';
+  if(!list.length){
+    html+='<div class="checklist-empty-note">まだ項目はありません。リーダーがこの現場に必要な持ち物・確認項目を追加してください。</div>';
+  }
   html+=list.map(function(x){
     var meta=x.done ? '確認：'+(x.by||'不明')+'｜'+(x.at||'') : '未確認';
-    var metaCls=x.done?'done-meta':'pending-meta';
     var click=editable ? 'onclick="toggleEventCheck(\''+ev.id+'\',\''+x.id+'\')"' : '';
     return '<div class="checklist-row">'
       +'<button class="check-btn '+(x.done?'done':'')+'" '+click+'>'+(x.done?'✅':'□')+'</button>'
-      +'<div><div class="check-name">'+x.text+'</div><div class="check-meta '+metaCls+'">'+meta+'</div>'
+      +'<div><div class="check-name">'+x.text+'</div><div class="check-meta">'+meta+'</div>'
       +(role==='leader'?'<button class="btn btn-danger btn-sm" style="margin-top:5px" onclick="deleteEventCheckItem(\''+ev.id+'\',\''+x.id+'\')">削除</button>':'')
       +'</div></div>';
   }).join('');
@@ -1916,7 +1863,7 @@ function copyBelongingsLineText(eventId){
 function makeBackupData(){
   return {
     app:'FUJIWARA GROUP 販売管理',
-    version:'v4.3.1',
+    version:'v4.1',
     exportedAt:new Date().toISOString(),
     state:state,
     passwords:PW
