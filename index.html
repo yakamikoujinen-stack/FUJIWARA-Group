@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.3</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1692,15 +1692,13 @@ function openBSheet(id) {
 
 
 function ensureEventChecklist(ev){
+  // v4.3.4: 忘れ物リストは現場ごとにリーダーが作るため、初期項目はゼロ件スタート。
+  // 旧版で自動追加されていた固定項目だけは安全に取り除く。custom_ で追加した項目は残す。
+  var defaultIds={tent:true,generator:true,extension:true,change_money:true,nobori:true,cash_register:true};
   if(!ev.checklist || !Array.isArray(ev.checklist)){
-    ev.checklist=[
-      {id:'tent', text:'テント', done:false, by:'', at:''},
-      {id:'generator', text:'発電機', done:false, by:'', at:''},
-      {id:'extension', text:'延長コード', done:false, by:'', at:''},
-      {id:'change_money', text:'釣り銭', done:false, by:'', at:''},
-      {id:'nobori', text:'のぼり', done:false, by:'', at:''},
-      {id:'cash_register', text:'レジ・決済端末', done:false, by:'', at:''}
-    ];
+    ev.checklist=[];
+  }else{
+    ev.checklist=ev.checklist.filter(function(x){ return !(x && defaultIds[x.id]); });
   }
   return ev.checklist;
 }
@@ -1712,6 +1710,9 @@ function renderEventChecklist(ev){
   var html='<div class="checklist-box">'
     +'<div class="checklist-title"><span>📝 忘れ物リスト</span><span>'+doneCount+'/'+list.length+'</span></div>'
     +'<div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px">担当者・リーダーがチェックできます。誰がチェックしたか名前と時間が残ります。</div>';
+  if(!list.length){
+    html+='<div class="empty-state" style="padding:18px 10px"><div class="ei">📝</div><p>項目はありません</p><p style="font-size:11px;color:var(--text2);margin-top:4px">リーダーが現場ごとに項目を追加してください</p></div>';
+  }
   html+=list.map(function(x){
     var meta=x.done ? '確認：'+(x.by||'不明')+'｜'+(x.at||'') : '未確認';
     var click=editable ? 'onclick="toggleEventCheck(\''+ev.id+'\',\''+x.id+'\')"' : '';
@@ -1829,7 +1830,7 @@ function copyBelongingsLineText(eventId){
 function makeBackupData(){
   return {
     app:'FUJIWARA GROUP 販売管理',
-    version:'v4.1',
+    version:'v4.3.4',
     exportedAt:new Date().toISOString(),
     state:state,
     passwords:PW
