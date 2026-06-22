@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>建設用日報アプリ 融合版</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--main:#1658a8;--main2:#0f766e;--sub:#eaf2ff;--danger:#d93025;--ok:#188038;--text:#1f2937;--line:#d7dee8;--muted:#64748b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,var(--main),#0f766e);color:#fff;padding:18px 12px;text-align:center;font-weight:900;font-size:21px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+main{padding:12px;max-width:1050px;margin:auto}.card{background:var(--card);border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 5px 18px rgba(0,0,0,.08)}
+h2{font-size:20px;margin:6px 0 12px;border-left:7px solid var(--main);padding-left:9px}h3{margin:14px 0 8px;font-size:17px}label{font-weight:800;display:block;margin:10px 0 5px}
+input,select,textarea,button{width:100%;font-size:17px;border-radius:11px;border:1px solid var(--line);padding:11px;background:#fff}textarea{min-height:90px}button{border:0;background:var(--main);color:#fff;font-weight:900;margin-top:10px;cursor:pointer}.btn2{background:#475569}.dangerBtn{background:var(--danger)}.okBtn{background:var(--ok)}.greenBtn{background:var(--main2)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.tabs button{font-size:14px;padding:10px 4px;margin:0;background:#334155}.tabs button.active{background:var(--main)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.weather{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.weather button{background:var(--sub);color:var(--text);border:1px solid var(--line)}.weather button.active{background:var(--main);color:#fff}
+.list{border:1px solid var(--line);border-radius:13px;overflow:hidden}.item{padding:11px;border-bottom:1px solid var(--line);background:#fff}.item:last-child{border-bottom:0}.small{font-size:13px;color:var(--muted)}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:var(--sub);font-size:13px;margin:2px}.photo{max-width:100%;border-radius:12px;margin-top:8px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;background:#fff;margin-top:8px}th,td{border:1px solid var(--line);padding:8px;text-align:left;font-size:14px}th{background:var(--sub)}
+.workerCheck{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.workerCheck button{width:auto;margin:0;padding:8px 14px}.bigCheck{font-size:24px;font-weight:900}.noticeBox{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px;margin:10px 0}.hide{display:none!important}
+.calHead{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center}.calHead button{margin:0;padding:10px}.calTitle{text-align:center;font-size:20px;font-weight:900}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}.dow{font-weight:900;text-align:center;background:var(--sub);border-radius:10px;padding:8px 2px}.day{min-height:96px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:7px;overflow:hidden}.day.today{border:3px solid var(--main)}.dayNum{font-weight:900;margin-bottom:4px}.dayPlan{font-size:12px;background:#eaf2ff;border-radius:8px;padding:4px;margin:3px 0}.dayReport{font-size:12px;background:#ecfdf5;border-radius:8px;padding:4px;margin:3px 0}.emptyDay{background:transparent;border:0}
+
+@media(max-width:700px){.tabs{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}.weather{grid-template-columns:repeat(2,1fr)}}
+@media print{header,.tabs,button,input,select,textarea,label{display:none!important}.card{box-shadow:none;margin:0}.printOnly{display:block!important}body{background:#fff}}
+</style>
+</head>
+<body>
+<header>👷 建設会社 日報・出勤・請求管理 融合版</header>
+<main>
+ <div class="tabs">
+  <button id="tab-home" onclick="showTab('home')" class="active">ホーム</button>
+  <button id="tab-calendar" onclick="showTab('calendar')">カレンダー</button>
+  <button id="tab-plan" onclick="showTab('plan')">リーダー作成</button>
+  <button id="tab-report" onclick="showTab('report')">作業員日報</button>
+  <button id="tab-leader" onclick="showTab('leader')">確認・承認</button>
+  <button id="tab-invoice" onclick="showTab('invoice')">月末請求表</button>
+  <button id="tab-notice" onclick="showTab('notice')">連絡事項</button>
+ </div>
+
+ <section id="home" class="card">
+  <h2>使い方</h2>
+  <div class="noticeBox"><b>流れ：</b>リーダーが現場と作業員を登録 → 作業員が自分で✅出勤・日報・写真提出 → リーダー承認 → 月末請求表</div>
+  <div class="grid2"><button onclick="showTab('calendar')">📅 カレンダーを見る</button><button onclick="showTab('plan')">① リーダーが現場作成</button><button class="greenBtn" onclick="showTab('report')">② 作業員が日報提出</button></div>
+ </section>
+
+ <section id="calendar" class="card" style="display:none">
+  <h2>カレンダー表示</h2>
+  <div class="calHead">
+   <button class="btn2" onclick="moveCal(-1)">前月</button>
+   <div id="calTitle" class="calTitle"></div>
+   <button class="btn2" onclick="moveCal(1)">次月</button>
+  </div>
+  <div class="small">青＝予定、緑＝提出済み日報。日付を押すと作業員日報の日付に入ります。</div>
+  <div id="calendarGrid" class="calendar"></div>
+ </section>
+
+ <section id="plan" class="card" style="display:none">
+  <h2>リーダー作成（日付・現場・作業員名）</h2>
+  <div class="grid2"><div><label>日付</label><input type="date" id="planDate"></div><div><label>会社名</label><select id="planCompany"><option>藤原一工業合同会社</option><option>リコー工業合同会社</option><option>株式会社 ミライソ</option></select></div></div>
+  <label>現場名</label><input id="planSite" placeholder="例：○○造成工事">
+  <label>元請会社</label><input id="planClient" placeholder="例：○○建設">
+  <label>予定作業内容</label><textarea id="planWork" placeholder="例：掘削、型枠、片付け"></textarea>
+  <label>作業員名（1行に1人）</label><textarea id="planWorkers" placeholder="藤原 明広&#10;山田 太郎&#10;田中 一郎"></textarea>
+  <button onclick="savePlan()">現場予定を保存</button>
+  <h3>登録済み予定</h3><div id="planList" class="list"></div>
+ </section>
+
+ <section id="report" class="card" style="display:none">
+  <h2>作業員 日報提出</h2>
+  <label>日付</label><input type="date" id="reportDate" onchange="renderPlanSelect()">
+  <label>今日の現場</label><select id="reportPlan" onchange="loadSelectedPlan()"></select>
+  <label>作業員名</label><select id="reportWorker"></select>
+  <button class="okBtn" onclick="checkIn()">✅ 出勤チェック</button>
+  <div id="checkStatus" class="noticeBox">まだ出勤チェックしていません</div>
+  <div class="grid3"><div><label>開始</label><input type="time" id="start" value="08:00"></div><div><label>終了</label><input type="time" id="end" value="17:00"></div><div><label>休憩（時間）</label><input type="number" id="breakTime" value="1" step="0.5"></div></div>
+  <label>天候</label><div class="weather"><button type="button" onclick="setWeather('晴れ')">☀️ 晴れ</button><button type="button" onclick="setWeather('曇')">☁️ 曇</button><button type="button" onclick="setWeather('雨')">🌧 雨</button><button type="button" onclick="setWeather('雪')">❄️ 雪</button></div><input type="hidden" id="weather" value="晴れ">
+  <div class="grid2"><div><label>残業時間</label><input type="number" id="overtime" value="0" step="0.5"></div><div><label>体調</label><select id="condition"><option>良好</option><option>普通</option><option>不良</option></select></div></div>
+  <label>危険箇所</label><select id="danger"><option>なし</option><option>あり</option></select>
+  <label>今日の作業報告</label><textarea id="dailyWork" placeholder="自分が今日した作業を入力"></textarea>
+  <label>写真貼り付け（一番下）</label><input type="file" id="photos" accept="image/*" multiple>
+  <button onclick="saveReport()">📩 日報を提出</button>
+ </section>
+
+ <section id="leader" class="card" style="display:none"><h2>リーダー確認・承認</h2><label>確認する月</label><input type="month" id="leaderMonth" onchange="renderLeader()"><div id="leaderList" class="list"></div><button class="btn2" onclick="exportBackup()">バックアップ保存</button></section>
+
+ <section id="invoice" class="card" style="display:none"><h2>月末 請求用集計表</h2><label>集計月</label><input type="month" id="invoiceMonth" onchange="renderInvoice()"><label>請求単価（1人工）</label><input type="number" id="rate" value="18000" onchange="renderInvoice()"><div id="invoiceTable"></div><button onclick="window.print()">印刷・PDF保存</button></section>
+
+ <section id="notice" class="card" style="display:none"><h2>共通連絡事項</h2><label>対象</label><select id="noticeTarget"><option>全員</option><option>建設</option><option>イベント</option></select><label>連絡内容</label><textarea id="noticeText" placeholder="集合時間・持参品など"></textarea><button onclick="saveNotice()">連絡事項を保存</button><div id="noticeList" class="list"></div><hr><button class="dangerBtn" onclick="clearAll()">全データ削除</button></section>
+</main>
+<script>
+let plans=JSON.parse(localStorage.getItem('kensetsuPlans')||'[]');
+let reports=JSON.parse(localStorage.getItem('kensetsuReports')||'[]');
+let notices=JSON.parse(localStorage.getItem('fujiwaraNotices')||'[]');
+const now=new Date(); function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')} function fmtMonth(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')} const today=fmtDate(now), thisMonth=fmtMonth(now);
+planDate.value=reportDate.value=today;leaderMonth.value=invoiceMonth.value=thisMonth;let calMonth=thisMonth;
+function showTab(id){['home','calendar','plan','report','leader','invoice','notice'].forEach(t=>{document.getElementById(t).style.display=t===id?'block':'none';document.getElementById('tab-'+t).classList.toggle('active',t===id)}); if(id==='calendar')renderCalendar(); if(id==='plan')renderPlans(); if(id==='report')renderPlanSelect(); if(id==='leader')renderLeader(); if(id==='invoice')renderInvoice(); if(id==='notice')renderNotices();}
+
+function renderCalendar(){
+ const [y,m]=calMonth.split('-').map(Number);
+ calTitle.textContent=`${y}年 ${m}月`;
+ const first=new Date(y,m-1,1), last=new Date(y,m,0);
+ const dows=['日','月','火','水','木','金','土'];
+ let html=dows.map(d=>`<div class="dow">${d}</div>`).join('');
+ for(let i=0;i<first.getDay();i++)html+='<div class="day emptyDay"></div>';
+ for(let d=1;d<=last.getDate();d++){
+  const date=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const ps=plans.filter(p=>p.date===date);
+  const rs=reports.filter(r=>r.date===date);
+  html+=`<div class="day ${date===today?'today':''}" onclick="selectCalDate('${date}')"><div class="dayNum">${d}</div>`;
+  ps.slice(0,3).forEach(p=>html+=`<div class="dayPlan">予定：${esc(p.site)}</div>`);
+  rs.slice(0,3).forEach(r=>html+=`<div class="dayReport">日報：${esc(r.worker)} ${r.approved?'承認':'未'}</div>`);
+  if(ps.length+rs.length>6)html+=`<div class="small">他 ${ps.length+rs.length-6} 件</div>`;
+  html+='</div>';
+ }
+ calendarGrid.innerHTML=html;
+}
+function moveCal(n){const [y,m]=calMonth.split('-').map(Number);const dt=new Date(y,m-1+n,1);calMonth=fmtMonth(dt);renderCalendar()}
+function selectCalDate(date){reportDate.value=date;planDate.value=date;showTab('report');renderPlanSelect()}
+
+function setWeather(w){weather.value=w;document.querySelectorAll('.weather button').forEach(b=>b.classList.toggle('active',b.textContent.includes(w)))} setWeather('晴れ');
+function esc(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function savePlan(){let ws=planWorkers.value.split('\n').map(x=>x.trim()).filter(Boolean); if(!planSite.value||!planClient.value||!ws.length){alert('現場名・元請会社・作業員名は必須です');return} plans.unshift({id:Date.now(),date:planDate.value,company:planCompany.value,site:planSite.value,client:planClient.value,work:planWork.value,workers:ws}); localStorage.setItem('kensetsuPlans',JSON.stringify(plans)); renderCalendar(); planSite.value='';planClient.value='';planWork.value='';planWorkers.value=''; renderPlans(); alert('現場予定を保存しました')}
+function renderPlans(){planList.innerHTML=plans.length?'':'<div class="item">予定はまだありません</div>'; plans.forEach(p=>{planList.innerHTML+=`<div class="item"><b>${esc(p.date)} ${esc(p.site)}</b><br><span class="small">${esc(p.client)} / ${esc(p.company)}</span><br>${p.work?esc(p.work).replace(/\n/g,'<br>'):''}<br>${p.workers.map(w=>`<span class="badge">${esc(w)}</span>`).join('')}<button class="dangerBtn" onclick="delPlan(${p.id})">予定削除</button></div>`})}
+function delPlan(id){if(confirm('この予定を削除しますか？')){plans=plans.filter(p=>p.id!==id);localStorage.setItem('kensetsuPlans',JSON.stringify(plans));renderPlans();renderPlanSelect();renderCalendar();}}
+function renderPlanSelect(){let arr=plans.filter(p=>p.date===reportDate.value); reportPlan.innerHTML=arr.length?arr.map(p=>`<option value="${p.id}">${esc(p.site)} / ${esc(p.client)}</option>`).join(''):'<option value="">予定なし</option>'; loadSelectedPlan();}
+function loadSelectedPlan(){let p=plans.find(x=>String(x.id)===String(reportPlan.value)); reportWorker.innerHTML=p?p.workers.map(w=>`<option>${esc(w)}</option>`).join(''):'<option></option>'; updateCheckStatus();}
+function updateCheckStatus(){let p=reportPlan.value,w=reportWorker.value,d=reportDate.value;let r=reports.find(x=>String(x.planId)===String(p)&&x.worker===w&&x.date===d); checkStatus.innerHTML=r&&r.checkInTime?`✅ 出勤済　${esc(r.checkInTime)}`:'まだ出勤チェックしていません'}
+reportWorker.addEventListener('change',updateCheckStatus);
+function checkIn(){let p=plans.find(x=>String(x.id)===String(reportPlan.value)); if(!p||!reportWorker.value){alert('現場と作業員名を選んでください');return} let r=reports.find(x=>String(x.planId)===String(p.id)&&x.worker===reportWorker.value&&x.date===reportDate.value); let time=new Date().toLocaleString(); if(r){r.checkIn=true;r.checkInTime=time}else{reports.push({id:Date.now(),planId:p.id,date:p.date,company:p.company,site:p.site,client:p.client,worker:reportWorker.value,checkIn:true,checkInTime:time,approved:false,photos:[]})} localStorage.setItem('kensetsuReports',JSON.stringify(reports)); updateCheckStatus(); alert('出勤チェックしました')}
+function photoToData(files){return Promise.all([...files].slice(0,6).map(f=>new Promise(res=>{let r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f)})))}
+async function saveReport(){let p=plans.find(x=>String(x.id)===String(reportPlan.value)); if(!p||!reportWorker.value){alert('現場と作業員名を選んでください');return} let ph=await photoToData(photos.files); let r=reports.find(x=>String(x.planId)===String(p.id)&&x.worker===reportWorker.value&&x.date===reportDate.value); let obj={id:r?r.id:Date.now(),planId:p.id,date:p.date,company:p.company,site:p.site,client:p.client,worker:reportWorker.value,checkIn:r?r.checkIn:false,checkInTime:r?r.checkInTime:'',start:start.value,end:end.value,breakTime:Number(breakTime.value||0),overtime:Number(overtime.value||0),weather:weather.value,work:dailyWork.value,condition:condition.value,danger:danger.value,photos:ph.length?ph:(r?r.photos:[]),approved:false,submittedTime:new Date().toLocaleString()}; if(r){Object.assign(r,obj)}else{reports.push(obj)} localStorage.setItem('kensetsuReports',JSON.stringify(reports)); dailyWork.value='';photos.value='';alert('日報を提出しました')}
+function monthFilter(m){return reports.filter(r=>r.date&&r.date.slice(0,7)===m)}
+function renderLeader(){let arr=monthFilter(leaderMonth.value).sort((a,b)=>(b.date+b.worker).localeCompare(a.date+a.worker));leaderList.innerHTML=arr.length?'':'<div class="item">日報はまだありません</div>'; arr.forEach(r=>{leaderList.innerHTML+=`<div class="item"><b>${esc(r.date)} ${esc(r.worker)}</b> <span class="badge">${r.approved?'承認済':'未承認'}</span> <span class="badge">${r.checkIn?'✅出勤':'未出勤'}</span><br><span class="small">${esc(r.client)} / ${esc(r.site)} / ${esc(r.weather||'')}</span><br>${esc(r.work||'').replace(/\n/g,'<br>')}<br><span class="badge">開始:${esc(r.start||'')}</span><span class="badge">終了:${esc(r.end||'')}</span><span class="badge">残業:${r.overtime||0}</span><span class="badge">体調:${esc(r.condition||'')}</span><span class="badge">危険:${esc(r.danger||'')}</span>${(r.photos||[]).map(p=>`<img class="photo" src="${p}">`).join('')}<button class="okBtn" onclick="approve(${r.id})">承認</button><button class="dangerBtn" onclick="delReport(${r.id})">削除</button></div>`})}
+function approve(id){reports=reports.map(r=>r.id===id?{...r,approved:true}:r);localStorage.setItem('kensetsuReports',JSON.stringify(reports));renderLeader();renderInvoice()}
+function delReport(id){if(confirm('削除しますか？')){reports=reports.filter(r=>r.id!==id);localStorage.setItem('kensetsuReports',JSON.stringify(reports));renderLeader();renderInvoice()}}
+function renderInvoice(){let arr=monthFilter(invoiceMonth.value).filter(r=>r.approved);let rateVal=Number(rate.value||0);let group={};arr.forEach(r=>{let k=r.client+'｜'+r.site;if(!group[k])group[k]={client:r.client,site:r.site,count:0,ot:0};group[k].count++;group[k].ot+=Number(r.overtime||0)});let html='<table><tr><th>元請会社</th><th>現場名</th><th>人工</th><th>残業</th><th>単価</th><th>請求金額</th></tr>';let total=0;Object.values(group).forEach(g=>{let amt=g.count*rateVal;total+=amt;html+=`<tr><td>${esc(g.client)}</td><td>${esc(g.site)}</td><td>${g.count}</td><td>${g.ot}</td><td>${rateVal.toLocaleString()}円</td><td>${amt.toLocaleString()}円</td></tr>`});html+=`<tr><th colspan="5">合計</th><th>${total.toLocaleString()}円</th></tr></table><h2>作業員別</h2><table><tr><th>作業員</th><th>出勤日数</th></tr>`;let w={};arr.forEach(r=>w[r.worker]=(w[r.worker]||0)+1);Object.keys(w).forEach(n=>html+=`<tr><td>${esc(n)}</td><td>${w[n]}</td></tr>`);html+='</table>';invoiceTable.innerHTML=arr.length?html:'承認済み日報がありません';}
+function saveNotice(){if(!noticeText.value){alert('連絡内容を入力してください');return}notices.unshift({id:Date.now(),date:new Date().toLocaleString(),target:noticeTarget.value,text:noticeText.value});localStorage.setItem('fujiwaraNotices',JSON.stringify(notices));noticeText.value='';renderNotices()}
+function renderNotices(){noticeList.innerHTML=notices.length?'':'<div class="item">連絡事項はありません</div>';notices.forEach(n=>noticeList.innerHTML+=`<div class="item"><b>${esc(n.target)}</b> <span class="small">${esc(n.date)}</span><br>${esc(n.text).replace(/\n/g,'<br>')}</div>`)}
+function exportBackup(){let blob=new Blob([JSON.stringify({plans,reports,notices},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kensetsu-nippo-fusion-backup.json';a.click()}
+function clearAll(){if(confirm('本当に全データを削除しますか？')){plans=[];reports=[];notices=[];localStorage.removeItem('kensetsuPlans');localStorage.removeItem('kensetsuReports');localStorage.removeItem('fujiwaraNotices');location.reload()}}
+renderPlans();renderPlanSelect();renderCalendar();
+</script>
+</body>
+</html>
