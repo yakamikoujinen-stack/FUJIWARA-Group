@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>建設日報アプリ</title>
+<style>
+  :root{--blue:#155baa;--navy:#26384d;--bg:#f3f6fb;--card:#fff;--line:#dfe6ef;--green:#138a47;--red:#d64545;--orange:#f59e0b}
+  *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:#1f2937;font-size:16px}
+  header{background:linear-gradient(120deg,#155baa,#00806c);color:white;padding:18px 14px;text-align:center;font-weight:800;font-size:20px;position:sticky;top:0;z-index:10}
+  main{max-width:980px;margin:0 auto;padding:12px 12px 80px}.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 6px 18px #0001}.hidden{display:none!important}
+  h2{margin:0 0 12px;border-left:6px solid var(--blue);padding-left:10px;font-size:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  button{border:0;border-radius:12px;padding:14px 12px;font-weight:800;font-size:16px;background:var(--navy);color:white;width:100%;min-height:50px}button.primary{background:var(--blue)}button.green{background:var(--green)}button.red{background:var(--red)}button.orange{background:var(--orange)}button.light{background:#e8eef7;color:#19324f}button:active{transform:scale(.99)}
+  input,select,textarea{width:100%;padding:13px;border:1px solid #ccd6e0;border-radius:12px;font-size:16px;background:white}textarea{min-height:90px}label{font-weight:700;font-size:14px;display:block;margin:9px 0 5px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.muted{color:#64748b;font-size:13px}.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eaf1ff;color:#155baa;font-weight:700;margin:3px}.danger{color:var(--red);font-weight:800}.ok{color:var(--green);font-weight:800}
+  table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden}th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;font-size:14px}th{background:#edf3fb;font-weight:800}.scroll{overflow:auto}.calendar-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.day{background:white;border:1px solid var(--line);border-radius:12px;min-height:72px;padding:6px;font-size:13px}.day strong{display:block}.day.has{border:2px solid var(--blue);background:#f0f7ff}.day.today{outline:3px solid #facc15}.day small{display:block;color:#155baa;font-weight:700;margin-top:4px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.tabs button{font-size:14px;padding:10px 5px;min-height:44px}.photo-preview{display:flex;gap:8px;flex-wrap:wrap}.photo-preview img{width:95px;height:95px;object-fit:cover;border-radius:10px;border:1px solid #ddd}.footer-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;z-index:20}.footer-nav button{font-size:12px;padding:8px 3px;min-height:42px}.loginbox{max-width:420px;margin:40px auto}.large{font-size:18px;font-weight:800}.notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px;margin:8px 0}@media(max-width:650px){.grid,.grid3,.row{grid-template-columns:1fr}.tabs{grid-template-columns:1fr 1fr}.day{min-height:62px;font-size:12px}main{padding:10px 8px 80px}}
+</style>
+</head>
+<body>
+<header>👷 建設会社 工事日報アプリ</header>
+<main>
+<section id="login" class="card loginbox">
+  <h2>ログイン</h2>
+  <label>名前</label><input id="loginName" placeholder="例：藤原 明広">
+  <label>権限</label><select id="loginRole"><option value="worker">作業員</option><option value="admin">管理者</option></select>
+  <label>パスワード</label><input id="loginPass" type="password" placeholder="管理者は 1111 / 作業員は空でもOK">
+  <button class="primary" onclick="login()">ログイン</button>
+  <p class="muted">最初はテスト用です。管理者パスワード：1111</p>
+</section>
+
+<section id="app" class="hidden">
+  <div class="card">
+    <div class="large">ログイン中：<span id="userLabel"></span></div>
+    <div class="muted">流れ：ログイン → カレンダー → 工事日報 → 管理者集計</div>
+  </div>
+
+  <div class="tabs">
+    <button class="primary" onclick="showPage('calendar')">📅 カレンダー</button>
+    <button onclick="showPage('daily')">📝 工事日報</button>
+    <button onclick="showPage('admin')">📊 管理者</button>
+    <button onclick="showPage('settings')">⚙️ 設定</button>
+  </div>
+
+  <section id="page-calendar" class="card page">
+    <h2>カレンダー表示</h2>
+    <div class="calendar-head">
+      <button class="light" onclick="moveMonth(-1)">前月</button>
+      <div class="large" id="monthLabel"></div>
+      <button class="light" onclick="moveMonth(1)">次月</button>
+    </div>
+    <div class="cal" style="margin:12px 0 6px;font-weight:800;text-align:center"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+    <div id="calendarGrid" class="cal"></div>
+  </section>
+
+  <section id="page-daily" class="card page hidden">
+    <h2>工事日報 作業員入力</h2>
+    <div class="row"><div><label>日付</label><input type="date" id="dDate"></div><div><label>作業員名</label><input id="dWorker"></div></div>
+    <div class="row"><div><label>取引先名</label><input id="dClient" placeholder="例：○○建設"></div><div><label>現場名</label><input id="dSite" placeholder="例：○○造成工事"></div></div>
+    <label>作業内容</label><textarea id="dWork" placeholder="今日の作業内容"></textarea>
+    <div class="grid3"><div><label>出勤区分</label><select id="dType"><option>通常</option><option>半日</option><option>休日出勤</option><option>休み</option></select></div><div><label>開始</label><input type="time" id="dStart" value="08:00"></div><div><label>終了</label><input type="time" id="dEnd" value="17:00"></div></div>
+    <div class="grid3"><div><label>休憩 時間</label><input type="number" id="dBreak" step="0.5" value="1"></div><div><label>残業 時間</label><input type="number" id="dOver" step="0.5" value="0"></div><div><label>人工</label><input type="number" id="dNinku" step="0.5" value="1"></div></div>
+    <label>写真貼り付け</label><input type="file" id="dPhotos" accept="image/*" multiple onchange="previewPhotos()"><div id="photoPreview" class="photo-preview"></div>
+    <label>備考</label><textarea id="dMemo" placeholder="材料不足・危険箇所・連絡など"></textarea>
+    <button class="green" onclick="saveDaily()">✅ 日報を保存</button>
+    <button class="light" onclick="clearForm()">入力をクリア</button>
+  </section>
+
+  <section id="page-admin" class="card page hidden">
+    <h2>管理者ページ</h2>
+    <div id="adminLock" class="notice hidden">管理者のみ表示できます。</div>
+    <div id="adminArea">
+      <div class="row"><div><label>集計月</label><input type="month" id="sumMonth" onchange="renderAdmin()"></div><div><label>単価（請求用・1人工）</label><input type="number" id="unitPrice" value="18000" onchange="renderAdmin()"></div></div>
+      <h2>取引先名別 作業員集計</h2><div id="clientSummary" class="scroll"></div>
+      <h2>給料用 作業員集計</h2><div id="workerSummary" class="scroll"></div>
+      <h2>日報一覧</h2><div id="dailyList" class="scroll"></div>
+      <div class="grid"><button class="primary" onclick="exportCSV()">CSV出力</button><button class="orange" onclick="window.print()">印刷/PDF</button></div>
+    </div>
+  </section>
+
+  <section id="page-settings" class="card page hidden">
+    <h2>設定・バックアップ</h2>
+    <div class="grid"><button onclick="backup()">バックアップ保存</button><button onclick="restoreClick()">バックアップ読込</button></div>
+    <input type="file" id="restoreFile" class="hidden" accept="application/json" onchange="restore(event)">
+    <button class="red" onclick="logout()">ログアウト</button>
+    <button class="red" onclick="resetAll()">全データ削除</button>
+  </section>
+</section>
+</main>
+<div id="footer" class="footer-nav hidden"><button onclick="showPage('calendar')">📅<br>カレンダー</button><button onclick="showPage('daily')">📝<br>日報</button><button onclick="showPage('admin')">📊<br>集計</button><button onclick="showPage('settings')">⚙️<br>設定</button></div>
+<script>
+const KEY='kensetsu_nippo_v1'; let state=JSON.parse(localStorage.getItem(KEY)||'{"records":[]}'); let user=null; let current=new Date(); let photoData=[];
+function save(){localStorage.setItem(KEY,JSON.stringify(state))} function today(){return new Date().toISOString().slice(0,10)} function ym(d){return d.toISOString().slice(0,7)}
+function login(){const name=loginName.value.trim(); const role=loginRole.value; if(!name)return alert('名前を入れてください'); if(role==='admin'&&loginPass.value!=='1111')return alert('管理者パスワードが違います'); user={name,role}; login.classList.add('hidden'); app.classList.remove('hidden'); footer.classList.remove('hidden'); userLabel.textContent=name+(role==='admin'?'（管理者）':'（作業員）'); dDate.value=today(); dWorker.value=name; sumMonth.value=ym(new Date()); renderCalendar(); showPage('calendar')}
+function logout(){location.reload()} function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden')); document.getElementById('page-'+p).classList.remove('hidden'); if(p==='calendar')renderCalendar(); if(p==='admin')renderAdmin();}
+function moveMonth(n){current.setMonth(current.getMonth()+n);renderCalendar()} function renderCalendar(){monthLabel.textContent=current.getFullYear()+'年 '+(current.getMonth()+1)+'月'; const grid=calendarGrid; grid.innerHTML=''; const first=new Date(current.getFullYear(),current.getMonth(),1); const start=first.getDay(); const last=new Date(current.getFullYear(),current.getMonth()+1,0).getDate(); for(let i=0;i<start;i++)grid.appendChild(document.createElement('div')); for(let d=1;d<=last;d++){const date=`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const recs=state.records.filter(r=>r.date===date); const el=document.createElement('div'); el.className='day '+(recs.length?'has ':'')+(date===today()?'today':''); el.innerHTML=`<strong>${d}</strong>${recs.length?`<small>${recs.length}件</small>`:''}`; el.onclick=()=>{dDate.value=date;showPage('daily')}; grid.appendChild(el)}}
+function previewPhotos(){photoData=[]; photoPreview.innerHTML=''; [...dPhotos.files].slice(0,5).forEach(f=>{const r=new FileReader(); r.onload=e=>{photoData.push(e.target.result); const img=new Image(); img.src=e.target.result; photoPreview.appendChild(img)}; r.readAsDataURL(f)})}
+function saveDaily(){const rec={id:Date.now(),date:dDate.value,worker:dWorker.value.trim(),client:dClient.value.trim(),site:dSite.value.trim(),work:dWork.value.trim(),type:dType.value,start:dStart.value,end:dEnd.value,break:+dBreak.value||0,over:+dOver.value||0,ninku:+dNinku.value||0,memo:dMemo.value.trim(),photos:photoData,created:new Date().toLocaleString()}; if(!rec.date||!rec.worker||!rec.client||!rec.site)return alert('日付・作業員名・取引先名・現場名は必須です'); state.records.push(rec); save(); alert('日報を保存しました'); clearForm(); dDate.value=rec.date; dWorker.value=user.name; renderCalendar()}
+function clearForm(){['dClient','dSite','dWork','dMemo'].forEach(id=>document.getElementById(id).value=''); dType.value='通常'; dStart.value='08:00'; dEnd.value='17:00'; dBreak.value=1; dOver.value=0; dNinku.value=1; dPhotos.value=''; photoData=[]; photoPreview.innerHTML=''}
+function monthRecords(){const m=sumMonth.value||ym(new Date()); return state.records.filter(r=>r.date&&r.date.startsWith(m))}
+function renderAdmin(){if(!user||user.role!=='admin'){adminLock.classList.remove('hidden');adminArea.classList.add('hidden');return}else{adminLock.classList.add('hidden');adminArea.classList.remove('hidden')} const rs=monthRecords(); const price=+unitPrice.value||0; const byClient={}; const byWorker={}; rs.forEach(r=>{byClient[r.client]??={ninku:0,over:0,days:0,workers:{}}; byClient[r.client].ninku+=+r.ninku; byClient[r.client].over+=+r.over; byClient[r.client].days++; byClient[r.client].workers[r.worker]=(byClient[r.client].workers[r.worker]||0)+(+r.ninku); byWorker[r.worker]??={ninku:0,over:0,days:0,clients:{}}; byWorker[r.worker].ninku+=+r.ninku; byWorker[r.worker].over+=+r.over; byWorker[r.worker].days++; byWorker[r.worker].clients[r.client]=(byWorker[r.worker].clients[r.client]||0)+(+r.ninku)});
+clientSummary.innerHTML='<table><tr><th>取引先名</th><th>作業員内訳</th><th>人工</th><th>残業</th><th>請求目安</th></tr>'+Object.entries(byClient).map(([k,v])=>`<tr><td>${k}</td><td>${Object.entries(v.workers).map(([w,n])=>`${w}:${n}`).join('<br>')}</td><td>${v.ninku}</td><td>${v.over}</td><td>¥${(v.ninku*price).toLocaleString()}</td></tr>`).join('')+'</table>';
+workerSummary.innerHTML='<table><tr><th>作業員</th><th>出勤日報数</th><th>人工</th><th>残業</th><th>取引先内訳</th></tr>'+Object.entries(byWorker).map(([k,v])=>`<tr><td>${k}</td><td>${v.days}</td><td>${v.ninku}</td><td>${v.over}</td><td>${Object.entries(v.clients).map(([c,n])=>`${c}:${n}`).join('<br>')}</td></tr>`).join('')+'</table>';
+dailyList.innerHTML='<table><tr><th>日付</th><th>作業員</th><th>取引先</th><th>現場</th><th>人工</th><th>削除</th></tr>'+rs.sort((a,b)=>a.date.localeCompare(b.date)).map(r=>`<tr><td>${r.date}</td><td>${r.worker}</td><td>${r.client}</td><td>${r.site}</td><td>${r.ninku}</td><td><button class="red" onclick="delRec(${r.id})">削除</button></td></tr>`).join('')+'</table>'}
+function delRec(id){if(confirm('削除しますか？')){state.records=state.records.filter(r=>r.id!==id);save();renderAdmin();renderCalendar()}}
+function exportCSV(){const rs=monthRecords(); const rows=[['日付','作業員','取引先名','現場名','作業内容','区分','開始','終了','休憩','残業','人工','備考']].concat(rs.map(r=>[r.date,r.worker,r.client,r.site,r.work,r.type,r.start,r.end,r.break,r.over,r.ninku,r.memo])); const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})); a.download='建設日報集計.csv'; a.click()}
+function backup(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='建設日報バックアップ.json';a.click()} function restoreClick(){restoreFile.click()} function restore(e){const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{state=JSON.parse(r.result);save();alert('読込完了');renderCalendar();renderAdmin()}; r.readAsText(f)} function resetAll(){if(confirm('全データを削除しますか？')){state={records:[]};save();renderCalendar();renderAdmin()}}
+</script>
+</body>
+</html>
