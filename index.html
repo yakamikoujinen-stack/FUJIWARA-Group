@@ -687,6 +687,13 @@ body::before,#app::before,.page::before{
         🔒 シークレットイベント
       </label>
     </div>
+    <div class="fg" style="border:2px solid #d94343;border-radius:12px;padding:10px;background:#fffdf8">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:900;color:#1f1a10">
+        <input type="checkbox" id="ef-family-share" style="width:24px;height:24px;margin:0;">
+        家族アプリで共有する（Family App）
+      </label>
+      <div style="font-size:11px;color:var(--text2);margin-top:5px">チェックすると、家族アプリのカレンダーに表示されます。</div>
+    </div>
     <div class="fg"><label>メモ・備考</label><textarea id="ef-memo" placeholder="備考など"></textarea></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-gold" style="flex:1" onclick="saveEventForm()">保存する</button>
@@ -1924,6 +1931,8 @@ function openEventForm(id) {
   // シークレットイベントの状態を反映
   var secretChk=document.getElementById('ef-secret');
   if(secretChk){ secretChk.checked = ev ? !!ev.secret : false; }
+  var familyShareChk=document.getElementById('ef-family-share');
+  if(familyShareChk){ familyShareChk.checked = ev ? !!ev.familyShare : false; }
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
     var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
     return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' style="width:auto;margin:0"> '+s+'</label>';
@@ -1951,7 +1960,10 @@ function saveEventForm() {
     staff:staff,
     items:[],
     // シークレットイベント設定
-    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
+    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false,
+    // Family App共有設定
+    familyShare: document.getElementById('ef-family-share') ? document.getElementById('ef-family-share').checked : false,
+    createdBy: currentUser || 'リーダー'
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
@@ -2776,7 +2788,9 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       checklist:Array.isArray(ev.checklist)?ev.checklist:(ev.checklist?Object.values(ev.checklist):null),
       availability:ev.availability||{},
       sales:ev.sales||null,
-      secret:!!ev.secret
+      secret:!!ev.secret,
+      familyShare:!!ev.familyShare,
+      createdBy:ev.createdBy||ev.creator||''
     };
   }
 
