@@ -2438,20 +2438,11 @@ function renderHome() {
   var greet=h<12?'おはようございます 🌅':h<18?'こんにちは ☀️':'こんばんは 🌙';
   document.getElementById('user-greeting').textContent=greet;
   document.getElementById('user-name-sub').textContent=userName+' さん';
-
-  // ホーム上部は「次のイベント」ではなく、リーダーのお知らせを最優先で表示
-  var activeNotices=getActiveNotices();
-  if(activeNotices.length){
-    var n=activeNotices[0];
-    document.getElementById('home-hero').innerHTML=
-      '<div style="font-size:12px;color:var(--text2);font-weight:900">🔔 リーダーからのお知らせ</div>'+
-      '<div style="font-size:18px;font-weight:900;margin:8px 0;line-height:1.7">'+(n.text||'')+'</div>'+
-      '<div style="font-size:11px;color:var(--text2)">'+(n.time||'')+'</div>';
-  }else{
-    document.getElementById('home-hero').innerHTML=
-      '<div style="font-size:13px;color:var(--text2)">現在お知らせはありません</div>';
-  }
-
+  var next=null;
+  for(var i=0;i<state.events.length;i++){ if(state.events[i].status!=='done'){ next=state.events[i]; break; } }
+  document.getElementById('home-hero').innerHTML=next
+    ?'<div style="font-size:11px;color:var(--text2)">次のイベント</div><div style="font-size:17px;font-weight:700;margin:4px 0">'+next.name+'</div><div style="font-size:12px">📍 '+next.place+'</div><div style="font-size:22px;font-weight:900;font-family:\'Space Grotesk\',sans-serif;color:var(--gold2);margin-top:6px">'+next.date+'</div>'
+    :'<div style="font-size:13px;color:var(--text2)">現在予定はありません</div>';
   var shortageEvents=(state.events||[]).filter(function(ev){
     return ev.status!=='done' && getStaffShortage(ev)>0;
   }).slice(0,5);
@@ -2460,7 +2451,7 @@ function renderHome() {
       +shortageEvents.map(function(ev){ return '<div style="margin-top:4px"><b>'+ev.name+'</b>　あと'+getStaffShortage(ev)+'人</div>'; }).join('')
       +'</div>'
     : '';
-  document.getElementById('home-notices').innerHTML=shortageHtml+activeNotices.map(function(n){
+  document.getElementById('home-notices').innerHTML=shortageHtml+getActiveNotices().map(function(n){
     return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'</div>'+n.text+'</div>';
   }).join('');
 }
