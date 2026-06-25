@@ -426,6 +426,19 @@ body::before,#app::before,.page::before{
   margin:12px 0 16px;
 }
 
+/* ===== v5.1 Family App共有・出勤一覧表 ===== */
+.family-share-row{display:flex;align-items:center;gap:8px;margin-bottom:13px;background:#fffdf6;border:1.5px solid #d8bf75;border-radius:12px;padding:11px 12px;}
+.family-share-row input[type=checkbox]{width:auto;margin:0;transform:scale(1.25);}
+.family-share-row label{font-size:13px;color:#111;margin:0;font-weight:900;cursor:pointer;}
+.family-share-help{font-size:11px;color:#6d5a2b;margin-top:3px;font-weight:700;}
+.attendance-filter{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.attendance-card{background:#fffdf6;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 3px 12px rgba(80,55,0,.08);}
+.attendance-title{font-size:16px;font-weight:900;color:#111;margin-bottom:4px;}
+.attendance-meta{font-size:12px;color:#6d5a2b;line-height:1.7;}
+.attendance-staff-list{font-size:12px;line-height:1.9;margin-top:8px;}
+.attendance-mini{display:inline-block;border-radius:999px;padding:2px 8px;margin:2px;background:#fff4d7;border:1px solid #d8bf75;font-weight:900;}
+@media(max-width:620px){.attendance-filter{grid-template-columns:1fr;}.bottom-nav .nav-item{font-size:8.5px}.bottom-nav .nav-item .ni{font-size:19px}}
+
 </style>
 </head>
 <body>
@@ -544,6 +557,35 @@ body::before,#app::before,.page::before{
             <select id="sales-ev-select" onchange="renderSalesDetail()"></select>
           </div>
           <div id="sales-detail"></div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- ATTENDANCE LIST -->
+    <div class="page" id="page-attendance">
+      <div class="pg">
+        <p class="page-title">👥 出勤一覧表</p>
+        <p class="page-sub">イベントごとの担当スタッフ・出勤回答を確認</p>
+        <div id="attendance-lock"></div>
+        <div id="attendance-content">
+          <div class="attendance-filter">
+            <select id="att-month" onchange="renderAttendancePage()"></select>
+            <select id="att-status" onchange="renderAttendancePage()">
+              <option value="all">すべて</option>
+              <option value="shortage">人員不足</option>
+              <option value="unanswered">未回答あり</option>
+            </select>
+            <select id="att-zone" onchange="renderAttendancePage()">
+              <option value="all">発注先すべて</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="showPage('calendar')">‹ 戻る</button>
+            <button class="btn btn-green btn-sm" style="flex:1" onclick="downloadAttendanceCSV()">📗 Excel出力</button>
+          </div>
+          <div id="attendance-list"></div>
         </div>
       </div>
     </div>
@@ -685,6 +727,14 @@ body::before,#app::before,.page::before{
         <input type="checkbox" id="ef-secret" style="width:auto;margin:0;">
         🔒 シークレットイベント
       </label>
+    </div>
+    <!-- Family App共有チェック -->
+    <div class="family-share-row">
+      <input type="checkbox" id="ef-family-share">
+      <div>
+        <label for="ef-family-share">家族アプリで共有する（Family App）</label>
+        <div class="family-share-help">チェックすると、家族アプリの Family Schedule に表示されます。</div>
+      </div>
     </div>
     <div class="fg"><label>メモ・備考</label><textarea id="ef-memo" placeholder="備考など"></textarea></div>
     <div style="display:flex;gap:8px">
@@ -922,6 +972,7 @@ var NAV = {
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
     {id:'sales',    icon:'📊', label:'売上・損益'},
+    {id:'attendance', icon:'👥', label:'出勤一覧表'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1255,6 +1306,7 @@ function showPage(id) {
     id='calendar';
   }
   if(id==='belongings') renderBelongingsPage();
+  if(id==='attendance') renderAttendancePage();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var p = document.getElementById('page-'+id);
@@ -1928,10 +1980,13 @@ function openEventForm(id) {
   document.getElementById('ef-memo').value=ev?ev.memo:'';
   document.getElementById('ef-items-text').value=ev?ev.itemsText||'':'';
   document.getElementById('ef-date-end').value=ev?ev.dateEnd||'':'';
+  var reqEl=document.getElementById('ef-required-staff'); if(reqEl) reqEl.value=ev?(ev.requiredStaff||''):'';
   document.getElementById('ef-del-btn').style.display=ev?'':'none';
   // シークレットイベントの状態を反映
   var secretChk=document.getElementById('ef-secret');
   if(secretChk){ secretChk.checked = ev ? !!ev.secret : false; }
+  var famChk=document.getElementById('ef-family-share');
+  if(famChk){ famChk.checked = ev ? !!ev.familyShare : false; }
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
     var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
     return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' style="width:auto;margin:0"> '+s+'</label>';
@@ -1959,7 +2014,8 @@ function saveEventForm() {
     staff:staff,
     items:[],
     // シークレットイベント設定
-    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
+    secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false,
+    familyShare: document.getElementById('ef-family-share') ? document.getElementById('ef-family-share').checked : false
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
@@ -1969,7 +2025,9 @@ function saveEventForm() {
           id:old.id,
           sales:old.sales||null,
           bsLeader:old.bsLeader||'',
-          bsHelper:old.bsHelper||''
+          bsHelper:old.bsHelper||'',
+          availability:old.availability||{},
+          checklist:old.checklist||null
         });
         break;
       }
@@ -1986,6 +2044,7 @@ function saveEventForm() {
   closeModal('modal-event-form');
   renderCalendar();
   renderSalesPage();
+  if(typeof renderAttendancePage==='function') renderAttendancePage();
   fbSave();
 }
 
@@ -2400,6 +2459,93 @@ function saveSalesEdit() {
   fbSave();
 }
 
+
+
+// ════ ATTENDANCE LIST PAGE ════
+function monthKeyFromDate(d){ return String(d||'').slice(0,7); }
+function attendanceStaffForEvent(ev){
+  var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
+  if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
+  if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
+  return staff;
+}
+function attendanceInfo(ev){
+  var staff=attendanceStaffForEvent(ev);
+  var av=ev.availability||{};
+  var ok=[], maybe=[], no=[], unanswered=[];
+  staff.forEach(function(name){
+    if(av[name]==='ok') ok.push(name);
+    else if(av[name]==='maybe') maybe.push(name);
+    else if(av[name]==='no') no.push(name);
+    else unanswered.push(name);
+  });
+  var req=parseInt(ev.requiredStaff)||0;
+  var shortage=req ? Math.max(req-staff.length,0) : 0;
+  return {staff:staff,ok:ok,maybe:maybe,no:no,unanswered:unanswered,required:req,shortage:shortage};
+}
+function renderAttendanceFilters(){
+  var msel=document.getElementById('att-month'), zsel=document.getElementById('att-zone');
+  if(!msel||!zsel) return;
+  var months={}, zones={};
+  (state.events||[]).forEach(function(ev){ if(ev.date) months[monthKeyFromDate(ev.date)]=true; if(ev.zone) zones[ev.zone]=true; });
+  var now=new Date(); var cur=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'); months[cur]=true;
+  var oldM=msel.value||cur, oldZ=zsel.value||'all';
+  msel.innerHTML=Object.keys(months).sort().map(function(m){return '<option value="'+m+'">'+m.replace('-','年 ')+'月</option>';}).join('');
+  if(Object.keys(months).indexOf(oldM)>=0) msel.value=oldM; else msel.value=cur;
+  zsel.innerHTML='<option value="all">発注先すべて</option>'+Object.keys(zones).sort().map(function(z){return '<option value="'+escHtml(z)+'">'+escHtml(z)+'</option>';}).join('');
+  zsel.value=Object.keys(zones).indexOf(oldZ)>=0?oldZ:'all';
+}
+function renderAttendancePage(){
+  if(role!=='leader'){
+    var lock=document.getElementById('attendance-lock'), cont=document.getElementById('attendance-content');
+    if(lock) lock.innerHTML='<div class="lock-box"><div style="font-size:36px;margin-bottom:8px">🔒</div><b>リーダーのみ閲覧できます</b></div>';
+    if(cont) cont.style.display='none';
+    return;
+  }
+  var lock=document.getElementById('attendance-lock'), cont=document.getElementById('attendance-content');
+  if(lock) lock.innerHTML=''; if(cont) cont.style.display='';
+  renderAttendanceFilters();
+  var month=(document.getElementById('att-month')||{}).value||'';
+  var status=(document.getElementById('att-status')||{}).value||'all';
+  var zone=(document.getElementById('att-zone')||{}).value||'all';
+  var list=(state.events||[]).filter(function(ev){
+    if(month && monthKeyFromDate(ev.date)!==month) return false;
+    if(zone!=='all' && ev.zone!==zone) return false;
+    var info=attendanceInfo(ev);
+    if(status==='shortage' && info.shortage<=0) return false;
+    if(status==='unanswered' && info.unanswered.length<=0) return false;
+    return true;
+  }).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''));});
+  var el=document.getElementById('attendance-list'); if(!el) return;
+  if(!list.length){ el.innerHTML='<div class="empty-state"><div class="ei">👥</div><p>対象イベントがありません</p></div>'; return; }
+  el.innerHTML=list.map(function(ev){
+    var info=attendanceInfo(ev);
+    var dateText=escHtml((ev.date||'')+(ev.dateEnd?' 〜 '+ev.dateEnd:''));
+    var staffChips=info.staff.length?info.staff.map(function(n){var v=(ev.availability||{})[n]||'';return '<span class="attendance-mini">'+availabilityMark(v)+' '+escHtml(n)+'</span>';}).join(''):'<span style="color:var(--red);font-weight:900">未設定</span>';
+    return '<div class="attendance-card">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
+      +'<div><div class="attendance-title">'+escHtml(ev.name||'名称未設定')+'</div><div class="attendance-meta">📅 '+dateText+'　📍 '+escHtml(ev.place||'')+'　発注先：'+escHtml(ev.zone||'')+'</div></div>'
+      +(info.shortage>0?'<span class="status-badge" style="background:rgba(214,66,66,.12);color:var(--red);border:1px solid rgba(214,66,66,.25)">不足 '+info.shortage+'人</span>':'<span class="status-badge" style="background:rgba(22,138,88,.12);color:var(--green);border:1px solid rgba(22,138,88,.25)">OK</span>')
+      +'</div>'
+      +'<div class="attendance-meta">必要人数：'+(info.required||'-')+'　担当：'+info.staff.length+'人　⭕'+info.ok.length+'　△'+info.maybe.length+'　❌'+info.no.length+'　未回答'+info.unanswered.length+'</div>'
+      +'<div class="attendance-staff-list">'+staffChips+'</div>'
+      +'</div>';
+  }).join('');
+}
+function downloadAttendanceCSV(){
+  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  var rows=[['日付','イベント名','発注先','場所','必要人数','担当スタッフ','出勤可','未定','不可','未回答']];
+  (state.events||[]).slice().sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''));}).forEach(function(ev){
+    var info=attendanceInfo(ev);
+    rows.push([ev.date+(ev.dateEnd?'〜'+ev.dateEnd:''),ev.name||'',ev.zone||'',ev.place||'',info.required||'',info.staff.join('・'),info.ok.join('・'),info.maybe.join('・'),info.no.join('・'),info.unanswered.join('・')]);
+  });
+  var csv='﻿'+rows.map(function(r){return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');}).join('
+');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='event-attendance-list.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},800);
+  toast('📗 出勤一覧表を出力しました');
+}
+
 // ════ HOME ════
 function renderHome() {
   var h=new Date().getHours();
@@ -2784,7 +2930,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       checklist:Array.isArray(ev.checklist)?ev.checklist:(ev.checklist?Object.values(ev.checklist):null),
       availability:ev.availability||{},
       sales:ev.sales||null,
-      secret:!!ev.secret
+      secret:!!ev.secret,
+      familyShare:!!ev.familyShare
     };
   }
 
@@ -2828,6 +2975,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       renderCalendar();
       renderInventory();
       renderSalesPage();
+      if(typeof renderAttendancePage==='function') renderAttendancePage();
       renderHome();
       renderSettings();
       showSync('✅ 同期済み');
