@@ -549,6 +549,33 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
+
+
+    <!-- ATTENDANCE LIST -->
+    <div class="page" id="page-attendance">
+      <div class="pg">
+        <p class="page-title">👥 出勤一覧表</p>
+        <p class="page-sub">イベントごとの参加予定スタッフ・出勤回答・未回答を確認</p>
+        <div id="attendance-lock"></div>
+        <div id="attendance-content">
+          <div class="admin-badge">🔒 リーダーのみ閲覧</div>
+          <div class="settings-group" style="padding:12px;margin-bottom:12px">
+            <div class="fg2">
+              <div class="fg"><label>期間</label><select id="att-filter-period" onchange="renderAttendancePage()"><option value="month">今月</option><option value="all">すべて</option></select></div>
+              <div class="fg"><label>発注先</label><select id="att-filter-zone" onchange="renderAttendancePage()"><option value="all">すべて</option></select></div>
+            </div>
+          </div>
+          <div class="scroll-x">
+            <table class="inv-table" style="min-width:760px">
+              <thead><tr><th>日付</th><th>イベント名</th><th>発注先</th><th>場所</th><th>担当スタッフ（出勤状況）</th><th>必要人数</th><th>出勤</th><th>未定</th><th>不可</th></tr></thead>
+              <tbody id="attendance-tbody"></tbody>
+            </table>
+          </div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-top:10px">⭕ 出勤可　△ 未定　❌ 出勤不可<br>※ シークレットイベントはリーダーのみ表示します。</div>
+        </div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="pg">
@@ -572,14 +599,6 @@ body::before,#app::before,.page::before{
           <div class="sec-title" style="margin-bottom:10px">👥 スタッフ管理</div>
           <div class="settings-group" id="staff-list-area"></div>
           <button class="btn btn-outline btn-sm btn-full" style="margin-bottom:16px" onclick="openStaffForm(null)">＋ スタッフを追加</button>
-
-          <!-- リーダー専用：イベント参加スタッフ一覧 -->
-          <div class="sec-title" style="margin:16px 0 10px">👥 イベント参加スタッフ一覧</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">
-            イベントごとの参加予定スタッフ・出勤回答・未回答をリーダーだけ確認できます。
-          </div>
-          <div class="settings-group" id="leader-event-staff-area"></div>
-          <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:16px" onclick="renderLeaderEventStaffList()">一覧を更新</button>
 
           <div class="settings-group">
             <div class="settings-row">
@@ -930,6 +949,7 @@ var NAV = {
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
     {id:'sales',    icon:'📊', label:'売上・損益'},
+    {id:'attendance', icon:'👥', label:'出勤一覧'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1219,6 +1239,13 @@ function applyPermissions() {
     document.getElementById('sales-lock').innerHTML='';
   }
   if(role!=='leader'){
+    lockSection('attendance-lock','出勤一覧表はリーダーのみ閲覧できます');
+    hide('attendance-content');
+  } else {
+    show('attendance-content');
+    var al=document.getElementById('attendance-lock'); if(al) al.innerHTML='';
+  }
+  if(role!=='leader'){
     lockSection('settings-lock','設定はリーダーのみ操作できます');
     hide('settings-content');
   } else {
@@ -1254,6 +1281,7 @@ function showPage(id) {
     id='calendar';
   }
   if(id==='belongings') renderBelongingsPage();
+  if(id==='attendance') renderAttendancePage();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var p = document.getElementById('page-'+id);
@@ -2410,11 +2438,20 @@ function renderHome() {
   var greet=h<12?'おはようございます 🌅':h<18?'こんにちは ☀️':'こんばんは 🌙';
   document.getElementById('user-greeting').textContent=greet;
   document.getElementById('user-name-sub').textContent=userName+' さん';
-  var next=null;
-  for(var i=0;i<state.events.length;i++){ if(state.events[i].status!=='done'){ next=state.events[i]; break; } }
-  document.getElementById('home-hero').innerHTML=next
-    ?'<div style="font-size:11px;color:var(--text2)">次のイベント</div><div style="font-size:17px;font-weight:700;margin:4px 0">'+next.name+'</div><div style="font-size:12px">📍 '+next.place+'</div><div style="font-size:22px;font-weight:900;font-family:\'Space Grotesk\',sans-serif;color:var(--gold2);margin-top:6px">'+next.date+'</div>'
-    :'<div style="font-size:13px;color:var(--text2)">現在予定はありません</div>';
+
+  // ホーム上部は「次のイベント」ではなく、リーダーのお知らせを最優先で表示
+  var activeNotices=getActiveNotices();
+  if(activeNotices.length){
+    var n=activeNotices[0];
+    document.getElementById('home-hero').innerHTML=
+      '<div style="font-size:12px;color:var(--text2);font-weight:900">🔔 リーダーからのお知らせ</div>'+
+      '<div style="font-size:18px;font-weight:900;margin:8px 0;line-height:1.7">'+(n.text||'')+'</div>'+
+      '<div style="font-size:11px;color:var(--text2)">'+(n.time||'')+'</div>';
+  }else{
+    document.getElementById('home-hero').innerHTML=
+      '<div style="font-size:13px;color:var(--text2)">現在お知らせはありません</div>';
+  }
+
   var shortageEvents=(state.events||[]).filter(function(ev){
     return ev.status!=='done' && getStaffShortage(ev)>0;
   }).slice(0,5);
@@ -2423,7 +2460,7 @@ function renderHome() {
       +shortageEvents.map(function(ev){ return '<div style="margin-top:4px"><b>'+ev.name+'</b>　あと'+getStaffShortage(ev)+'人</div>'; }).join('')
       +'</div>'
     : '';
-  document.getElementById('home-notices').innerHTML=shortageHtml+getActiveNotices().map(function(n){
+  document.getElementById('home-notices').innerHTML=shortageHtml+activeNotices.map(function(n){
     return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'</div>'+n.text+'</div>';
   }).join('');
 }
@@ -2434,7 +2471,6 @@ function renderSettings() {
   document.getElementById('st-ev-count').textContent=state.events.length+'件';
   document.getElementById('st-item-count').textContent=state.invItems.length+'品目';
   renderStaffList();
-  renderLeaderEventStaffList();
   renderAuditLogs();
 }
 
@@ -2443,6 +2479,48 @@ function escHtml(s){
   return String(s||'').replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
+}
+
+
+function populateAttendanceZoneFilter(){
+  var sel=document.getElementById('att-filter-zone');
+  if(!sel) return;
+  var cur=sel.value||'all';
+  var zones=[];
+  (state.events||[]).forEach(function(ev){ if(ev.zone && zones.indexOf(ev.zone)<0) zones.push(ev.zone); });
+  sel.innerHTML='<option value="all">すべて</option>'+zones.map(function(z){return '<option value="'+escHtml(z)+'">'+escHtml(z)+'</option>';}).join('');
+  sel.value=zones.indexOf(cur)>=0?cur:'all';
+}
+function renderAttendancePage(){
+  if(role!=='leader') return;
+  populateAttendanceZoneFilter();
+  var body=document.getElementById('attendance-tbody');
+  if(!body) return;
+  var period=(document.getElementById('att-filter-period')||{}).value||'month';
+  var zone=(document.getElementById('att-filter-zone')||{}).value||'all';
+  var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
+  var events=(state.events||[]).slice().filter(function(ev){
+    if(zone!=='all' && ev.zone!==zone) return false;
+    if(period==='month'){
+      var dates=(typeof dateListForEvent==='function') ? dateListForEvent(ev) : [ev.date];
+      return dates.some(function(d){return String(d||'').slice(0,7)===ym;});
+    }
+    return true;
+  }).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''));});
+  if(!events.length){ body.innerHTML='<tr><td colspan="9" style="padding:16px;color:var(--text2)">表示するイベントがありません</td></tr>'; return; }
+  body.innerHTML=events.map(function(ev){
+    var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
+    if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
+    if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
+    var av=ev.availability||{};
+    var ok=0,maybe=0,no=0;
+    var staffHtml=staff.length?staff.map(function(n){
+      var v=av[n]||''; if(v==='ok') ok++; else if(v==='maybe') maybe++; else if(v==='no') no++;
+      return '<span style="display:inline-block;margin:2px 6px 2px 0">'+availabilityMark(v)+' '+escHtml(n)+'</span>';
+    }).join(''):'<span style="color:var(--red);font-weight:900">未設定</span>';
+    var date=escHtml((ev.date||'').slice(5).replace('-','/'))+(ev.dateEnd?'〜'+escHtml(String(ev.dateEnd).slice(5).replace('-','/')):'');
+    return '<tr><td>'+date+'</td><td><b>'+escHtml(ev.name||'名称未設定')+'</b></td><td>'+escHtml(ev.zone||'未設定')+'</td><td>'+escHtml(ev.place||'場所未設定')+'</td><td>'+staffHtml+'</td><td>'+(ev.requiredStaff||'')+'</td><td style="color:var(--green);font-weight:900">'+ok+'</td><td style="color:var(--gold);font-weight:900">'+maybe+'</td><td style="color:var(--red);font-weight:900">'+no+'</td></tr>';
+  }).join('');
 }
 
 function renderLeaderEventStaffList(){
