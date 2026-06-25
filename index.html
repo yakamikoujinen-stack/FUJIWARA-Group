@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.4</title>
+<title>FUJIWARA GROUP 販売管理 v5.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -2835,5 +2835,163 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   });
 })();
 </script>
+
+<!-- ===== FUJIWARA v5.0 リーダー専用 3アプリ入口 ===== -->
+<style>
+  #fujiwara-leader-system-btn{
+    display:none;
+    position:fixed;
+    right:14px;
+    bottom:calc(120px + env(safe-area-inset-bottom));
+    z-index:180;
+    border:none;
+    border-radius:999px;
+    padding:12px 16px;
+    font-size:13px;
+    font-weight:900;
+    color:#1a1200;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    box-shadow:0 5px 20px rgba(80,55,0,.35);
+  }
+  #fujiwara-system-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:260;
+    background:rgba(0,0,0,.55);
+    align-items:flex-end;
+    justify-content:center;
+  }
+  #fujiwara-system-modal.open{display:flex;}
+  .fujiwara-system-panel{
+    width:100%;
+    max-width:520px;
+    background:var(--surface);
+    border:1.5px solid var(--border);
+    border-radius:18px 18px 0 0;
+    padding:18px 16px 24px;
+    box-shadow:0 -6px 28px rgba(0,0,0,.25);
+  }
+  .fujiwara-system-title{
+    font-size:18px;
+    font-weight:900;
+    color:var(--text);
+    margin-bottom:4px;
+  }
+  .fujiwara-system-sub{
+    font-size:12px;
+    color:var(--text2);
+    margin-bottom:14px;
+  }
+  .fujiwara-system-card{
+    display:block;
+    text-decoration:none;
+    background:#fffdf6;
+    border:1.5px solid #d8bf75;
+    border-radius:13px;
+    padding:14px;
+    margin-bottom:10px;
+    color:#111;
+    font-weight:900;
+  }
+  .fujiwara-system-card span{
+    display:block;
+    font-size:11px;
+    color:#6d5a2b;
+    font-weight:700;
+    margin-top:3px;
+  }
+</style>
+
+<button id="fujiwara-leader-system-btn" type="button" onclick="openFujiwaraSystemMenu()">⚙ システム管理</button>
+
+<div id="fujiwara-system-modal" onclick="closeFujiwaraSystemMenu(event)">
+  <div class="fujiwara-system-panel" onclick="event.stopPropagation()">
+    <div class="fujiwara-system-title">⚙ リーダー専用 システム管理</div>
+    <div class="fujiwara-system-sub">建設アプリ・家族サブアプリへの入口です。</div>
+
+    <a class="fujiwara-system-card" href="kensetsu.html">
+      🏗 建設アプリ
+      <span>工事日報・請求集計・給与集計</span>
+    </a>
+
+    <a class="fujiwara-system-card" href="family.html">
+      🏠 家族サブアプリ
+      <span>家族カレンダー・家族連絡用</span>
+    </a>
+
+    <button class="btn btn-ghost btn-full" type="button" onclick="closeFujiwaraSystemMenu()">閉じる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  function isLeaderRole(){
+    try { return window.role === 'leader' || (typeof role !== 'undefined' && role === 'leader'); }
+    catch(e){ return false; }
+  }
+
+  window.openFujiwaraSystemMenu = function(){
+    var modal=document.getElementById('fujiwara-system-modal');
+    if(modal) modal.classList.add('open');
+  };
+
+  window.closeFujiwaraSystemMenu = function(e){
+    var modal=document.getElementById('fujiwara-system-modal');
+    if(modal) modal.classList.remove('open');
+  };
+
+  function refreshLeaderSystemButton(){
+    var btn=document.getElementById('fujiwara-leader-system-btn');
+    var app=document.getElementById('app');
+    if(!btn || !app) return;
+    var appShown = app.style.display !== 'none' && getComputedStyle(app).display !== 'none';
+    btn.style.display = (appShown && isLeaderRole()) ? 'block' : 'none';
+  }
+
+  var oldInitApp = window.initApp;
+  if(typeof oldInitApp === 'function'){
+    window.initApp = function(){
+      var result = oldInitApp.apply(this, arguments);
+      setTimeout(refreshLeaderSystemButton, 80);
+      return result;
+    };
+  }
+
+  var oldSetLoginRole = window.setLoginRole;
+  if(typeof oldSetLoginRole === 'function'){
+    window.setLoginRole = function(r){
+      var result = oldSetLoginRole.apply(this, arguments);
+      setTimeout(refreshLeaderSystemButton, 80);
+      return result;
+    };
+  }
+
+  var oldDoLogin = window.doLogin;
+  if(typeof oldDoLogin === 'function'){
+    window.doLogin = function(){
+      var result = oldDoLogin.apply(this, arguments);
+      setTimeout(refreshLeaderSystemButton, 120);
+      return result;
+    };
+  }
+
+  var oldLogout = window.logout;
+  if(typeof oldLogout === 'function'){
+    window.logout = function(){
+      var result = oldLogout.apply(this, arguments);
+      setTimeout(refreshLeaderSystemButton, 80);
+      return result;
+    };
+  }
+
+  setInterval(refreshLeaderSystemButton, 1000);
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(refreshLeaderSystemButton, 300);
+  });
+})();
+</script>
+<!-- ===== /FUJIWARA v5.0 リーダー専用 3アプリ入口 ===== -->
+
 </body>
 </html>
