@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.4 ログイン安定版</title>
+<title>FUJIWARA GROUP 正式版 v7.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -427,6 +427,7 @@ body::before,#app::before,.page::before{
 }
 
 </style>
+<!-- FUJIWARA_OFFICIAL_V7: 本番用・ログイン安定版 -->
 </head>
 <body>
 
@@ -1061,7 +1062,7 @@ function refreshSavedLoginBox(){
   var saved=getSavedLoginProfile();
   if(saved && saved.name){
     box.style.display='';
-    var extra = (saved.role==='leader' || saved.role==='staff') ? '<br>※リーダー・担当者は毎回パスワードが必要です' : '<br>※一般は自動ログインできます';
+    var extra = saved.role==='leader' ? '<br>※リーダーは毎回パスワードが必要です' : '<br>※名前だけでログインできます';
     box.innerHTML='✅ この端末は登録済みです<br><b>'+saved.name+'</b>（'+roleLabel(saved.role)+'）'+extra;
     btn.textContent='ログイン →';
     clearBtn.style.display='';
@@ -1101,10 +1102,11 @@ function setLoginRole(r) {
   });
   var pww = document.getElementById('pw-wrap');
   var pwnote = document.getElementById('pw-note');
-  if(r==='user'){ pww.style.display='none'; }
-  else {
+  if(r==='leader'){
     pww.style.display='';
-    pwnote.textContent = r==='leader' ? '🔑 リーダー専用パスワードが必要です' : '🔑 担当者パスワードが必要です';
+    pwnote.textContent = '🔑 リーダー専用パスワードが必要です';
+  } else {
+    pww.style.display='none';
   }
   document.getElementById('login-err').style.display='none';
 }
