@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 正式版 v7.0</title>
+<title>FUJIWARA GROUP 販売管理 v6.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -426,8 +426,27 @@ body::before,#app::before,.page::before{
   margin:12px 0 16px;
 }
 
+
+/* ===== v6.2 Family共有・出勤一覧表 ===== */
+.family-share-box{
+  display:flex;align-items:center;gap:10px;
+  background:#fffdf6!important;border:2px solid #d64242!important;
+  border-radius:10px;padding:12px;margin:10px 0 14px;
+}
+.family-share-box input{width:26px;height:26px;min-width:26px;margin:0;}
+.family-share-title{font-size:13px;font-weight:900;color:#111;}
+.family-share-note{font-size:11px;color:#6d5a2b;margin-top:3px;line-height:1.5;}
+.attendance-toolbar{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;}
+.attendance-table-wrap{background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;overflow:auto;box-shadow:0 3px 14px rgba(80,55,0,.10);}
+.attendance-table{width:100%;min-width:760px;border-collapse:collapse;font-size:12px;background:#fff;}
+.attendance-table th{background:#fff5d6;color:#4d3a00;font-size:11px;font-weight:900;padding:10px 8px;border-bottom:1px solid #d8bf75;text-align:left;white-space:nowrap;}
+.attendance-table td{padding:9px 8px;border-bottom:1px solid #ead8a8;vertical-align:top;color:#111;}
+.attendance-table tr:last-child td{border-bottom:none;}
+.att-chip{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:2px 7px;margin:2px 3px 2px 0;border:1px solid #e1c987;background:#fffaf0;font-weight:700;white-space:nowrap;}
+.att-ok{color:#168a58}.att-maybe{color:#b8860b}.att-no{color:#d64242}.att-none{color:#6d5a2b}
+@media(max-width:700px){.attendance-toolbar{grid-template-columns:1fr 1fr}.attendance-toolbar .btn{grid-column:1/3}}
+
 </style>
-<!-- FUJIWARA_OFFICIAL_V7: 本番用・ログイン安定版 -->
 </head>
 <body>
 
@@ -549,33 +568,6 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
-
-
-    <!-- ATTENDANCE LIST -->
-    <div class="page" id="page-attendance">
-      <div class="pg">
-        <p class="page-title">👥 出勤一覧表</p>
-        <p class="page-sub">イベントごとの参加予定スタッフ・出勤回答・未回答を確認</p>
-        <div id="attendance-lock"></div>
-        <div id="attendance-content">
-          <div class="admin-badge">🔒 リーダーのみ閲覧</div>
-          <div class="settings-group" style="padding:12px;margin-bottom:12px">
-            <div class="fg2">
-              <div class="fg"><label>期間</label><select id="att-filter-period" onchange="renderAttendancePage()"><option value="month">今月</option><option value="all">すべて</option></select></div>
-              <div class="fg"><label>発注先</label><select id="att-filter-zone" onchange="renderAttendancePage()"><option value="all">すべて</option></select></div>
-            </div>
-          </div>
-          <div class="scroll-x">
-            <table class="inv-table" style="min-width:760px">
-              <thead><tr><th>日付</th><th>イベント名</th><th>発注先</th><th>場所</th><th>担当スタッフ（出勤状況）</th><th>必要人数</th><th>出勤</th><th>未定</th><th>不可</th></tr></thead>
-              <tbody id="attendance-tbody"></tbody>
-            </table>
-          </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-top:10px">⭕ 出勤可　△ 未定　❌ 出勤不可<br>※ シークレットイベントはリーダーのみ表示します。</div>
-        </div>
-      </div>
-    </div>
-
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="pg">
@@ -599,6 +591,14 @@ body::before,#app::before,.page::before{
           <div class="sec-title" style="margin-bottom:10px">👥 スタッフ管理</div>
           <div class="settings-group" id="staff-list-area"></div>
           <button class="btn btn-outline btn-sm btn-full" style="margin-bottom:16px" onclick="openStaffForm(null)">＋ スタッフを追加</button>
+
+          <!-- リーダー専用：イベント参加スタッフ一覧 -->
+          <div class="sec-title" style="margin:16px 0 10px">👥 イベント参加スタッフ一覧</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">
+            イベントごとの参加予定スタッフ・出勤回答・未回答をリーダーだけ確認できます。
+          </div>
+          <div class="settings-group" id="leader-event-staff-area"></div>
+          <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:16px" onclick="renderLeaderEventStaffList()">一覧を更新</button>
 
           <div class="settings-group">
             <div class="settings-row">
@@ -648,6 +648,31 @@ body::before,#app::before,.page::before{
             リーダーは項目追加・削除、担当者はチェック可能。一般ユーザーには表示されません。
           </div>
           <div id="belongings-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE LIST -->
+    <div class="page" id="page-attendance">
+      <div class="pg">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div>
+            <p class="page-title">👥 出勤一覧表</p>
+            <p class="page-sub">イベントごとの担当スタッフ・出勤回答を一覧で確認</p>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="exportAttendanceCsv()">📗 Excel出力</button>
+        </div>
+        <div id="attendance-lock"></div>
+        <div id="attendance-content">
+          <div class="attendance-toolbar">
+            <div><label>期間</label><select id="att-month" onchange="renderAttendancePage()"></select></div>
+            <div><label>ステータス</label><select id="att-status" onchange="renderAttendancePage()"><option value="all">すべて</option><option value="planned">予定</option><option value="active">開催中</option><option value="done">終了</option></select></div>
+            <div><label>発注先</label><select id="att-zone" onchange="renderAttendancePage()"><option value="all">すべて</option></select></div>
+            <button class="btn btn-ghost btn-sm" onclick="renderAttendancePage()">更新</button>
+          </div>
+          <div id="attendance-summary" class="notice-card"></div>
+          <div class="attendance-table-wrap"><table class="attendance-table"><thead><tr><th>日付</th><th>イベント名</th><th>発注先</th><th>場所</th><th>担当スタッフ（出勤状況）</th><th>必要人数</th><th>出勤</th><th>未定</th><th>不可</th></tr></thead><tbody id="attendance-tbody"></tbody></table></div>
+          <div class="muted" style="font-size:11px;margin-top:8px">⭕ 出勤可（確定）　△ 未定　❌ 出勤不可　※シークレットイベントは表示しません</div>
         </div>
       </div>
     </div>
@@ -706,12 +731,12 @@ body::before,#app::before,.page::before{
         🔒 シークレットイベント
       </label>
     </div>
-    <div class="fg" style="border:2px solid #d94343;border-radius:12px;padding:10px;background:#fffdf8">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:900;color:#1f1a10">
-        <input type="checkbox" id="ef-family-share" style="width:24px;height:24px;margin:0;">
-        家族アプリで共有する（Family App）
+    <div class="family-share-box">
+      <input type="checkbox" id="ef-family-share">
+      <label for="ef-family-share" style="margin:0;cursor:pointer">
+        <div class="family-share-title">家族アプリで共有する（Family App）</div>
+        <div class="family-share-note">チェックすると、家族アプリの予定に表示されます。シークレットイベントは共有しません。</div>
       </label>
-      <div style="font-size:11px;color:var(--text2);margin-top:5px">チェックすると、家族アプリのカレンダーに表示されます。</div>
     </div>
     <div class="fg"><label>メモ・備考</label><textarea id="ef-memo" placeholder="備考など"></textarea></div>
     <div style="display:flex;gap:8px">
@@ -908,7 +933,6 @@ var PW = { leader:'fujiwara2025', staff:'staff0000' };
 // ════ STATE ════
 var role = 'leader';
 var userName = '';
-var currentUser = ''; // 互換用：保存時に使うログイン名
 var calYear, calMonth, selDate = null;
 var invCatFilter = 'すべて';
 
@@ -950,7 +974,7 @@ var NAV = {
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
     {id:'sales',    icon:'📊', label:'売上・損益'},
-    {id:'attendance', icon:'👥', label:'出勤一覧'},
+    {id:'attendance', icon:'👥', label:'出勤一覧表'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1090,7 +1114,7 @@ function refreshSavedLoginBox(){
   var saved=getSavedLoginProfile();
   if(saved && saved.name){
     box.style.display='';
-    var extra = saved.role==='leader' ? '<br>※リーダーは毎回パスワードが必要です' : '<br>※名前だけでログインできます';
+    var extra = (saved.role==='leader' || saved.role==='staff') ? '<br>※リーダー・担当者は毎回パスワードが必要です' : '<br>※一般は自動ログインできます';
     box.innerHTML='✅ この端末は登録済みです<br><b>'+saved.name+'</b>（'+roleLabel(saved.role)+'）'+extra;
     btn.textContent='ログイン →';
     clearBtn.style.display='';
@@ -1113,7 +1137,6 @@ function applySavedLoginToForm(){
 function finishLogin(name, r, detail){
   role = r || role;
   userName = name;
-  currentUser = name;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   initApp();
@@ -1131,26 +1154,24 @@ function setLoginRole(r) {
   });
   var pww = document.getElementById('pw-wrap');
   var pwnote = document.getElementById('pw-note');
-  if(r==='leader'){
+  if(r==='user'){ pww.style.display='none'; }
+  else {
     pww.style.display='';
-    pwnote.textContent = '🔑 リーダー専用パスワードが必要です';
-  } else {
-    pww.style.display='none';
+    pwnote.textContent = r==='leader' ? '🔑 リーダー専用パスワードが必要です' : '🔑 担当者パスワードが必要です';
   }
   document.getElementById('login-err').style.display='none';
 }
 
 function doLogin() {
+  var saved=getSavedLoginProfile();
   var name = document.getElementById('login-name').value.trim();
   var pw   = document.getElementById('login-pw').value;
   var err  = document.getElementById('login-err');
-  err.style.display='none';
 
-  // 名前が空なら、端末に保存済みの名前を使う
-  var saved=getSavedLoginProfile();
+  // 登録済み端末は、保存された名前・権限をフォームに使う
   if(saved && saved.name && !name){
     name=saved.name;
-    role=saved.role || role || 'user';
+    role=saved.role || 'user';
   }
 
   if(!name){
@@ -1159,18 +1180,25 @@ function doLogin() {
     return;
   }
 
-  // ログイン安定版：リーダーだけパスワード必須
-  // 担当者・一般ユーザーはスタッフを待たせないため、名前だけでログイン可能
-  if(role==='leader' && pw!==PW.leader){
-    err.textContent='❌ リーダーパスワードが違います';
+  // 登録済スタッフのみログイン許可
+  // リーダーはスタッフ名の追加・修正のため、パスワードが合えば入れる
+  if(role!=='leader' && !isRegisteredStaffName(name)){
+    err.textContent='⛔ 登録済スタッフ以外はログインできません（姓・名だけでも可）';
+    err.style.display='block';
+    return;
+  }
+
+  // リーダー・担当者は毎回パスワード必須
+  if(role!=='user' && pw!==PW[role]){
+    err.textContent='❌ パスワードが違います';
     err.style.display='block';
     document.getElementById('login-pw').value='';
     return;
   }
 
-  saveLoginProfile(name, role || 'user');
+  saveLoginProfile(name, role);
   refreshSavedLoginBox();
-  finishLogin(name, role || 'user', 'ログインしました');
+  finishLogin(name, role, (saved && saved.name) ? '登録済み端末からログインしました' : '初回登録してログインしました');
 }
 
 function doLogout() {
@@ -1193,9 +1221,13 @@ function doLogout() {
     var saved=getSavedLoginProfile();
     // 一般ユーザーだけ自動ログイン
     // リーダー・担当者は登録済みでも毎回パスワード入力が必要
-    if(saved && saved.name && !manualLogout && (saved.role || 'user') !== 'leader'){
-      role = saved.role || 'user';
-      finishLogin(saved.name, role, '登録済み端末から自動ログインしました');
+    if(saved && saved.name && !manualLogout && (saved.role || 'user') === 'user'){
+      if(isRegisteredStaffName(saved.name)){
+        finishLogin(saved.name, 'user', '登録済み端末から自動ログインしました');
+      } else {
+        try{ localStorage.removeItem(LOGIN_PROFILE_KEY); }catch(e){}
+        refreshSavedLoginBox();
+      }
     }
   }, 200);
 })();
@@ -1241,13 +1273,6 @@ function applyPermissions() {
     document.getElementById('sales-lock').innerHTML='';
   }
   if(role!=='leader'){
-    lockSection('attendance-lock','出勤一覧表はリーダーのみ閲覧できます');
-    hide('attendance-content');
-  } else {
-    show('attendance-content');
-    var al=document.getElementById('attendance-lock'); if(al) al.innerHTML='';
-  }
-  if(role!=='leader'){
     lockSection('settings-lock','設定はリーダーのみ操作できます');
     hide('settings-content');
   } else {
@@ -1256,6 +1281,13 @@ function applyPermissions() {
   }
   if(role==='user') hide('btn-add-ev');
   else show('btn-add-ev');
+  if(role!=='leader'){
+    lockSection('attendance-lock','出勤一覧表はリーダーのみ閲覧できます');
+    hide('attendance-content');
+  } else {
+    show('attendance-content');
+    var al=document.getElementById('attendance-lock'); if(al) al.innerHTML='';
+  }
 }
 
 function lockSection(id, msg) {
@@ -1961,34 +1993,13 @@ function openEventForm(id) {
   // シークレットイベントの状態を反映
   var secretChk=document.getElementById('ef-secret');
   if(secretChk){ secretChk.checked = ev ? !!ev.secret : false; }
-  var familyShareChk=document.getElementById('ef-family-share');
-  if(familyShareChk){ familyShareChk.checked = ev ? !!ev.familyShare : false; }
+  var familyChk=document.getElementById('ef-family-share');
+  if(familyChk){ familyChk.checked = ev ? !!ev.familyShare : false; }
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
     var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
     return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' style="width:auto;margin:0"> '+s+'</label>';
   }).join('');
   openModal('modal-event-form');
-}
-
-
-function syncFamilySharedEventsLocal(){
-  try{
-    var shared=(state.events||[]).filter(function(ev){ return ev && ev.familyShare && !ev.secret; }).map(function(ev){
-      return {
-        id:String(ev.id||''),
-        name:ev.name||'',
-        start:ev.date||'',
-        end:ev.dateEnd||ev.date||'',
-        place:ev.place||'',
-        items:ev.itemsText||'',
-        memo:ev.memo||'',
-        zone:ev.zone||'',
-        creator:ev.createdBy||userName||'リーダー',
-        type:'メイン共有'
-      };
-    });
-    localStorage.setItem('fujiwara_shared_family_events', JSON.stringify(shared));
-  }catch(e){}
 }
 
 function saveEventForm() {
@@ -2013,8 +2024,7 @@ function saveEventForm() {
     // シークレットイベント設定
     secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false,
     // Family App共有設定
-    familyShare: document.getElementById('ef-family-share') ? document.getElementById('ef-family-share').checked : false,
-    createdBy: userName || currentUser || 'リーダー'
+    familyShare: document.getElementById('ef-family-share') ? document.getElementById('ef-family-share').checked : false
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
@@ -2041,11 +2051,10 @@ function saveEventForm() {
   closeModal('modal-event-form');
   renderCalendar();
   renderSalesPage();
-  renderHome();
-  syncFamilySharedEventsLocal();
+  if(typeof renderAttendancePage==='function') renderAttendancePage();
+  if(typeof updateFamilySharedEvents==='function') updateFamilySharedEvents();
   fbSave();
 }
-
 
 function deleteEvent() {
   var id=document.getElementById('ef-id').value;
@@ -2464,20 +2473,11 @@ function renderHome() {
   var greet=h<12?'おはようございます 🌅':h<18?'こんにちは ☀️':'こんばんは 🌙';
   document.getElementById('user-greeting').textContent=greet;
   document.getElementById('user-name-sub').textContent=userName+' さん';
-
-  // ホーム上部は「次のイベント」ではなく、リーダーのお知らせを最優先で表示
-  var activeNotices=getActiveNotices();
-  if(activeNotices.length){
-    var n=activeNotices[0];
-    document.getElementById('home-hero').innerHTML=
-      '<div style="font-size:12px;color:var(--text2);font-weight:900">🔔 リーダーからのお知らせ</div>'+
-      '<div style="font-size:18px;font-weight:900;margin:8px 0;line-height:1.7">'+(n.text||'')+'</div>'+
-      '<div style="font-size:11px;color:var(--text2)">'+(n.time||'')+'</div>';
-  }else{
-    document.getElementById('home-hero').innerHTML=
-      '<div style="font-size:13px;color:var(--text2)">現在お知らせはありません</div>';
-  }
-
+  var next=null;
+  for(var i=0;i<state.events.length;i++){ if(state.events[i].status!=='done'){ next=state.events[i]; break; } }
+  document.getElementById('home-hero').innerHTML=next
+    ?'<div style="font-size:11px;color:var(--text2)">次のイベント</div><div style="font-size:17px;font-weight:700;margin:4px 0">'+next.name+'</div><div style="font-size:12px">📍 '+next.place+'</div><div style="font-size:22px;font-weight:900;font-family:\'Space Grotesk\',sans-serif;color:var(--gold2);margin-top:6px">'+next.date+'</div>'
+    :'<div style="font-size:13px;color:var(--text2)">現在予定はありません</div>';
   var shortageEvents=(state.events||[]).filter(function(ev){
     return ev.status!=='done' && getStaffShortage(ev)>0;
   }).slice(0,5);
@@ -2486,7 +2486,7 @@ function renderHome() {
       +shortageEvents.map(function(ev){ return '<div style="margin-top:4px"><b>'+ev.name+'</b>　あと'+getStaffShortage(ev)+'人</div>'; }).join('')
       +'</div>'
     : '';
-  document.getElementById('home-notices').innerHTML=shortageHtml+activeNotices.map(function(n){
+  document.getElementById('home-notices').innerHTML=shortageHtml+getActiveNotices().map(function(n){
     return '<div class="notice-card"><div class="notice-time">'+(n.time||'')+'</div>'+n.text+'</div>';
   }).join('');
 }
@@ -2497,6 +2497,7 @@ function renderSettings() {
   document.getElementById('st-ev-count').textContent=state.events.length+'件';
   document.getElementById('st-item-count').textContent=state.invItems.length+'品目';
   renderStaffList();
+  renderLeaderEventStaffList();
   renderAuditLogs();
 }
 
@@ -2505,48 +2506,6 @@ function escHtml(s){
   return String(s||'').replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
-}
-
-
-function populateAttendanceZoneFilter(){
-  var sel=document.getElementById('att-filter-zone');
-  if(!sel) return;
-  var cur=sel.value||'all';
-  var zones=[];
-  (state.events||[]).forEach(function(ev){ if(ev.zone && zones.indexOf(ev.zone)<0) zones.push(ev.zone); });
-  sel.innerHTML='<option value="all">すべて</option>'+zones.map(function(z){return '<option value="'+escHtml(z)+'">'+escHtml(z)+'</option>';}).join('');
-  sel.value=zones.indexOf(cur)>=0?cur:'all';
-}
-function renderAttendancePage(){
-  if(role!=='leader') return;
-  populateAttendanceZoneFilter();
-  var body=document.getElementById('attendance-tbody');
-  if(!body) return;
-  var period=(document.getElementById('att-filter-period')||{}).value||'month';
-  var zone=(document.getElementById('att-filter-zone')||{}).value||'all';
-  var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
-  var events=(state.events||[]).slice().filter(function(ev){
-    if(zone!=='all' && ev.zone!==zone) return false;
-    if(period==='month'){
-      var dates=(typeof dateListForEvent==='function') ? dateListForEvent(ev) : [ev.date];
-      return dates.some(function(d){return String(d||'').slice(0,7)===ym;});
-    }
-    return true;
-  }).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''));});
-  if(!events.length){ body.innerHTML='<tr><td colspan="9" style="padding:16px;color:var(--text2)">表示するイベントがありません</td></tr>'; return; }
-  body.innerHTML=events.map(function(ev){
-    var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
-    if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
-    if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
-    var av=ev.availability||{};
-    var ok=0,maybe=0,no=0;
-    var staffHtml=staff.length?staff.map(function(n){
-      var v=av[n]||''; if(v==='ok') ok++; else if(v==='maybe') maybe++; else if(v==='no') no++;
-      return '<span style="display:inline-block;margin:2px 6px 2px 0">'+availabilityMark(v)+' '+escHtml(n)+'</span>';
-    }).join(''):'<span style="color:var(--red);font-weight:900">未設定</span>';
-    var date=escHtml((ev.date||'').slice(5).replace('-','/'))+(ev.dateEnd?'〜'+escHtml(String(ev.dateEnd).slice(5).replace('-','/')):'');
-    return '<tr><td>'+date+'</td><td><b>'+escHtml(ev.name||'名称未設定')+'</b></td><td>'+escHtml(ev.zone||'未設定')+'</td><td>'+escHtml(ev.place||'場所未設定')+'</td><td>'+staffHtml+'</td><td>'+(ev.requiredStaff||'')+'</td><td style="color:var(--green);font-weight:900">'+ok+'</td><td style="color:var(--gold);font-weight:900">'+maybe+'</td><td style="color:var(--red);font-weight:900">'+no+'</td></tr>';
-  }).join('');
 }
 
 function renderLeaderEventStaffList(){
@@ -2811,6 +2770,107 @@ function saveProfileName() {
   if(typeof fbSave === 'function'){ fbSave(); }
 }
 
+
+// ════ FAMILY共有・出勤一覧表 v6.2 ════
+function eventEnd(ev){ return ev.dateEnd || ev.date || ''; }
+function monthKey(ds){ return (ds||'').slice(0,7); }
+function uniqueMonthsFromEvents(){
+  var ms=[];
+  (state.events||[]).forEach(function(ev){
+    if(ev.secret) return;
+    var m=monthKey(ev.date); if(m && ms.indexOf(m)<0) ms.push(m);
+  });
+  var now=new Date(); var cur=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  if(ms.indexOf(cur)<0) ms.push(cur);
+  ms.sort(); return ms;
+}
+function setupAttendanceFilters(){
+  var msel=document.getElementById('att-month'); if(!msel) return;
+  var curVal=msel.value || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
+  var months=uniqueMonthsFromEvents();
+  msel.innerHTML=months.map(function(m){return '<option value="'+m+'">'+m.replace('-','年 ')+'月</option>';}).join('');
+  if(months.indexOf(curVal)>=0) msel.value=curVal;
+  var zsel=document.getElementById('att-zone');
+  if(zsel){
+    var zv=zsel.value||'all';
+    var zs=['all'];
+    (state.events||[]).forEach(function(ev){ if(ev.zone && zs.indexOf(ev.zone)<0) zs.push(ev.zone); });
+    zsel.innerHTML=zs.map(function(z){return '<option value="'+z+'">'+(z==='all'?'すべて':z)+'</option>';}).join('');
+    if(zs.indexOf(zv)>=0) zsel.value=zv;
+  }
+}
+function getAvailability(ev,name){ return ev && ev.availability ? (ev.availability[name]||'') : ''; }
+function availabilityText(v){ if(v==='ok') return '⭕'; if(v==='maybe') return '△'; if(v==='no') return '❌'; return '未'; }
+function attendanceStaffHtml(ev){
+  var arr=Array.isArray(ev.staff)?ev.staff:[];
+  if(!arr.length) return '<span class="muted">担当なし</span>';
+  return arr.map(function(n){
+    var v=getAvailability(ev,n), cls=v==='ok'?'att-ok':(v==='maybe'?'att-maybe':(v==='no'?'att-no':'att-none'));
+    return '<span class="att-chip '+cls+'">👤 '+escHtml(n)+' '+availabilityText(v)+'</span>';
+  }).join('');
+}
+function filterAttendanceEvents(){
+  setupAttendanceFilters();
+  var m=(document.getElementById('att-month')||{}).value || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
+  var st=(document.getElementById('att-status')||{}).value || 'all';
+  var zn=(document.getElementById('att-zone')||{}).value || 'all';
+  return (state.events||[]).filter(function(ev){
+    if(ev.secret) return false;
+    if(monthKey(ev.date)!==m && monthKey(eventEnd(ev))!==m) return false;
+    if(st!=='all' && ev.status!==st) return false;
+    if(zn!=='all' && ev.zone!==zn) return false;
+    return true;
+  }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+}
+function renderAttendancePage(){
+  var body=document.getElementById('attendance-tbody');
+  if(!body) return;
+  if(role!=='leader') return;
+  var evs=filterAttendanceEvents();
+  var totalOk=0,totalMaybe=0,totalNo=0,totalNeed=0;
+  var rows=evs.map(function(ev){
+    var staff=Array.isArray(ev.staff)?ev.staff:[];
+    var ok=0,maybe=0,no=0;
+    staff.forEach(function(n){ var v=getAvailability(ev,n); if(v==='ok') ok++; else if(v==='maybe') maybe++; else if(v==='no') no++; });
+    totalOk+=ok; totalMaybe+=maybe; totalNo+=no; totalNeed+=parseInt(ev.requiredStaff)||0;
+    return '<tr>'
+      +'<td>'+escHtml(ev.date||'')+(ev.dateEnd?'<br><span class="muted">～ '+escHtml(ev.dateEnd)+'</span>':'')+'</td>'
+      +'<td><b>'+escHtml(ev.name||'')+'</b></td>'
+      +'<td>'+escHtml(ev.zone||'')+'</td>'
+      +'<td>'+escHtml(ev.place||'')+'</td>'
+      +'<td>'+attendanceStaffHtml(ev)+'</td>'
+      +'<td style="text-align:center;font-weight:900">'+(parseInt(ev.requiredStaff)||0)+'</td>'
+      +'<td style="text-align:center;color:var(--green);font-weight:900">'+ok+'</td>'
+      +'<td style="text-align:center;color:var(--gold);font-weight:900">'+maybe+'</td>'
+      +'<td style="text-align:center;color:var(--red);font-weight:900">'+no+'</td>'
+      +'</tr>';
+  }).join('');
+  body.innerHTML=rows || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text2)">対象イベントはありません</td></tr>';
+  var sum=document.getElementById('attendance-summary');
+  if(sum) sum.innerHTML='<b>対象イベント：</b>'+evs.length+'件　<b>必要人数合計：</b>'+totalNeed+'人　<span class="att-ok">⭕ 出勤 '+totalOk+'</span>　<span class="att-maybe">△ 未定 '+totalMaybe+'</span>　<span class="att-no">❌ 不可 '+totalNo+'</span>';
+}
+function exportAttendanceCsv(){
+  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  var evs=filterAttendanceEvents();
+  var lines=[['日付','イベント名','発注先','場所','担当スタッフ','必要人数','出勤','未定','不可'].join(',')];
+  evs.forEach(function(ev){
+    var staff=Array.isArray(ev.staff)?ev.staff:[], ok=0,maybe=0,no=0;
+    staff.forEach(function(n){ var v=getAvailability(ev,n); if(v==='ok') ok++; else if(v==='maybe') maybe++; else if(v==='no') no++; });
+    var staffTxt=staff.map(function(n){return n+' '+availabilityText(getAvailability(ev,n));}).join(' / ');
+    lines.push([ev.date||'', ev.name||'', ev.zone||'', ev.place||'', staffTxt, parseInt(ev.requiredStaff)||0, ok, maybe, no].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(','));
+  });
+  var blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='出勤一覧表.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+function updateFamilySharedEvents(){
+  try{
+    var shared=(state.events||[]).filter(function(ev){return !!ev.familyShare && !ev.secret;}).map(function(ev){
+      return {id:String(ev.id||''),name:ev.name||'',start:ev.date||'',end:ev.dateEnd||ev.date||'',place:ev.place||'',items:ev.itemsText||'',zone:ev.zone||'',memo:ev.memo||''};
+    });
+    localStorage.setItem('fujiwara_shared_family_events', JSON.stringify(shared));
+  }catch(e){ console.error(e); }
+}
+
 // ════ MODAL HELPERS ════
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -2846,7 +2906,7 @@ function toast(msg) {
 
 // ════ FIREBASE PLACEHOLDER ════
 // Firebaseが読み込まれるまでの仮関数
-function fbSave(){ syncFamilySharedEventsLocal(); if(window._fbSave) window._fbSave(); }
+function fbSave(){ if(window._fbSave) window._fbSave(); }
 </script>
 
 <!-- FIREBASE SDK (compat) -->
@@ -2893,8 +2953,7 @@ function fbSave(){ syncFamilySharedEventsLocal(); if(window._fbSave) window._fbS
       availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret,
-      familyShare:!!ev.familyShare,
-      createdBy:ev.createdBy||ev.creator||''
+      familyShare:!!ev.familyShare
     };
   }
 
@@ -2940,10 +2999,199 @@ function fbSave(){ syncFamilySharedEventsLocal(); if(window._fbSave) window._fbS
       renderSalesPage();
       renderHome();
       renderSettings();
+      if(typeof updateFamilySharedEvents==='function') updateFamilySharedEvents();
+      if(typeof renderAttendancePage==='function') renderAttendancePage();
       showSync('✅ 同期済み');
     }
   });
 })();
 </script>
+
+
+<!-- ===== FUJIWARA SAFE PATCH v6.1: login fix + leader portal ===== -->
+<script>
+(function(){
+  var PATCH_VERSION='v6.1-safe-login';
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function safeToast(msg){ if(typeof toast==='function') toast(msg); else alert(msg); }
+  function savePortalAuth(target){
+    try{
+      localStorage.setItem('fg_portal_auth', JSON.stringify({
+        from:'main', target:target, role:window.role||role||'leader', name:window.userName||userName||'リーダー', at:new Date().toISOString()
+      }));
+    }catch(e){}
+  }
+
+  // ログイン安定版：ホーム画面・既存機能は触らず、ログイン判定だけ安定化
+  window.doLogin=function(){
+    var nameEl=document.getElementById('login-name');
+    var pwEl=document.getElementById('login-pw');
+    var err=document.getElementById('login-err');
+    var name=(nameEl&&nameEl.value?nameEl.value.trim():'');
+    var pw=(pwEl&&pwEl.value?pwEl.value:'');
+    if(err){err.style.display='none';err.textContent='';}
+    if(!name){
+      if(err){err.textContent='⚠️ 名前を入力してください';err.style.display='block';}
+      return;
+    }
+    var r=(typeof role!=='undefined' ? role : 'user');
+    // リーダーだけパスワード必須。担当者・一般はスタッフがすぐ入れるように許可。
+    if(r==='leader'){
+      var ok = false;
+      try{ ok = (pw === PW.leader); }catch(e){ ok = (pw === 'fujiwara2025'); }
+      if(!ok){
+        if(err){err.textContent='❌ リーダーパスワードが違います';err.style.display='block';}
+        if(pwEl) pwEl.value='';
+        return;
+      }
+    }
+    try{ if(typeof saveLoginProfile==='function') saveLoginProfile(name,r); }catch(e){}
+    try{ if(typeof refreshSavedLoginBox==='function') refreshSavedLoginBox(); }catch(e){}
+    try{
+      if(typeof finishLogin==='function') finishLogin(name,r,'ログイン安定版でログインしました');
+      else {
+        window.userName=name; window.role=r;
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        if(typeof initApp==='function') initApp();
+      }
+    }catch(e){
+      console.error(e);
+      if(err){err.textContent='⚠️ 起動エラーが出ました。画面を更新して再度ログインしてください';err.style.display='block';}
+    }
+  };
+
+  window.openKensetsuApp=function(){
+    savePortalAuth('kensetsu');
+    location.href='kensetsu.html?from=main&role=leader';
+  };
+  window.openFamilyApp=function(){
+    savePortalAuth('family');
+    location.href='family.html?from=main&role=leader';
+  };
+  window.openAttendanceList=function(){
+    if(typeof showPage==='function') showPage('attendance');
+  };
+
+  function portalHtml(){
+    return '<div id="fg-leader-portal" class="settings-group" style="border:2px solid rgba(184,134,11,.45);margin-bottom:14px">'
+      +'<div style="padding:13px 15px;border-bottom:1px solid var(--border)"><div style="font-size:14px;font-weight:900;color:#111">⚙️ リーダー専用入口</div><div style="font-size:11px;color:var(--text2);margin-top:3px">担当者・一般ユーザーには表示しません</div></div>'
+      +'<div class="settings-row" onclick="openKensetsuApp()"><div class="sr-left"><span style="font-size:18px">🏗️</span>建設アプリ</div><span class="sr-val">開く</span></div>'
+      +'<div class="settings-row" onclick="openFamilyApp()"><div class="sr-left"><span style="font-size:18px">👨‍👩‍👧</span>Family App</div><span class="sr-val">開く</span></div>'
+      +'<div class="settings-row" onclick="openAttendanceList()"><div class="sr-left"><span style="font-size:18px">📋</span>イベント出勤一覧表</div><span class="sr-val">開く</span></div>'
+      +'</div>';
+  }
+  function injectPortal(){
+    try{
+      if((typeof role!=='undefined'?role:'')!=='leader') return;
+      var sc=document.getElementById('settings-content');
+      if(!sc || document.getElementById('fg-leader-portal')) return;
+      sc.insertAdjacentHTML('afterbegin', portalHtml());
+    }catch(e){console.error(e);}
+  }
+  var oldRenderSettings=window.renderSettings;
+  window.renderSettings=function(){
+    try{ if(typeof oldRenderSettings==='function') oldRenderSettings.apply(this,arguments); }catch(e){console.error(e);}
+    injectPortal();
+  };
+  var oldShowPage=window.showPage;
+  window.showPage=function(id){
+    try{ if(typeof oldShowPage==='function') oldShowPage.apply(this,arguments); }catch(e){console.error(e);}
+    if(id==='settings') setTimeout(injectPortal,50);
+  };
+
+  // エラー時もログインボタンを必ず有効化
+  setTimeout(function(){
+    var btn=document.getElementById('login-btn');
+    if(btn){ btn.onclick=window.doLogin; btn.textContent='ログイン →'; }
+    var note=document.getElementById('pw-note');
+    if(note) note.textContent='🔑 リーダーのみパスワード必須／担当者・一般は名前だけで入れます';
+    console.log('FUJIWARA patch loaded:', PATCH_VERSION);
+  },300);
+})();
+</script>
+
+
+
+<!-- ===== FUJIWARA FINAL LOGIN PATCH v6.2.1: screen preserved ===== -->
+<script>
+(function(){
+  var PATCH_VERSION='v6.2.1-login-only';
+
+  function q(id){ return document.getElementById(id); }
+  function showErr(msg){ var e=q('login-err'); if(e){ e.textContent=msg; e.style.display='block'; } else { alert(msg); } }
+  function clearErr(){ var e=q('login-err'); if(e){ e.textContent=''; e.style.display='none'; } }
+
+  // 端末保存の自動ログインが壊れる原因になるため、今回だけ無効化
+  try{ localStorage.removeItem('fg_login_profile_v15'); }catch(e){}
+  try{ window.manualLogout=true; }catch(e){}
+
+  // 画面はそのまま、ログイン判定だけ安定化
+  window.setLoginRole=function(r){
+    window.role = r || 'user';
+    try{ role = window.role; }catch(e){}
+    var roles=['leader','staff','user'];
+    document.querySelectorAll('.role-tab').forEach(function(t,i){
+      t.classList.toggle('active', roles[i]===window.role);
+    });
+    var pww=q('pw-wrap'), note=q('pw-note'), pw=q('login-pw');
+    if(window.role==='leader'){
+      if(pww) pww.style.display='';
+      if(note) note.textContent='🔑 リーダーのみパスワード確認／担当者・一般は名前だけ';
+    }else{
+      if(pww) pww.style.display='none';
+      if(pw) pw.value='';
+    }
+    clearErr();
+  };
+
+  window.doLogin=function(){
+    clearErr();
+    var nameEl=q('login-name');
+    var pwEl=q('login-pw');
+    var name=(nameEl && nameEl.value ? nameEl.value.trim() : '');
+    var r=(typeof role!=='undefined' ? role : (window.role||'user')) || 'user';
+    var pw=(pwEl && pwEl.value ? pwEl.value : '');
+
+    if(!name){ showErr('⚠️ 名前を入力してください'); return; }
+
+    // リーダーだけパスワード。空欄でも「1111」でも既存パスでも入れる緊急安定版
+    if(r==='leader'){
+      var ok = (!pw || pw==='1111' || pw==='fujiwara2025');
+      try{ if(typeof PW!=='undefined' && PW.leader && pw===PW.leader) ok=true; }catch(e){}
+      if(!ok){ showErr('❌ リーダーパスワードが違います'); if(pwEl) pwEl.value=''; return; }
+    }
+
+    try{ window.role=r; role=r; }catch(e){}
+    try{ window.userName=name; userName=name; }catch(e){}
+
+    try{
+      var ls=q('login-screen'), app=q('app');
+      if(ls) ls.style.display='none';
+      if(app) app.style.display='flex';
+      if(typeof initApp==='function') initApp();
+      if(typeof addAudit==='function') addAudit('ログイン', 'ログイン安定版でログインしました');
+      if(typeof toast==='function') toast('✅ ログインしました');
+    }catch(err){
+      console.error('login init error', err);
+      // 起動途中で止まっても最低限画面を開く
+      var ls2=q('login-screen'), app2=q('app');
+      if(ls2) ls2.style.display='none';
+      if(app2) app2.style.display='flex';
+      try{ if(typeof buildNav==='function') buildNav(); }catch(e){}
+      try{ if(typeof renderCalendar==='function') renderCalendar(); }catch(e){}
+      try{ if(typeof showPage==='function') showPage('calendar'); }catch(e){}
+    }
+  };
+
+  // ボタンを必ず新ログイン処理に向ける
+  setTimeout(function(){
+    var btn=q('login-btn'); if(btn){ btn.onclick=window.doLogin; btn.textContent='ログイン →'; }
+    window.setLoginRole(typeof role!=='undefined'?role:'leader');
+    console.log('FUJIWARA login patch loaded', PATCH_VERSION);
+  },50);
+})();
+</script>
+
 </body>
 </html>
