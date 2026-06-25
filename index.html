@@ -908,6 +908,7 @@ var PW = { leader:'fujiwara2025', staff:'staff0000' };
 // ════ STATE ════
 var role = 'leader';
 var userName = '';
+var currentUser = ''; // 互換用：保存時に使うログイン名
 var calYear, calMonth, selDate = null;
 var invCatFilter = 'すべて';
 
@@ -1112,6 +1113,7 @@ function applySavedLoginToForm(){
 function finishLogin(name, r, detail){
   role = r || role;
   userName = name;
+  currentUser = name;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   initApp();
@@ -1968,6 +1970,27 @@ function openEventForm(id) {
   openModal('modal-event-form');
 }
 
+
+function syncFamilySharedEventsLocal(){
+  try{
+    var shared=(state.events||[]).filter(function(ev){ return ev && ev.familyShare && !ev.secret; }).map(function(ev){
+      return {
+        id:String(ev.id||''),
+        name:ev.name||'',
+        start:ev.date||'',
+        end:ev.dateEnd||ev.date||'',
+        place:ev.place||'',
+        items:ev.itemsText||'',
+        memo:ev.memo||'',
+        zone:ev.zone||'',
+        creator:ev.createdBy||userName||'リーダー',
+        type:'メイン共有'
+      };
+    });
+    localStorage.setItem('fujiwara_shared_family_events', JSON.stringify(shared));
+  }catch(e){}
+}
+
 function saveEventForm() {
   var name=document.getElementById('ef-name').value.trim();
   var date=document.getElementById('ef-date').value;
@@ -1991,7 +2014,7 @@ function saveEventForm() {
     secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false,
     // Family App共有設定
     familyShare: document.getElementById('ef-family-share') ? document.getElementById('ef-family-share').checked : false,
-    createdBy: currentUser || 'リーダー'
+    createdBy: userName || currentUser || 'リーダー'
   };
   if(rawId){
     for(var i=0;i<state.events.length;i++){
@@ -2018,8 +2041,11 @@ function saveEventForm() {
   closeModal('modal-event-form');
   renderCalendar();
   renderSalesPage();
+  renderHome();
+  syncFamilySharedEventsLocal();
   fbSave();
 }
+
 
 function deleteEvent() {
   var id=document.getElementById('ef-id').value;
@@ -2820,7 +2846,7 @@ function toast(msg) {
 
 // ════ FIREBASE PLACEHOLDER ════
 // Firebaseが読み込まれるまでの仮関数
-function fbSave(){ if(window._fbSave) window._fbSave(); }
+function fbSave(){ syncFamilySharedEventsLocal(); if(window._fbSave) window._fbSave(); }
 </script>
 
 <!-- FIREBASE SDK (compat) -->
