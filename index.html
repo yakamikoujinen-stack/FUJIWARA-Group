@@ -1864,7 +1864,7 @@ function makeBelongingsLineText(ev){
   var done=list.filter(function(x){return x.done;});
   var txt='【忘れ物チェック】\n'+(ev.date||'')+' '+(ev.name||'')+'\n';
   txt+='確認済 '+done.length+'/'+list.length+'\n';
-  if(remain.length){ txt+='\n未確認\n'+remain.map(function(x){return '・'+x.text;}).join('\n'); }
+  if(remain.length){ txt+='\n未確認\n'+remain.map(function(x){return '・'+x.text;}).join('\\n'); }
   else { txt+='\n✅ 全て確認済です'; }
   return txt;
 }
@@ -2539,8 +2539,7 @@ function downloadAttendanceCSV(){
     var info=attendanceInfo(ev);
     rows.push([ev.date+(ev.dateEnd?'〜'+ev.dateEnd:''),ev.name||'',ev.zone||'',ev.place||'',info.required||'',info.staff.join('・'),info.ok.join('・'),info.maybe.join('・'),info.no.join('・'),info.unanswered.join('・')]);
   });
-  var csv='﻿'+rows.map(function(r){return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');}).join('
-');
+  var csv='﻿'+rows.map(function(r){return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='event-attendance-list.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},800);
   toast('📗 出勤一覧表を出力しました');
