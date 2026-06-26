@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Construction v2.0</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef2f7;margin:0}
+header{background:#2c3e50;color:#fff;padding:16px;text-align:center}
+main{max-width:900px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,textarea,button{width:100%;padding:10px;margin-top:8px;font-size:16px}
+button{background:#2c3e50;color:#fff;border:0;border-radius:8px}
+</style></head><body>
+<header><h1>🏗 FKS Construction v2.0</h1><p>Home v5.0連携対応</p></header>
+<main>
+<div class="card"><a href="fks-home-v5.0.html">← FKS Homeへ戻る</a></div>
+<div class="card">
+<label>現場名</label><input id="site">
+<label>作業人数</label><input id="workers" type="number">
+<label>作業内容</label><textarea id="report"></textarea>
+<label>安全確認・KY</label><textarea id="safety"></textarea>
+<button onclick="save()">日報保存</button>
+</div>
+<div class="card">
+<h3>保存中の日報</h3>
+<div id="view">未入力</div>
+</div>
+<script>
+function load(){
+ const d=JSON.parse(localStorage.getItem("fks_construction_report")||"null");
+ if(!d){view.textContent="未入力";return;}
+ site.value=d.site||"";workers.value=d.workers||"";report.value=d.report||"";safety.value=d.safety||"";
+ view.innerHTML="<b>"+(d.site||"現場未設定")+"</b><br>人数："+(d.workers||0)+"名<br>"+(d.report||"")+"<br><small>"+d.date+"</small>";
+}
+function save(){
+ const d={site:site.value,workers:Number(workers.value||0),report:report.value,safety:safety.value,date:new Date().toLocaleString()};
+ localStorage.setItem("fks_construction_report",JSON.stringify(d));
+ alert("保存しました。Home v5.0に反映されます。");
+ load();
+}
+window.onload=load;
+</script>
+</main></body></html>
