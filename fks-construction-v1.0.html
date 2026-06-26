@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Construction v1.0</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef2f5;margin:0}
+header{background:#2c3e50;color:#fff;padding:16px;text-align:center}
+main{max-width:820px;margin:20px auto;background:#fff;padding:20px;border-radius:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{border:1px solid #ccc;border-radius:10px;padding:14px;text-align:center;background:#fafafa}
+input,textarea,button{width:100%;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<header><h1>🏗 FKS Construction v1.0</h1></header>
+<main>
+<div class="grid">
+<div class="card">👷 今日の現場</div>
+<div class="card">📝 日報</div>
+<div class="card">📷 現場写真</div>
+<div class="card">🚚 車両管理</div>
+<div class="card">📦 資材管理</div>
+<div class="card">⚠️ KY・安全</div>
+</div>
+
+<h2>日報メモ</h2>
+<input id="site" placeholder="現場名">
+<textarea id="report" rows="6" placeholder="作業内容を入力"></textarea>
+<button onclick="save()">保存</button>
+
+<script>
+function save(){
+ const data={
+   site:document.getElementById('site').value,
+   report:document.getElementById('report').value,
+   updated:new Date().toLocaleString()
+ };
+ localStorage.setItem('fks_construction_report',JSON.stringify(data));
+ alert('保存しました');
+}
+window.onload=()=>{
+ const d=JSON.parse(localStorage.getItem('fks_construction_report')||'null');
+ if(d){
+   site.value=d.site||'';
+   report.value=d.report||'';
+ }
+}
+</script>
+</main>
+</body>
+</html>
