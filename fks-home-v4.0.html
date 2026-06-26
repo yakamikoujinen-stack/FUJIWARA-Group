@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Home v4.0</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#eef2f7}
+header{background:#152238;color:#fff;padding:18px;text-align:center}
+.wrap{max-width:1000px;margin:auto;padding:16px}
+.top{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.box,.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+a{text-decoration:none;color:#152238;font-weight:bold;display:block}
+.small{color:#666;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>👑 FUJIWARA KING SYSTEM</h1>
+<p>Home v4.0 - 経営司令塔</p>
+</header>
+
+<div class="wrap">
+
+<div class="top">
+<div class="box"><h3>💰 今月売上</h3><div id="sales">¥0</div></div>
+<div class="box"><h3>📈 今月利益</h3><div id="profit">¥0</div></div>
+<div class="box"><h3>🏦 現預金</h3><div id="cash">¥0</div></div>
+<div class="box"><h3>🤖 AI秘書</h3><div id="ai">入力状況を確認してください</div></div>
+</div>
+
+<div class="grid">
+<div class="card"><a href="fks-dashboard-v1.0.html">📊 Dashboard</a><div class="small">経営状況</div></div>
+<div class="card"><a href="fks-accounting-v1.0.html">💰 Accounting</a><div class="small">売上・経費・利益</div></div>
+<div class="card"><a href="fks-event-v1.0.html">🎪 Event</a><div class="small">イベント管理</div></div>
+<div class="card"><a href="fks-construction-v1.0.html">🏗 Construction</a><div class="small">建設管理</div></div>
+<div class="card"><a href="fks-staff-v1.0.html">👷 Staff</a><div class="small">スタッフ管理</div></div>
+<div class="card"><a href="fks-family-v1.0.html">👨‍👩‍👧 Family</a><div class="small">家族共有</div></div>
+<div class="card"><a href="fks-real-family-v1.0.html">🔒 Real Family</a><div class="small">家族専用</div></div>
+<div class="card"><a href="fks-ai-secretary-v1.0.html">🤖 AI Secretary</a><div class="small">AI秘書</div></div>
+</div>
+
+<div class="card" style="margin-top:18px">
+<h3>📌 社長メモ</h3>
+<textarea id="memo" style="width:100%;height:120px"></textarea><br><br>
+<button onclick="save()">保存</button>
+</div>
+
+</div>
+
+<script>
+function load(){
+ const a=JSON.parse(localStorage.getItem("fks_accounting")||'{"sales":0,"expense":0,"cash":0}');
+ sales.textContent="¥"+Number(a.sales||0).toLocaleString();
+ profit.textContent="¥"+(Number(a.sales||0)-Number(a.expense||0)).toLocaleString();
+ cash.textContent="¥"+Number(a.cash||0).toLocaleString();
+ memo.value=localStorage.getItem("fks_ceo_memo")||"";
+}
+function save(){
+ localStorage.setItem("fks_ceo_memo",memo.value);
+ alert("保存しました");
+}
+window.onload=load;
+</script>
+</body>
+</html>
