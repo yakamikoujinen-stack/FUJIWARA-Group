@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Invoice v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#0f3d3e;color:#fff;text-align:center;padding:18px}
+.wrap{max-width:950px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select,textarea,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#0f3d3e;color:#fff;border:0;font-weight:bold}
+.btn2{background:#888}
+.num{font-size:24px;font-weight:800}
+.item{border-bottom:1px solid #eee;padding:10px 0}
+a{color:#0f3d3e;font-weight:bold;text-decoration:none}
+.paid{color:#0a7a2f;font-weight:bold}
+.unpaid{color:#b00020;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>📄 FKS Invoice v1.0</h1>
+<p>請求・入金管理</p>
+</header>
+
+<div class="wrap">
+<div class="card"><a href="fks-home-v5.0.html">← FKS Homeへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>請求合計</h3><div class="num" id="total">¥0</div></div>
+<div class="card"><h3>入金済み</h3><div class="num" id="paid">¥0</div></div>
+<div class="card"><h3>未入金</h3><div class="num" id="unpaid">¥0</div></div>
+</div>
+
+<div class="card">
+<h3>請求登録</h3>
+<input id="client" placeholder="請求先">
+<input id="amount" type="number" placeholder="請求金額">
+<input id="due" type="date">
+<textarea id="memo" placeholder="内容・メモ"></textarea>
+<button onclick="addInvoice()">請求を登録</button>
+</div>
+
+<div class="card">
+<h3>請求一覧</h3>
+<div id="list">登録なし</div>
+<button class="btn2" onclick="clearAll()">全削除</button>
+</div>
+</div>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString();}
+function loadInvoices(){
+ return JSON.parse(localStorage.getItem("fks_invoices")||"[]");
+}
+function saveInvoices(arr){
+ localStorage.setItem("fks_invoices",JSON.stringify(arr));
+}
+function addInvoice(){
+ const c=client.value.trim();
+ const a=Number(amount.value||0);
+ if(!c||!a){alert("請求先と金額を入力してください");return;}
+ const arr=loadInvoices();
+ arr.push({id:Date.now(),client:c,amount:a,due:due.value,memo:memo.value,paid:false,date:new Date().toLocaleString()});
+ saveInvoices(arr);
+ client.value="";amount.value="";due.value="";memo.value="";
+ render();
+ alert("登録しました");
+}
+function togglePaid(id){
+ const arr=loadInvoices();
+ const i=arr.find(x=>x.id===id);
+ if(i)i.paid=!i.paid;
+ saveInvoices(arr);
+ render();
+}
+function removeInvoice(id){
+ if(!confirm("削除しますか？"))return;
+ saveInvoices(loadInvoices().filter(x=>x.id!==id));
+ render();
+}
+function clearAll(){
+ if(confirm("請求データを全削除しますか？")){
+  saveInvoices([]);
+  render();
+ }
+}
+function render(){
+ const arr=loadInvoices();
+ const t=arr.reduce((s,x)=>s+Number(x.amount||0),0);
+ const p=arr.filter(x=>x.paid).reduce((s,x)=>s+Number(x.amount||0),0);
+ total.textContent=yen(t);
+ paid.textContent=yen(p);
+ unpaid.textContent=yen(t-p);
+ list.innerHTML=arr.length?arr.slice().reverse().map(x=>`
+  <div class="item">
+   <b>${x.client}</b><br>
+   金額：${yen(x.amount)}<br>
+   入金予定：${x.due||"未設定"}<br>
+   状態：<span class="${x.paid?'paid':'unpaid'}">${x.paid?'入金済み':'未入金'}</span><br>
+   <small>${x.memo||""}</small><br>
+   <button onclick="togglePaid(${x.id})">${x.paid?'未入金に戻す':'入金済みにする'}</button>
+   <button class="btn2" onclick="removeInvoice(${x.id})">削除</button>
+  </div>`).join(""):"登録なし";
+}
+window.onload=render;
+</script>
+</body>
+</html>
