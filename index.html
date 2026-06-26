@@ -3063,11 +3063,11 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
 
   window.openKensetsuApp=function(){
     savePortalAuth('kensetsu');
-    /* auto redirect removed */
+    location.href='kensetsu.html?from=main&role=leader';
   };
   window.openFamilyApp=function(){
     savePortalAuth('family');
-    /* auto redirect removed */
+    location.href='family.html?from=main&role=leader';
   };
   window.openAttendanceList=function(){
     if(typeof showPage==='function') showPage('attendance');
@@ -3108,94 +3108,6 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(note) note.textContent='🔑 リーダーのみパスワード必須／担当者・一般は名前だけで入れます';
     console.log('FUJIWARA patch loaded:', PATCH_VERSION);
   },300);
-})();
-</script>
-
-
-
-
-
-<script>
-/* ===== FUJIWARA Login Restore Patch v7.5 =====
-   リーダーパスワードを前の 1111 に戻す
-   担当者・一般は名前だけ
-   画面デザインは変更しない
-===== */
-(function(){
-  function $(id){ return document.getElementById(id); }
-  function q(sel){ return document.querySelector(sel); }
-  function qa(sel){ return Array.from(document.querySelectorAll(sel)); }
-
-  function activeRole(){
-    const active = q('.role-tab.active');
-    const tx = active ? (active.textContent || '') : '';
-    if(/担当/.test(tx)) return 'staff';
-    if(/一般/.test(tx)) return 'user';
-    return 'leader';
-  }
-
-  function updatePwVisibility(){
-    const role = activeRole();
-    const pw = $('#loginPw') || $('#login-password') || $('#password') || q('#login-screen input[type="password"]');
-    const label = $('#pwLabel') || q('#login-screen label[for*="pass"]');
-    if(pw){
-      pw.style.display = role === 'leader' ? 'block' : 'none';
-      pw.placeholder = role === 'leader' ? 'リーダーパスワード' : '';
-    }
-    if(label){ label.style.display = role === 'leader' ? 'block' : 'none'; }
-  }
-
-  window.fujiwaraLoginRestore = function(){
-    const role = activeRole();
-    const nameEl = $('#loginName') || $('#login-name') || $('#name') || q('#login-screen input[type="text"], #login-screen input:not([type])');
-    const pwEl = $('#loginPw') || $('#login-password') || $('#password') || q('#login-screen input[type="password"]');
-    const name = nameEl && nameEl.value ? nameEl.value.trim() : '藤原';
-    const pw = pwEl && pwEl.value ? pwEl.value.trim() : '';
-
-    if(role === 'leader' && pw !== '1111'){
-      const err = q('.login-err') || $('#login-err');
-      if(err){ err.textContent = 'リーダーパスワードが違います'; err.style.display = 'block'; }
-      else alert('リーダーパスワードが違います');
-      return false;
-    }
-
-    try{
-      localStorage.setItem('fg_current_user', name);
-      localStorage.setItem('fg_current_role', role);
-    }catch(e){}
-
-    const login = $('#login-screen') || $('#login') || q('.login');
-    const app = $('#app') || q('.app');
-    if(login) login.style.display = 'none';
-    if(app){ app.style.display = 'flex'; app.style.visibility = 'visible'; }
-
-    const badge = q('.role-badge') || $('#roleBadge') || $('#role-badge');
-    if(badge){
-      badge.textContent = role === 'leader' ? '👑 リーダー' : role === 'staff' ? '担当者' : '一般';
-      badge.className = 'role-badge ' + (role === 'leader' ? 'rb-leader' : role === 'staff' ? 'rb-staff' : 'rb-user');
-    }
-
-    if(typeof renderCalendar === 'function'){ try{ renderCalendar(); }catch(e){} }
-    if(typeof renderHome === 'function'){ try{ renderHome(); }catch(e){} }
-    if(typeof renderAll === 'function'){ try{ renderAll(); }catch(e){} }
-    return false;
-  };
-
-  function attach(){
-    qa('button,input[type="button"],input[type="submit"]').forEach(function(btn){
-      const t = btn.textContent || btn.value || '';
-      if(/ログイン/.test(t) && (btn.closest('#login-screen') || btn.closest('#login'))){
-        btn.onclick = window.fujiwaraLoginRestore;
-      }
-    });
-    qa('.role-tab').forEach(function(tab){
-      tab.addEventListener('click', function(){ setTimeout(updatePwVisibility, 30); }, true);
-    });
-    updatePwVisibility();
-  }
-
-  document.addEventListener('DOMContentLoaded', attach);
-  attach();
 })();
 </script>
 
