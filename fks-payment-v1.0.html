@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Payment v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#4b2e83;color:#fff;text-align:center;padding:18px}
+.wrap{max-width:950px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select,textarea,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#4b2e83;color:#fff;border:0;font-weight:bold}
+.btn2{background:#888}
+.num{font-size:24px;font-weight:800}
+.item{border-bottom:1px solid #eee;padding:10px 0}
+a{color:#4b2e83;font-weight:bold;text-decoration:none}
+.done{color:#0a7a2f;font-weight:bold}
+.wait{color:#b00020;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>💸 FKS Payment v1.0</h1>
+<p>支払予定・支払済み管理</p>
+</header>
+
+<div class="wrap">
+<div class="card"><a href="fks-home-v5.0.html">← FKS Homeへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>支払予定合計</h3><div class="num" id="total">¥0</div></div>
+<div class="card"><h3>支払済み</h3><div class="num" id="done">¥0</div></div>
+<div class="card"><h3>未払い</h3><div class="num" id="wait">¥0</div></div>
+</div>
+
+<div class="card">
+<h3>支払登録</h3>
+<input id="payee" placeholder="支払先">
+<input id="amount" type="number" placeholder="支払金額">
+<input id="due" type="date">
+<select id="category">
+<option>材料費</option>
+<option>人件費</option>
+<option>外注費</option>
+<option>燃料費</option>
+<option>車両費</option>
+<option>消耗品</option>
+<option>その他</option>
+</select>
+<textarea id="memo" placeholder="内容・メモ"></textarea>
+<button onclick="addPayment()">支払予定を登録</button>
+</div>
+
+<div class="card">
+<h3>支払一覧</h3>
+<div id="list">登録なし</div>
+<button class="btn2" onclick="clearAll()">全削除</button>
+</div>
+</div>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString();}
+function loadPayments(){return JSON.parse(localStorage.getItem("fks_payments")||"[]");}
+function savePayments(arr){localStorage.setItem("fks_payments",JSON.stringify(arr));}
+function addPayment(){
+ const p=payee.value.trim();
+ const a=Number(amount.value||0);
+ if(!p||!a){alert("支払先と金額を入力してください");return;}
+ const arr=loadPayments();
+ arr.push({id:Date.now(),payee:p,amount:a,due:due.value,category:category.value,memo:memo.value,done:false,date:new Date().toLocaleString()});
+ savePayments(arr);
+ payee.value="";amount.value="";due.value="";memo.value="";
+ render();
+ alert("登録しました");
+}
+function toggleDone(id){
+ const arr=loadPayments();
+ const i=arr.find(x=>x.id===id);
+ if(i)i.done=!i.done;
+ savePayments(arr);
+ render();
+}
+function removePayment(id){
+ if(!confirm("削除しますか？"))return;
+ savePayments(loadPayments().filter(x=>x.id!==id));
+ render();
+}
+function clearAll(){
+ if(confirm("支払データを全削除しますか？")){
+  savePayments([]);
+  render();
+ }
+}
+function render(){
+ const arr=loadPayments();
+ const t=arr.reduce((s,x)=>s+Number(x.amount||0),0);
+ const d=arr.filter(x=>x.done).reduce((s,x)=>s+Number(x.amount||0),0);
+ total.textContent=yen(t);
+ done.textContent=yen(d);
+ wait.textContent=yen(t-d);
+ list.innerHTML=arr.length?arr.slice().reverse().map(x=>`
+  <div class="item">
+   <b>${x.payee}</b>（${x.category||"その他"}）<br>
+   金額：${yen(x.amount)}<br>
+   支払日：${x.due||"未設定"}<br>
+   状態：<span class="${x.done?'done':'wait'}">${x.done?'支払済み':'未払い'}</span><br>
+   <small>${x.memo||""}</small><br>
+   <button onclick="toggleDone(${x.id})">${x.done?'未払いに戻す':'支払済みにする'}</button>
+   <button class="btn2" onclick="removePayment(${x.id})">削除</button>
+  </div>`).join(""):"登録なし";
+}
+window.onload=render;
+</script>
+</body>
+</html>
