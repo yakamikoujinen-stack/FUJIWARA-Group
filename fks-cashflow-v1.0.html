@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang='ja'><head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>FKS Cashflow v1.0</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef2f7;margin:0}
+header{background:#00695c;color:#fff;padding:16px;text-align:center}
+main{max-width:900px;margin:auto;padding:16px}
+.card{background:#fff;padding:16px;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+button{padding:10px 16px;border:0;border-radius:8px;background:#00695c;color:#fff}
+.big{font-size:26px;font-weight:bold}
+</style></head><body>
+<header><h1>🏦 FKS Cashflow v1.0</h1><p>資金繰り確認</p></header>
+<main>
+<div class="card"><div>現預金</div><div id="cash" class="big">¥0</div></div>
+<div class="card"><div>入金予定</div><div id="income" class="big">¥0</div></div>
+<div class="card"><div>支払予定</div><div id="payment" class="big">¥0</div></div>
+<div class="card"><div>予測残高</div><div id="forecast" class="big">¥0</div></div>
+<div class="card">
+<button onclick="calc()">更新</button>
+</div>
+</main>
+<script>
+function yen(n){return "¥"+Number(n).toLocaleString();}
+function calc(){
+ const acc=JSON.parse(localStorage.getItem("fks_accounting")||'{}');
+ const inv=JSON.parse(localStorage.getItem("fks_invoices")||'[]');
+ const pay=JSON.parse(localStorage.getItem("fks_payments")||'[]');
+ const cash=Number(acc.cash||0);
+ const income=inv.filter(x=>!x.paid).reduce((s,x)=>s+Number(x.amount||0),0);
+ const payment=pay.filter(x=>!x.done).reduce((s,x)=>s+Number(x.amount||0),0);
+ document.getElementById("cash").textContent=yen(cash);
+ document.getElementById("income").textContent=yen(income);
+ document.getElementById("payment").textContent=yen(payment);
+ document.getElementById("forecast").textContent=yen(cash+income-payment);
+}
+window.onload=calc;
+</script>
+</body></html>
