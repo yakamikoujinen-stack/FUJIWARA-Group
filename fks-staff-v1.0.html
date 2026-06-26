@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FKS Staff v1.0</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#111827;--muted:#6b7280;--line:#dbe1ea;--blue:#2563eb;--green:#059669;--red:#dc2626;--orange:#ea580c;--dark:#111827}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}header{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#111827,#1e3a8a);color:#fff;padding:18px 16px;border-bottom:4px solid #d99a1c}header h1{margin:0;font-size:23px}header p{margin:6px 0 0;font-size:13px;opacity:.9}.wrap{max-width:1100px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:10px}.tab{white-space:nowrap;border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:10px 15px;font-weight:800}.tab.active{background:#111827;color:#fff}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 4px 14px rgba(0,0,0,.05)}h2{margin:4px 0 12px;font-size:20px}.badge{display:inline-block;border-radius:999px;padding:5px 10px;color:#fff;font-size:12px;font-weight:900;margin-bottom:8px}.b-blue{background:var(--blue)}.b-green{background:var(--green)}.b-red{background:var(--red)}.b-orange{background:var(--orange)}label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-top:8px}input,select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:12px;font-size:16px;background:#fff}textarea{min-height:76px}.btn{width:100%;border:0;border-radius:13px;padding:12px;font-size:15px;font-weight:900;color:#fff;background:#111827;margin-top:10px}.btn.green{background:var(--green)}.btn.red{background:var(--red)}.list{display:grid;gap:8px}.item{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:10px}.item b{display:block}.muted{color:var(--muted);font-size:13px}.row{display:flex;gap:8px}.row>*{flex:1}.num{font-size:26px;font-weight:900}.hidden{display:none}footer{text-align:center;color:var(--muted);font-size:12px;padding:22px}</style>
+</head>
+<body>
+<header><h1>👷 FKS Staff v1.0</h1><p>一部社員用：スタッフ確認・シフト・お知らせ・提出物・緊急連絡</p></header>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="show('home',this)">全体</button><button class="tab" onclick="show('members',this)">スタッフ</button><button class="tab" onclick="show('shift',this)">シフト</button><button class="tab" onclick="show('notice',this)">お知らせ</button><button class="tab" onclick="show('submit',this)">提出物</button><button class="tab" onclick="show('emergency',this)">緊急</button>
+  </div>
+
+  <section id="home">
+    <div class="grid">
+      <div class="card"><span class="badge b-blue">スタッフ</span><h2>登録人数</h2><div class="num" id="memberCount">0人</div><p class="muted">登録済みスタッフ数</p></div>
+      <div class="card"><span class="badge b-green">本日</span><h2>本日のシフト</h2><div class="num" id="todayShift">0件</div><p class="muted">今日予定されている勤務</p></div>
+      <div class="card"><span class="badge b-orange">提出</span><h2>未完了提出物</h2><div class="num" id="openSubmit">0件</div><p class="muted">未完了の提出・確認事項</p></div>
+      <div class="card"><span class="badge b-red">緊急</span><h2>緊急連絡</h2><p id="latestEmergency" class="muted">未登録</p></div>
+    </div>
+  </section>
+
+  <section id="members" class="hidden"><div class="grid"><div class="card"><span class="badge b-blue">登録</span><h2>スタッフ追加</h2><label>名前</label><input id="mName"><label>役割</label><select id="mRole"><option>一部社員</option><option>担当者</option><option>建設部</option><option>イベント</option><option>事務</option></select><label>電話</label><input id="mTel"><button class="btn" onclick="addMember()">保存</button></div><div class="card"><h2>スタッフ一覧</h2><div class="list" id="memberList"></div></div></div></section>
+
+  <section id="shift" class="hidden"><div class="grid"><div class="card"><span class="badge b-green">予定</span><h2>シフト追加</h2><label>日付</label><input id="sDate" type="date"><label>名前</label><input id="sName"><label>内容</label><input id="sWork" placeholder="例：現場A / イベントB"><button class="btn green" onclick="addShift()">保存</button></div><div class="card"><h2>シフト一覧</h2><div class="list" id="shiftList"></div></div></div></section>
+
+  <section id="notice" class="hidden"><div class="grid"><div class="card"><span class="badge b-orange">共有</span><h2>お知らせ作成</h2><label>タイトル</label><input id="nTitle"><label>内容</label><textarea id="nBody"></textarea><button class="btn" onclick="addNotice()">保存</button></div><div class="card"><h2>お知らせ一覧</h2><div class="list" id="noticeList"></div></div></div></section>
+
+  <section id="submit" class="hidden"><div class="grid"><div class="card"><span class="badge b-orange">提出物</span><h2>提出物追加</h2><label>対象者</label><input id="pName"><label>内容</label><input id="pTask" placeholder="例：免許証コピー提出"><button class="btn" onclick="addSubmit()">保存</button></div><div class="card"><h2>提出物一覧</h2><div class="list" id="submitList"></div></div></div></section>
+
+  <section id="emergency" class="hidden"><div class="grid"><div class="card"><span class="badge b-red">緊急</span><h2>緊急連絡登録</h2><label>内容</label><textarea id="eBody"></textarea><button class="btn red" onclick="saveEmergency()">保存</button></div><div class="card"><h2>現在の緊急連絡</h2><div id="emergencyBox" class="item muted">未登録</div></div></div></section>
+</div><footer>FUJIWARA KING SYSTEM / Staff v1.0 / localStorage保存</footer>
+<script>
+const KEY='fks_staff_v1';let db=JSON.parse(localStorage.getItem(KEY)||'{"members":[],"shifts":[],"notices":[],"submits":[],"emergency":""}');
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function show(id,btn){document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
+function esc(s){return String(s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}
+function addMember(){if(!mName.value)return;db.members.push({name:mName.value,role:mRole.value,tel:mTel.value});mName.value=mTel.value='';save()}
+function addShift(){if(!sDate.value||!sName.value)return;db.shifts.push({date:sDate.value,name:sName.value,work:sWork.value});sName.value=sWork.value='';save()}
+function addNotice(){if(!nTitle.value)return;db.notices.unshift({title:nTitle.value,body:nBody.value,date:new Date().toLocaleDateString('ja-JP')});nTitle.value=nBody.value='';save()}
+function addSubmit(){if(!pName.value||!pTask.value)return;db.submits.push({name:pName.value,task:pTask.value,done:false});pName.value=pTask.value='';save()}
+function toggleSubmit(i){db.submits[i].done=!db.submits[i].done;save()}
+function del(type,i){db[type].splice(i,1);save()}
+function saveEmergency(){db.emergency=eBody.value;eBody.value='';save()}
+function render(){let today=new Date().toISOString().slice(0,10);memberCount.textContent=db.members.length+'人';todayShift.textContent=db.shifts.filter(x=>x.date===today).length+'件';openSubmit.textContent=db.submits.filter(x=>!x.done).length+'件';latestEmergency.textContent=db.emergency||'未登録';emergencyBox.textContent=db.emergency||'未登録';memberList.innerHTML=db.members.map((x,i)=>`<div class=item><b>${esc(x.name)}</b><span class=muted>${esc(x.role)} / ${esc(x.tel)}</span><button class="btn red" onclick="del('members',${i})">削除</button></div>`).join('')||'<p class=muted>未登録</p>';shiftList.innerHTML=db.shifts.map((x,i)=>`<div class=item><b>${esc(x.date)} ${esc(x.name)}</b><span class=muted>${esc(x.work)}</span><button class="btn red" onclick="del('shifts',${i})">削除</button></div>`).join('')||'<p class=muted>未登録</p>';noticeList.innerHTML=db.notices.map((x,i)=>`<div class=item><b>${esc(x.title)}</b><span class=muted>${esc(x.date)}</span><p>${esc(x.body)}</p><button class="btn red" onclick="del('notices',${i})">削除</button></div>`).join('')||'<p class=muted>未登録</p>';submitList.innerHTML=db.submits.map((x,i)=>`<div class=item><b>${esc(x.name)}</b><span class=muted>${esc(x.task)} / ${x.done?'完了':'未完了'}</span><button class="btn green" onclick="toggleSubmit(${i})">${x.done?'未完了へ':'完了'}</button><button class="btn red" onclick="del('submits',${i})">削除</button></div>`).join('')||'<p class=muted>未登録</p>'}
+render();
+</script>
+</body></html>
