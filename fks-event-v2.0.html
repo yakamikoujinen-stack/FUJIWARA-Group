@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Event v2.0</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef2f7;margin:0}
+header{background:#8b1e3f;color:#fff;padding:16px;text-align:center}
+main{max-width:900px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,textarea,button{width:100%;padding:10px;margin-top:8px}
+button{background:#8b1e3f;color:#fff;border:0;border-radius:8px}
+</style></head><body>
+<header><h1>🎪 FKS Event v2.0</h1><p>Home v5.0連携対応</p></header>
+<main>
+<div class="card">
+<label>イベント名</label><input id="name">
+<label>売上</label><input id="sales" type="number">
+<label>経費</label><input id="expense" type="number">
+<label>メモ</label><textarea id="memo"></textarea>
+<button onclick="save()">保存</button>
+</div>
+<div class="card">
+<h3>現在の集計</h3>
+<p>売上: <span id="sv">¥0</span></p>
+<p>経費: <span id="ev">¥0</span></p>
+<p>利益: <span id="pv">¥0</span></p>
+</div>
+<script>
+function y(n){return "¥"+Number(n).toLocaleString();}
+function load(){
+ const d=JSON.parse(localStorage.getItem("fks_event")||'{"sales":0,"expense":0,"profit":0}');
+ sv.textContent=y(d.sales||0);ev.textContent=y(d.expense||0);pv.textContent=y(d.profit||0);
+}
+function save(){
+ const s=Number(sales.value||0),e=Number(expense.value||0);
+ const d={name:name.value,sales:s,expense:e,profit:s-e,memo:memo.value,date:new Date().toLocaleString()};
+ localStorage.setItem("fks_event",JSON.stringify(d));
+ alert("保存しました。Home v5.0に反映されます。");
+ load();
+}
+window.onload=load;
+</script>
+</main></body></html>
