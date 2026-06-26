@@ -3113,171 +3113,58 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
 
 
 <script>
-/* ===== FUJIWARA Notice Patch v1.0 =====
-   カレンダー上にリーダーからのお知らせを表示
-   設定画面にお知らせ登録欄を追加
-   画面デザインは変更しない
-===== */
+/* ===== FUJIWARA Notice Single Patch v1.1 ===== */
 (function(){
-  const LS_NOTICE = 'fujiwara_leader_notice_v1';
-
-  function $(id){ return document.getElementById(id); }
-  function q(sel){ return document.querySelector(sel); }
-  function qa(sel){ return Array.from(document.querySelectorAll(sel)); }
-  function esc(s){
-    return String(s ?? '').replace(/[&<>"']/g, m => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[m]));
+  const LS='fujiwara_leader_notice_v1';
+  const BOX='fujiwara-single-leader-notice';
+  function q(s){return document.querySelector(s)}
+  function qa(s){return Array.from(document.querySelectorAll(s))}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})}
+  function getN(){try{return JSON.parse(localStorage.getItem(LS)||'null')||{text:'イベント担当者はリーダーが入力しています。出勤の可否は各自、入力してください。',updated:''}}catch(e){return{text:'イベント担当者はリーダーが入力しています。出勤の可否は各自、入力してください。',updated:''}}}
+  function setN(t){localStorage.setItem(LS,JSON.stringify({text:t,updated:new Date().toLocaleString('ja-JP')}))}
+  function clean(){
+    qa('#'+BOX).forEach(function(el,i){if(i>0)el.remove()});
+    qa('[data-fujiwara-notice-box="1"]').forEach(function(el){if(el.id!==BOX)el.remove()});
+    qa('#fujiwara-notice-above-calendar,#fujiwara-notice-settings-box').forEach(function(el){el.remove()});
   }
-
-  function getNotice(){
-    try{
-      return JSON.parse(localStorage.getItem(LS_NOTICE) || 'null') || {
-        text:'イベント担当者はリーダーが入力しています。出勤の可否は各自、入力してください。',
-        updated:''
-      };
-    }catch(e){
-      return {text:'イベント担当者はリーダーが入力しています。出勤の可否は各自、入力してください。', updated:''};
-    }
+  function htmlN(){
+    const n=getN();
+    return '<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:24px">🔔</div><div style="flex:1"><div style="font-weight:900;font-size:15px;color:#1d1400;margin-bottom:5px">リーダーからのお知らせ</div>'+(n.updated?'<div style="font-size:10px;color:#6d5a2b;margin-bottom:5px">'+esc(n.updated)+'</div>':'')+'<div style="font-size:13px;line-height:1.7;color:#1d1400;white-space:pre-wrap">'+esc(n.text)+'</div></div></div>';
   }
-
-  function setNotice(text){
-    localStorage.setItem(LS_NOTICE, JSON.stringify({
-      text:text,
-      updated:new Date().toLocaleString('ja-JP')
-    }));
-  }
-
-  function isLeader(){
-    const badge = q('.role-badge') || q('[class*="role"]') || q('.rb-leader');
-    const txt = badge ? badge.textContent : '';
-    if(txt.indexOf('リーダー') >= 0) return true;
-    try{
-      return localStorage.getItem('fg_current_role') === 'leader';
-    }catch(e){ return false; }
-  }
-
-  function noticeHtml(){
-    const n = getNotice();
-    return `
-      <div style="display:flex;align-items:flex-start;gap:10px;">
-        <div style="font-size:24px;line-height:1;">🔔</div>
-        <div style="flex:1;">
-          <div style="font-weight:900;font-size:15px;color:#1d1400;margin-bottom:5px;">リーダーからのお知らせ</div>
-          ${n.updated ? `<div style="font-size:10px;color:#6d5a2b;margin-bottom:5px;">${esc(n.updated)}</div>` : ''}
-          <div style="font-size:13px;line-height:1.7;color:#1d1400;white-space:pre-wrap;">${esc(n.text)}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  function insertNoticeAboveCalendar(){
-    // カレンダー画面の目印を探す
-    const calGrid = q('.cal-grid') || q('#calendar') || q('[id*="calendar"]') || q('[class*="calendar"]');
-    if(!calGrid) return;
-
-    // カレンダー全体の親ブロックに入れる
-    const parent = calGrid.parentElement || calGrid;
-    let box = $('#fujiwara-notice-above-calendar');
-
+  function insert(){
+    clean();
+    const cal=q('.cal-grid')||q('#calendar')||q('[id*="calendar"]');
+    if(!cal)return;
+    const conflict=q('.conflict-strip');
+    const parent=(conflict&&conflict.parentElement)?conflict.parentElement:(cal.parentElement||cal.parentNode);
+    if(!parent)return;
+    let box=document.getElementById(BOX);
     if(!box){
-      box = document.createElement('div');
-      box.id = 'fujiwara-notice-above-calendar';
-      box.style.cssText = [
-        'background:#fffdf6',
-        'border:1.5px solid #d8bf75',
-        'border-left:6px solid #b8860b',
-        'border-radius:12px',
-        'padding:12px',
-        'margin:0 0 12px',
-        'box-shadow:0 3px 14px rgba(80,55,0,.10)',
-        'color:#111'
-      ].join(';');
-
-      // 赤い「同日重複あり」より上、なければカレンダーの直前
-      const conflict = q('.conflict-strip');
-      if(conflict && conflict.parentElement){
-        conflict.parentElement.insertBefore(box, conflict);
-      }else{
-        parent.insertBefore(box, calGrid);
-      }
+      box=document.createElement('div');
+      box.id=BOX;
+      box.setAttribute('data-fujiwara-notice-box','1');
+      box.style.cssText='background:#fffdf6;border:1.5px solid #d8bf75;border-left:6px solid #b8860b;border-radius:12px;padding:12px;margin:0 0 12px;box-shadow:0 3px 14px rgba(80,55,0,.10);color:#111';
+      if(conflict) parent.insertBefore(box,conflict); else parent.insertBefore(box,cal);
     }
-
-    box.innerHTML = noticeHtml();
+    box.innerHTML=htmlN();
   }
-
-  function ensureNoticeSettings(){
-    // 設定ページらしき場所を探す
-    const settingsPage =
-      q('#settings') || q('#page-settings') || q('#settings-page') ||
-      qa('.page').find(p => (p.textContent || '').indexOf('設定') >= 0);
-
-    if(!settingsPage || $('#fujiwara-notice-settings-box')) return;
-
-    const box = document.createElement('div');
-    box.id = 'fujiwara-notice-settings-box';
-    box.className = 'settings-group';
-    box.style.cssText = 'background:#fffdfa;border:1px solid #d8bf75;border-radius:10px;margin:12px 0;padding:14px;color:#111;';
-    const n = getNotice();
-
-    box.innerHTML = `
-      <div style="font-weight:900;margin-bottom:8px;">🔔 リーダーお知らせ管理</div>
-      <div style="font-size:12px;color:#6d5a2b;margin-bottom:8px;">ここで入力したお知らせが、リーダー・担当者・一般のカレンダー上に表示されます。</div>
-      <textarea id="fujiwara-notice-text" style="width:100%;min-height:80px;border:1.5px solid #d8bf75;border-radius:9px;padding:10px;background:#fff;color:#111;">${esc(n.text)}</textarea>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-        <button id="fujiwara-notice-save" class="btn btn-gold">保存</button>
-        <button id="fujiwara-notice-clear" class="btn btn-ghost">空にする</button>
-      </div>
-    `;
-
-    // 設定画面の一番上に追加
-    settingsPage.insertBefore(box, settingsPage.firstChild);
-
-    $('#fujiwara-notice-save').onclick = function(){
-      const v = $('#fujiwara-notice-text').value.trim();
-      if(!v){ alert('お知らせを入力してください'); return; }
-      setNotice(v);
-      insertNoticeAboveCalendar();
-      alert('お知らせを保存しました');
-    };
-
-    $('#fujiwara-notice-clear').onclick = function(){
-      if(!confirm('お知らせを空にしますか？')) return;
-      setNotice('');
-      $('#fujiwara-notice-text').value = '';
-      insertNoticeAboveCalendar();
-    };
+  function editor(){
+    const settings=q('#settings')||q('#page-settings')||q('#settings-page')||qa('.page').find(function(p){return (p.textContent||'').indexOf('設定')>=0});
+    if(!settings||document.getElementById('fujiwara-single-notice-editor'))return;
+    const n=getN();
+    const ed=document.createElement('div');
+    ed.id='fujiwara-single-notice-editor';
+    ed.style.cssText='background:#fffdfa;border:1px solid #d8bf75;border-radius:10px;margin:12px 0;padding:14px;color:#111';
+    ed.innerHTML='<div style="font-weight:900;margin-bottom:8px">🔔 リーダーお知らせ管理</div><div style="font-size:12px;color:#6d5a2b;margin-bottom:8px">保存したお知らせがカレンダー上に1件だけ表示されます。</div><textarea id="fujiwara-single-notice-text" style="width:100%;min-height:80px;border:1.5px solid #d8bf75;border-radius:9px;padding:10px;background:#fff;color:#111">'+esc(n.text)+'</textarea><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button id="fujiwara-single-notice-save" class="btn btn-gold">保存</button><button id="fujiwara-single-notice-reset" class="btn btn-ghost">初期文に戻す</button></div>';
+    settings.insertBefore(ed,settings.firstChild);
+    document.getElementById('fujiwara-single-notice-save').onclick=function(){const v=document.getElementById('fujiwara-single-notice-text').value.trim();if(!v){alert('お知らせを入力してください');return}setN(v);insert();alert('お知らせを保存しました')};
+    document.getElementById('fujiwara-single-notice-reset').onclick=function(){const v='イベント担当者はリーダーが入力しています。出勤の可否は各自、入力してください。';document.getElementById('fujiwara-single-notice-text').value=v;setN(v);insert()};
   }
-
-  function refreshNotice(){
-    insertNoticeAboveCalendar();
-    ensureNoticeSettings();
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(refreshNotice, 200);
-    setTimeout(refreshNotice, 800);
-  });
-
-  // 下メニュー・ページ切替後にも復活
-  document.addEventListener('click', function(){
-    setTimeout(refreshNotice, 250);
-  }, true);
-
-  // 描画関数がある場合は後ろに追加
-  ['renderCalendar','renderHome','renderAll','showPage','switchPage'].forEach(function(fn){
-    if(typeof window[fn] === 'function' && !window[fn].__noticePatched){
-      const old = window[fn];
-      window[fn] = function(){
-        const ret = old.apply(this, arguments);
-        setTimeout(refreshNotice, 100);
-        return ret;
-      };
-      window[fn].__noticePatched = true;
-    }
-  });
-
-  setTimeout(refreshNotice, 1200);
+  function refresh(){insert();editor()}
+  document.addEventListener('DOMContentLoaded',function(){refresh();setTimeout(refresh,300);setTimeout(refresh,1000)});
+  document.addEventListener('click',function(){setTimeout(refresh,250)},true);
+  ['renderCalendar','renderHome','renderAll','showPage','switchPage'].forEach(function(fn){if(typeof window[fn]==='function'&&!window[fn].__singleNoticePatched){const old=window[fn];window[fn]=function(){const r=old.apply(this,arguments);setTimeout(refresh,80);return r};window[fn].__singleNoticePatched=true}});
+  setTimeout(refresh,1500);
 })();
 </script>
 
