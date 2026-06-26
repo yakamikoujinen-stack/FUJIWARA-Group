@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Home v5.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#14213d;color:#fff;text-align:center;padding:18px}
+.wrap{max-width:1050px;margin:auto;padding:16px}
+.stats,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.box,.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.num{font-size:24px;font-weight:800}
+a{text-decoration:none;color:#14213d;font-weight:800;font-size:18px}
+.small{font-size:13px;color:#666;margin-top:6px}
+textarea{width:100%;height:110px;font-size:16px;border-radius:10px;padding:10px}
+button{background:#14213d;color:#fff;border:0;border-radius:10px;padding:10px 18px;margin-top:8px}
+.ai{border-left:6px solid #14213d}
+.badge{display:inline-block;background:#eef2f7;border-radius:999px;padding:6px 10px;margin:4px;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>👑 FUJIWARA KING SYSTEM</h1><p>Home v5.0 - データ連携ダッシュボード</p></header>
+<div class="wrap">
+<div class="stats">
+<div class="box"><h3>💰 今月売上</h3><div class="num" id="sales">¥0</div></div>
+<div class="box"><h3>💸 今月経費</h3><div class="num" id="expense">¥0</div></div>
+<div class="box"><h3>📈 今月利益</h3><div class="num" id="profit">¥0</div></div>
+<div class="box"><h3>🏦 現預金</h3><div class="num" id="cash">¥0</div></div>
+</div>
+
+<div class="card ai" style="margin-top:16px">
+<h3>🤖 AI秘書コメント</h3>
+<div id="aiText"></div>
+<div>
+<span class="badge" id="eventBadge"></span>
+<span class="badge" id="constructionBadge"></span>
+<span class="badge" id="accountingBadge"></span>
+</div>
+</div>
+
+<div class="grid" style="margin-top:16px">
+<div class="card"><a href="fks-dashboard-v1.0.html">📊 Dashboard</a><div class="small">経営状況</div></div>
+<div class="card"><a href="fks-accounting-v1.0.html">💰 Accounting</a><div class="small">売上・経費・現預金</div></div>
+<div class="card"><a href="fks-event-v1.0.html">🎪 Event</a><div class="small">イベント管理</div></div>
+<div class="card"><a href="fks-construction-v1.0.html">🏗 Construction</a><div class="small">建設・日報</div></div>
+<div class="card"><a href="fks-staff-v1.0.html">👷 Staff</a><div class="small">スタッフ管理</div></div>
+<div class="card"><a href="fks-family-v1.0.html">👨‍👩‍👧 Family</a><div class="small">家族共有</div></div>
+<div class="card"><a href="fks-real-family-v1.0.html">🔒 Real Family</a><div class="small">家族専用</div></div>
+<div class="card"><a href="fks-ai-secretary-v1.0.html">🤖 AI Secretary</a><div class="small">AI秘書</div></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h3>📝 社長メモ</h3>
+<textarea id="memo" placeholder="今日の判断・指示・気づきを入力"></textarea>
+<button onclick="saveMemo()">保存</button>
+</div>
+</div>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString();}
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;}}
+function load(){
+ const acc=getJSON("fks_accounting",{sales:0,expense:0,cash:0});
+ const evt=getJSON("fks_event",{sales:0,expense:0,profit:0});
+ const con=getJSON("fks_construction_report",null);
+ const s=Number(acc.sales||0)+Number(evt.sales||0);
+ const e=Number(acc.expense||0)+Number(evt.expense||0);
+ const p=s-e+Number(evt.profit||0);
+ sales.textContent=yen(s); expense.textContent=yen(e); profit.textContent=yen(p); cash.textContent=yen(acc.cash||0);
+ memo.value=localStorage.getItem("fks_ceo_memo")||"";
+ eventBadge.textContent=(evt.sales||evt.profit)?"🎪 Event 入力あり":"🎪 Event 未入力";
+ constructionBadge.textContent=con?"🏗 日報あり":"🏗 日報未入力";
+ accountingBadge.textContent=(acc.sales||acc.expense||acc.cash)?"💰 会計入力あり":"💰 会計未入力";
+ let c=[];
+ if(!acc.sales&&!acc.expense)c.push("会計入力がまだ少ないです。売上・経費を確認してください。");
+ if(!con)c.push("建設日報が未入力です。現場報告を確認してください。");
+ if(!evt.sales&&!evt.profit)c.push("イベント売上が未入力です。イベント担当へ確認してください。");
+ if(p>0)c.push("今月は利益が出ています。支払予定と現預金を確認してください。");
+ if(!c.length)c.push("本日の主要入力は確認できています。次は資金繰りを確認してください。");
+ aiText.innerHTML=c.map(x=>"・"+x).join("<br>");
+}
+function saveMemo(){localStorage.setItem("fks_ceo_memo",memo.value);alert("保存しました");}
+window.onload=load;
+</script>
+</body>
+</html>
