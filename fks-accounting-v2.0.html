@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Accounting v2.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#14213d;color:#fff;text-align:center;padding:18px}
+.wrap{max-width:900px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select,textarea,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#14213d;color:#fff;border:0;font-weight:bold}
+.num{font-size:24px;font-weight:800}
+a{color:#14213d;font-weight:bold;text-decoration:none}
+</style>
+</head>
+<body>
+<header><h1>💰 FKS Accounting v2.0</h1><p>Home連携対応</p></header>
+<div class="wrap">
+
+<div class="card">
+<a href="fks-home-v5.0.html">← FKS Homeへ戻る</a>
+</div>
+
+<div class="grid">
+<div class="card"><h3>今月売上</h3><div class="num" id="salesView">¥0</div></div>
+<div class="card"><h3>今月経費</h3><div class="num" id="expenseView">¥0</div></div>
+<div class="card"><h3>今月利益</h3><div class="num" id="profitView">¥0</div></div>
+<div class="card"><h3>現預金</h3><div class="num" id="cashView">¥0</div></div>
+</div>
+
+<div class="card">
+<h3>入力</h3>
+<select id="type">
+<option value="sales">売上</option>
+<option value="expense">経費</option>
+<option value="cash">現預金</option>
+</select>
+<input id="amount" type="number" placeholder="金額">
+<input id="title" placeholder="内容（例：建設売上、材料費、銀行残高）">
+<textarea id="memo" placeholder="メモ"></textarea>
+<button onclick="add()">登録</button>
+</div>
+
+<div class="card">
+<h3>履歴</h3>
+<div id="list"></div>
+<button onclick="clearAll()">全削除</button>
+</div>
+
+</div>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString();}
+function loadData(){
+ return JSON.parse(localStorage.getItem("fks_accounting")||'{"sales":0,"expense":0,"cash":0,"records":[]}');
+}
+function saveData(d){localStorage.setItem("fks_accounting",JSON.stringify(d));}
+function render(){
+ const d=loadData();
+ salesView.textContent=yen(d.sales);
+ expenseView.textContent=yen(d.expense);
+ profitView.textContent=yen(Number(d.sales)-Number(d.expense));
+ cashView.textContent=yen(d.cash);
+ list.innerHTML=(d.records||[]).slice().reverse().map(r=>`
+ <div style="border-bottom:1px solid #eee;padding:8px">
+ <b>${r.typeLabel}</b> ${yen(r.amount)}<br>${r.title||""}<br><small>${r.date}</small>
+ </div>`).join("")||"履歴なし";
+}
+function add(){
+ const d=loadData();
+ const t=type.value;
+ const a=Number(amount.value||0);
+ if(!a){alert("金額を入力してください");return;}
+ if(t==="sales")d.sales=Number(d.sales||0)+a;
+ if(t==="expense")d.expense=Number(d.expense||0)+a;
+ if(t==="cash")d.cash=a;
+ d.records=d.records||[];
+ d.records.push({
+  type:t,
+  typeLabel:t==="sales"?"売上":t==="expense"?"経費":"現預金",
+  amount:a,title:title.value,memo:memo.value,date:new Date().toLocaleString()
+ });
+ saveData(d);
+ amount.value="";title.value="";memo.value="";
+ render();
+ alert("登録しました。FKS Home v5.0へ反映されます。");
+}
+function clearAll(){
+ if(confirm("会計データを全削除しますか？")){
+  localStorage.setItem("fks_accounting",JSON.stringify({sales:0,expense:0,cash:0,records:[]}));
+  render();
+ }
+}
+window.onload=render;
+</script>
+</body>
+</html>
