@@ -3112,59 +3112,90 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
 </script>
 
 
+
+
+
 <script>
-/* ===== FUJIWARA v7.4 安全追加パッチ ===== */
+/* ===== FUJIWARA Login Restore Patch v7.5 =====
+   リーダーパスワードを前の 1111 に戻す
+   担当者・一般は名前だけ
+   画面デザインは変更しない
+===== */
 (function(){
-  const NOTICE_KEY='fujiwara_leader_notices_v74';
-  const FAMILY_KEY='family_shared_events_v1';
-  const EVENT_KEYS=['fg_events_v7','fujiwara_events','events','fg_events_v62','fg_events'];
-  function $(id){return document.getElementById(id)}
-  function q(s){return document.querySelector(s)}
-  function qa(s){return Array.from(document.querySelectorAll(s))}
-  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-  function parse(v,fb){try{return JSON.parse(v)}catch(e){return fb}}
-  function eventKey(){
-    for(const k of EVENT_KEYS){let a=parse(localStorage.getItem(k),null); if(Array.isArray(a)) return k;}
-    for(let i=0;i<localStorage.length;i++){let k=localStorage.key(i),a=parse(localStorage.getItem(k),null); if(Array.isArray(a)&&a.some(x=>x&&(x.name||x.title)&&(x.start||x.date||x.startDate))) return k;}
-    return EVENT_KEYS[0];
+  function $(id){ return document.getElementById(id); }
+  function q(sel){ return document.querySelector(sel); }
+  function qa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+  function activeRole(){
+    const active = q('.role-tab.active');
+    const tx = active ? (active.textContent || '') : '';
+    if(/担当/.test(tx)) return 'staff';
+    if(/一般/.test(tx)) return 'user';
+    return 'leader';
   }
-  function events(){return parse(localStorage.getItem(eventKey()),[])||[]}
-  function saveEvents(a){localStorage.setItem(eventKey(),JSON.stringify(a||[]))}
-  function sharedFlag(e){return !!(e.family||e.familyShare||e.shareFamily||e.familyApp||e.familyShared||e.shareToFamily)}
-  function norm(e){let id=e.id||e.eventId||((e.name||e.title||'event')+'-'+(e.start||e.date||Date.now()));return {id:'main-'+id,date:e.start||e.date||e.startDate||new Date().toISOString().slice(0,10),end:e.end||e.endDate||e.start||e.date||e.startDate||new Date().toISOString().slice(0,10),title:e.name||e.title||e.eventName||'共有イベント',place:e.place||e.location||'',items:e.items||e.item||e.menu||'',memo:e.memo||e.note||'',person:'共有イベント',creator:'共有イベント',color:'yellow',type:'shared'}}
-  function syncFamily(){localStorage.setItem(FAMILY_KEY,JSON.stringify(events().filter(e=>e&&sharedFlag(e)&&!e.secret&&!e.isSecret).map(norm)))}
-  function ensureFamilyBox(){
-    if($('#fg-family-share-v74')) return;
-    let modal=q('.modal.open')||q('.modal')||document.body;
-    let label=qa('label').reverse().find(l=>/メモ|備考|連絡/.test(l.textContent||''));
-    let box=document.createElement('label');
-    box.className='family-share-box';
-    box.style.cssText='display:flex;align-items:center;gap:10px;background:#fffdf6;border:2px solid #d64242;border-radius:10px;padding:12px;margin:10px 0 14px;color:#111;';
-    box.innerHTML='<input id="fg-family-share-v74" type="checkbox" style="width:26px;height:26px;min-width:26px;margin:0;"><span><b>家族アプリで共有する（Family App）</b><br><small>チェックすると、家族アプリのカレンダーに表示されます。</small></span>';
-    if(label&&label.parentNode) label.parentNode.insertBefore(box,label); else modal.appendChild(box);
+
+  function updatePwVisibility(){
+    const role = activeRole();
+    const pw = $('#loginPw') || $('#login-password') || $('#password') || q('#login-screen input[type="password"]');
+    const label = $('#pwLabel') || q('#login-screen label[for*="pass"]');
+    if(pw){
+      pw.style.display = role === 'leader' ? 'block' : 'none';
+      pw.placeholder = role === 'leader' ? 'リーダーパスワード' : '';
+    }
+    if(label){ label.style.display = role === 'leader' ? 'block' : 'none'; }
   }
-  document.addEventListener('click',function(ev){
-    let t=ev.target,txt=(t&&(t.textContent||t.value)||'');
-    if(/編集|追加|詳細/.test(txt)) setTimeout(ensureFamilyBox,100);
-    if(/保存/.test(txt)) setTimeout(function(){
-      let cb=$('#fg-family-share-v74');
-      if(cb){let a=events();let idEl=$('#evId')||$('#event-id')||$('#editId');let id=idEl&&idEl.value;let target=id?a.find(e=>String(e.id||e.eventId)===String(id)):a[a.length-1];if(target){target.family=cb.checked;target.familyShare=cb.checked;target.shareFamily=cb.checked;saveEvents(a)}}
-      syncFamily(); renderNotice();
-    },250);
-  },true);
-  ['saveEvent','saveEventForm','saveCurrentEvent'].forEach(fn=>{if(typeof window[fn]==='function'&&!window[fn].__fgFam){let old=window[fn];window[fn]=function(){let r=old.apply(this,arguments);setTimeout(syncFamily,150);return r};window[fn].__fgFam=true}});
-  function getNotices(){return parse(localStorage.getItem(NOTICE_KEY),[{time:'今日',text:'イベント担当者はリーダーが入力しています。出勤の可否は各自、入力してください'}])}
-  function setNotices(a){localStorage.setItem(NOTICE_KEY,JSON.stringify(a||[]))}
-  function noticeHTML(){let a=getNotices();return '<div style="font-weight:900;margin-bottom:8px;">🔔 リーダーからのお知らせ</div>'+ (a.length?a.slice(0,4).map(n=>'<div style="background:#fff;border:1px solid #ead8a8;border-radius:9px;padding:9px;margin:6px 0;"><small style="color:#6d5a2b">'+esc(n.time)+'</small><br>'+esc(n.text)+'</div>').join(''):'<div style="color:#6d5a2b">お知らせはありません</div>')}
-  function renderNotice(){let cal=q('.cal-grid')||$('#calendar')||q('[id*=calendar]');if(!cal)return;let par=cal.parentElement||cal;let box=$('#fg-notice-above-calendar');if(!box){box=document.createElement('div');box.id='fg-notice-above-calendar';box.style.cssText='background:#fffdf6;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:0 0 12px;box-shadow:0 3px 14px rgba(80,55,0,.10);color:#111;';par.insertBefore(box,cal)}box.innerHTML=noticeHTML()}
-  function ensureNoticeInput(){let settings=q('#settings-page')||q('#page-settings')||q('.settings-group')||qa('.page').find(p=>/設定/.test(p.textContent||'')); if(!settings||$('#fg-notice-input-box'))return;let box=document.createElement('div');box.id='fg-notice-input-box';box.className='settings-group';box.style.cssText='background:#fffdfa;border:1px solid #d8bf75;border-radius:10px;margin:12px 0;padding:12px;color:#111;';box.innerHTML='<b>🔔 リーダーお知らせ</b><textarea id="fg-notice-text" placeholder="お知らせを入力" style="margin-top:8px;width:100%;min-height:70px;"></textarea><button class="btn btn-gold" id="fg-notice-add" style="margin-top:8px;">お知らせ追加</button>';settings.prepend(box);$('#fg-notice-add').onclick=function(){let v=$('#fg-notice-text').value.trim();if(!v)return;let a=getNotices();a.unshift({time:new Date().toLocaleString('ja-JP'),text:v});setNotices(a);$('#fg-notice-text').value='';renderNotice();alert('お知らせを追加しました')}}
-  function role(){let a=q('.role-tab.active'),tx=a?a.textContent:'';if(/担当/.test(tx))return 'staff';if(/一般/.test(tx))return 'user';return 'leader'}
-  function needPw(r){return r==='leader'||r==='staff'} function pwFor(r){return r==='leader'?'1111':r==='staff'?'2222':''}
-  function pwVis(){let r=role(),pw=$('#loginPw')||$('#login-password')||$('#password')||q('#login-screen input[type=password]'),lab=$('#pwLabel'); if(pw){pw.style.display=needPw(r)?'block':'none';pw.placeholder=r==='leader'?'リーダー：1111':r==='staff'?'担当者：2222':''} if(lab)lab.style.display=needPw(r)?'block':'none'}
-  document.addEventListener('click',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('role-tab'))setTimeout(pwVis,30)},true);
-  window.fujiwaraSafeLogin=function(){let r=role(),nameEl=$('#loginName')||$('#login-name')||$('#name')||q('#login-screen input[type=text],#login-screen input:not([type])'),pwEl=$('#loginPw')||$('#login-password')||$('#password')||q('#login-screen input[type=password]'),name=nameEl&&nameEl.value?nameEl.value.trim():'藤原',pw=pwEl&&pwEl.value?pwEl.value.trim():'';if(needPw(r)&&pw!==pwFor(r)){let msg=r==='leader'?'リーダーパスワードが違います':'担当者パスワードが違います',err=q('.login-err')||$('#login-err');if(err){err.textContent=msg;err.style.display='block'}else alert(msg);return false}try{localStorage.setItem('fg_current_user',name);localStorage.setItem('fg_current_role',r)}catch(e){}let login=$('#login-screen')||$('#login')||q('.login'),app=$('#app')||q('.app');if(login)login.style.display='none';if(app){app.style.display='flex';app.style.visibility='visible'}let b=q('.role-badge')||$('#roleBadge')||$('#role-badge');if(b){b.textContent=r==='leader'?'👑 リーダー':r==='staff'?'担当者':'一般';b.className='role-badge '+(r==='leader'?'rb-leader':r==='staff'?'rb-staff':'rb-user')}setTimeout(()=>{renderNotice();ensureNoticeInput();ensureFamilyBox();syncFamily()},150);if(typeof renderCalendar==='function')try{renderCalendar()}catch(e){}if(typeof renderHome==='function')try{renderHome()}catch(e){}return false}
-  function attach(){qa('button,input[type=button],input[type=submit]').forEach(b=>{let t=b.textContent||b.value||'';if(/ログイン/.test(t)&&(b.closest('#login-screen')||b.closest('#login')))b.onclick=window.fujiwaraSafeLogin});pwVis()}
-  document.addEventListener('DOMContentLoaded',()=>{attach();setTimeout(()=>{renderNotice();ensureNoticeInput();syncFamily()},300)});attach();setTimeout(()=>{renderNotice();ensureNoticeInput();syncFamily()},500);
+
+  window.fujiwaraLoginRestore = function(){
+    const role = activeRole();
+    const nameEl = $('#loginName') || $('#login-name') || $('#name') || q('#login-screen input[type="text"], #login-screen input:not([type])');
+    const pwEl = $('#loginPw') || $('#login-password') || $('#password') || q('#login-screen input[type="password"]');
+    const name = nameEl && nameEl.value ? nameEl.value.trim() : '藤原';
+    const pw = pwEl && pwEl.value ? pwEl.value.trim() : '';
+
+    if(role === 'leader' && pw !== '1111'){
+      const err = q('.login-err') || $('#login-err');
+      if(err){ err.textContent = 'リーダーパスワードが違います'; err.style.display = 'block'; }
+      else alert('リーダーパスワードが違います');
+      return false;
+    }
+
+    try{
+      localStorage.setItem('fg_current_user', name);
+      localStorage.setItem('fg_current_role', role);
+    }catch(e){}
+
+    const login = $('#login-screen') || $('#login') || q('.login');
+    const app = $('#app') || q('.app');
+    if(login) login.style.display = 'none';
+    if(app){ app.style.display = 'flex'; app.style.visibility = 'visible'; }
+
+    const badge = q('.role-badge') || $('#roleBadge') || $('#role-badge');
+    if(badge){
+      badge.textContent = role === 'leader' ? '👑 リーダー' : role === 'staff' ? '担当者' : '一般';
+      badge.className = 'role-badge ' + (role === 'leader' ? 'rb-leader' : role === 'staff' ? 'rb-staff' : 'rb-user');
+    }
+
+    if(typeof renderCalendar === 'function'){ try{ renderCalendar(); }catch(e){} }
+    if(typeof renderHome === 'function'){ try{ renderHome(); }catch(e){} }
+    if(typeof renderAll === 'function'){ try{ renderAll(); }catch(e){} }
+    return false;
+  };
+
+  function attach(){
+    qa('button,input[type="button"],input[type="submit"]').forEach(function(btn){
+      const t = btn.textContent || btn.value || '';
+      if(/ログイン/.test(t) && (btn.closest('#login-screen') || btn.closest('#login'))){
+        btn.onclick = window.fujiwaraLoginRestore;
+      }
+    });
+    qa('.role-tab').forEach(function(tab){
+      tab.addEventListener('click', function(){ setTimeout(updatePwVisibility, 30); }, true);
+    });
+    updatePwVisibility();
+  }
+
+  document.addEventListener('DOMContentLoaded', attach);
+  attach();
 })();
 </script>
 
