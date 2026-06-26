@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Home v3.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f3f5f8}
+header{background:#16233b;color:#fff;padding:18px;text-align:center}
+.wrap{max-width:980px;margin:auto;padding:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.card a{text-decoration:none;color:#16233b;font-weight:bold}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.box{background:#fff;border-radius:10px;padding:12px;text-align:center}
+.note{background:#fff;border-radius:10px;padding:16px;margin-top:16px}
+button{padding:10px 16px;border:0;border-radius:8px;background:#16233b;color:#fff}
+</style>
+</head>
+<body>
+<header>
+<h1>👑 FUJIWARA KING SYSTEM v3.0</h1>
+<p>経営ダッシュボード（統合ホーム）</p>
+</header>
+
+<div class="wrap">
+
+<div class="stat">
+<div class="box"><h3>今月売上</h3><div id="sales">¥0</div></div>
+<div class="box"><h3>今月利益</h3><div id="profit">¥0</div></div>
+<div class="box"><h3>AI秘書</h3><div>入力状況を確認してください</div></div>
+</div>
+
+<div class="cards">
+<div class="card"><a href="fks-dashboard-v1.0.html">📊 Dashboard</a></div>
+<div class="card"><a href="fks-accounting-v1.0.html">💰 Accounting</a></div>
+<div class="card"><a href="fks-event-v1.0.html">🎪 Event</a></div>
+<div class="card"><a href="fks-construction-v1.0.html">🏗 Construction</a></div>
+<div class="card"><a href="fks-staff-v1.0.html">👷 Staff</a></div>
+<div class="card"><a href="fks-family-v1.0.html">👨‍👩‍👧 Family</a></div>
+<div class="card"><a href="fks-real-family-v1.0.html">🔒 Real Family</a></div>
+</div>
+
+<div class="note">
+<h3>経営メモ</h3>
+<textarea id="memo" style="width:100%;height:120px"></textarea><br><br>
+<button onclick="saveMemo()">保存</button>
+</div>
+
+</div>
+
+<script>
+function loadTotals(){
+ const a=JSON.parse(localStorage.getItem("fks_accounting")||'{"sales":0,"expense":0}');
+ document.getElementById("sales").textContent="¥"+(a.sales||0).toLocaleString();
+ document.getElementById("profit").textContent="¥"+((a.sales||0)-(a.expense||0)).toLocaleString();
+ document.getElementById("memo").value=localStorage.getItem("fks_home_memo")||"";
+}
+function saveMemo(){
+ localStorage.setItem("fks_home_memo",document.getElementById("memo").value);
+ alert("保存しました");
+}
+loadTotals();
+</script>
+</body>
+</html>
