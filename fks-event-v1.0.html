@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FKS Event v1.0</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#14213d;--muted:#6b7280;--line:#d9dee8;--gold:#d6a329;--red:#dc2626;--green:#059669;--blue:#2563eb;--orange:#ea580c;--dark:#0f172a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}header{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;padding:18px 16px;border-bottom:5px solid var(--gold);position:sticky;top:0;z-index:10}h1{font-size:24px;margin:0 0 5px}header p{margin:0;color:#e5e7eb}.wrap{max-width:1100px;margin:0 auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:800;color:var(--ink)}.tab.active{background:#0f172a;color:#fff}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.05)}h2{font-size:20px;margin:4px 0 12px}.badge{display:inline-block;color:#fff;background:var(--orange);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;margin-bottom:8px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}label{display:block;font-weight:800;font-size:13px;margin:8px 0 4px;color:#334155}input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px;background:#fff;font-size:16px}textarea{min-height:78px;resize:vertical}.btn{border:0;border-radius:14px;padding:12px 14px;font-weight:900;background:#0f172a;color:white;font-size:15px}.btn2{background:#2563eb}.btn3{background:#059669}.btnDanger{background:#dc2626}.btnGhost{background:#fff;color:#0f172a;border:1px solid var(--line)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.num{font-size:26px;font-weight:900}.muted{color:var(--muted);font-size:13px}.list{display:grid;gap:10px}.item{border:1px solid var(--line);border-radius:14px;padding:11px;background:#fff}.itemTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#eef2ff;color:#1e3a8a}.profit{font-weight:900;color:var(--green)}.loss{font-weight:900;color:var(--red)}.hidden{display:none}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.summary .card{text-align:center}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.dayName{text-align:center;font-weight:900;font-size:12px;color:var(--muted)}.day{min-height:76px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px;font-size:12px}.day b{display:block;font-size:13px}.dot{display:block;margin-top:4px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:2px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}@media(max-width:520px){.row,.row3{grid-template-columns:1fr}h1{font-size:21px}.calendar{gap:4px}.day{min-height:62px;padding:4px}}
+</style>
+</head>
+<body>
+<header><h1>🎪 FKS Event v1.0</h1><p>イベント登録・売上・経費・利益・人員配置を管理</p></header>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="show('home',this)">全体</button>
+    <button class="tab" onclick="show('entry',this)">イベント入力</button>
+    <button class="tab" onclick="show('calendar',this)">カレンダー</button>
+    <button class="tab" onclick="show('list',this)">一覧</button>
+    <button class="tab" onclick="show('settings',this)">設定</button>
+  </div>
+
+  <section id="home">
+    <div class="summary">
+      <div class="card"><div class="num" id="sumSales">¥0</div><div class="muted">総売上</div></div>
+      <div class="card"><div class="num" id="sumCost">¥0</div><div class="muted">総経費</div></div>
+      <div class="card"><div class="num" id="sumProfit">¥0</div><div class="muted">総利益</div></div>
+      <div class="card"><div class="num" id="sumCount">0</div><div class="muted">登録イベント数</div></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="card"><span class="badge">AIメモ</span><h2>今日の確認</h2><p id="aiComment">イベントを登録すると、利益や注意点を自動で表示します。</p></div>
+      <div class="card"><span class="badge">次の予定</span><h2>直近イベント</h2><div id="nextEvent" class="muted">未登録</div></div>
+    </div>
+  </section>
+
+  <section id="entry" class="hidden">
+    <div class="card">
+      <span class="badge">入力</span><h2>イベント登録</h2>
+      <input type="hidden" id="editId">
+      <div class="row">
+        <div><label>日付</label><input id="date" type="date"></div>
+        <div><label>イベント名</label><input id="name" placeholder="例：○○祭り"></div>
+      </div>
+      <div class="row">
+        <div><label>会場</label><input id="place" placeholder="例：丹波篠山 ○○公園"></div>
+        <div><label>責任者</label><input id="leader" placeholder="例：藤原"></div>
+      </div>
+      <div class="row3">
+        <div><label>スタッフ人数</label><input id="staffCount" type="number" min="0" value="0"></div>
+        <div><label>売上</label><input id="sales" type="number" min="0" value="0"></div>
+        <div><label>経費</label><input id="cost" type="number" min="0" value="0"></div>
+      </div>
+      <label>商品</label>
+      <div class="row3">
+        <label><input type="checkbox" class="product" value="牛串"> 牛串</label>
+        <label><input type="checkbox" class="product" value="カステラ"> カステラ</label>
+        <label><input type="checkbox" class="product" value="からあげ"> からあげ</label>
+        <label><input type="checkbox" class="product" value="いか焼き"> いか焼き</label>
+        <label><input type="checkbox" class="product" value="とんかつ"> とんかつ</label>
+        <label><input type="checkbox" class="product" value="りんご飴"> りんご飴</label>
+      </div>
+      <label>人員配置・持ち物</label><textarea id="staffMemo" placeholder="例：A班 牛串2名、B班 カステラ2名、発電機・テント"></textarea>
+      <label>反省・引継ぎメモ</label><textarea id="memo" placeholder="例：牛串がよく売れた。次回は氷を多めに。"></textarea>
+      <div class="actions">
+        <button class="btn btn3" onclick="saveEvent()">保存</button>
+        <button class="btn btnGhost" onclick="clearForm()">入力クリア</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="calendar" class="hidden">
+    <div class="card"><span class="badge">カレンダー</span><h2 id="calTitle"></h2><div class="actions"><button class="btn btnGhost" onclick="moveMonth(-1)">前月</button><button class="btn btnGhost" onclick="moveMonth(1)">次月</button></div><div class="calendar" id="cal"></div></div>
+  </section>
+
+  <section id="list" class="hidden">
+    <div class="card"><span class="badge">一覧</span><h2>イベント一覧</h2><div class="list" id="eventList"></div></div>
+  </section>
+
+  <section id="settings" class="hidden">
+    <div class="card"><span class="badge">設定</span><h2>データ管理</h2><p class="muted">このデータは、この端末のブラウザ内に保存されます。</p><div class="actions"><button class="btn btnDanger" onclick="resetAll()">全データ削除</button></div></div>
+  </section>
+</div>
+<footer>FUJIWARA KING SYSTEM / FKS Event v1.0 / localStorage保存</footer>
+<script>
+const KEY='fks_event_v1_events';
+let events=JSON.parse(localStorage.getItem(KEY)||'[]');
+let calDate=new Date();
+const yen=n=>'¥'+(Number(n)||0).toLocaleString('ja-JP');
+function persist(){localStorage.setItem(KEY,JSON.stringify(events));renderAll();}
+function show(id,btn){document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderAll();}
+function getProducts(){return [...document.querySelectorAll('.product:checked')].map(x=>x.value)}
+function saveEvent(){
+ const id=document.getElementById('editId').value||String(Date.now());
+ const ev={id,date:date.value,name:name.value.trim(),place:place.value.trim(),leader:leader.value.trim(),staffCount:+staffCount.value||0,sales:+sales.value||0,cost:+cost.value||0,products:getProducts(),staffMemo:staffMemo.value.trim(),memo:memo.value.trim()};
+ if(!ev.date||!ev.name){alert('日付とイベント名を入力してね');return}
+ const i=events.findIndex(e=>e.id===id); if(i>=0)events[i]=ev; else events.push(ev);
+ events.sort((a,b)=>a.date.localeCompare(b.date)); clearForm(); persist(); alert('保存しました');
+}
+function clearForm(){editId.value='';date.value='';name.value='';place.value='';leader.value='';staffCount.value=0;sales.value=0;cost.value=0;staffMemo.value='';memo.value='';document.querySelectorAll('.product').forEach(x=>x.checked=false)}
+function editEvent(id){const e=events.find(x=>x.id===id); if(!e)return; editId.value=e.id;date.value=e.date;name.value=e.name;place.value=e.place;leader.value=e.leader;staffCount.value=e.staffCount;sales.value=e.sales;cost.value=e.cost;staffMemo.value=e.staffMemo||'';memo.value=e.memo||'';document.querySelectorAll('.product').forEach(x=>x.checked=e.products?.includes(x.value));document.querySelectorAll('.tab')[1].click();}
+function delEvent(id){if(confirm('削除しますか？')){events=events.filter(e=>e.id!==id);persist();}}
+function renderHome(){const sales=events.reduce((s,e)=>s+Number(e.sales||0),0),cost=events.reduce((s,e)=>s+Number(e.cost||0),0),profit=sales-cost;sumSales.textContent=yen(sales);sumCost.textContent=yen(cost);sumProfit.textContent=yen(profit);sumProfit.className=profit>=0?'num profit':'num loss';sumCount.textContent=events.length;const today=new Date().toISOString().slice(0,10);const next=events.find(e=>e.date>=today);nextEvent.innerHTML=next?`<b>${next.date} ${next.name}</b><br>${next.place||''}<br>予定売上 ${yen(next.sales)} / 利益 ${yen(next.sales-next.cost)}`:'未登録';aiComment.textContent=events.length?`登録イベント${events.length}件。総利益は${yen(profit)}です。利益が低いイベントは経費と人員配置を確認してください。`:'イベントを登録すると、利益や注意点を自動で表示します。'}
+function renderList(){eventList.innerHTML=events.length?'':'<div class="muted">まだイベントがありません</div>';events.forEach(e=>{const p=e.sales-e.cost;const div=document.createElement('div');div.className='item';div.innerHTML=`<div class="itemTop"><div><span class="pill">${e.date}</span><h3>${e.name}</h3><div class="muted">${e.place||''} / 責任者 ${e.leader||'-'} / ${e.staffCount||0}名</div><div>${(e.products||[]).join('・')||'商品未選択'}</div></div><div class="${p>=0?'profit':'loss'}">${yen(p)}</div></div><div class="muted">売上 ${yen(e.sales)} / 経費 ${yen(e.cost)}</div><p>${e.memo||''}</p><div class="actions"><button class="btn btn2" onclick="editEvent('${e.id}')">編集</button><button class="btn btnDanger" onclick="delEvent('${e.id}')">削除</button></div>`;eventList.appendChild(div);});}
+function renderCal(){const y=calDate.getFullYear(),m=calDate.getMonth();calTitle.textContent=`${y}年 ${m+1}月`;cal.innerHTML='';['日','月','火','水','木','金','土'].forEach(d=>{const x=document.createElement('div');x.className='dayName';x.textContent=d;cal.appendChild(x)});const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();for(let i=0;i<first;i++){cal.appendChild(document.createElement('div'))}for(let d=1;d<=last;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const cell=document.createElement('div');cell.className='day';cell.innerHTML=`<b>${d}</b>`;events.filter(e=>e.date===ds).forEach(e=>{const dot=document.createElement('span');dot.className='dot';dot.textContent=e.name;dot.onclick=()=>editEvent(e.id);cell.appendChild(dot)});cal.appendChild(cell)}}
+function moveMonth(n){calDate.setMonth(calDate.getMonth()+n);renderCal();}
+function renderAll(){renderHome();renderList();renderCal();}
+function resetAll(){if(confirm('本当に全データを削除しますか？')){events=[];persist();}}
+renderAll();
+</script>
+</body>
+</html>
