@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang='ja'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>FKS Daily Brief v2.0</title>
+<style>
+:root{--bg:#071019;--gold:#d4af37;--panel:rgba(255,255,255,.08);--line:rgba(212,175,55,.25);--text:#fff8df}
+body{margin:0;background:linear-gradient(135deg,#071019,#18120a);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+header{padding:18px;text-align:center;border-bottom:1px solid var(--line)}
+main{max-width:1100px;margin:auto;padding:16px}
+.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.big{font-size:26px;font-weight:900}.muted{font-size:12px;color:#d7cda6}
+button{background:linear-gradient(135deg,#d4af37,#ffe082);border:0;border-radius:10px;padding:10px 16px;font-weight:bold}
+ol{line-height:1.8}
+</style></head><body>
+<header><h1>🌅 FKS Daily Brief v2.0</h1><div>社長の朝礼画面</div></header>
+<main>
+<div class='hero'>
+<h2>おはようございます、社長。</h2>
+<p>今日の経営状況を30秒で確認できます。</p>
+<button onclick='loadData()'>最新状態に更新</button>
+</div>
+<div class='grid'>
+<div class='card'><h3>💰 今日の売上</h3><div id='sales' class='big'>¥0</div></div>
+<div class='card'><h3>📈 利益</h3><div id='profit' class='big'>¥0</div></div>
+<div class='card'><h3>🏦 現預金</h3><div id='cash' class='big'>¥0</div></div>
+<div class='card'><h3>🚨 注意事項</h3><div id='alerts' class='big'>0</div><div class='muted'>未入金・在庫・車両など</div></div>
+</div>
+<div class='card'>
+<h3>👩‍💼 AIKA 今日の優先順位</h3>
+<ol id='tasks'></ol>
+</div>
+<div class='card'>
+<h3>📅 今日の確認</h3>
+<ul>
+<li>建設現場の予定確認</li>
+<li>イベント会場の準備確認</li>
+<li>請求・支払状況確認</li>
+<li>スタッフ配置確認</li>
+</ul>
+</div>
+</main>
+<script>
+function y(n){return "¥"+Number(n||0).toLocaleString()}
+function g(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function loadData(){
+ const a=g("fks_accounting",{sales:0,expense:0,cash:0});
+ const e=g("fks_event",{sales:0,expense:0});
+ const inv=g("fks_inventory",[]);
+ const iv=g("fks_invoices",[]);
+ const pay=g("fks_payments",[]);
+ const s=(+a.sales||0)+(+e.sales||0), p=s-((+a.expense||0)+(+e.expense||0));
+ sales.textContent=y(s); profit.textContent=y(p); cash.textContent=y(a.cash||0);
+ let c=0,t=[];
+ if(iv.filter(x=>!x.paid).length){c++;t.push("未入金を確認")}
+ if(pay.filter(x=>!x.done).length){c++;t.push("支払予定を確認")}
+ if(inv.filter(x=>(+x.qty||0)<= (+x.min||0)).length){c++;t.push("在庫を補充")}
+ if(!t.length)t.push("大きなアラートはありません");
+ alerts.textContent=c;
+ tasks.innerHTML=t.map(v=>"<li>"+v+"</li>").join("");
+}
+loadData();
+</script>
+</body></html>
