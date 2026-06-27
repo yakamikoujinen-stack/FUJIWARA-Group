@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Staff v2.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#263238;color:#fff;text-align:center;padding:18px}
+main{max-width:1050px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0002}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select,textarea,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#263238;color:#fff;border:0;font-weight:bold}
+.btn2{background:#888}
+.item{border-bottom:1px solid #eee;padding:10px 0}
+.ok{color:#0a7a2f;font-weight:bold}.warn{color:#b00020;font-weight:bold}
+a{color:#263238;font-weight:bold;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+<h1>👷 FKS Staff v2.0</h1>
+<p>スタッフ情報・資格・勤務時間管理</p>
+</header>
+
+<main>
+<div class="card"><a href="fks-portal-v1.0.html">← FKS Portalへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>スタッフ数</h3><div id="count" style="font-size:26px;font-weight:900">0</div></div>
+<div class="card"><h3>本日出勤</h3><div id="todayWork" style="font-size:26px;font-weight:900">0</div></div>
+<div class="card"><h3>資格あり</h3><div id="licenseCount" style="font-size:26px;font-weight:900">0</div></div>
+</div>
+
+<div class="card">
+<h3>スタッフ登録</h3>
+<input id="name" placeholder="氏名">
+<input id="phone" placeholder="電話番号">
+<input id="role" placeholder="役割（例：建設、イベント、事務）">
+<input id="license" placeholder="資格・免許（例：普通免許、玉掛け）">
+<input id="gear" placeholder="保護具（例：ヘルメット、安全靴）">
+<div class="grid">
+<input id="wage" type="number" placeholder="時給・日給">
+<select id="payType">
+<option>時給</option>
+<option>日給</option>
+</select>
+</div>
+<textarea id="memo" placeholder="メモ"></textarea>
+<button onclick="addStaff()">スタッフ保存</button>
+</div>
+
+<div class="card">
+<h3>出勤記録</h3>
+<select id="workName"></select>
+<div class="grid">
+<input id="start" type="time">
+<input id="end" type="time">
+</div>
+<button onclick="addWork()">勤務を記録</button>
+</div>
+
+<div class="card">
+<h3>スタッフ一覧</h3>
+<div id="list">登録なし</div>
+<button class="btn2" onclick="clearAll()">全削除</button>
+</div>
+</main>
+
+<script>
+function loadStaff(){return JSON.parse(localStorage.getItem("fks_staff_v2")||"[]")}
+function saveStaff(v){localStorage.setItem("fks_staff_v2",JSON.stringify(v))}
+function loadWorks(){return JSON.parse(localStorage.getItem("fks_staff_works")||"[]")}
+function saveWorks(v){localStorage.setItem("fks_staff_works",JSON.stringify(v))}
+function addStaff(){
+ if(!name.value){alert("氏名を入力してください");return}
+ const arr=loadStaff()
+ arr.push({id:Date.now(),name:name.value,phone:phone.value,role:role.value,license:license.value,gear:gear.value,wage:Number(wage.value||0),payType:payType.value,memo:memo.value})
+ saveStaff(arr)
+ name.value="";phone.value="";role.value="";license.value="";gear.value="";wage.value="";memo.value=""
+ render()
+ alert("保存しました")
+}
+function addWork(){
+ if(!workName.value){alert("スタッフを選択してください");return}
+ const arr=loadWorks()
+ arr.push({id:Date.now(),name:workName.value,start:start.value,end:end.value,date:new Date().toLocaleDateString()})
+ saveWorks(arr)
+ start.value="";end.value=""
+ render()
+ alert("勤務を記録しました")
+}
+function delStaff(id){if(confirm("削除しますか？")){saveStaff(loadStaff().filter(x=>x.id!==id));render()}}
+function clearAll(){if(confirm("全削除しますか？")){saveStaff([]);saveWorks([]);render()}}
+function render(){
+ const s=loadStaff(), w=loadWorks(), today=new Date().toLocaleDateString()
+ count.textContent=s.length
+ todayWork.textContent=w.filter(x=>x.date===today).length
+ licenseCount.textContent=s.filter(x=>x.license).length
+ workName.innerHTML=s.map(x=>`<option>${x.name}</option>`).join("")
+ list.innerHTML=s.length?s.map(x=>{
+ const works=w.filter(y=>y.name===x.name).slice(-3).reverse().map(y=>`<small>${y.date} ${y.start||"-"}〜${y.end||"-"}</small>`).join("<br>")
+ return `<div class="item"><b>${x.name}</b>（${x.role||"-"}）<br>
+ 電話：${x.phone||"-"}<br>
+ 資格：<span class="${x.license?'ok':'warn'}">${x.license||"未登録"}</span><br>
+ 保護具：${x.gear||"-"}<br>
+ 給与：${x.wage||0}円 / ${x.payType||"-"}<br>
+ メモ：${x.memo||"-"}<br>
+ 最近の勤務：<br>${works||"<small>記録なし</small>"}<br>
+ <button onclick="delStaff(${x.id})">削除</button></div>`
+ }).join(""):"登録なし"
+}
+render()
+</script>
+</body>
+</html>
