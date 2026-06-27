@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS PDF Center v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7}
+header{background:#7a1f1f;color:#fff;text-align:center;padding:18px}
+main{max-width:1000px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+button{width:100%;padding:12px;font-size:16px;border:0;border-radius:10px;background:#7a1f1f;color:#fff;font-weight:bold}
+.small{color:#666;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>📄 FKS PDF Center v1.0</h1>
+<p>印刷・PDF出力センター</p>
+</header>
+
+<main>
+<div class="card">
+<h2>PDF出力メニュー</h2>
+<div class="grid">
+<div>
+<button onclick="printDoc('建設日報')">🏗 建設日報</button>
+<div class="small">日報を印刷・PDF保存</div>
+</div>
+<div>
+<button onclick="printDoc('請求書')">📄 請求書</button>
+<div class="small">請求内容を印刷・PDF保存</div>
+</div>
+<div>
+<button onclick="printDoc('イベント収支')">🎪 イベント収支</button>
+<div class="small">イベント報告書を出力</div>
+</div>
+<div>
+<button onclick="printDoc('資金繰り表')">💴 資金繰り表</button>
+<div class="small">経営資料を出力</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>使い方</h2>
+<ol>
+<li>出力したい帳票を選択</li>
+<li>印刷画面で「PDFとして保存」を選択</li>
+<li>会社資料として保管・共有</li>
+</ol>
+</div>
+
+<script>
+function printDoc(title){
+ document.title="FKS - "+title;
+ window.print();
+}
+</script>
+</main>
+</body>
+</html>
