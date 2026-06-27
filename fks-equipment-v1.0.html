@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Equipment v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7}
+header{background:#5a3e2b;color:#fff;text-align:center;padding:18px}
+main{max-width:1050px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select,textarea,button{width:100%;padding:10px;font-size:16px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#5a3e2b;color:#fff;border:0;font-weight:bold}
+.btn2{background:#888}
+.item{border-bottom:1px solid #eee;padding:10px 0}
+.warn{color:#b00020;font-weight:bold}.ok{color:#0a7a2f;font-weight:bold}
+.big{font-size:26px;font-weight:900}
+a{text-decoration:none;color:#5a3e2b;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>🛠 FKS Equipment v1.0</h1>
+<p>工具・重機・機材管理</p>
+</header>
+
+<main>
+<div class="card"><a href="fks-portal-v1.0.html">← FKS Portalへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>登録機材</h3><div id="count" class="big">0</div></div>
+<div class="card"><h3>点検注意</h3><div id="alert" class="big">0</div></div>
+</div>
+
+<div class="card">
+<h3>機材登録</h3>
+<input id="name" placeholder="機材名">
+<input id="code" placeholder="管理番号">
+<select id="type">
+<option>電動工具</option>
+<option>重機</option>
+<option>発電機</option>
+<option>コンプレッサー</option>
+<option>測量機器</option>
+<option>その他</option>
+</select>
+<input id="place" placeholder="保管場所">
+<input id="user" placeholder="使用者">
+<input id="inspect" type="date">
+<textarea id="memo" placeholder="修理履歴・メモ"></textarea>
+<button onclick="addItem()">保存</button>
+</div>
+
+<div class="card">
+<h3>機材一覧</h3>
+<div id="list">登録なし</div>
+<button class="btn2" onclick="clearAll()">全削除</button>
+</div>
+</main>
+
+<script>
+function load(){return JSON.parse(localStorage.getItem("fks_equipment")||"[]")}
+function save(v){localStorage.setItem("fks_equipment",JSON.stringify(v))}
+function daysUntil(s){if(!s)return null;const t=new Date();t.setHours(0,0,0,0);const d=new Date(s);d.setHours(0,0,0,0);return Math.ceil((d-t)/86400000);}
+function status(s){const d=daysUntil(s);if(d===null)return "<span class='warn'>未登録</span>";if(d<0)return "<span class='warn'>期限切れ</span>";if(d<=30)return "<span class='warn'>あと"+d+"日</span>";return "<span class='ok'>OK</span>";}
+function addItem(){
+ if(!name.value){alert("機材名を入力してください");return;}
+ const a=load();
+ a.push({id:Date.now(),name:name.value,code:code.value,type:type.value,place:place.value,user:user.value,inspect:inspect.value,memo:memo.value});
+ save(a);
+ name.value=code.value=place.value=user.value=inspect.value=memo.value="";
+ render();
+ alert("保存しました");
+}
+function del(id){if(confirm("削除しますか？")){save(load().filter(x=>x.id!==id));render();}}
+function clearAll(){if(confirm("全削除しますか？")){save([]);render();}}
+function render(){
+ const a=load();
+ count.textContent=a.length;
+ alert.textContent=a.filter(x=>{const d=daysUntil(x.inspect);return d===null||d<=30}).length;
+ list.innerHTML=a.length?a.slice().reverse().map(x=>`
+ <div class="item">
+ <b>${x.name}</b>（${x.type}）<br>
+ 管理番号：${x.code||"-"}<br>
+ 保管場所：${x.place||"-"}<br>
+ 使用者：${x.user||"-"}<br>
+ 点検：${x.inspect||"未登録"} ${status(x.inspect)}<br>
+ メモ：${x.memo||"-"}<br>
+ <button onclick="del(${x.id})">削除</button>
+ </div>`).join(""):"登録なし";
+}
+render();
+</script>
+</body>
+</html>
