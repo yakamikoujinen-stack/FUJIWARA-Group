@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Daily Brief v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:linear-gradient(135deg,#0f172a,#1f2937);color:#fff;text-align:center;padding:22px}
+main{max-width:1150px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.big{font-size:24px;font-weight:900}
+.ai{border-left:6px solid #0f172a}
+.warn{color:#b00020;font-weight:bold}
+.ok{color:#0a7a2f;font-weight:bold}
+button{background:#0f172a;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-size:16px;font-weight:bold}
+a{color:#0f172a;font-weight:bold;text-decoration:none}
+ul{margin:8px 0 0 20px;line-height:1.8}
+.small{font-size:13px;color:#666}
+</style>
+</head>
+<body>
+<header>
+<h1>🌅 FKS Daily Brief v1.0</h1>
+<p>社長の朝礼画面・AIKA本日の報告</p>
+</header>
+
+<main>
+<div class="card"><a href="fks-command-center-v1.0.html">← Command Centerへ戻る</a></div>
+
+<div class="card ai">
+<h2>👩‍💼 AIKA</h2>
+<div id="aikaMsg">おはようございます、社長。</div>
+</div>
+
+<div class="grid">
+<div class="card"><h3>💰 売上</h3><div class="big" id="sales">¥0</div></div>
+<div class="card"><h3>📈 利益</h3><div class="big" id="profit">¥0</div></div>
+<div class="card"><h3>🏦 現預金</h3><div class="big" id="cash">¥0</div></div>
+<div class="card"><h3>📄 未入金</h3><div class="big" id="unpaid">¥0</div></div>
+<div class="card"><h3>💸 未払い</h3><div class="big" id="unpaidPay">¥0</div></div>
+<div class="card"><h3>📦 在庫不足</h3><div class="big" id="lowStock">0件</div></div>
+<div class="card"><h3>🏗 未承認日報</h3><div class="big" id="pendingReport">0件</div></div>
+<div class="card"><h3>🚗 車両注意</h3><div class="big" id="vehicleWarn">0件</div></div>
+</div>
+
+<div class="card">
+<h2>👑 今日の優先順位 TOP5</h2>
+<ul id="top5"></ul>
+<button onclick="loadBrief()">更新</button>
+</div>
+
+<div class="card">
+<h2>ショートカット</h2>
+<div class="grid">
+<div><a href="fks-dashboard-v2.0.html">📊 Dashboard</a><div class="small">全体状況</div></div>
+<div><a href="fks-analytics-v1.0.html">📈 Analytics</a><div class="small">分析</div></div>
+<div><a href="fks-ai-secretary-v2.0.html">👩‍💼 AIKA</a><div class="small">秘書</div></div>
+<div><a href="fks-integration-center-v1.0.html">🔗 Integration</a><div class="small">連携</div></div>
+</div>
+</div>
+</main>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function daysUntil(s){if(!s)return null;const t=new Date();t.setHours(0,0,0,0);const d=new Date(s);d.setHours(0,0,0,0);return Math.ceil((d-t)/86400000)}
+function loadBrief(){
+ const acc=getJSON("fks_accounting",{sales:0,expense:0,cash:0});
+ const evt=getJSON("fks_event",{sales:0,expense:0,profit:0});
+ const invoices=getJSON("fks_invoices",[]);
+ const payments=getJSON("fks_payments",[]);
+ const stock=getJSON("fks_inventory",[]);
+ const reports=getJSON("fks_construction_reports",[]);
+ const vehicles=getJSON("fks_vehicles",[]);
+ const s=Number(acc.sales||0)+Number(evt.sales||0);
+ const e=Number(acc.expense||0)+Number(evt.expense||0);
+ const p=s-e+Number(evt.profit||0);
+ const ui=invoices.filter(x=>!x.paid).reduce((a,x)=>a+Number(x.amount||0),0);
+ const up=payments.filter(x=>!x.done).reduce((a,x)=>a+Number(x.amount||0),0);
+ const low=stock.filter(x=>Number(x.qty||0)<=Number(x.min||0)).length;
+ const pending=reports.filter(x=>!x.approved).length;
+ const vw=vehicles.filter(x=>{
+   const d1=daysUntil(x.inspection), d2=daysUntil(x.insurance);
+   return d1===null||d1<=30||d2===null||d2<=30;
+ }).length;
+
+ sales.textContent=yen(s); profit.textContent=yen(p); cash.textContent=yen(acc.cash||0);
+ unpaid.textContent=yen(ui); unpaidPay.textContent=yen(up);
+ lowStock.textContent=low+"件"; pendingReport.textContent=pending+"件"; vehicleWarn.textContent=vw+"件";
+
+ let tasks=[];
+ if(ui>0)tasks.push("未入金 "+yen(ui)+" の確認");
+ if(up>0)tasks.push("未払い "+yen(up)+" の支払予定確認");
+ if(low>0)tasks.push("在庫不足 "+low+" 件の補充確認");
+ if(pending>0)tasks.push("建設日報 "+pending+" 件の承認");
+ if(vw>0)tasks.push("車検・保険期限 "+vw+" 件の確認");
+ if(tasks.length<5)tasks.push("今日の建設・イベント予定を確認");
+ if(tasks.length<5)tasks.push("スタッフ出勤状況を確認");
+ if(tasks.length<5)tasks.push("資金繰りを確認");
+ top5.innerHTML=tasks.slice(0,5).map(x=>"<li>"+x+"</li>").join("");
+
+ let msg="おはようございます、社長。";
+ if(tasks.length>0)msg+=" 本日は「"+tasks[0]+"」を最優先に進めましょう。";
+ if(p>0)msg+=" 今月利益はプラスです。";
+ if(p<0)msg+=" 利益がマイナスです。経費確認を優先してください。";
+ aikaMsg.textContent=msg;
+}
+window.onload=loadBrief;
+</script>
+</body>
+</html>
