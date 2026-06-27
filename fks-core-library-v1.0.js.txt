@@ -1,0 +1,99 @@
+/* FKS Core Library v1.0
+   FUJIWARA KING SYSTEM 共通エンジン
+   役割：データ読込・保存・集計・AIKAコメント生成を共通化
+*/
+window.FKS = {
+  get(key, def){
+    try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); }
+    catch(e){ return def; }
+  },
+  set(key, value){
+    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem("fks_last_saved", new Date().toLocaleString());
+    return value;
+  },
+  yen(n){
+    return "¥" + Number(n || 0).toLocaleString();
+  },
+  daysUntil(dateStr){
+    if(!dateStr) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = new Date(dateStr); d.setHours(0,0,0,0);
+    return Math.ceil((d - today) / 86400000);
+  },
+  accounting(){
+    return this.get("fks_accounting", {sales:0, expense:0, cash:0, records:[]});
+  },
+  event(){
+    return this.get("fks_event", {sales:0, expense:0, profit:0});
+  },
+  invoices(){
+    return this.get("fks_invoices", []);
+  },
+  payments(){
+    return this.get("fks_payments", []);
+  },
+  inventory(){
+    return this.get("fks_inventory", []);
+  },
+  construction(){
+    return this.get("fks_construction_reports", []);
+  },
+  vehicles(){
+    return this.get("fks_vehicles", []);
+  },
+  equipment(){
+    return this.get("fks_equipment", []);
+  },
+  summary(){
+    const acc = this.accounting();
+    const evt = this.event();
+    const invoices = this.invoices();
+    const payments = this.payments();
+    const stock = this.inventory();
+    const reports = this.construction();
+    const vehicles = this.vehicles();
+
+    const sales = Number(acc.sales || 0) + Number(evt.sales || 0);
+    const expense = Number(acc.expense || 0) + Number(evt.expense || 0);
+    const profit = sales - expense + Number(evt.profit || 0);
+    const unpaid = invoices.filter(x=>!x.paid).reduce((a,x)=>a+Number(x.amount||0),0);
+    const unpaidCount = invoices.filter(x=>!x.paid).length;
+    const unpaidPay = payments.filter(x=>!x.done).reduce((a,x)=>a+Number(x.amount||0),0);
+    const unpaidPayCount = payments.filter(x=>!x.done).length;
+    const lowStock = stock.filter(x=>Number(x.qty||0) <= Number(x.min||0)).length;
+    const pendingReports = reports.filter(x=>!x.approved).length;
+    const vehicleWarn = vehicles.filter(x=>{
+      const d1 = this.daysUntil(x.inspection);
+      const d2 = this.daysUntil(x.insurance);
+      return d1===null || d1<=30 || d2===null || d2<=30;
+    }).length;
+
+    return {
+      sales, expense, profit,
+      margin: sales ? Math.round((profit / sales) * 100) : 0,
+      cash: Number(acc.cash || 0),
+      unpaid, unpaidCount,
+      unpaidPay, unpaidPayCount,
+      lowStock,
+      pendingReports,
+      vehicleWarn,
+      forecast: Number(acc.cash || 0) + unpaid - unpaidPay,
+      checkedAt: new Date().toLocaleString()
+    };
+  },
+  aika(){
+    const s = this.summary();
+    const msg = [];
+    if(s.unpaid > 0) msg.push("未入金 " + this.yen(s.unpaid) + " を確認してください。");
+    if(s.unpaidPay > 0) msg.push("未払い " + this.yen(s.unpaidPay) + " の支払予定を確認してください。");
+    if(s.lowStock > 0) msg.push("在庫不足が " + s.lowStock + " 件あります。補充確認が必要です。");
+    if(s.pendingReports > 0) msg.push("建設日報の未承認が " + s.pendingReports + " 件あります。");
+    if(s.vehicleWarn > 0) msg.push("車検・保険期限の注意が " + s.vehicleWarn + " 件あります。");
+    if(s.margin < 10 && s.sales > 0) msg.push("利益率が低めです。原価と経費を確認しましょう。");
+    if(s.margin >= 30) msg.push("利益率は良好です。強い部門を伸ばしましょう。");
+    if(msg.length === 0) msg.push("大きな警告はありません。本日の予定確認から始めましょう。");
+    localStorage.setItem("fks_ai_last", JSON.stringify({messages:msg, date:new Date().toLocaleString()}));
+    return msg;
+  }
+};
