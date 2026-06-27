@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang='ja'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>FKS Dashboard v2.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#0f172a;color:#fff;text-align:center;padding:18px}
+.wrap{max-width:1100px;margin:auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px #0002}
+.big{font-size:24px;font-weight:800}
+.ai{border-left:6px solid #0f172a}
+button{padding:10px 16px;border:0;border-radius:10px;background:#0f172a;color:#fff}
+</style></head><body>
+<header><h1>👑 FKS Dashboard v2.0</h1><p>社長専用 司令塔</p></header>
+<div class='wrap'>
+<div class='grid'>
+<div class='card'><div>売上</div><div id='sales' class='big'>¥0</div></div>
+<div class='card'><div>利益</div><div id='profit' class='big'>¥0</div></div>
+<div class='card'><div>現預金</div><div id='cash' class='big'>¥0</div></div>
+<div class='card'><div>未入金</div><div id='inv' class='big'>¥0</div></div>
+<div class='card'><div>未払い</div><div id='pay' class='big'>¥0</div></div>
+<div class='card'><div>在庫不足</div><div id='low' class='big'>0件</div></div>
+</div>
+<div class='card ai' style='margin-top:16px'>
+<h3>👩‍💼 AIKA 本日の優先順位</h3>
+<div id='msg'></div>
+<button onclick='load()'>更新</button>
+</div>
+</div>
+<script>
+function y(n){return "¥"+Number(n||0).toLocaleString()}
+function g(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function load(){
+const a=g("fks_accounting",{sales:0,expense:0,cash:0}),e=g("fks_event",{sales:0,expense:0,profit:0}),i=g("fks_invoices",[]),p=g("fks_payments",[]),s=g("fks_inventory",[]);
+const sales=(+a.sales||0)+(+e.sales||0),profit=sales-((+a.expense||0)+(+e.expense||0))+(+e.profit||0),cash=(+a.cash||0),uinv=i.filter(x=>!x.paid).reduce((t,x)=>t+ +x.amount,0),upay=p.filter(x=>!x.done).reduce((t,x)=>t+ +x.amount,0),low=s.filter(x=>(+x.qty||0)<= (+x.min||0)).length;
+salesEl.textContent=y(sales);profitEl.textContent=y(profit);cashEl.textContent=y(cash);invEl.textContent=y(uinv);payEl.textContent=y(upay);lowEl.textContent=low+"件";
+let m=[];if(uinv)m.push("① 未入金確認");if(upay)m.push("② 支払予定確認");if(low)m.push("③ 在庫補充");if(!m.length)m.push("今日は大きな警告はありません。");
+msg.innerHTML="社長、おはようございます。<br>"+m.join("<br>");
+}
+const salesEl=document.getElementById("sales"),profitEl=document.getElementById("profit"),cashEl=document.getElementById("cash"),invEl=document.getElementById("inv"),payEl=document.getElementById("pay"),lowEl=document.getElementById("low");
+window.onload=load;
+</script></body></html>
