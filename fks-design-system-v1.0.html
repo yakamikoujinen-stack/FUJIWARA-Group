@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Design System v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#111827;color:#fff;text-align:center;padding:22px}
+main{max-width:1150px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.theme{border-left:8px solid #111827}
+.king{border-left-color:#c8a84b}.field{border-left-color:#1f3a5f}.festival{border-left-color:#e85d04}
+.finance{border-left-color:#0a7a2f}.warehouse{border-left-color:#8b5e00}.team{border-left-color:#2563eb}
+.ai{border-left-color:#243b63}.home{border-left-color:#7c9b59}
+.badge{display:inline-block;border-radius:999px;padding:5px 10px;background:#eef2f7;font-size:12px;margin:3px}
+button{background:#111827;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-weight:bold}
+a{color:#111827;font-weight:bold;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+<h1>🎨 FKS Design System v1.0</h1>
+<p>FUJIWARA KING SYSTEM デザイン統一設計</p>
+</header>
+
+<main>
+<div class="card">
+<h2>基本方針</h2>
+<p>FKSは共通の骨組みを持ちながら、各アプリごとに役割に合った色・雰囲気へ仕上げます。</p>
+<p><strong>今は中身を完成 → 最後に個別デザインへ展開。</strong></p>
+</div>
+
+<div class="grid">
+<div class="card theme king"><h3>👑 KING</h3><p>Command Center / Home</p><span class="badge">黒</span><span class="badge">金</span><span class="badge">高級感</span></div>
+<div class="card theme field"><h3>🏗 FIELD</h3><p>建設 / 車両 / 工具</p><span class="badge">紺</span><span class="badge">グレー</span><span class="badge">現場感</span></div>
+<div class="card theme festival"><h3>🎪 FESTIVAL</h3><p>イベント / 在庫</p><span class="badge">赤</span><span class="badge">オレンジ</span><span class="badge">活気</span></div>
+<div class="card theme finance"><h3>💰 FINANCE</h3><p>会計 / 請求 / 支払 / 資金繰り</p><span class="badge">深緑</span><span class="badge">白</span><span class="badge">安心感</span></div>
+<div class="card theme warehouse"><h3>📦 WAREHOUSE</h3><p>在庫 / 材料</p><span class="badge">茶</span><span class="badge">黄</span><span class="badge">管理感</span></div>
+<div class="card theme team"><h3>👷 TEAM</h3><p>スタッフ / 勤怠</p><span class="badge">青</span><span class="badge">白</span><span class="badge">見やすさ</span></div>
+<div class="card theme ai"><h3>👩‍💼 AIKA</h3><p>AI秘書 / Daily Brief</p><span class="badge">白</span><span class="badge">ネイビー</span><span class="badge">優秀な秘書感</span></div>
+<div class="card theme home"><h3>👨‍👩‍👧 HOME</h3><p>Family / Real Family</p><span class="badge">ベージュ</span><span class="badge">木目</span><span class="badge">温かさ</span></div>
+</div>
+
+<div class="card">
+<h2>共通部品</h2>
+<ul>
+<li>共通ヘッダー：左上に「一」ロゴ、中央にアプリ名</li>
+<li>共通カード：角丸16px、軽い影、余白16px</li>
+<li>共通ボタン：大きめ、押しやすい、iPhone対応</li>
+<li>共通メニュー：Command Center / Home / AIKA / Portalへ戻れる</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>次の実装</h2>
+<p>次はこのDesign Systemをもとに、<strong>Command Center v2.0</strong> を黒×金の完成デザインへ育てます。</p>
+<button onclick="alert('FKSデザイン統一プロジェクト開始！')">デザイン方針確認</button>
+</div>
+</main>
+</body>
+</html>
