@@ -1,0 +1,45 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIKA v3.0</title><style>
+body{margin:0;font-family:-apple-system,sans-serif;background:#08111c;color:#eef3ff}
+header{background:#13233a;padding:18px;text-align:center}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#15263d;border:1px solid #2d476b;border-radius:16px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.big{font-size:24px;font-weight:800}.btn{background:#5fa8ff;color:#06111d;border:0;padding:10px 16px;border-radius:10px;font-weight:bold}
+</style></head><body>
+<header><h1>👩‍💼 AIKA v3.0</h1><div>経営秘書アシスタント</div></header>
+<main>
+<div class="card">
+<h2>社長への朝の報告</h2>
+<div id="greet">おはようございます、社長。</div>
+<button class="btn" onclick="analyze()">分析を更新</button>
+</div>
+<div class="grid">
+<div class="card"><h3>🎯 最優先</h3><ol id="priority"></ol></div>
+<div class="card"><h3>💡 改善提案</h3><ul id="advice"></ul></div>
+<div class="card"><h3>⚠️ アラート</h3><ul id="alerts"></ul></div>
+</div>
+</main>
+<script>
+function j(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function yen(n){return "¥"+Number(n).toLocaleString()}
+function analyze(){
+ const a=j("fks_accounting",{sales:0,expense:0,cash:0});
+ const inv=j("fks_inventory",[]);
+ const iv=j("fks_invoices",[]);
+ const pay=j("fks_payments",[]);
+ let p=[],adv=[],al=[];
+ if(iv.some(x=>!x.paid)){p.push("未入金を確認");al.push("未入金があります")}
+ if(pay.some(x=>!x.done)){p.push("支払予定を確認");al.push("未払いがあります")}
+ if(inv.some(x=>(+x.qty||0)<= (+x.min||0))){p.push("在庫を補充");al.push("在庫不足があります")}
+ if(!p.length)p.push("本日の予定を確認");
+ const profit=(+a.sales||0)-(+a.expense||0);
+ adv.push("利益: "+yen(profit));
+ adv.push(profit>=0?"利益はプラスです":"利益改善が必要です");
+ adv.push("現預金: "+yen(a.cash||0));
+ priority.innerHTML=p.map(x=>"<li>"+x+"</li>").join("");
+ advice.innerHTML=adv.map(x=>"<li>"+x+"</li>").join("");
+ alerts.innerHTML=(al.length?al:["重大なアラートはありません"]).map(x=>"<li>"+x+"</li>").join("");
+}
+analyze();
+</script></body></html>
