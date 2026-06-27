@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Inventory v2.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#6a4c00;color:#fff;text-align:center;padding:16px}
+main{max-width:1050px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0002}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+input,select,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#6a4c00;color:#fff;border:0;font-weight:bold}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
+.num{font-size:24px;font-weight:800}
+.warn{color:#b00020;font-weight:bold}
+.good{color:#0a7a2f;font-weight:bold}
+a{color:#6a4c00;font-weight:bold;text-decoration:none}
+</style>
+</head>
+<body>
+<header><h1>📦 FKS Inventory v2.0</h1><p>イベント在庫・原価・利益管理</p></header>
+<main>
+<div class="card"><a href="fks-home-v6.0.html">← FKS Homeへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>在庫品目数</h3><div class="num" id="count">0</div></div>
+<div class="card"><h3>在庫評価額</h3><div class="num" id="stockValue">¥0</div></div>
+<div class="card"><h3>販売見込額</h3><div class="num" id="salesValue">¥0</div></div>
+<div class="card"><h3>見込利益</h3><div class="num" id="profitValue">¥0</div></div>
+</div>
+
+<div class="card">
+<h3>在庫登録・更新</h3>
+<select id="preset" onchange="usePreset()">
+<option value="">商品を選択</option>
+<option>牛串</option><option>カステラ</option><option>からあげ</option><option>いか焼き</option><option>とんかつ</option><option>りんご飴</option>
+<option>その他</option>
+</select>
+<input id="name" placeholder="商品名">
+<input id="qty" type="number" placeholder="現在数量">
+<input id="cost" type="number" placeholder="原価（1個あたり）">
+<input id="price" type="number" placeholder="売価（1個あたり）">
+<input id="min" type="number" placeholder="最低在庫数（これ以下で警告）">
+<button onclick="saveItem()">登録・更新</button>
+</div>
+
+<div class="card">
+<h3>入庫・出庫</h3>
+<select id="moveName"></select>
+<input id="moveQty" type="number" placeholder="数量">
+<div class="grid">
+<button onclick="moveStock(1)">入庫</button>
+<button onclick="moveStock(-1)">出庫</button>
+</div>
+</div>
+
+<div class="card">
+<h3>在庫一覧</h3>
+<div style="overflow:auto">
+<table>
+<thead><tr><th>商品</th><th>数量</th><th>原価</th><th>売価</th><th>見込利益</th><th>状態</th><th></th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</div>
+</main>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString();}
+function load(){return JSON.parse(localStorage.getItem("fks_inventory")||"[]");}
+function save(v){localStorage.setItem("fks_inventory",JSON.stringify(v));}
+function usePreset(){if(preset.value&&preset.value!="その他")name.value=preset.value;}
+function saveItem(){
+ const n=name.value.trim(); if(!n){alert("商品名を入力してください");return;}
+ const d=load(); const i=d.findIndex(x=>x.name===n);
+ const item={name:n,qty:Number(qty.value||0),cost:Number(cost.value||0),price:Number(price.value||0),min:Number(min.value||0)};
+ if(i>=0)d[i]=item; else d.push(item);
+ save(d); name.value=""; qty.value=""; cost.value=""; price.value=""; min.value=""; preset.value="";
+ draw(); alert("保存しました");
+}
+function moveStock(sign){
+ const n=moveName.value; const q=Number(moveQty.value||0); if(!n||!q){alert("商品と数量を入力してください");return;}
+ const d=load(); const item=d.find(x=>x.name===n); if(!item)return;
+ item.qty=Number(item.qty||0)+(q*sign); if(item.qty<0)item.qty=0;
+ save(d); moveQty.value=""; draw();
+}
+function delItem(n){if(confirm("削除しますか？")){save(load().filter(x=>x.name!==n));draw();}}
+function draw(){
+ const d=load();
+ count.textContent=d.length;
+ const stock=d.reduce((s,x)=>s+(Number(x.qty||0)*Number(x.cost||0)),0);
+ const sales=d.reduce((s,x)=>s+(Number(x.qty||0)*Number(x.price||0)),0);
+ stockValue.textContent=yen(stock); salesValue.textContent=yen(sales); profitValue.textContent=yen(sales-stock);
+ moveName.innerHTML=d.map(x=>`<option>${x.name}</option>`).join("");
+ rows.innerHTML=d.map(x=>{
+   const profit=(Number(x.price||0)-Number(x.cost||0))*Number(x.qty||0);
+   const low=Number(x.qty||0)<=Number(x.min||0);
+   return `<tr><td>${x.name}</td><td>${x.qty}</td><td>${yen(x.cost)}</td><td>${yen(x.price)}</td><td>${yen(profit)}</td><td class="${low?'warn':'good'}">${low?'不足注意':'OK'}</td><td><button onclick="delItem('${x.name}')">削除</button></td></tr>`;
+ }).join("")||"<tr><td colspan='7'>登録なし</td></tr>";
+}
+draw();
+</script>
+</body>
+</html>
