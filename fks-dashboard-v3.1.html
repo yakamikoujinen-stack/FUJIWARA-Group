@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Dashboard v3.1</title>
+<style>
+:root{
+  --bg:#07090d;--panel:rgba(255,255,255,.08);--line:rgba(212,175,55,.25);
+  --gold:#d4af37;--gold2:#ffe082;--text:#fff8df;--muted:#c8b77a;
+  --red:#ff6464;--green:#48d597;--blue:#8ec5ff;--r:20px;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 20% 0%,rgba(212,175,55,.20),transparent 28%),
+linear-gradient(135deg,#07090d,#18120a 55%,#07090d);color:var(--text)}
+header{position:sticky;top:0;z-index:10;background:rgba(7,9,13,.84);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 16px}
+.head{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:22px;font-weight:950;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;color:transparent}
+.sub{font-size:12px;color:var(--muted)}
+.nav a{display:inline-block;color:var(--text);text-decoration:none;font-weight:800;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:999px;margin-left:6px;background:rgba(255,255,255,.04)}
+main{max-width:1200px;margin:auto;padding:16px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,rgba(212,175,55,.17),rgba(255,255,255,.04));border-radius:28px;padding:20px;margin-bottom:16px}
+.hero h1{margin:0 0 8px;font-size:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 10px 28px rgba(0,0,0,.28);backdrop-filter:blur(8px)}
+.card h3{margin:0 0 8px;color:var(--gold2);font-size:15px}
+.big{font-size:27px;font-weight:950}
+.small{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55}
+.ai{border-left:7px solid var(--gold)}
+.warn{color:var(--red);font-weight:900}.ok{color:var(--green);font-weight:900}
+.btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#151006;border:0;border-radius:12px;padding:11px 18px;font-weight:950;font-size:15px}
+.bar{height:18px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.chart{height:150px;border:1px dashed var(--line);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--muted);background:rgba(0,0,0,.16)}
+ul{margin:0;padding-left:20px;line-height:1.8}
+.footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0}
+@media(max-width:680px){
+ .head{display:block;text-align:center}.nav{margin-top:10px}.nav a{margin:3px}
+ .hero h1{font-size:23px}.big{font-size:23px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div>
+      <div class="logo">📊 FKS DASHBOARD</div>
+      <div class="sub">v3.1 POLISHED / 経営サマリー</div>
+    </div>
+    <div class="nav">
+      <a href="fks-command-center-v2.1.html">👑 Command</a>
+      <a href="fks-daily-brief-v1.0.html">🌅 Brief</a>
+      <a href="fks-analytics-v1.0.html">📈 Analytics</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <h1>経営状況を一画面で確認</h1>
+  <p>売上・利益・資金繰り・アラートを集約します。</p>
+  <button class="btn" onclick="loadData()">最新状態に更新</button>
+</section>
+
+<section class="grid">
+  <div class="card"><h3>💰 総売上</h3><div class="big" id="sales">¥0</div><div class="small">会計＋イベント</div></div>
+  <div class="card"><h3>📈 利益</h3><div class="big" id="profit">¥0</div><div class="small">売上−経費</div></div>
+  <div class="card"><h3>📊 利益率</h3><div class="big" id="margin">0%</div><div class="bar"><div class="fill" id="marginBar"></div></div></div>
+  <div class="card"><h3>🏦 現預金</h3><div class="big" id="cash">¥0</div><div class="small">会計データ</div></div>
+  <div class="card"><h3>📄 未入金</h3><div class="big" id="unpaid">¥0</div><div class="small">請求管理</div></div>
+  <div class="card"><h3>💸 未払い</h3><div class="big" id="unpaidPay">¥0</div><div class="small">支払管理</div></div>
+  <div class="card"><h3>📦 在庫不足</h3><div class="big" id="lowStock">0件</div><div class="small">最低在庫以下</div></div>
+  <div class="card"><h3>🚗 車両注意</h3><div class="big" id="vehicleWarn">0件</div><div class="small">車検・保険30日以内</div></div>
+</section>
+
+<section class="grid" style="margin-top:16px">
+  <div class="card">
+    <h3>📈 売上推移</h3>
+    <div class="chart">グラフ表示エリア</div>
+    <div class="small">次版で月別データに対応</div>
+  </div>
+  <div class="card">
+    <h3>🏗🎪 部門比較</h3>
+    <div class="chart">建設 / イベント 比較エリア</div>
+    <div class="small">次版で部門別利益を表示</div>
+  </div>
+</section>
+
+<section class="card ai" style="margin-top:16px">
+  <h3>👩‍💼 AIKA 分析コメント</h3>
+  <ul id="aika"></ul>
+</section>
+
+<div class="footer">PROJECT KING / Dashboard Sprint 2</div>
+</main>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function daysUntil(s){if(!s)return null;const t=new Date();t.setHours(0,0,0,0);const d=new Date(s);d.setHours(0,0,0,0);return Math.ceil((d-t)/86400000)}
+function loadData(){
+ const acc=getJSON("fks_accounting",{sales:0,expense:0,cash:0});
+ const evt=getJSON("fks_event",{sales:0,expense:0,profit:0});
+ const invoices=getJSON("fks_invoices",[]);
+ const payments=getJSON("fks_payments",[]);
+ const stock=getJSON("fks_inventory",[]);
+ const vehicles=getJSON("fks_vehicles",[]);
+ const s=Number(acc.sales||0)+Number(evt.sales||0);
+ const e=Number(acc.expense||0)+Number(evt.expense||0);
+ const p=s-e+Number(evt.profit||0);
+ const m=s?Math.round((p/s)*100):0;
+ const ui=invoices.filter(x=>!x.paid).reduce((a,x)=>a+Number(x.amount||0),0);
+ const up=payments.filter(x=>!x.done).reduce((a,x)=>a+Number(x.amount||0),0);
+ const low=stock.filter(x=>Number(x.qty||0)<=Number(x.min||0)).length;
+ const vw=vehicles.filter(x=>{const d1=daysUntil(x.inspection),d2=daysUntil(x.insurance);return d1===null||d1<=30||d2===null||d2<=30}).length;
+ sales.textContent=yen(s); profit.textContent=yen(p); margin.textContent=m+"%"; cash.textContent=yen(acc.cash||0);
+ unpaid.textContent=yen(ui); unpaidPay.textContent=yen(up); lowStock.textContent=low+"件"; vehicleWarn.textContent=vw+"件";
+ marginBar.style.width=Math.max(0,Math.min(100,m))+"%";
+ let msg=[];
+ if(m<10 && s>0)msg.push("利益率が低めです。経費と原価を確認してください。");
+ if(m>=30)msg.push("利益率は良好です。この状態を維持しましょう。");
+ if(ui>0)msg.push("未入金が "+yen(ui)+" あります。入金確認を優先してください。");
+ if(up>0)msg.push("未払いが "+yen(up)+" あります。支払予定を確認してください。");
+ if(low>0)msg.push("在庫不足が "+low+" 件あります。イベント前に補充確認が必要です。");
+ if(vw>0)msg.push("車検・保険期限の注意が "+vw+" 件あります。");
+ if(!msg.length)msg.push("大きな警告はありません。今日の予定確認から始めましょう。");
+ aika.innerHTML=msg.map(x=>"<li>"+x+"</li>").join("");
+}
+window.onload=loadData;
+</script>
+</body>
+</html>
