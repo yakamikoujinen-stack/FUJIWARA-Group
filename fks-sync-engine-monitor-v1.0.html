@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Sync Engine Monitor v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7}
+header{background:#111827;color:#fff;text-align:center;padding:20px}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.ok{color:#0a7a2f;font-weight:bold}.wait{color:#b45309;font-weight:bold}
+button{padding:10px 16px;border:0;border-radius:10px;background:#111827;color:#fff}
+</style>
+</head>
+<body>
+<header>
+<h1>🔗 FKS Sync Engine Monitor v1.0</h1>
+<p>システム連携状況モニター</p>
+</header>
+<main>
+<div class="grid" id="grid"></div>
+
+<div class="card">
+<h2>同期ログ</h2>
+<div id="log">待機中...</div><br>
+<button onclick="scan()">同期状態を確認</button>
+</div>
+
+<div class="card">
+<h2>連携対象</h2>
+<ul>
+<li>🏗 建設 → 💰 会計 → 📊 Dashboard</li>
+<li>🎪 イベント → 📦 在庫 → 📈 Analytics</li>
+<li>📄 請求・💸支払 → 🏦 資金繰り</li>
+<li>🚗 車両 → 👑 Command Center</li>
+<li>🤖 AIKA → 全体サマリー</li>
+</ul>
+</div>
+</main>
+<script>
+const items=[
+["fks_accounting","💰 会計"],
+["fks_event","🎪 イベント"],
+["fks_inventory","📦 在庫"],
+["fks_construction_reports","🏗 建設"],
+["fks_vehicles","🚗 車両"],
+["fks_ai_last","🤖 AIKA"]
+];
+function scan(){
+ let html="",ok=0;
+ items.forEach(i=>{
+   const ex=localStorage.getItem(i[0])!==null;
+   if(ex) ok++;
+   html+=`<div class="card"><h3>${i[1]}</h3><div class="${ex?'ok':'wait'}">${ex?'同期対象あり':'未登録'}</div></div>`;
+ });
+ grid.innerHTML=html;
+ log.innerHTML=`${ok}/${items.length} システムが同期対象データを保持しています。<br>確認: ${new Date().toLocaleString()}`;
+ localStorage.setItem("fks_sync_lastcheck",new Date().toISOString());
+}
+scan();
+</script>
+</body>
+</html>
