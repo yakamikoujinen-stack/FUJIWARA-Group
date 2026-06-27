@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Command Center v3.0</title>
+<style>
+:root{
+  --bg:#05070b;--panel:rgba(255,255,255,.08);--panel2:rgba(255,255,255,.12);
+  --line:rgba(212,175,55,.30);--gold:#d4af37;--gold2:#ffe082;
+  --text:#fff8df;--muted:#c8b77a;--red:#ff5c5c;--yellow:#ffd166;--green:#48d597;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 15% 0%,rgba(212,175,55,.24),transparent 28%),
+radial-gradient(circle at 85% 8%,rgba(255,224,130,.10),transparent 22%),
+linear-gradient(135deg,#05070b,#17110a 58%,#05070b);color:var(--text)}
+header{position:sticky;top:0;z-index:10;background:rgba(5,7,11,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:14px 16px}
+.head{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:23px;font-weight:950;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;color:transparent}
+.sub{font-size:12px;color:var(--muted)}
+.nav a{display:inline-block;color:var(--text);text-decoration:none;font-weight:850;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:999px;margin-left:6px;background:rgba(255,255,255,.04)}
+main{max-width:1200px;margin:auto;padding:16px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,rgba(212,175,55,.20),rgba(255,255,255,.04));border-radius:28px;padding:22px;margin-bottom:16px;box-shadow:0 14px 38px rgba(0,0,0,.42)}
+.hero h1{margin:0 0 8px;font-size:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.30);backdrop-filter:blur(8px)}
+.card h3{margin:0 0 8px;color:var(--gold2);font-size:15px}
+.big{font-size:26px;font-weight:950}
+.small{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55}
+.btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#151006;border:0;border-radius:12px;padding:11px 18px;font-weight:950;font-size:15px}
+.alertBox{border-left:8px solid var(--gold)}
+.red{border-left-color:var(--red)}.yellow{border-left-color:var(--yellow)}.green{border-left-color:var(--green)}
+.priority{margin:0;padding-left:20px;line-height:1.9}
+.status{display:inline-block;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900}
+.s-red{background:rgba(255,92,92,.16);color:var(--red)}
+.s-yellow{background:rgba(255,209,102,.16);color:var(--yellow)}
+.s-green{background:rgba(72,213,151,.16);color:var(--green)}
+.linkcard a{display:block;color:var(--text);text-decoration:none;font-weight:900;font-size:17px}
+.footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0}
+@media(max-width:680px){
+ .head{display:block;text-align:center}.nav{margin-top:10px}.nav a{margin:3px}
+ .hero h1{font-size:23px}.big{font-size:23px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div>
+      <div class="logo">👑 FKS COMMAND CENTER</div>
+      <div class="sub">v3.0 FINAL POLISH / 朝30秒で会社を把握</div>
+    </div>
+    <div class="nav">
+      <a href="fks-v10-release-gate.html">🚀 Gate</a>
+      <a href="fks-daily-brief-v2.0.html">🌅 Brief</a>
+      <a href="fks-test-center-v1.0.html">🧪 Test</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <h1>社長、本日の最優先から確認します。</h1>
+  <p>危険・注意・通常の順に並べて、見る順番を迷わない司令塔にしました。</p>
+  <button class="btn" onclick="loadData()">最新状態に更新</button>
+</section>
+
+<section class="card alertBox" id="topAlert">
+  <h3>🚨 最優先アラート</h3>
+  <div id="topAlertText" class="big">確認中...</div>
+  <div class="small" id="topAlertSub"></div>
+</section>
+
+<section class="grid" style="margin-top:16px">
+  <div class="card"><h3>💰 売上</h3><div class="big" id="sales">¥0</div><div class="small">会計＋イベント</div></div>
+  <div class="card"><h3>📈 利益</h3><div class="big" id="profit">¥0</div><div class="small">利益率 <span id="margin">0%</span></div></div>
+  <div class="card"><h3>🏦 現預金</h3><div class="big" id="cash">¥0</div><div class="small">資金予測 <span id="forecast">¥0</span></div></div>
+  <div class="card"><h3>📄 未入金</h3><div class="big" id="unpaid">¥0</div><div class="small" id="unpaidCount">0件</div></div>
+</section>
+
+<section class="grid" style="margin-top:16px">
+  <div class="card"><h3>💸 未払い</h3><div class="big" id="unpaidPay">¥0</div><div class="small" id="payCount">0件</div></div>
+  <div class="card"><h3>📦 在庫不足</h3><div class="big" id="lowStock">0件</div><div class="small">最低在庫以下</div></div>
+  <div class="card"><h3>🏗 未承認日報</h3><div class="big" id="pendingReport">0件</div><div class="small">社長承認待ち</div></div>
+  <div class="card"><h3>🚗 車両注意</h3><div class="big" id="vehicleWarn">0件</div><div class="small">車検・保険30日以内</div></div>
+</section>
+
+<section class="card" style="margin-top:16px">
+  <h3>👩‍💼 AIKA 今日の行動順</h3>
+  <ol class="priority" id="aika"></ol>
+</section>
+
+<section class="grid" style="margin-top:16px">
+  <div class="card linkcard"><a href="fks-dashboard-v3.1.html">📊 Dashboard</a><div class="small">経営状況</div></div>
+  <div class="card linkcard"><a href="fks-analytics-v2.0.html">📈 Analytics</a><div class="small">分析・改善提案</div></div>
+  <div class="card linkcard"><a href="fks-aika-v3.0.html">👩‍💼 AIKA</a><div class="small">経営秘書</div></div>
+  <div class="card linkcard"><a href="fks-home-v8.0.html">🏠 FKS Home</a><div class="small">全アプリ入口</div></div>
+  <div class="card linkcard"><a href="fks-link-check-center-v1.0.html">🔍 Link Check</a><div class="small">リンク確認</div></div>
+  <div class="card linkcard"><a href="fks-settings-center-v1.0.html">⚙️ Settings</a><div class="small">設定</div></div>
+</section>
+
+<div class="footer">PROJECT KING / メインアプリ（宝）は最終確認まで変更しません。</div>
+</main>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function daysUntil(s){if(!s)return null;const t=new Date();t.setHours(0,0,0,0);const d=new Date(s);d.setHours(0,0,0,0);return Math.ceil((d-t)/86400000)}
+function loadData(){
+ const acc=getJSON("fks_accounting",{sales:0,expense:0,cash:0});
+ const evt=getJSON("fks_event",{sales:0,expense:0,profit:0});
+ const invoices=getJSON("fks_invoices",[]);
+ const payments=getJSON("fks_payments",[]);
+ const stock=getJSON("fks_inventory",[]);
+ const reports=getJSON("fks_construction_reports",[]);
+ const vehicles=getJSON("fks_vehicles",[]);
+ const s=Number(acc.sales||0)+Number(evt.sales||0);
+ const e=Number(acc.expense||0)+Number(evt.expense||0);
+ const p=s-e+Number(evt.profit||0);
+ const m=s?Math.round((p/s)*100):0;
+ const ui=invoices.filter(x=>!x.paid).reduce((a,x)=>a+Number(x.amount||0),0);
+ const uic=invoices.filter(x=>!x.paid).length;
+ const up=payments.filter(x=>!x.done).reduce((a,x)=>a+Number(x.amount||0),0);
+ const upc=payments.filter(x=>!x.done).length;
+ const low=stock.filter(x=>Number(x.qty||0)<=Number(x.min||0)).length;
+ const pending=reports.filter(x=>!x.approved).length;
+ const vw=vehicles.filter(x=>{const d1=daysUntil(x.inspection),d2=daysUntil(x.insurance);return d1===null||d1<=30||d2===null||d2<=30}).length;
+ const f=Number(acc.cash||0)+ui-up;
+ sales.textContent=yen(s);profit.textContent=yen(p);margin.textContent=m+"%";cash.textContent=yen(acc.cash||0);forecast.textContent=yen(f);
+ unpaid.textContent=yen(ui);unpaidCount.textContent=uic+"件";unpaidPay.textContent=yen(up);payCount.textContent=upc+"件";
+ lowStock.textContent=low+"件";pendingReport.textContent=pending+"件";vehicleWarn.textContent=vw+"件";
+ let tasks=[];
+ if(f<0)tasks.push("資金予測がマイナスです。入金予定と支払予定を最優先で確認。");
+ if(ui>0)tasks.push("未入金 "+yen(ui)+" を確認。");
+ if(up>0)tasks.push("未払い "+yen(up)+" の支払予定を確認。");
+ if(low>0)tasks.push("在庫不足 "+low+" 件を補充確認。");
+ if(pending>0)tasks.push("建設日報 "+pending+" 件を承認。");
+ if(vw>0)tasks.push("車検・保険期限 "+vw+" 件を確認。");
+ if(m<10&&s>0)tasks.push("利益率が低めです。原価と経費を確認。");
+ if(tasks.length<5)tasks.push("本日の建設・イベント予定を確認。");
+ if(tasks.length<5)tasks.push("スタッフ配置を確認。");
+ aika.innerHTML=tasks.slice(0,6).map(x=>"<li>"+x+"</li>").join("");
+ topAlert.className="card alertBox";
+ if(f<0){topAlert.classList.add("red");topAlertText.textContent="資金予測マイナス";topAlertSub.textContent="支払と入金予定を最優先で確認してください。";}
+ else if(ui>0||up>0||low>0||pending>0||vw>0){topAlert.classList.add("yellow");topAlertText.textContent="注意事項あり";topAlertSub.textContent="AIKAの行動順に沿って確認してください。";}
+ else{topAlert.classList.add("green");topAlertText.textContent="大きな警告なし";topAlertSub.textContent="今日の予定確認から始めましょう。";}
+}
+window.onload=loadData;
+</script>
+</body>
+</html>
