@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Link Check Center v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#111827;color:#fff;text-align:center;padding:20px}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+a{display:block;text-decoration:none;color:#111827;font-weight:800;font-size:17px}
+.small{font-size:12px;color:#666;margin-top:6px}
+button{background:#111827;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:bold}
+.ok{color:#0a7a2f;font-weight:bold}
+.warn{color:#b45309;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>🔍 FKS Link Check Center v1.0</h1>
+<p>Ver.10.0 リリース前リンク確認</p>
+</header>
+
+<main>
+<div class="card">
+<h2>使い方</h2>
+<p>下の各リンクを順番に開いて、表示できるか確認します。戻ってきたらチェック済みにしてください。</p>
+<button onclick="resetChecks()">チェックをリセット</button>
+</div>
+
+<div class="grid" id="links"></div>
+
+<div class="card">
+<h2>確認状況</h2>
+<div id="status">未確認</div>
+</div>
+</main>
+
+<script>
+const pages=[
+["👑 Release Gate","fks-v10-release-gate.html"],
+["👑 Command Center","fks-command-center-v2.1.html"],
+["🌅 Daily Brief","fks-daily-brief-v2.0.html"],
+["📊 Dashboard","fks-dashboard-v3.1.html"],
+["📈 Analytics","fks-analytics-v2.0.html"],
+["👩‍💼 AIKA","fks-aika-v3.0.html"],
+["🏠 FKS Home","fks-home-v8.0.html"],
+["🔐 Permission","fks-permission-v1.0.html"],
+["🧪 Test Center","fks-test-center-v1.0.html"],
+["🩺 System Health","fks-system-health-v1.0.html"],
+["🔗 Sync Monitor","fks-sync-engine-monitor-v1.0.html"],
+["⚙️ Settings","fks-settings-center-v1.0.html"],
+["💰 Accounting","fks-accounting-v2.0.html"],
+["📄 Invoice","fks-invoice-v1.0.html"],
+["💸 Payment","fks-payment-v1.0.html"],
+["🏦 Cashflow","fks-cashflow-v1.0.html"],
+["🏗 Construction","fks-construction-v3.0.html"],
+["🎪 Event","fks-event-v2.0.html"],
+["📦 Inventory","fks-inventory-v2.0.html"],
+["🚗 Vehicle","fks-vehicle-v1.0.html"],
+["🛠 Equipment","fks-equipment-v1.0.html"],
+["👷 Staff","fks-staff-v2.0.html"],
+["📄 PDF Center","fks-pdf-center-v1.0.html"]
+];
+
+function key(file){return "fks_linkcheck_"+file}
+function mark(file){
+ localStorage.setItem(key(file),"ok");
+ render();
+}
+function resetChecks(){
+ pages.forEach(p=>localStorage.removeItem(key(p[1])));
+ render();
+}
+function render(){
+ let ok=0;
+ links.innerHTML=pages.map(p=>{
+  const done=localStorage.getItem(key(p[1]))==="ok";
+  if(done)ok++;
+  return `<div class="card">
+    <a href="${p[1]}">${p[0]}</a>
+    <div class="small">${p[1]}</div>
+    <p class="${done?'ok':'warn'}">${done?'確認済み':'未確認'}</p>
+    <button onclick="mark('${p[1]}')">確認済みにする</button>
+  </div>`;
+ }).join("");
+ status.innerHTML=`${ok}/${pages.length} ページ確認済み<br>${ok===pages.length?"<span class='ok'>全リンク確認完了</span>":"<span class='warn'>未確認リンクがあります</span>"}`;
+}
+render();
+</script>
+</body>
+</html>
