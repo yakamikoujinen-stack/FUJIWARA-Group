@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Operations Center v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0b1220;color:#eef2ff}
+header{padding:18px;text-align:center;background:#131c2f}
+main{max-width:1100px;margin:auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card{background:#1b263b;border:1px solid #334155;border-radius:16px;padding:16px}
+h3{margin-top:0}
+.big{font-size:24px;font-weight:700}
+.ok{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}
+button{padding:10px 16px;border:0;border-radius:10px;background:#d4af37;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>🛠 FKS Operations Center v1.0</h1>
+<p>運用管理・システム状態確認</p>
+</header>
+<main>
+<div class="card">
+<button onclick="scan()">システム状態を更新</button>
+<p id="time">未確認</p>
+</div>
+
+<div class="grid">
+<div class="card"><h3>👑 社長モード</h3><div id="boss" class="big ok">準備完了</div></div>
+<div class="card"><h3>🏗 業務モード</h3><div id="work" class="big ok">準備完了</div></div>
+<div class="card"><h3>💾 最終保存</h3><div id="saved" class="big">-</div></div>
+<div class="card"><h3>🔗 同期状態</h3><div id="sync" class="big warn">確認待ち</div></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h3>📋 今日の運用チェック</h3>
+<ul id="list"></ul>
+</div>
+
+<script>
+function g(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function scan(){
+ const last=localStorage.getItem("fks_last_saved")||"未保存";
+ saved.textContent=last;
+ sync.textContent="正常";
+ sync.className="big ok";
+ time.textContent="最終確認: "+new Date().toLocaleString();
+ let items=[];
+ const inv=g("fks_invoices",[]);
+ const pay=g("fks_payments",[]);
+ const stock=g("fks_inventory",[]);
+ if(inv.some(x=>!x.paid)) items.push("未入金を確認");
+ if(pay.some(x=>!x.done)) items.push("未払いを確認");
+ if(stock.some(x=>(+x.qty||0)<= (+x.min||0))) items.push("在庫補充");
+ if(items.length===0) items.push("本日の運用は良好です");
+ list.innerHTML=items.map(i=>"<li>"+i+"</li>").join("");
+}
+scan();
+</script>
+</main>
+</body>
+</html>
