@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS System Health v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#1f2937}
+header{background:#0f172a;color:#fff;padding:20px;text-align:center}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.good{color:#0a7a2f;font-weight:bold}
+.warn{color:#b45309;font-weight:bold}
+button{padding:10px 16px;border:0;border-radius:10px;background:#0f172a;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>🩺 FKS System Health v1.0</h1>
+<p>システム診断・完成度チェック</p>
+</header>
+
+<main>
+<div class="grid" id="cards"></div>
+
+<div class="card">
+<h2>AIKA診断</h2>
+<div id="summary"></div>
+<br>
+<button onclick="scan()">再チェック</button>
+</div>
+</main>
+
+<script>
+const ITEMS=[
+["fks_accounting","💰 会計"],
+["fks_invoices","📄 請求"],
+["fks_payments","💸 支払"],
+["fks_inventory","📦 在庫"],
+["fks_construction_reports","🏗 建設"],
+["fks_staff_v2","👷 スタッフ"],
+["fks_vehicles","🚗 車両"],
+["fks_equipment","🛠 機材"]
+];
+
+function scan(){
+ let ok=0;
+ let html="";
+ ITEMS.forEach(i=>{
+   const exists=localStorage.getItem(i[0])!==null;
+   if(exists) ok++;
+   html+=`<div class="card"><h3>${i[1]}</h3><div class="${exists?'good':'warn'}">${exists?'データあり':'未登録'}</div></div>`;
+ });
+ document.getElementById("cards").innerHTML=html;
+ const rate=Math.round(ok/ITEMS.length*100);
+ let msg=`完成度チェック：<strong>${rate}%</strong><br>`;
+ if(rate===100){
+   msg+="<span class='good'>AIKA：主要データは揃っています。Ver.10.0最終テストへ進めます。</span>";
+ }else{
+   msg+=`<span class='warn'>AIKA：${ITEMS.length-ok}項目が未登録です。実データ入力後に再チェックしてください。</span>`;
+ }
+ document.getElementById("summary").innerHTML=msg;
+}
+scan();
+</script>
+</body>
+</html>
