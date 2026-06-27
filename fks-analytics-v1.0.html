@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang='ja'><head><meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>FKS Analytics v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7}
+header{background:#153b6b;color:#fff;text-align:center;padding:18px}
+main{max-width:1000px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.big{font-size:24px;font-weight:700}
+.bar{height:18px;background:#d9e2f2;border-radius:9px;overflow:hidden}
+.fill{height:100%;background:#153b6b}
+button{padding:10px 16px;border:0;border-radius:10px;background:#153b6b;color:#fff}
+</style></head><body>
+<header><h1>📊 FKS Analytics v1.0</h1><p>経営分析ダッシュボード</p></header>
+<main>
+<div class='grid'>
+<div class='card'><div>売上</div><div id='sales' class='big'>¥0</div></div>
+<div class='card'><div>経費</div><div id='expense' class='big'>¥0</div></div>
+<div class='card'><div>利益</div><div id='profit' class='big'>¥0</div></div>
+<div class='card'><div>利益率</div><div id='margin' class='big'>0%</div></div>
+</div>
+<div class='card'>
+<h3>利益率</h3>
+<div class='bar'><div id='fill' class='fill' style='width:0%'></div></div>
+<p id='comment'></p>
+<button onclick='loadData()'>更新</button>
+</div>
+</main>
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function j(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function loadData(){
+ const acc=j("fks_accounting",{sales:0,expense:0});
+ const evt=j("fks_event",{sales:0,expense:0});
+ const s=(+acc.sales||0)+(+evt.sales||0);
+ const e=(+acc.expense||0)+(+evt.expense||0);
+ const p=s-e;
+ const m=s?Math.round((p/s)*100):0;
+ sales.textContent=yen(s);expense.textContent=yen(e);profit.textContent=yen(p);margin.textContent=m+"%";
+ fill.style.width=Math.max(0,Math.min(100,m))+"%";
+ let c="利益率を維持しましょう。";
+ if(m<10)c="利益率が低めです。経費を見直しましょう。";
+ else if(m>=30)c="利益率は良好です。この調子です。";
+ comment.textContent="AIKA: "+c;
+}
+window.onload=loadData;
+</script>
+</body></html>
