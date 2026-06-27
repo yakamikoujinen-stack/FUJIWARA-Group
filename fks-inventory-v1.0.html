@@ -1,0 +1,8 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FKS Inventory v1.0</title><style>body{margin:0;font-family:Arial;background:#eef2f7}header{background:#6a4c00;color:#fff;padding:16px;text-align:center}main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;padding:16px;border-radius:12px;margin-bottom:14px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:8px}input,button{padding:10px;font-size:16px}button{background:#6a4c00;color:#fff;border:0;border-radius:8px}</style></head><body><header><h1>📦 FKS Inventory v1.0</h1></header><main><div class="card"><input id="name" placeholder="商品名" style="width:100%"><br><br><input id="qty" type="number" placeholder="数量" style="width:100%"><br><br><button onclick="add()">登録</button></div><div class="card"><table><thead><tr><th>商品</th><th>数量</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></main><script>
+function load(){return JSON.parse(localStorage.getItem("fks_inventory")||"[]")}
+function save(v){localStorage.setItem("fks_inventory",JSON.stringify(v))}
+function draw(){const d=load();rows.innerHTML=d.map((x,i)=>`<tr><td>${x.name}</td><td>${x.qty}</td><td><button onclick="del(${i})">削除</button></td></tr>`).join("")}
+function add(){if(!name.value)return;const d=load();d.push({name:name.value,qty:Number(qty.value||0)});save(d);name.value="";qty.value="";draw()}
+function del(i){const d=load();d.splice(i,1);save(d);draw()}
+draw();
+</script></body></html>
