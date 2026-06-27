@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Integration Center v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#0f172a;color:#fff;text-align:center;padding:18px}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.big{font-size:24px;font-weight:900}
+button{background:#0f172a;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-size:16px;font-weight:bold}
+a{color:#0f172a;font-weight:bold;text-decoration:none}
+.ok{color:#0a7a2f;font-weight:bold}.warn{color:#b00020;font-weight:bold}
+.flow{border-left:6px solid #0f172a}
+.small{font-size:13px;color:#666;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+<h1>🔗 FKS Integration Center v1.0</h1>
+<p>全アプリ連携・同期チェックセンター</p>
+</header>
+
+<main>
+<div class="card"><a href="fks-home-v8.0.html">← FKS Homeへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>💰 会計データ</h3><div id="acc" class="big">未確認</div></div>
+<div class="card"><h3>🎪 イベントデータ</h3><div id="evt" class="big">未確認</div></div>
+<div class="card"><h3>🏗 建設日報</h3><div id="con" class="big">未確認</div></div>
+<div class="card"><h3>📦 在庫データ</h3><div id="inv" class="big">未確認</div></div>
+<div class="card"><h3>🚗 車両データ</h3><div id="veh" class="big">未確認</div></div>
+<div class="card"><h3>🛠 機材データ</h3><div id="eqp" class="big">未確認</div></div>
+</div>
+
+<div class="card flow">
+<h3>連携状態</h3>
+<div id="status"></div>
+<button onclick="sync()">同期チェック</button>
+</div>
+
+<div class="card">
+<h3>データの流れ</h3>
+<p class="small">
+Accounting → Home / Dashboard / Analytics<br>
+Event → Home / Accounting / Inventory<br>
+Construction → Home / Dashboard / PDF Center<br>
+Inventory → Home / AIKA<br>
+Vehicle / Equipment → Dashboard / AIKA<br>
+Invoice / Payment → Cashflow / AIKA
+</p>
+</div>
+</main>
+
+<script>
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function mark(el,yes){el.innerHTML=yes?"<span class='ok'>OK</span>":"<span class='warn'>未入力</span>"}
+function sync(){
+ const accounting=getJSON("fks_accounting",null);
+ const event=getJSON("fks_event",null);
+ const construction=getJSON("fks_construction_reports",[]);
+ const inventory=getJSON("fks_inventory",[]);
+ const vehicles=getJSON("fks_vehicles",[]);
+ const equipment=getJSON("fks_equipment",[]);
+ mark(acc, accounting && (accounting.sales||accounting.expense||accounting.cash));
+ mark(evt, event && (event.sales||event.profit));
+ mark(con, construction.length>0);
+ mark(inv, inventory.length>0);
+ mark(veh, vehicles.length>0);
+ mark(eqp, equipment.length>0);
+
+ let notes=[];
+ if(!accounting)notes.push("会計データが未入力です。");
+ if(!event)notes.push("イベントデータが未入力です。");
+ if(!construction.length)notes.push("建設日報が未入力です。");
+ if(!inventory.length)notes.push("在庫データが未入力です。");
+ if(!vehicles.length)notes.push("車両データが未入力です。");
+ if(!equipment.length)notes.push("機材データが未入力です。");
+ if(!notes.length)notes.push("主要データは接続されています。次はVer.10最終チェックへ進めます。");
+ status.innerHTML=notes.map(x=>"・"+x).join("<br>");
+ localStorage.setItem("fks_integration_lastcheck",new Date().toLocaleString());
+}
+window.onload=sync;
+</script>
+</body>
+</html>
