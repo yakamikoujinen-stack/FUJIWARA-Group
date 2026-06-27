@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Settings Center v1.0</title>
+<style>
+:root{--bg:#0b0f16;--panel:#161c28;--gold:#d4af37;--text:#f4f0de}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+header{padding:20px;text-align:center;border-bottom:1px solid #4b3c12}
+h1{margin:0;color:var(--gold)}
+main{max-width:1100px;margin:auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--panel);padding:16px;border-radius:16px;border:1px solid #3d3210}
+label{display:block;margin:10px 0 4px}
+input,select{width:100%;padding:10px;border-radius:10px;border:1px solid #555;background:#0f141d;color:#fff}
+button{margin-top:14px;padding:11px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#d4af37,#f3d979);font-weight:bold}
+.small{font-size:12px;color:#cfc6a5}
+</style></head>
+<body>
+<header><h1>⚙️ FKS Settings Center v1.0</h1><div>システム共通設定</div></header>
+<main>
+<div class="grid">
+<div class="card">
+<h3>🏢 会社情報</h3>
+<label>会社名</label><input id="company">
+<label>代表者</label><input id="owner">
+<button onclick="saveCompany()">保存</button>
+</div>
+
+<div class="card">
+<h3>🎨 テーマ</h3>
+<label>表示テーマ</label>
+<select id="theme">
+<option>Command Center（黒×金）</option>
+<option>建設（ネイビー）</option>
+<option>イベント（赤×オレンジ）</option>
+<option>会計（深緑）</option>
+</select>
+<button onclick="saveTheme()">保存</button>
+</div>
+
+<div class="card">
+<h3>🔐 システム</h3>
+<p class="small">バックアップ・通知・権限管理は今後ここへ集約します。</p>
+<button onclick="backup()">バックアップ日時を記録</button>
+<div id="status"></div>
+</div>
+
+<div class="card">
+<h3>🚀 完成状況</h3>
+<p>✔ 共通設定画面</p>
+<p>✔ テーマ管理</p>
+<p>✔ 会社情報</p>
+<p>⏳ バックアップ管理（次版）</p>
+</div>
+</div>
+</main>
+<script>
+function saveCompany(){
+ localStorage.setItem("fks_company",JSON.stringify({company:company.value,owner:owner.value}));
+ alert("会社情報を保存しました");
+}
+function saveTheme(){
+ localStorage.setItem("fks_theme",theme.value);
+ alert("テーマを保存しました");
+}
+function backup(){
+ const t=new Date().toLocaleString();
+ localStorage.setItem("fks_backup_time",t);
+ status.textContent="最終バックアップ記録: "+t;
+}
+(function(){
+ try{
+  const c=JSON.parse(localStorage.getItem("fks_company")||"{}");
+  company.value=c.company||""; owner.value=c.owner||"";
+ }catch(e){}
+ const th=localStorage.getItem("fks_theme"); if(th) theme.value=th;
+ const b=localStorage.getItem("fks_backup_time"); if(b) status.textContent="最終バックアップ記録: "+b;
+})();
+</script>
+</body></html>
