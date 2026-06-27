@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Construction v3.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#2c3e50;color:#fff;text-align:center;padding:18px}
+main{max-width:1050px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0002}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select,textarea,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+textarea{height:95px}
+button{background:#2c3e50;color:#fff;border:0;font-weight:bold}
+.btn2{background:#888}
+.item{border-bottom:1px solid #eee;padding:10px 0}
+.ok{color:#0a7a2f;font-weight:bold}.ng{color:#b00020;font-weight:bold}
+a{color:#2c3e50;font-weight:bold;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+<h1>🏗 FKS Construction v3.0</h1>
+<p>建設日報・車両・材料・KY・社長承認</p>
+</header>
+
+<main>
+<div class="card"><a href="fks-portal-v1.0.html">← FKS Portalへ戻る</a></div>
+
+<div class="grid">
+<div class="card"><h3>日報件数</h3><div id="count" style="font-size:26px;font-weight:900">0</div></div>
+<div class="card"><h3>未承認</h3><div id="pending" style="font-size:26px;font-weight:900">0</div></div>
+<div class="card"><h3>本日の現場</h3><div id="todaySite">未入力</div></div>
+</div>
+
+<div class="card">
+<h3>日報入力</h3>
+<input id="site" placeholder="現場名">
+<input id="client" placeholder="元請・取引先">
+<div class="grid">
+<input id="date" type="date">
+<input id="workers" type="number" placeholder="作業人数">
+</div>
+<input id="vehicle" placeholder="使用車両">
+<input id="machine" placeholder="使用重機">
+<input id="materials" placeholder="使用材料">
+<textarea id="work" placeholder="作業内容"></textarea>
+<textarea id="ky" placeholder="KY・安全確認"></textarea>
+<textarea id="photoMemo" placeholder="写真メモ（今後、写真添付へ拡張）"></textarea>
+<button onclick="addReport()">日報を保存</button>
+</div>
+
+<div class="card">
+<h3>日報一覧</h3>
+<div id="list">登録なし</div>
+<button class="btn2" onclick="clearAll()">全削除</button>
+</div>
+</main>
+
+<script>
+function load(){return JSON.parse(localStorage.getItem("fks_construction_reports")||"[]")}
+function save(v){localStorage.setItem("fks_construction_reports",JSON.stringify(v))}
+function addReport(){
+ if(!site.value){alert("現場名を入力してください");return}
+ const arr=load()
+ arr.push({id:Date.now(),site:site.value,client:client.value,date:date.value,workers:Number(workers.value||0),vehicle:vehicle.value,machine:machine.value,materials:materials.value,work:work.value,ky:ky.value,photoMemo:photoMemo.value,approved:false,created:new Date().toLocaleString()})
+ save(arr)
+ localStorage.setItem("fks_construction_report",JSON.stringify(arr[arr.length-1]))
+ site.value="";client.value="";date.value="";workers.value="";vehicle.value="";machine.value="";materials.value="";work.value="";ky.value="";photoMemo.value=""
+ render()
+ alert("保存しました")
+}
+function toggle(id){
+ const arr=load(); const r=arr.find(x=>x.id===id); if(r)r.approved=!r.approved; save(arr); render()
+}
+function del(id){if(confirm("削除しますか？")){save(load().filter(x=>x.id!==id));render()}}
+function clearAll(){if(confirm("全削除しますか？")){save([]);localStorage.removeItem("fks_construction_report");render()}}
+function render(){
+ const arr=load()
+ count.textContent=arr.length
+ pending.textContent=arr.filter(x=>!x.approved).length
+ todaySite.textContent=arr.length?arr[arr.length-1].site:"未入力"
+ list.innerHTML=arr.length?arr.slice().reverse().map(r=>`
+ <div class="item">
+ <b>${r.date||"日付未設定"}｜${r.site}</b><br>
+ 元請：${r.client||"-"}／人数：${r.workers||0}名<br>
+ 車両：${r.vehicle||"-"}／重機：${r.machine||"-"}<br>
+ 材料：${r.materials||"-"}<br>
+ 作業：${r.work||"-"}<br>
+ KY：${r.ky||"-"}<br>
+ 写真メモ：${r.photoMemo||"-"}<br>
+ 状態：<span class="${r.approved?'ok':'ng'}">${r.approved?'社長承認済み':'未承認'}</span><br>
+ <button onclick="toggle(${r.id})">${r.approved?'未承認に戻す':'社長承認'}</button>
+ <button class="btn2" onclick="del(${r.id})">削除</button>
+ </div>`).join(""):"登録なし"
+}
+render()
+</script>
+</body>
+</html>
