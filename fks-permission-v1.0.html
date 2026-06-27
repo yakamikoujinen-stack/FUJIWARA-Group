@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FKS Permission v1.0</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#111827;color:#fff;text-align:center;padding:18px}
+main{max-width:1050px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+input,select,button{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#111827;color:#fff;border:0;font-weight:bold}
+a{text-decoration:none;color:#111827;font-weight:900;font-size:18px;display:block}
+.small{font-size:13px;color:#666;margin-top:6px;line-height:1.6}
+.role{border-left:6px solid #111827}
+.lock{color:#b00020;font-weight:bold}
+.ok{color:#0a7a2f;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>🔐 FKS Permission v1.0</h1>
+<p>権限別入口・メインアプリ融合前チェック用</p>
+</header>
+
+<main>
+<div class="card">
+<h2>ログイン役割選択</h2>
+<select id="role" onchange="render()">
+<option value="ceo">👑 社長</option>
+<option value="leader">🧭 リーダー</option>
+<option value="office">💰 事務・経理</option>
+<option value="construction">🏗 建設部社員</option>
+<option value="event">🎪 イベント担当</option>
+<option value="staff">👷 一部スタッフ</option>
+<option value="family">👨‍👩‍👧 Family</option>
+<option value="user">👤 一般ユーザー</option>
+</select>
+</div>
+
+<div class="card role">
+<h2 id="roleTitle">権限</h2>
+<div id="note" class="small"></div>
+</div>
+
+<div class="grid" id="apps"></div>
+
+<div class="card">
+<h3>メインアプリについて</h3>
+<p class="lock">メインアプリ（宝）はまだ触りません。</p>
+<p>このファイルは、誰がどのFKSアプリへ入れるかを確認するための安全チェック用です。</p>
+</div>
+</main>
+
+<script>
+const APP_LIST=[
+ {name:"👑 FKS Home",file:"fks-home-v8.0.html",roles:["ceo","leader"]},
+ {name:"📊 Dashboard",file:"fks-dashboard-v2.0.html",roles:["ceo","leader"]},
+ {name:"📈 Analytics",file:"fks-analytics-v1.0.html",roles:["ceo","leader","office"]},
+ {name:"👩‍💼 AIKA",file:"fks-ai-secretary-v2.0.html",roles:["ceo","leader"]},
+ {name:"💰 Accounting",file:"fks-accounting-v2.0.html",roles:["ceo","office"]},
+ {name:"📄 Invoice",file:"fks-invoice-v1.0.html",roles:["ceo","office"]},
+ {name:"💸 Payment",file:"fks-payment-v1.0.html",roles:["ceo","office"]},
+ {name:"🏦 Cashflow",file:"fks-cashflow-v1.0.html",roles:["ceo","office"]},
+ {name:"🏗 Construction",file:"fks-construction-v3.0.html",roles:["ceo","leader","construction"]},
+ {name:"🚗 Vehicle",file:"fks-vehicle-v1.0.html",roles:["ceo","leader","construction"]},
+ {name:"🛠 Equipment",file:"fks-equipment-v1.0.html",roles:["ceo","leader","construction"]},
+ {name:"🎪 Event",file:"fks-event-v2.0.html",roles:["ceo","leader","event"]},
+ {name:"📦 Inventory",file:"fks-inventory-v2.0.html",roles:["ceo","leader","event"]},
+ {name:"👷 Staff",file:"fks-staff-v2.0.html",roles:["ceo","leader","staff"]},
+ {name:"👨‍👩‍👧 Family",file:"fks-family-v1.0.html",roles:["ceo","family"]},
+ {name:"🔒 Real Family",file:"fks-real-family-v1.0.html",roles:["ceo","family"]},
+ {name:"📄 PDF Center",file:"fks-pdf-center-v1.0.html",roles:["ceo","leader","office"]},
+ {name:"👑 Portal",file:"fks-portal-v1.0.html",roles:["ceo","leader"]}
+];
+
+const LABELS={
+ ceo:"👑 社長：全権限",
+ leader:"🧭 リーダー：Portal・管理系",
+ office:"💰 事務・経理：会計・請求・支払・資金繰り",
+ construction:"🏗 建設部社員：建設・車両・工具",
+ event:"🎪 イベント担当：イベント・在庫",
+ staff:"👷 一部スタッフ：スタッフ管理",
+ family:"👨‍👩‍👧 Family：家族系",
+ user:"👤 一般ユーザー：FKS入口なし"
+};
+
+function render(){
+ const r=role.value;
+ roleTitle.textContent=LABELS[r];
+ note.innerHTML = r==="user"
+  ? "一般ユーザーにはFKS入口を表示しません。メインアプリ内の必要機能だけを使います。"
+  : "この役割で表示されるアプリだけにアクセスできます。";
+
+ const visible=APP_LIST.filter(a=>a.roles.includes(r));
+ apps.innerHTML=visible.length?visible.map(a=>`
+  <div class="card">
+   <a href="${a.file}">${a.name}</a>
+   <div class="small ok">アクセス許可</div>
+  </div>`).join(""):`<div class="card"><h3>表示できるFKSアプリはありません</h3><p class="small">一般ユーザーにはFKS管理画面を見せない設計です。</p></div>`;
+}
+render();
+</script>
+</body>
+</html>
