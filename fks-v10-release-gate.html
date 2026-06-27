@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA KING SYSTEM Ver.10.0</title>
+<style>
+:root{
+  --bg:#07090d;--panel:rgba(255,255,255,.08);--line:rgba(212,175,55,.28);
+  --gold:#d4af37;--gold2:#ffe082;--text:#fff8df;--muted:#c8b77a;
+  --red:#ff6464;--green:#48d597;--r:20px;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 18% 0%,rgba(212,175,55,.23),transparent 28%),
+radial-gradient(circle at 90% 8%,rgba(255,224,130,.11),transparent 24%),
+linear-gradient(135deg,#07090d,#18120a 55%,#07090d);color:var(--text)}
+header{position:sticky;top:0;z-index:10;background:rgba(7,9,13,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 16px}
+.head{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:23px;font-weight:950;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;color:transparent}
+.sub{font-size:12px;color:var(--muted)}
+.nav a{display:inline-block;color:var(--text);text-decoration:none;font-weight:800;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:999px;margin-left:6px;background:rgba(255,255,255,.04)}
+main{max-width:1200px;margin:auto;padding:16px}
+.hero{border:1px solid var(--line);background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(255,255,255,.04));border-radius:28px;padding:22px;margin-bottom:16px;box-shadow:0 14px 36px rgba(0,0,0,.35)}
+.hero h1{margin:0 0 8px;font-size:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 10px 28px rgba(0,0,0,.28);backdrop-filter:blur(8px)}
+.card h3{margin:0 0 8px;color:var(--gold2);font-size:15px}
+.big{font-size:26px;font-weight:950}
+.small{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55}
+a{display:block;text-decoration:none;color:var(--text);font-weight:900;font-size:17px}
+.btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#151006;border:0;border-radius:12px;padding:11px 18px;font-weight:950;font-size:15px}
+.ok{color:var(--green);font-weight:900}.warn{color:var(--red);font-weight:900}
+.ai{border-left:7px solid var(--gold)}
+ul,ol{line-height:1.8}
+.progress{height:18px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.fill{height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0}
+@media(max-width:680px){.head{display:block;text-align:center}.nav{margin-top:10px}.nav a{margin:3px}.hero h1{font-size:23px}.big{font-size:23px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div>
+      <div class="logo">👑 FUJIWARA KING SYSTEM</div>
+      <div class="sub">Ver.10.0 RELEASE GATE / 出発前最終画面</div>
+    </div>
+    <div class="nav">
+      <a href="fks-command-center-v2.1.html">👑 Command</a>
+      <a href="fks-test-center-v1.0.html">🧪 Test</a>
+      <a href="fks-settings-center-v1.0.html">⚙️ Settings</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <h1>Ver.10.0 出発準備</h1>
+  <p>FKS単体の完成チェックをここで行います。メインアプリ（宝）はまだ変更しません。</p>
+  <button class="btn" onclick="scan()">最終チェック更新</button>
+</section>
+
+<section class="card">
+  <h3>完成進捗</h3>
+  <div class="progress"><div class="fill"></div></div>
+  <div class="small">設計・画面・社長モード・業務モード・テスト環境：完成フェーズ</div>
+</section>
+
+<section class="grid" style="margin-top:16px">
+  <div class="card"><h3>💰 売上</h3><div class="big" id="sales">¥0</div><div class="small">会計＋イベント</div></div>
+  <div class="card"><h3>📈 利益</h3><div class="big" id="profit">¥0</div><div class="small">売上−経費</div></div>
+  <div class="card"><h3>🏦 現預金</h3><div class="big" id="cash">¥0</div><div class="small">会計データ</div></div>
+  <div class="card"><h3>🚨 注意件数</h3><div class="big" id="alerts">0件</div><div class="small">未入金・支払・在庫・車両</div></div>
+</section>
+
+<section class="card ai" style="margin-top:16px">
+  <h3>👩‍💼 AIKA 最終コメント</h3>
+  <div id="aika">確認中...</div>
+</section>
+
+<section class="grid" style="margin-top:16px">
+  <div class="card"><a href="fks-command-center-v2.1.html">👑 Command Center</a><div class="small">社長専用司令塔</div></div>
+  <div class="card"><a href="fks-daily-brief-v2.0.html">🌅 Daily Brief</a><div class="small">朝礼画面</div></div>
+  <div class="card"><a href="fks-dashboard-v3.1.html">📊 Dashboard</a><div class="small">経営状況</div></div>
+  <div class="card"><a href="fks-analytics-v2.0.html">📈 Analytics</a><div class="small">経営分析</div></div>
+  <div class="card"><a href="fks-aika-v3.0.html">👩‍💼 AIKA</a><div class="small">経営秘書</div></div>
+  <div class="card"><a href="fks-home-v8.0.html">🏠 FKS Home</a><div class="small">全体入口</div></div>
+  <div class="card"><a href="fks-permission-v1.0.html">🔐 Permission</a><div class="small">権限確認</div></div>
+  <div class="card"><a href="fks-system-health-v1.0.html">🩺 System Health</a><div class="small">健康診断</div></div>
+  <div class="card"><a href="fks-sync-engine-monitor-v1.0.html">🔗 Sync Monitor</a><div class="small">連携確認</div></div>
+  <div class="card"><a href="fks-release-candidate-v1.0.html">🚀 Release Check</a><div class="small">最終チェック表</div></div>
+</section>
+
+<section class="card" style="margin-top:16px">
+  <h3>出発前チェック</h3>
+  <ol>
+    <li>Command Centerを開いて数字とAIKAコメントを確認</li>
+    <li>Daily Briefで今日の優先順位を確認</li>
+    <li>DashboardとAnalyticsで売上・利益を確認</li>
+    <li>Test Centerに気づいた修正点をメモ</li>
+    <li>すべてOKならメインアプリ融合準備へ進む</li>
+  </ol>
+</section>
+
+<div class="footer">PROJECT KING / メインアプリ（宝）は最終確認まで変更しません。</div>
+</main>
+
+<script>
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function getJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function daysUntil(s){if(!s)return null;const t=new Date();t.setHours(0,0,0,0);const d=new Date(s);d.setHours(0,0,0,0);return Math.ceil((d-t)/86400000)}
+function scan(){
+ const acc=getJSON("fks_accounting",{sales:0,expense:0,cash:0});
+ const evt=getJSON("fks_event",{sales:0,expense:0,profit:0});
+ const invoices=getJSON("fks_invoices",[]);
+ const payments=getJSON("fks_payments",[]);
+ const stock=getJSON("fks_inventory",[]);
+ const vehicles=getJSON("fks_vehicles",[]);
+ const s=Number(acc.sales||0)+Number(evt.sales||0);
+ const e=Number(acc.expense||0)+Number(evt.expense||0);
+ const p=s-e+Number(evt.profit||0);
+ const unpaid=invoices.filter(x=>!x.paid).length;
+ const unpaidPay=payments.filter(x=>!x.done).length;
+ const low=stock.filter(x=>Number(x.qty||0)<=Number(x.min||0)).length;
+ const vw=vehicles.filter(x=>{const d1=daysUntil(x.inspection),d2=daysUntil(x.insurance);return d1===null||d1<=30||d2===null||d2<=30}).length;
+ const totalAlerts=unpaid+unpaidPay+low+vw;
+ sales.textContent=yen(s); profit.textContent=yen(p); cash.textContent=yen(acc.cash||0); alerts.textContent=totalAlerts+"件";
+ let msg=[];
+ if(totalAlerts===0)msg.push("大きな警告はありません。出発前チェックへ進めます。");
+ if(unpaid>0)msg.push("未入金が "+unpaid+" 件あります。");
+ if(unpaidPay>0)msg.push("未払いが "+unpaidPay+" 件あります。");
+ if(low>0)msg.push("在庫不足が "+low+" 件あります。");
+ if(vw>0)msg.push("車両・保険期限の注意が "+vw+" 件あります。");
+ msg.push("メインアプリ（宝）はまだ変更せず、FKS単体テストを完了させましょう。");
+ aika.innerHTML=msg.map(x=>"・"+x).join("<br>");
+ localStorage.setItem("fks_v10_release_gate_check",new Date().toLocaleString());
+}
+window.onload=scan;
+</script>
+</body>
+</html>
