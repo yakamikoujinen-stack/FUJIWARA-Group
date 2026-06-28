@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FKS Home v9.1</title><style>
+:root{--bg:#05070b;--panel:rgba(255,255,255,.08);--line:rgba(212,175,55,.30);--gold:#d4af37;--gold2:#ffe082;--text:#fff8df;--muted:#c8b77a}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#05070b,#17110a);color:var(--text)}
+header{position:sticky;top:0;background:rgba(5,7,11,.9);border-bottom:1px solid var(--line);padding:14px;text-align:center}
+.logo{font-size:24px;font-weight:950;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;color:transparent}
+main{max-width:1200px;margin:auto;padding:16px}.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.section{margin:20px 0 10px;color:var(--gold2);font-size:18px;font-weight:950}
+a{display:block;color:var(--text);text-decoration:none;font-weight:900;font-size:17px}.small{font-size:12px;color:var(--muted);margin-top:6px}.btn{background:linear-gradient(135deg,var(--gold),var(--gold2));border:0;border-radius:12px;padding:10px 16px;font-weight:900}.yellow{border-left:8px solid #ffd166}.green{border-left:8px solid #48d597}.quick{border:2px solid var(--gold);background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(255,255,255,.08))}.footer{text-align:center;color:var(--muted);font-size:12px;margin:18px}
+</style></head><body><header><div class="logo">👑 FUJIWARA KING SYSTEM</div><div>Home v9.1 / Quick Entry対応</div></header><main>
+<section class="hero"><h1>毎日使う入口</h1><p>入力 → 確認 → 判断 の順番に整理しました。</p><button class="btn" onclick="loadData()">最新状態に更新</button></section>
+<section class="card" id="mainAlert"><h3>👩‍💼 AIKA 本日の入口案内</h3><div id="alertTitle" style="font-size:24px;font-weight:900">確認中...</div><div class="small" id="alertSub"></div></section>
+
+<div class="section">⚡ 毎日使う最短ルート</div><section class="grid">
+<div class="card quick"><a href="fks-quick-entry-v1.0.html">⚡ Quick Entry</a><div class="small">売上・入金・支払・メモを30秒入力</div></div>
+<div class="card"><a href="fks-command-center-v3.0.html">👑 Command Center</a><div class="small">会社全体を30秒確認</div></div>
+<div class="card"><a href="fks-daily-brief-v2.0.html">🌅 Daily Brief</a><div class="small">今日の優先順位</div></div>
+</section>
+
+<div class="section">👑 社長モード</div><section class="grid">
+<div class="card"><a href="fks-dashboard-v3.1.html">📊 Dashboard</a><div class="small">売上・利益・現預金</div></div>
+<div class="card"><a href="fks-analytics-v2.0.html">📈 Analytics</a><div class="small">利益率・改善提案</div></div>
+<div class="card"><a href="fks-aika-v3.0.html">👩‍💼 AIKA</a><div class="small">経営秘書</div></div></section>
+
+<div class="section">🏗 業務モード</div><section class="grid">
+<div class="card"><a href="fks-construction-v3.0.html">🏗 建設</a><div class="small">日報・現場・承認</div></div>
+<div class="card"><a href="fks-event-v2.0.html">🎪 イベント</a><div class="small">売上・利益</div></div>
+<div class="card"><a href="fks-inventory-v2.0.html">📦 在庫</a><div class="small">入庫・出庫・不足</div></div>
+<div class="card"><a href="fks-accounting-v2.0.html">💰 会計</a><div class="small">売上・経費・現預金</div></div>
+<div class="card"><a href="fks-invoice-v1.0.html">📄 請求</a><div class="small">請求・入金管理</div></div>
+<div class="card"><a href="fks-payment-v1.0.html">💸 支払</a><div class="small">支払予定・支払済み</div></div>
+<div class="card"><a href="fks-cashflow-v1.0.html">🏦 資金繰り</a><div class="small">予測残高</div></div>
+<div class="card"><a href="fks-vehicle-v1.0.html">🚗 車両</a><div class="small">車検・保険・点検</div></div>
+<div class="card"><a href="fks-equipment-v1.0.html">🛠 工具・重機</a><div class="small">点検・保管・使用者</div></div>
+<div class="card"><a href="fks-staff-v2.0.html">👷 スタッフ</a><div class="small">スタッフ・勤務</div></div></section>
+
+<div class="section">⚙️ 管理・テスト</div><section class="grid">
+<div class="card"><a href="fks-v10-release-gate.html">🚀 Release Gate</a><div class="small">出発前最終画面</div></div>
+<div class="card"><a href="fks-operations-center-v1.0.html">🛠 Operations</a><div class="small">運用状態確認</div></div>
+<div class="card"><a href="fks-link-check-center-v1.0.html">🔍 Link Check</a><div class="small">リンク確認</div></div>
+<div class="card"><a href="fks-permission-v1.0.html">🔐 Permission</a><div class="small">権限確認</div></div>
+<div class="card"><a href="fks-settings-center-v1.0.html">⚙️ Settings</a><div class="small">会社情報・設定</div></div>
+<div class="card"><a href="fks-main-integration-plan-v1.0.html">🏰 Integration Plan</a><div class="small">メイン融合計画</div></div></section>
+
+<div class="footer">PROJECT KING / Home v9.1 / メインアプリ（宝）は最終確認まで変更しません。</div></main>
+<script>
+function g(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function loadData(){const inv=g("fks_invoices",[]),pay=g("fks_payments",[]),stock=g("fks_inventory",[]);const total=inv.filter(x=>!x.paid).length+pay.filter(x=>!x.done).length+stock.filter(x=>(+x.qty||0)<= (+x.min||0)).length;mainAlert.className="card "+(total?"yellow":"green");alertTitle.textContent=total?"注意事項あり":"大きな警告なし";alertSub.textContent=total?"Command Centerで未入金・支払・在庫を確認してください。":"Quick Entryで入力してからDaily Briefを確認しましょう。"}
+loadData();
+</script></body></html>
