@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FKS Main Integration Plan v1.0</title><style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#07090d;color:#fff8df}
+header{text-align:center;padding:20px;background:#111827;border-bottom:1px solid #d4af37}
+main{max-width:1000px;margin:auto;padding:16px}.card{background:rgba(255,255,255,.08);border:1px solid rgba(212,175,55,.28);border-radius:16px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.gold{color:#ffe082}.danger{color:#ff6464;font-weight:bold}.ok{color:#48d597;font-weight:bold}pre{background:rgba(0,0,0,.3);padding:10px;border-radius:10px;overflow:auto}button{background:#d4af37;border:0;border-radius:10px;padding:10px 16px;font-weight:bold}
+</style></head><body><header><h1 class="gold">👑 FKS Main Integration Plan v1.0</h1><p>メインアプリ（宝）融合前・安全統合計画</p></header><main>
+<div class="card"><h2>基本方針</h2><p class="danger">メインアプリ本体は、最終確認まで変更しません。</p><p>FKS単体テスト完了後、メインアプリへ「入口だけ」を追加します。</p></div>
+<div class="grid">
+<div class="card"><h3>STEP 1</h3><p class="ok">FKS単体完成確認</p></div>
+<div class="card"><h3>STEP 2</h3><p>実データテスト</p></div>
+<div class="card"><h3>STEP 3</h3><p>権限確認</p></div>
+<div class="card"><h3>STEP 4</h3><p>リーダー専用入口追加</p></div>
+</div>
+<div class="card"><h2>入口追加の考え方</h2><p>メインアプリに追加するのはリンクボタンだけ。</p><pre>&lt;a href="fks-command-center-v3.0.html"&gt;👑 FKS本部&lt;/a&gt;</pre><p>一般ユーザー・担当者には表示しません。</p></div>
+<div class="card"><h2>最終チェックリスト</h2><ul><li>☐ メインアプリのバックアップ取得</li><li>☐ FKS全ファイルアップロード済み</li><li>☐ Link Check Center確認</li><li>☐ Test Center修正メモ確認</li><li>☐ Permission権限確認</li><li>☐ iPhone / iPad表示確認</li><li>☐ 相棒が融合OK判断</li></ul><button onclick="saveCheck()">確認日時を保存</button><p id="saved"></p></div>
+<div class="card"><h2>統合後の入口構成</h2><pre>メインアプリ（宝）
+ └─ リーダー専用入口
+     ├─ 👑 FKS Command Center
+     ├─ 🏗 建設
+     ├─ 💰 会計
+     ├─ 🎪 イベント
+     ├─ 👷 スタッフ
+     └─ 👨‍👩‍👧 Family</pre></div>
+</main><script>
+function saveCheck(){const t=new Date().toLocaleString();localStorage.setItem("fks_main_integration_plan_checked",t);saved.textContent="確認日時: "+t}
+saved.textContent=localStorage.getItem("fks_main_integration_plan_checked")?("確認日時: "+localStorage.getItem("fks_main_integration_plan_checked")):"未確認";
+</script></body></html>
