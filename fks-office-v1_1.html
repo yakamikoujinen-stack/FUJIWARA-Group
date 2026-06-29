@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>事務アプリ v1.1 — FUJIWARA Group</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+
+  :root {
+    --bg: #f2f4f7;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #e0e4ea;
+    --teal: #0e7c6e;
+    --teal-light: #e0f4f1;
+    --teal-mid: #a8ddd6;
+    --fujiwara: #1a56a0;
+    --fujiwara-light: #e8f0fb;
+    --riko: #8b4513;
+    --riko-light: #fdf3ec;
+    --riko-mid: #ddb89a;
+    --green: #1e8f55;
+    --green-light: #e6f7ef;
+    --red: #c0333a;
+    --red-light: #fdecea;
+    --orange: #c05a20;
+    --orange-light: #fdf0e8;
+    --text: #1a1e24;
+    --text-sub: #6a7280;
+    --text-dim: #aab0bc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  /* Header */
+  .app-header {
+    background: #12294a;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .back-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+  .app-header h1 { font-size: 15px; font-weight: 700; color: #fff; flex: 1; }
+  .header-sub { font-size: 10px; color: rgba(255,255,255,0.5); }
+
+  /* Month bar */
+  .month-bar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .month-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-sub); padding: 2px 8px; }
+  .month-label { font-size: 15px; font-weight: 700; }
+
+  /* Company toggle */
+  .company-bar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 8px 16px; display: flex; gap: 8px;
+  }
+  .co-btn {
+    flex: 1; padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--surface2); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    text-align: center; color: var(--text-sub);
+  }
+  .co-btn.active-fj { background: var(--fujiwara-light); border-color: var(--fujiwara); color: var(--fujiwara); }
+  .co-btn.active-rk { background: var(--riko-light); border-color: var(--riko); color: var(--riko); }
+  .co-btn.active-all { background: var(--teal-light); border-color: var(--teal); color: var(--teal); }
+
+  /* Tab */
+  .tab-nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    flex: 1; padding: 12px 6px; background: none; border: none;
+    border-bottom: 2px solid transparent; color: var(--text-sub);
+    font-size: 11px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+  .tab-btn .tab-icon { display: block; font-size: 19px; margin-bottom: 3px; }
+
+  /* Page */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim);
+    text-transform: uppercase; margin: 20px 0 10px;
+  }
+  .section-label:first-child { margin-top: 4px; }
+
+  /* Card */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+
+  /* Company header strip */
+  .co-strip {
+    font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 5px; margin-bottom: 10px;
+  }
+  .co-strip-fj { background: var(--fujiwara-light); color: var(--fujiwara); }
+  .co-strip-rk { background: var(--riko-light); color: var(--riko); }
+  .co-strip-all { background: var(--teal-light); color: var(--teal); }
+
+  /* KPI */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .kpi-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; text-align: center; }
+  .kpi-item.full { grid-column: 1 / -1; }
+  .kpi-num { font-size: 22px; font-weight: 900; }
+  .kpi-label { font-size: 10px; color: var(--text-sub); margin-top: 3px; }
+  .kpi-sub { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+
+  /* P&L rows */
+  .pl-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .pl-row:last-child { border-bottom: none; }
+  .pl-label { color: var(--text-sub); }
+  .pl-value { font-weight: 600; }
+  .pl-total { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--surface2); margin: 0 -16px -16px; border-radius: 0 0 12px 12px; font-size: 13px; font-weight: 700; }
+
+  /* Colors */
+  .c-green  { color: var(--green); }
+  .c-red    { color: var(--red); }
+  .c-teal   { color: var(--teal); }
+  .c-orange { color: var(--orange); }
+  .c-fj     { color: var(--fujiwara); }
+  .c-rk     { color: var(--riko); }
+
+  /* Form */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 11px; color: var(--text-sub); margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    padding: 10px 12px; outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--teal); }
+  .form-select option { background: #fff; color: var(--text); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    padding: 12px 20px; border-radius: 8px; border: none;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-primary { background: #12294a; color: #fff; width: 100%; }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm { padding: 6px 12px; font-size: 11px; }
+
+  /* List items */
+  .list-item {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-left { flex: 1; }
+  .list-name { font-size: 13px; font-weight: 500; }
+  .list-meta { font-size: 11px; color: var(--text-sub); margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .list-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .list-amount { font-size: 14px; font-weight: 700; }
+  .list-rm { font-size: 18px; color: var(--text-dim); cursor: pointer; }
+
+  /* Badge */
+  .badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; display: inline-block; }
+  .badge-fj    { background: var(--fujiwara-light); color: var(--fujiwara); border: 1px solid #b0c8f0; }
+  .badge-rk    { background: var(--riko-light); color: var(--riko); border: 1px solid var(--riko-mid); }
+  .badge-paid  { background: var(--green-light); color: var(--green); border: 1px solid #a8dfc4; }
+  .badge-unpaid{ background: var(--orange-light); color: var(--orange); border: 1px solid #f0c4a0; }
+
+  /* Pay summary */
+  .pay-summary { display: flex; gap: 10px; margin-bottom: 12px; }
+  .pay-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+  .pay-box .num { font-size: 18px; font-weight: 900; }
+  .pay-box .lbl { font-size: 10px; color: var(--text-sub); margin-top: 3px; }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #12294a; color: #fff; font-size: 26px; border: none;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(18,41,74,0.3);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 150; transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.93); }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 16px 40px; width: 100%; max-height: 92vh; overflow-y: auto; border-top: 3px solid #12294a; }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #12294a; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-actions .btn { flex: 1; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 92px; left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    color: #fff; font-size: 13px; font-weight: 700;
+    padding: 10px 22px; border-radius: 20px;
+    opacity: 0; transition: all 0.3s; z-index: 400;
+    white-space: nowrap; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Empty */
+  .empty { text-align: center; padding: 36px 20px; color: var(--text-dim); }
+  .empty-icon { font-size: 36px; opacity: 0.3; display: block; margin-bottom: 10px; }
+  .empty p { font-size: 13px; }
+
+  /* Revenue input grid */
+  .rev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rev-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .rev-card-fj { border-color: #b0c8f0; background: var(--fujiwara-light); }
+  .rev-card-rk { border-color: var(--riko-mid); background: var(--riko-light); }
+  .rev-card label { font-size: 11px; font-weight: 700; display: block; margin-bottom: 6px; }
+  .rev-card-fj label { color: var(--fujiwara); }
+  .rev-card-rk label { color: var(--riko); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="app-header">
+  <button class="back-btn" onclick="history.back()">←</button>
+  <div style="flex:1">
+    <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:2px;">FUJIWARA Group</div>
+    <h1>🗂 事務アプリ — 財務諸表</h1>
+  </div>
+  <span style="font-size:10px;color:rgba(255,255,255,0.4);">v1.1</span>
+</div>
+
+<!-- Month -->
+<div class="month-bar">
+  <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+  <span class="month-label" id="month-label"></span>
+  <button class="month-btn" onclick="changeMonth(1)">›</button>
+</div>
+
+<!-- Company toggle -->
+<div class="company-bar">
+  <button class="co-btn active-all" id="co-all" onclick="setCompany('all', this)">📊 グループ全体</button>
+  <button class="co-btn" id="co-fj"  onclick="setCompany('fj', this)">🏗 藤原一工業</button>
+  <button class="co-btn" id="co-rk"  onclick="setCompany('rk', this)">🎪 リコー工業</button>
+</div>
+
+<!-- Tabs -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('pl', this)">
+    <span class="tab-icon">📊</span>損益 P/L
+  </button>
+  <button class="tab-btn" onclick="showTab('expense', this)">
+    <span class="tab-icon">📝</span>経費入力
+  </button>
+  <button class="tab-btn" onclick="showTab('payment', this)">
+    <span class="tab-icon">💳</span>支払管理
+  </button>
+</div>
+
+<!-- ===== P/L ===== -->
+<div id="page-pl" class="page active">
+  <div id="pl-co-label" class="co-strip co-strip-all" style="margin-top:4px;">📊 FUJIWARA Group — グループ合算</div>
+
+  <div class="kpi-grid">
+    <div class="kpi-item full" style="background:var(--teal-light);border-color:var(--teal-mid);">
+      <div class="kpi-num c-teal" id="pl-profit">―</div>
+      <div class="kpi-label">純利益</div>
+      <div class="kpi-sub" id="pl-margin">粗利率 ―%</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-num c-green" id="pl-revenue">―</div>
+      <div class="kpi-label">売上合計</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-num c-red" id="pl-cost">―</div>
+      <div class="kpi-label">経費合計</div>
+    </div>
+  </div>
+
+  <!-- 売上内訳 -->
+  <div class="card">
+    <div class="card-title">売上内訳</div>
+    <div id="pl-rev-rows"></div>
+    <div class="pl-total">
+      <span>売上合計</span><span class="c-green" id="pl-rev-total">―</span>
+    </div>
+  </div>
+
+  <!-- 経費内訳 -->
+  <div class="card">
+    <div class="card-title">経費内訳</div>
+    <div id="pl-cost-rows"></div>
+    <div class="pl-total">
+      <span>経費合計</span><span class="c-red" id="pl-cost-total">―</span>
+    </div>
+  </div>
+
+  <!-- 売上入力 -->
+  <div class="card" style="border-color:#b0c8f0;">
+    <div class="card-title" style="color:#12294a;">📥 売上を入力</div>
+    <div class="rev-grid">
+      <div class="rev-card rev-card-fj">
+        <label>🏗 藤原一工業（建設）</label>
+        <input type="number" class="form-input" id="input-rev-fj" placeholder="0" inputmode="numeric" style="background:#fff;">
+      </div>
+      <div class="rev-card rev-card-rk">
+        <label>🎪 リコー工業（イベント）</label>
+        <input type="number" class="form-input" id="input-rev-rk" placeholder="0" inputmode="numeric" style="background:#fff;">
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:12px;" onclick="saveRevenue()">売上を保存する</button>
+  </div>
+</div>
+
+<!-- ===== 経費入力 ===== -->
+<div id="page-expense" class="page">
+  <div class="card">
+    <div class="card-title">📝 経費を追加</div>
+    <div class="form-group">
+      <label class="form-label">会社</label>
+      <select class="form-select" id="exp-co">
+        <option value="fj">🏗 藤原一工業（建設）</option>
+        <option value="rk">🎪 リコー工業（イベント）</option>
+        <option value="group">🏢 グループ共通（事務所等）</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">内容</label>
+      <input type="text" class="form-input" id="exp-name" placeholder="例：外注費、事務所家賃、燃料代">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">金額（円）</label>
+        <input type="number" class="form-input" id="exp-amount" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">日付</label>
+        <input type="date" class="form-input" id="exp-date">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">入力者</label>
+      <select class="form-select" id="exp-who">
+        <option>あきひろ</option>
+        <option>スタッフ</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveExpense()">💾 経費を保存する</button>
+  </div>
+
+  <div class="section-label">今月の経費一覧</div>
+  <div id="expense-list-view"></div>
+</div>
+
+<!-- ===== 支払管理 ===== -->
+<div id="page-payment" class="page">
+  <div class="pay-summary">
+    <div class="pay-box">
+      <div class="num c-orange" id="pay-unpaid-total">―</div>
+      <div class="lbl">支払待ち</div>
+    </div>
+    <div class="pay-box">
+      <div class="num c-green" id="pay-paid-total">―</div>
+      <div class="lbl">支払済み</div>
+    </div>
+  </div>
+
+  <div class="section-label">支払待ち</div>
+  <div id="pay-unpaid-list"></div>
+
+  <div class="section-label">支払済み</div>
+  <div id="pay-paid-list"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" onclick="openModal()" style="display:none;">＋</button>
+<div class="toast" id="toast"></div>
+
+<!-- 支払モーダル -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💳 支払を追加</div>
+    <div class="form-group">
+      <label class="form-label">支払先・内容</label>
+      <input type="text" class="form-input" id="pay-name" placeholder="例：外注業者、リース料">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">金額（円）</label>
+        <input type="number" class="form-input" id="pay-amount" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">支払期日</label>
+        <input type="date" class="form-input" id="pay-due">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">会社</label>
+      <select class="form-select" id="pay-co">
+        <option value="fj">🏗 藤原一工業</option>
+        <option value="rk">🎪 リコー工業</option>
+        <option value="group">🏢 グループ共通</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-payment')">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePayment()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage ──
+const KEYS = { revenue: 'fks_v11_revenue', expenses: 'fks_v11_expenses', payments: 'fks_v11_payments' };
+const getD = k => JSON.parse(localStorage.getItem(k) || (k === KEYS.revenue ? '{}' : '[]'));
+const setD = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+// ── State ──
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1;
+let currentCo = 'all'; // all / fj / rk
+let currentTab = 'pl';
+
+const CO_LABEL = {
+  fj:    '🏗 藤原一工業',
+  rk:    '🎪 リコー工業',
+  group: '🏢 グループ共通',
+  all:   '📊 FUJIWARA Group',
+};
+const CO_BADGE = { fj: 'badge-fj', rk: 'badge-rk', group: 'badge-fj' };
+
+function monthKey() { return `${currentYear}-${String(currentMonth).padStart(2,'0')}`; }
+function fmt(n) { return Number(Math.abs(n)).toLocaleString(); }
+
+// ── Month ──
+function changeMonth(d) {
+  currentMonth += d;
+  if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+  if (currentMonth < 1)  { currentMonth = 12; currentYear--; }
+  document.getElementById('month-label').textContent = `${currentYear}年${currentMonth}月`;
+  renderAll();
+}
+
+// ── Company ──
+function setCompany(co, btn) {
+  currentCo = co;
+  ['all','fj','rk'].forEach(c => {
+    const b = document.getElementById('co-' + c);
+    b.className = 'co-btn' + (c === co ? (' active-' + (co === 'all' ? 'all' : co === 'fj' ? 'fj' : 'rk')) : '');
+  });
+  renderAll();
+}
+
+// ── Tab ──
+function showTab(tab, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  btn.classList.add('active');
+  currentTab = tab;
+  document.getElementById('fab-btn').style.display = tab === 'payment' ? 'flex' : 'none';
+  renderAll();
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('exp-date').value = today;
+  document.getElementById('pay-due').value = today;
+  document.getElementById('month-label').textContent = `${currentYear}年${currentMonth}月`;
+
+  if (!localStorage.getItem(KEYS.revenue)) {
+    const rv = {};
+    rv[monthKey()] = { fj: 2070000, rk: 1850000 };
+    setD(KEYS.revenue, rv);
+  }
+  if (!localStorage.getItem(KEYS.expenses)) {
+    const mk = monthKey();
+    setD(KEYS.expenses, [
+      { id:1, co:'fj',    name:'外注費 田中工業',   amount:150000, date:`${currentYear}-${String(currentMonth).padStart(2,'0')}-15`, who:'あきひろ', month:mk },
+      { id:2, co:'fj',    name:'材料費（建設）',     amount:85000,  date:`${currentYear}-${String(currentMonth).padStart(2,'0')}-18`, who:'スタッフ', month:mk },
+      { id:3, co:'rk',    name:'イベント備品',       amount:35000,  date:`${currentYear}-${String(currentMonth).padStart(2,'0')}-12`, who:'あきひろ', month:mk },
+      { id:4, co:'rk',    name:'屋台消耗品',         amount:22000,  date:`${currentYear}-${String(currentMonth).padStart(2,'0')}-20`, who:'スタッフ', month:mk },
+      { id:5, co:'group', name:'事務所家賃',          amount:80000,  date:`${currentYear}-${String(currentMonth).padStart(2,'0')}-01`, who:'あきひろ', month:mk },
+      { id:6, co:'group', name:'通信費',              amount:12000,  date:`${currentYear}-${String(currentMonth).padStart(2,'0')}-05`, who:'あきひろ', month:mk },
+    ]);
+  }
+  if (!localStorage.getItem(KEYS.payments)) {
+    const mk = monthKey();
+    setD(KEYS.payments, [
+      { id:1, name:'〇〇リース料',        amount:45000,  due:`${currentYear}-${String(currentMonth).padStart(2,'0')}-25`, co:'group', paid:false, month:mk },
+      { id:2, name:'外注業者 田中工業',   amount:120000, due:`${currentYear}-${String(currentMonth).padStart(2,'0')}-30`, co:'fj',    paid:false, month:mk },
+      { id:3, name:'イベント資材 山田商店',amount:38000, due:`${currentYear}-${String(currentMonth).padStart(2,'0')}-20`, co:'rk',    paid:true,  month:mk },
+    ]);
+  }
+  renderAll();
+});
+
+function renderAll() { renderPL(); renderExpenseList(); renderPayments(); }
+
+// ── P/L ──
+function renderPL() {
+  const mk = monthKey();
+  const rv = getD(KEYS.revenue)[mk] || { fj:0, rk:0 };
+  const expenses = getD(KEYS.expenses).filter(e => e.month === mk);
+
+  const filter = co => co === 'all' ? true : (co === 'fj' ? (e => e.co === 'fj' || e.co === 'group') : (e => e.co === 'rk' || e.co === 'group'));
+
+  let revFj = 0, revRk = 0, costFj = 0, costRk = 0, costGroup = 0;
+
+  if (currentCo === 'all') {
+    revFj = rv.fj || 0; revRk = rv.rk || 0;
+    costFj    = expenses.filter(e => e.co === 'fj').reduce((s,e) => s+e.amount, 0);
+    costRk    = expenses.filter(e => e.co === 'rk').reduce((s,e) => s+e.amount, 0);
+    costGroup = expenses.filter(e => e.co === 'group').reduce((s,e) => s+e.amount, 0);
+  } else if (currentCo === 'fj') {
+    revFj = rv.fj || 0;
+    costFj    = expenses.filter(e => e.co === 'fj').reduce((s,e) => s+e.amount, 0);
+    costGroup = expenses.filter(e => e.co === 'group').reduce((s,e) => s+e.amount, 0);
+  } else {
+    revRk = rv.rk || 0;
+    costRk    = expenses.filter(e => e.co === 'rk').reduce((s,e) => s+e.amount, 0);
+    costGroup = expenses.filter(e => e.co === 'group').reduce((s,e) => s+e.amount, 0);
+  }
+
+  const revTotal  = revFj + revRk;
+  const costTotal = costFj + costRk + costGroup;
+  const profit    = revTotal - costTotal;
+  const margin    = revTotal > 0 ? Math.round(profit / revTotal * 100) : 0;
+
+  document.getElementById('pl-profit').textContent  = fmt(profit) + '円';
+  document.getElementById('pl-margin').textContent  = `粗利率 ${margin}%`;
+  document.getElementById('pl-revenue').textContent = fmt(revTotal) + '円';
+  document.getElementById('pl-cost').textContent    = fmt(costTotal) + '円';
+  document.getElementById('pl-rev-total').textContent  = fmt(revTotal) + '円';
+  document.getElementById('pl-cost-total').textContent = fmt(costTotal) + '円';
+  document.getElementById('pl-profit').className = 'kpi-num ' + (profit >= 0 ? 'c-teal' : 'c-red');
+
+  // Co label
+  const labels = { all:'📊 FUJIWARA Group — グループ合算', fj:'🏗 藤原一工業（建設）', rk:'🎪 リコー工業（イベント）' };
+  const cls    = { all:'co-strip co-strip-all', fj:'co-strip co-strip-fj', rk:'co-strip co-strip-rk' };
+  document.getElementById('pl-co-label').textContent = labels[currentCo];
+  document.getElementById('pl-co-label').className   = cls[currentCo];
+
+  // Rev rows
+  let revRows = '';
+  if (currentCo === 'all' || currentCo === 'fj')
+    revRows += `<div class="pl-row"><span class="pl-label">🏗 藤原一工業（建設）</span><span class="pl-value c-green">${fmt(revFj)}円</span></div>`;
+  if (currentCo === 'all' || currentCo === 'rk')
+    revRows += `<div class="pl-row"><span class="pl-label">🎪 リコー工業（イベント）</span><span class="pl-value c-green">${fmt(revRk)}円</span></div>`;
+  document.getElementById('pl-rev-rows').innerHTML = revRows;
+
+  // Cost rows
+  let costRows = '';
+  if ((currentCo === 'all' || currentCo === 'fj') && costFj)
+    costRows += `<div class="pl-row"><span class="pl-label">🏗 藤原一工業 経費</span><span class="pl-value c-red">${fmt(costFj)}円</span></div>`;
+  if ((currentCo === 'all' || currentCo === 'rk') && costRk)
+    costRows += `<div class="pl-row"><span class="pl-label">🎪 リコー工業 経費</span><span class="pl-value c-red">${fmt(costRk)}円</span></div>`;
+  if (costGroup)
+    costRows += `<div class="pl-row"><span class="pl-label">🏢 グループ共通経費</span><span class="pl-value c-red">${fmt(costGroup)}円</span></div>`;
+  document.getElementById('pl-cost-rows').innerHTML = costRows || '<div class="pl-row"><span class="pl-label">経費なし</span><span>―</span></div>';
+
+  // 売上入力欄
+  document.getElementById('input-rev-fj').value = rv.fj || '';
+  document.getElementById('input-rev-rk').value = rv.rk || '';
+}
+
+function saveRevenue() {
+  const mk = monthKey();
+  const rv = getD(KEYS.revenue);
+  rv[mk] = {
+    fj: parseInt(document.getElementById('input-rev-fj').value) || 0,
+    rk: parseInt(document.getElementById('input-rev-rk').value) || 0,
+  };
+  setD(KEYS.revenue, rv);
+  renderPL();
+  showToast('売上を保存しました ✓');
+}
+
+// ── Expenses ──
+function saveExpense() {
+  const name   = document.getElementById('exp-name').value.trim();
+  const amount = parseInt(document.getElementById('exp-amount').value) || 0;
+  if (!name || !amount) { showToast('内容と金額を入力してください', true); return; }
+  const mk = monthKey();
+  const list = getD(KEYS.expenses);
+  list.unshift({ id: Date.now(), co: document.getElementById('exp-co').value, name, amount, date: document.getElementById('exp-date').value, who: document.getElementById('exp-who').value, month: mk });
+  setD(KEYS.expenses, list);
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-amount').value = '';
+  renderAll();
+  showToast('経費を保存しました ✓');
+}
+
+function deleteExpense(id) {
+  setD(KEYS.expenses, getD(KEYS.expenses).filter(e => e.id !== id));
+  renderAll();
+}
+
+function renderExpenseList() {
+  const mk = monthKey();
+  let list = getD(KEYS.expenses).filter(e => e.month === mk);
+  if (currentCo === 'fj') list = list.filter(e => e.co === 'fj' || e.co === 'group');
+  if (currentCo === 'rk') list = list.filter(e => e.co === 'rk' || e.co === 'group');
+  const el = document.getElementById('expense-list-view');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-icon">📝</span><p>経費を入力すると<br>ここに表示されます</p></div>';
+    return;
+  }
+  const total = list.reduce((s,e) => s+e.amount, 0);
+  el.innerHTML = `<div class="card">` +
+    list.map(e => `<div class="list-item">
+      <div class="list-left">
+        <div class="list-name">${e.name}</div>
+        <div class="list-meta">
+          <span>${e.date}</span>
+          <span class="badge ${CO_BADGE[e.co] || 'badge-fj'}">${CO_LABEL[e.co]}</span>
+          <span>${e.who}</span>
+        </div>
+      </div>
+      <div class="list-right">
+        <span class="list-amount c-red">${fmt(e.amount)}円</span>
+        <span class="list-rm" onclick="deleteExpense(${e.id})">×</span>
+      </div>
+    </div>`).join('') +
+    `<div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:2px 0;">
+      <span>合計</span><span class="c-red">${fmt(total)}円</span>
+    </div></div>`;
+}
+
+// ── Payments ──
+function savePayment() {
+  const name   = document.getElementById('pay-name').value.trim();
+  const amount = parseInt(document.getElementById('pay-amount').value) || 0;
+  if (!name || !amount) { showToast('内容と金額を入力してください', true); return; }
+  const mk = monthKey();
+  const list = getD(KEYS.payments);
+  list.unshift({ id: Date.now(), name, amount, due: document.getElementById('pay-due').value, co: document.getElementById('pay-co').value, paid: false, month: mk });
+  setD(KEYS.payments, list);
+  closeModal('modal-payment');
+  document.getElementById('pay-name').value = '';
+  document.getElementById('pay-amount').value = '';
+  renderPayments();
+  showToast('支払を追加しました ✓');
+}
+
+function markPaid(id) {
+  const list = getD(KEYS.payments);
+  const item = list.find(p => p.id === id);
+  if (item) { item.paid = true; setD(KEYS.payments, list); renderPayments(); showToast('支払済みにしました ✓'); }
+}
+
+function deletePayment(id) {
+  setD(KEYS.payments, getD(KEYS.payments).filter(p => p.id !== id));
+  renderPayments();
+}
+
+function renderPayments() {
+  const mk = monthKey();
+  let all = getD(KEYS.payments).filter(p => p.month === mk);
+  if (currentCo === 'fj') all = all.filter(p => p.co === 'fj' || p.co === 'group');
+  if (currentCo === 'rk') all = all.filter(p => p.co === 'rk' || p.co === 'group');
+  const unpaid = all.filter(p => !p.paid);
+  const paid   = all.filter(p =>  p.paid);
+
+  document.getElementById('pay-unpaid-total').textContent = fmt(unpaid.reduce((s,p) => s+p.amount, 0)) + '円';
+  document.getElementById('pay-paid-total').textContent   = fmt(paid.reduce((s,p)   => s+p.amount, 0)) + '円';
+
+  const renderList = (items, showBtn) => items.length
+    ? `<div class="card">${items.map(p => `
+        <div class="list-item">
+          <div class="list-left">
+            <div class="list-name">${p.name}</div>
+            <div class="list-meta">
+              <span>期日：${p.due}</span>
+              <span class="badge ${CO_BADGE[p.co] || 'badge-fj'}">${CO_LABEL[p.co]}</span>
+            </div>
+          </div>
+          <div class="list-right">
+            <span class="list-amount ${showBtn ? 'c-orange' : 'c-green'}">${fmt(p.amount)}円</span>
+            ${showBtn
+              ? `<button class="btn btn-sm" style="background:var(--teal-light);color:var(--teal);border:1px solid var(--teal-mid);" onclick="markPaid(${p.id})">支払済み</button>`
+              : `<span class="badge badge-paid">済み</span>`}
+            <span class="list-rm" onclick="deletePayment(${p.id})">×</span>
+          </div>
+        </div>`).join('')}</div>`
+    : `<div class="empty"><span class="empty-icon">${showBtn ? '💳' : '✅'}</span><p>${showBtn ? '支払待ちはありません' : 'なし'}</p></div>`;
+
+  document.getElementById('pay-unpaid-list').innerHTML = renderList(unpaid, true);
+  document.getElementById('pay-paid-list').innerHTML   = renderList(paid, false);
+}
+
+// ── Modal / Toast ──
+function openModal()    { document.getElementById('modal-payment').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+function showToast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? '#c0333a' : '#1e8f55';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>建設管理 v1.1 — FUJIWARA GROUP</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+
+  :root {
+    --bg: #f2f4f7;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #e0e4ea;
+    --gold: #b8860b;
+    --gold-dim: #d4af37;
+    --steel: #2a7aa8;
+    --steel-dim: #ddeef8;
+    --green: #1e8f55;
+    --green-dim: #e6f7ef;
+    --orange: #c05a20;
+    --red: #c0333a;
+    --text: #1a1e24;
+    --text-sub: #6a7280;
+    --text-dim: #aab0bc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .back-btn {
+    background: none; border: none;
+    color: var(--gold); font-size: 20px; cursor: pointer; padding: 4px;
+  }
+  .app-header h1 { font-size: 16px; font-weight: 700; flex: 1; }
+  .header-badge {
+    font-size: 10px; color: var(--text-sub);
+    background: var(--surface2); padding: 3px 8px;
+    border-radius: 10px; border: 1px solid var(--border);
+  }
+
+  /* Tab */
+  .tab-nav {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1; padding: 13px 8px;
+    background: none; border: none;
+    color: var(--text-sub);
+    font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-btn .tab-icon { display: block; font-size: 20px; margin-bottom: 3px; }
+
+  /* Page */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px; letter-spacing: 0.15em;
+    color: var(--text-dim); text-transform: uppercase;
+    margin: 20px 0 10px;
+  }
+  .section-label:first-child { margin-top: 4px; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+
+  /* Badge */
+  .badge {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .badge-active { background: #e6f7ef; color: var(--green); border: 1px solid #a8dfc4; }
+  .badge-done   { background: #ddeef8; color: var(--steel); border: 1px solid #a8d0e8; }
+  .badge-sub    { background: #fdf0e8; color: var(--orange); border: 1px solid #f0c4a0; }
+
+  /* Progress */
+  .progress-wrap { margin: 10px 0 6px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sub); margin-bottom: 5px; }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--steel), var(--green)); }
+
+  /* Site card */
+  .site-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 10px;
+    cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+  }
+  .site-card:active { transform: scale(0.99); }
+  .site-card:hover { border-color: var(--gold-dim); }
+  .site-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+  .site-name { font-size: 15px; font-weight: 700; }
+  .site-client { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .site-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--text-sub); margin-top: 8px; }
+
+  /* Form */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 11px; color: var(--text-sub); margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    padding: 10px 12px; outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-select option { background: var(--surface); color: var(--text); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    padding: 12px 20px; border-radius: 8px; border: none;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-primary { background: var(--gold); color: #0a0a0f; width: 100%; }
+  .btn-primary:active { background: #e8c84a; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+
+  /* Worker tags */
+  .worker-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .worker-tag {
+    background: var(--steel-dim); border: 1px solid #a8d0e8;
+    color: var(--steel); font-size: 11px; padding: 4px 10px;
+    border-radius: 20px; display: flex; align-items: center; gap: 6px;
+  }
+  .worker-tag .rm { cursor: pointer; color: var(--text-sub); font-size: 14px; line-height: 1; }
+
+  /* Expense list */
+  .expense-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .expense-item:last-child { border-bottom: none; }
+  .expense-name { color: var(--text-sub); }
+  .expense-right { display: flex; align-items: center; gap: 10px; }
+  .expense-amount { color: var(--orange); font-weight: 600; }
+  .expense-rm { color: var(--text-dim); cursor: pointer; font-size: 16px; }
+
+  /* Daily log */
+  .log-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 14px; margin-bottom: 8px;
+  }
+  .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .log-date { font-size: 11px; color: var(--text-sub); }
+  .log-site { font-size: 11px; color: var(--gold); font-weight: 700; }
+  .log-weather { font-size: 18px; }
+  .log-work { font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 8px; }
+  .log-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .log-chip {
+    font-size: 10px; background: var(--surface);
+    border: 1px solid var(--border); padding: 2px 8px;
+    border-radius: 10px; color: var(--text-sub);
+  }
+  .log-note { font-size: 11px; color: var(--orange); margin-top: 6px; }
+
+  /* Info row */
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--text-sub); }
+  .info-value { color: var(--text); font-weight: 500; }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--gold); color: #0a0a0f;
+    font-size: 26px; border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(212,175,55,0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 150; transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.93); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.72); z-index: 300; align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px 16px 40px; width: 100%;
+    max-height: 92vh; overflow-y: auto;
+    border-top: 3px solid var(--gold-dim);
+  }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--gold); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-actions .btn { flex: 1; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 92px; left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    background: var(--green); color: #fff;
+    font-size: 13px; font-weight: 700;
+    padding: 10px 22px; border-radius: 20px;
+    opacity: 0; transition: all 0.3s; z-index: 400;
+    white-space: nowrap; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Empty */
+  .empty { text-align: center; padding: 48px 20px; color: var(--text-dim); }
+  .empty-icon { font-size: 40px; opacity: 0.3; display: block; margin-bottom: 10px; }
+  .empty p { font-size: 13px; }
+
+  /* Worker row */
+  .worker-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .worker-row .form-input { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="app-header">
+  <button class="back-btn" onclick="history.back()">←</button>
+  <h1>⛏️ 建設管理</h1>
+  <span class="header-badge">v1.1</span>
+</div>
+
+<!-- Tabs: 2本のみ -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('sites', this)">
+    <span class="tab-icon">📋</span>現場一覧
+  </button>
+  <button class="tab-btn" onclick="showTab('daily', this)">
+    <span class="tab-icon">📝</span>日報
+  </button>
+</div>
+
+<!-- ======== 現場一覧 ======== -->
+<div id="page-sites" class="page active">
+  <div class="section-label">進行中</div>
+  <div id="sites-active-list"></div>
+
+  <div class="section-label">完了済み</div>
+  <div id="sites-done-list"></div>
+</div>
+
+<!-- ======== 日報 ======== -->
+<div id="page-daily" class="page">
+
+  <!-- 入力フォーム -->
+  <div class="card">
+    <div class="card-title">📝 日報を記録</div>
+
+    <div class="form-group">
+      <label class="form-label">現場</label>
+      <select class="form-select" id="daily-site">
+        <option value="">-- 現場を選ぶ --</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">日付</label>
+        <input type="date" class="form-input" id="daily-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">天気</label>
+        <select class="form-select" id="daily-weather">
+          <option value="☀️">☀️ 晴れ</option>
+          <option value="⛅">⛅ 曇り</option>
+          <option value="🌧">🌧 雨</option>
+          <option value="⛈">⛈ 雷雨</option>
+          <option value="❄️">❄️ 雪</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 作業員 -->
+    <div class="form-group">
+      <label class="form-label">作業員</label>
+      <div class="worker-row">
+        <input type="text" class="form-input" id="worker-input" placeholder="名前を入力してEnter">
+        <button class="btn btn-secondary btn-sm" onclick="addWorker()">追加</button>
+      </div>
+      <div class="worker-tags" id="worker-tags"></div>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px;">
+        <span style="font-size:12px; color:var(--text-sub);">合計人数</span>
+        <button onclick="changeCount(-1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">－</button>
+        <span id="worker-count" style="font-size:22px;font-weight:900;color:var(--gold);min-width:32px;text-align:center;">0</span>
+        <button onclick="changeCount(1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">＋</button>
+        <span style="font-size:12px; color:var(--text-sub);">人</span>
+      </div>
+    </div>
+
+    <!-- 作業内容・進捗 -->
+    <div class="form-group">
+      <label class="form-label">作業内容・進捗</label>
+      <textarea class="form-textarea" id="daily-work" placeholder="本日の作業内容、進捗状況..."></textarea>
+    </div>
+
+    <!-- 現場経費（簡易）-->
+    <div class="form-group">
+      <label class="form-label">現場経費（燃料代・立替など）</label>
+      <div class="form-row" style="margin-bottom:8px;">
+        <input type="text" class="form-input" id="exp-name" placeholder="内容（例：軽油代）">
+        <input type="number" class="form-input" id="exp-amount" placeholder="金額（円）" inputmode="numeric">
+      </div>
+      <button class="btn btn-secondary btn-sm" style="width:100%" onclick="addExpense()">＋ 経費を追加</button>
+      <div id="expense-list" style="margin-top:8px;"></div>
+      <div id="expense-total" style="font-size:12px;color:var(--orange);text-align:right;margin-top:6px;display:none;"></div>
+    </div>
+
+    <!-- 特記事項 -->
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">特記事項・メモ</label>
+      <textarea class="form-textarea" id="daily-note" placeholder="危険箇所・材料不足・連絡事項など..." style="min-height:60px;"></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveDaily()">📝 日報を保存する</button>
+  </div>
+
+  <!-- 過去の日報 -->
+  <div class="section-label">過去の日報</div>
+  <div id="daily-log-list">
+    <div class="empty">
+      <span class="empty-icon">📋</span>
+      <p>日報を記録すると<br>ここに表示されます</p>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openSiteModal()" title="新規現場追加">＋</button>
+<div class="toast" id="toast"></div>
+
+<!-- 新規現場モーダル -->
+<div class="modal-overlay" id="modal-site">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⛏️ 新規現場を追加</div>
+
+    <div class="form-group">
+      <label class="form-label">現場名 *</label>
+      <input type="text" class="form-input" id="s-name" placeholder="例：鈴木邸 外壁塗装">
+    </div>
+    <div class="form-group">
+      <label class="form-label">顧客名</label>
+      <input type="text" class="form-input" id="s-client" placeholder="例：鈴木一郎様">
+    </div>
+    <div class="form-group">
+      <label class="form-label">受注種別</label>
+      <select class="form-select" id="s-type">
+        <option value="元請け">元請け（直接受注）</option>
+        <option value="下請け">下請け</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">着工予定日</label>
+        <input type="date" class="form-input" id="s-start">
+      </div>
+      <div class="form-group">
+        <label class="form-label">完工予定日</label>
+        <input type="date" class="form-input" id="s-end">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">現場住所</label>
+      <input type="text" class="form-input" id="s-addr" placeholder="例：大阪市北区〇〇1-2-3">
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">備考</label>
+      <textarea class="form-textarea" id="s-note" placeholder="工事概要など..." style="min-height:56px;"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-site')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveSite()">現場を登録する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data store (localStorage) ──
+const SITES_KEY = 'fks_construction_sites';
+const LOGS_KEY  = 'fks_construction_logs';
+
+function getSites() { return JSON.parse(localStorage.getItem(SITES_KEY) || '[]'); }
+function getLogs()  { return JSON.parse(localStorage.getItem(LOGS_KEY)  || '[]'); }
+function saveSites(data) { localStorage.setItem(SITES_KEY, JSON.stringify(data)); }
+function saveLogs(data)  { localStorage.setItem(LOGS_KEY,  JSON.stringify(data)); }
+
+// ── Tab ──
+function showTab(tab, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('daily-date').value = today;
+
+  // サンプルデータ（初回のみ）
+  if (!localStorage.getItem(SITES_KEY)) {
+    const sample = [
+      { id: 1, name: '山田邸 外壁リフォーム', client: '山田太郎様', type: '元請け', start: '2026-06-01', end: '2026-07-15', addr: '大阪市北区', note: '', progress: 65, status: 'active' },
+      { id: 2, name: '○○建設 基礎工事',      client: '○○建設',    type: '下請け', start: '2026-06-10', end: '2026-08-31', addr: '堺市',     note: '', progress: 30, status: 'active' },
+      { id: 3, name: '田中様 屋根修繕',        client: '田中花子様', type: '元請け', start: '2026-05-01', end: '2026-05-20', addr: '大阪市住吉区', note: '', progress: 100, status: 'done' }
+    ];
+    saveSites(sample);
+  }
+  if (!localStorage.getItem(LOGS_KEY)) {
+    const sample = [
+      { id: 1, siteId: 1, siteName: '山田邸 外壁リフォーム', date: '2026-06-28', weather: '☀️', workers: ['田中', '佐藤', '山本'], workerCount: 3, work: '外壁下地処理完了。養生作業を午後から開始。明日から塗装工程に入る予定。', expenses: [{ name: '養生テープ・材料', amount: 8500 }], note: '' },
+      { id: 2, siteId: 2, siteName: '○○建設 基礎工事',      date: '2026-06-27', weather: '⛅', workers: ['田中', '佐藤', '山本', '鈴木', '木村'], workerCount: 5, work: '配筋作業3割完了。コンクリート打設は来週月曜予定。', expenses: [{ name: '軽油代', amount: 8000 }, { name: '材料費立替', amount: 16000 }], note: 'コンクリート手配を来週月曜朝までに確認すること' }
+    ];
+    saveLogs(sample);
+  }
+
+  renderSites();
+  renderLogs();
+  updateSiteSelect();
+});
+
+// ── Render sites ──
+function renderSites() {
+  const sites = getSites();
+  const active = sites.filter(s => s.status === 'active');
+  const done   = sites.filter(s => s.status === 'done');
+
+  document.getElementById('sites-active-list').innerHTML = active.length
+    ? active.map(siteCard).join('')
+    : '<div class="empty"><span class="empty-icon">⛏️</span><p>進行中の現場はありません<br>＋ボタンで追加できます</p></div>';
+
+  document.getElementById('sites-done-list').innerHTML = done.length
+    ? done.map(siteCard).join('')
+    : '<div style="color:var(--text-dim);font-size:12px;padding:8px 0;">なし</div>';
+}
+
+function siteCard(s) {
+  const badge = s.status === 'done' ? '<span class="badge badge-done">完了</span>'
+    : s.type === '下請け' ? '<span class="badge badge-sub">下請け</span>'
+    : '<span class="badge badge-active">進行中</span>';
+
+  const progress = s.status !== 'done' ? `
+    <div class="progress-wrap">
+      <div class="progress-label"><span>進捗</span><span>${s.progress}%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${s.progress}%"></div></div>
+    </div>` : '';
+
+  return `<div class="site-card" onclick="openSiteDetail(${s.id})">
+    <div class="site-card-top">
+      <div>
+        <div class="site-name">${s.name}</div>
+        <div class="site-client">${s.type === '下請け' ? '🏢' : '👤'} ${s.client}（${s.type}）</div>
+      </div>
+      ${badge}
+    </div>
+    ${progress}
+    <div class="site-meta">
+      ${s.start ? `<span>📅 ${s.start.slice(5).replace('-','/')}〜${s.end ? s.end.slice(5).replace('-','/') : '?'}</span>` : ''}
+      ${s.addr ? `<span>📍 ${s.addr}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function openSiteDetail(id) {
+  // 進捗更新モーダル（シンプルに）
+  const sites = getSites();
+  const s = sites.find(x => x.id === id);
+  if (!s) return;
+  const np = prompt(`「${s.name}」の進捗を入力してください（現在 ${s.progress}%）\n0〜100の数字を入力`, s.progress);
+  if (np === null) return;
+  const val = Math.max(0, Math.min(100, parseInt(np) || s.progress));
+  s.progress = val;
+  if (val === 100) s.status = 'done';
+  saveSites(sites);
+  renderSites();
+  showToast('進捗を更新しました');
+}
+
+// ── Site select ──
+function updateSiteSelect() {
+  const sites = getSites().filter(s => s.status === 'active');
+  const sel = document.getElementById('daily-site');
+  sel.innerHTML = '<option value="">-- 現場を選ぶ --</option>'
+    + sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+// ── Workers ──
+let workers = [];
+let workerCount = 0;
+
+function addWorker() {
+  const input = document.getElementById('worker-input');
+  const name = input.value.trim();
+  if (!name) return;
+  workers.push(name);
+  if (workers.length > workerCount) workerCount = workers.length;
+  document.getElementById('worker-count').textContent = workerCount;
+  renderWorkers();
+  input.value = '';
+  input.focus();
+}
+
+function removeWorker(i) {
+  workers.splice(i, 1);
+  if (workers.length < workerCount) workerCount = workers.length;
+  document.getElementById('worker-count').textContent = workerCount;
+  renderWorkers();
+}
+
+function renderWorkers() {
+  document.getElementById('worker-tags').innerHTML = workers.map((w, i) =>
+    `<div class="worker-tag">${w}<span class="rm" onclick="removeWorker(${i})">×</span></div>`
+  ).join('');
+}
+
+function changeCount(d) {
+  workerCount = Math.max(0, workerCount + d);
+  document.getElementById('worker-count').textContent = workerCount;
+}
+
+// ── Expenses ──
+let expenses = [];
+
+function addExpense() {
+  const name   = document.getElementById('exp-name').value.trim();
+  const amount = parseInt(document.getElementById('exp-amount').value) || 0;
+  if (!name || !amount) { showToast('内容と金額を入力してください', true); return; }
+  expenses.push({ name, amount });
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-amount').value = '';
+  renderExpenses();
+}
+
+function removeExpense(i) { expenses.splice(i, 1); renderExpenses(); }
+
+function renderExpenses() {
+  const list = document.getElementById('expense-list');
+  const total = expenses.reduce((s, e) => s + e.amount, 0);
+  list.innerHTML = expenses.map((e, i) =>
+    `<div class="expense-item">
+      <span class="expense-name">${e.name}</span>
+      <div class="expense-right">
+        <span class="expense-amount">${e.amount.toLocaleString()}円</span>
+        <span class="expense-rm" onclick="removeExpense(${i})">×</span>
+      </div>
+    </div>`
+  ).join('');
+  const totalEl = document.getElementById('expense-total');
+  if (expenses.length > 0) {
+    totalEl.style.display = 'block';
+    totalEl.textContent = `合計 ${total.toLocaleString()}円`;
+  } else {
+    totalEl.style.display = 'none';
+  }
+}
+
+// ── Save daily ──
+function saveDaily() {
+  const siteId = document.getElementById('daily-site').value;
+  if (!siteId) { showToast('現場を選んでください', true); return; }
+  const work = document.getElementById('daily-work').value.trim();
+  if (!work) { showToast('作業内容を入力してください', true); return; }
+
+  const sites = getSites();
+  const site  = sites.find(s => s.id == siteId);
+  const logs  = getLogs();
+
+  const log = {
+    id: Date.now(),
+    siteId: parseInt(siteId),
+    siteName: site ? site.name : '',
+    date: document.getElementById('daily-date').value,
+    weather: document.getElementById('daily-weather').value,
+    workers: [...workers],
+    workerCount,
+    work,
+    expenses: [...expenses],
+    note: document.getElementById('daily-note').value.trim()
+  };
+
+  logs.unshift(log);
+  saveLogs(logs);
+  renderLogs();
+
+  // reset
+  document.getElementById('daily-work').value = '';
+  document.getElementById('daily-note').value = '';
+  workers = []; workerCount = 0;
+  document.getElementById('worker-count').textContent = '0';
+  document.getElementById('worker-tags').innerHTML = '';
+  expenses = [];
+  renderExpenses();
+
+  showToast('日報を保存しました ✓');
+}
+
+// ── Render logs ──
+function renderLogs() {
+  const logs = getLogs();
+  const el = document.getElementById('daily-log-list');
+  if (!logs.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-icon">📋</span><p>日報を記録すると<br>ここに表示されます</p></div>';
+    return;
+  }
+  el.innerHTML = logs.map(log => {
+    const totalExp = log.expenses.reduce((s, e) => s + e.amount, 0);
+    const chips = [
+      log.workerCount ? `👷 ${log.workerCount}人` : null,
+      log.workers.length ? log.workers.join('・') : null,
+      totalExp ? `💴 現場経費 ${totalExp.toLocaleString()}円` : null
+    ].filter(Boolean).map(c => `<span class="log-chip">${c}</span>`).join('');
+
+    return `<div class="log-item">
+      <div class="log-header">
+        <div>
+          <div class="log-site">${log.siteName}</div>
+          <div class="log-date">${formatDate(log.date)}</div>
+        </div>
+        <span class="log-weather">${log.weather}</span>
+      </div>
+      <div class="log-work">${log.work}</div>
+      ${chips ? `<div class="log-chips">${chips}</div>` : ''}
+      ${log.note ? `<div class="log-note">⚠️ ${log.note}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  const days = ['日','月','火','水','木','金','土'];
+  return `${dt.getFullYear()}年${dt.getMonth()+1}月${dt.getDate()}日（${days[dt.getDay()]}）`;
+}
+
+// ── New site modal ──
+function openSiteModal() {
+  document.getElementById('modal-site').classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function saveSite() {
+  const name = document.getElementById('s-name').value.trim();
+  if (!name) { showToast('現場名を入力してください', true); return; }
+
+  const sites = getSites();
+  const newSite = {
+    id: Date.now(),
+    name,
+    client: document.getElementById('s-client').value.trim(),
+    type: document.getElementById('s-type').value,
+    start: document.getElementById('s-start').value,
+    end: document.getElementById('s-end').value,
+    addr: document.getElementById('s-addr').value.trim(),
+    note: document.getElementById('s-note').value.trim(),
+    progress: 0,
+    status: 'active'
+  };
+  sites.push(newSite);
+  saveSites(sites);
+  renderSites();
+  updateSiteSelect();
+  closeModal('modal-site');
+  // reset
+  ['s-name','s-client','s-addr','s-note'].forEach(id => document.getElementById(id).value = '');
+  showToast('現場を登録しました ✓');
+}
+
+// ── Toast ──
+function showToast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--red)' : 'var(--green)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Modal close on overlay ──
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ── Worker input: Enter key ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.id === 'worker-input') {
+    e.preventDefault(); addWorker();
+  }
+});
+</script>
+</body>
+</html>

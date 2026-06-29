@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FUJIWARA KING SYSTEM — 総本陣</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --washi:    #F5F0E8;
+  --washi2:   #EDE6D6;
+  --washi3:   #E0D8C4;
+  --sumi:     #1A1A2E;
+  --sumi2:    #2A2A42;
+  --gold:     #C8A82A;
+  --gold-lt:  #F0D060;
+  --gold-bg:  #FBF3D8;
+  --shu:      #C8392B;
+  --shu-lt:   #E85A4A;
+  --shu-bg:   #FDECEA;
+  --kon:      #2C3E6B;
+  --kon-lt:   #4A62A0;
+  --kon-bg:   #E8EEF8;
+  --green:    #2A7A50;
+  --green-bg: #E6F4EC;
+  --border:   #D0C8B4;
+  --border2:  #B8B0A0;
+  --text:     #1A1A2E;
+  --text-sub: #6A6258;
+  --text-dim: #A89E90;
+}
+
+body {
+  background: var(--washi);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 和紙テクスチャ的な背景 */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,0,0,0.025) 39px, rgba(0,0,0,0.025) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0,0,0,0.025) 39px, rgba(0,0,0,0.025) 40px);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── HEADER / 総本陣 ── */
+.main-header {
+  background: var(--sumi);
+  position: relative; overflow: hidden;
+  padding: 0 0 0;
+}
+.header-inner {
+  position: relative; z-index: 2;
+  padding: 20px 20px 0;
+}
+.header-top {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 14px;
+}
+.mon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle, #2a2a42 60%, #1a1a2e);
+  border: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 0 16px rgba(200,168,42,0.4);
+  flex-shrink: 0;
+}
+.header-titles { flex: 1; }
+.header-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px; letter-spacing: 0.3em;
+  color: var(--gold); opacity: 0.8;
+}
+.header-main {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 22px; font-weight: 900;
+  color: #fff; line-height: 1.1;
+  letter-spacing: 0.05em;
+}
+.header-sub-title {
+  font-size: 10px; color: rgba(255,255,255,0.4);
+  letter-spacing: 0.2em; margin-top: 2px;
+}
+
+/* KPI strip in header */
+.kpi-strip {
+  display: flex; gap: 1px;
+  background: rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin-top: 14px;
+}
+.kpi-cell {
+  flex: 1; padding: 12px 10px; text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.kpi-cell:last-child { border-right: none; }
+.kpi-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; color: var(--gold-lt);
+  letter-spacing: 0.05em; line-height: 1;
+}
+.kpi-lbl { font-size: 9px; color: rgba(255,255,255,0.45); margin-top: 3px; letter-spacing: 0.1em; }
+
+/* ── SECTION WRAPPER ── */
+.page-body { position: relative; z-index: 1; padding: 0 14px; }
+
+/* ── SECTION TITLE (朱印風) ── */
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 22px 0 12px;
+}
+.sec-mark {
+  width: 32px; height: 32px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.sec-mark-shu  { background: var(--shu); box-shadow: 2px 2px 0 rgba(0,0,0,0.15); }
+.sec-mark-gold { background: var(--gold); box-shadow: 2px 2px 0 rgba(0,0,0,0.15); }
+.sec-mark-kon  { background: var(--kon); box-shadow: 2px 2px 0 rgba(0,0,0,0.15); }
+.sec-mark-sumi { background: var(--sumi2); box-shadow: 2px 2px 0 rgba(0,0,0,0.15); }
+.sec-title-text { font-family: 'Noto Serif JP', serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; }
+.sec-rule { flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
+.sec-count { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; }
+
+/* ── APP GRID ── */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.app-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+/* ── APP CARD ── */
+.app-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 10px 12px;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  position: relative; overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  box-shadow: 2px 3px 0 rgba(0,0,0,0.06);
+}
+.app-card:active { transform: scale(0.96); }
+.app-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+/* カラーライン per section */
+.app-card.c-shu::before  { background: linear-gradient(90deg, var(--shu), var(--shu-lt)); }
+.app-card.c-gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-lt)); }
+.app-card.c-kon::before  { background: linear-gradient(90deg, var(--kon), var(--kon-lt)); }
+.app-card.c-sumi::before { background: linear-gradient(90deg, var(--sumi2), #6a6a90); }
+
+.app-icon { font-size: 28px; line-height: 1; }
+.app-name {
+  font-size: 11px; font-weight: 700; color: var(--text);
+  letter-spacing: 0.02em; line-height: 1.3;
+}
+.app-desc { font-size: 9px; color: var(--text-dim); line-height: 1.4; }
+
+/* Hero card (Quick Entry) */
+.app-card.hero {
+  grid-column: 1 / -1;
+  flex-direction: row; text-align: left;
+  padding: 16px 18px; gap: 14px;
+  background: linear-gradient(135deg, var(--sumi) 0%, var(--sumi2) 100%);
+  border-color: var(--gold);
+  box-shadow: 3px 4px 0 rgba(0,0,0,0.12), 0 0 20px rgba(200,168,42,0.15);
+}
+.app-card.hero::before { background: linear-gradient(90deg, var(--gold-lt), var(--gold)); height: 2px; }
+.app-card.hero .app-icon { font-size: 36px; }
+.app-card.hero .app-name { font-family: 'Noto Serif JP', serif; font-size: 16px; color: var(--gold-lt); font-weight: 700; }
+.app-card.hero .app-desc { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+.app-card.hero .hero-badge {
+  margin-left: auto; align-self: center;
+  background: var(--gold); color: var(--sumi);
+  font-size: 9px; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; letter-spacing: 0.1em; white-space: nowrap;
+}
+
+/* ── AIKA BANNER ── */
+.aika-banner {
+  background: linear-gradient(135deg, var(--kon) 0%, #3a527a 100%);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 4px;
+  box-shadow: 2px 3px 0 rgba(0,0,0,0.1);
+  border: 1px solid var(--kon-lt);
+  cursor: pointer; transition: transform 0.15s;
+}
+.aika-banner:active { transform: scale(0.98); }
+.aika-face { font-size: 32px; flex-shrink: 0; }
+.aika-info { flex: 1; }
+.aika-name { font-family: 'Noto Serif JP', serif; font-size: 14px; font-weight: 700; color: #fff; }
+.aika-sub  { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 3px; }
+.aika-chevron { font-size: 18px; color: rgba(255,255,255,0.3); }
+
+/* ── DIVIDER (巻物風) ── */
+.scroll-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 6px 0 0;
+  opacity: 0.5;
+}
+.scroll-divider::before, .scroll-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(to right, transparent, var(--border2), transparent);
+}
+.scroll-divider span { font-size: 12px; color: var(--border2); }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 28px 16px 10px;
+  position: relative; z-index: 1;
+}
+.footer-mon { font-size: 28px; opacity: 0.2; display: block; margin-bottom: 6px; }
+.footer-txt { font-size: 9px; color: var(--text-dim); letter-spacing: 0.25em; text-transform: uppercase; }
+
+/* ── Hover glow on desktop ── */
+@media (hover: hover) {
+  .app-card:hover { transform: translateY(-2px); box-shadow: 3px 6px 0 rgba(0,0,0,0.1); border-color: var(--gold); }
+  .app-card.hero:hover { box-shadow: 4px 8px 0 rgba(0,0,0,0.15), 0 0 28px rgba(200,168,42,0.2); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER 総本陣 ══ -->
+<div class="main-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="mon">⚔️</div>
+      <div class="header-titles">
+        <div class="header-brand">藤原グループ 経営統合システム</div>
+        <div class="header-main">総本陣</div>
+        <div class="header-sub-title">藤原一工業 ／ リコー工業</div>
+      </div>
+    </div>
+  </div>
+  <!-- KPI Strip -->
+  <div class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="kpi-num">392万</div>
+      <div class="kpi-lbl">今月売上</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-num">118万</div>
+      <div class="kpi-lbl">純利益</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-num">30.1%</div>
+      <div class="kpi-lbl">粗利率</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-num">2</div>
+      <div class="kpi-lbl">進行現場</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BODY ══ -->
+<div class="page-body">
+
+  <!-- ① 毎日の最短ルート -->
+  <div class="sec-head">
+    <div class="sec-mark sec-mark-shu">⚡</div>
+    <span class="sec-title-text">毎日の最短ルート</span>
+    <div class="sec-rule"></div>
+  </div>
+
+  <div class="app-grid">
+    <!-- Hero: Quick Entry -->
+    <a class="app-card hero c-gold" href="#">
+      <div class="app-icon">⚡</div>
+      <div>
+        <div class="app-name">即時入力</div>
+        <div class="app-desc">売上・入金・支払・メモを30秒で記録</div>
+      </div>
+      <div class="hero-badge">本日</div>
+    </a>
+
+    <a class="app-card c-shu" href="#">
+      <div class="app-icon">👑</div>
+      <div class="app-name">全体<br>確認</div>
+      <div class="app-desc">会社全体を<br>30秒確認</div>
+    </a>
+    <a class="app-card c-shu" href="#">
+      <div class="app-icon">🌅</div>
+      <div class="app-name">本日の<br>優先順位</div>
+      <div class="app-desc">今日の<br>優先順位</div>
+    </a>
+    <a class="app-card c-shu" href="#">
+      <div class="app-icon">👩‍💼</div>
+      <div class="app-name">AIKA<br>秘書</div>
+      <div class="app-desc">経営<br>助言</div>
+    </a>
+  </div>
+
+  <div class="scroll-divider"><span>✦</span></div>
+
+  <!-- ② AI秘書 AIKA -->
+  <div class="sec-head" style="margin-top:16px;">
+    <div class="sec-mark sec-mark-kon">👩‍💼</div>
+    <span class="sec-title-text">AI秘書 AIKA</span>
+    <div class="sec-rule"></div>
+  </div>
+
+  <div class="aika-banner">
+    <div class="aika-face">👩‍💼</div>
+    <div class="aika-info">
+      <div class="aika-name">AIKA — 経営秘書</div>
+      <div class="aika-sub">本日の状況分析・優先事項・助言を確認する</div>
+    </div>
+    <div class="aika-chevron">›</div>
+  </div>
+
+  <div class="scroll-divider"><span>✦</span></div>
+
+  <!-- ③ 業務アプリ -->
+  <div class="sec-head" style="margin-top:16px;">
+    <div class="sec-mark sec-mark-gold">🏗</div>
+    <span class="sec-title-text">業務アプリ</span>
+    <div class="sec-rule"></div>
+    <span class="sec-count">2本</span>
+  </div>
+
+  <div class="app-grid app-grid-2">
+    <a class="app-card c-gold" href="fks-construction-v1.1.html">
+      <div class="app-icon">⛏️</div>
+      <div class="app-name">建設管理</div>
+      <div class="app-desc">藤原一工業<br>現場・日報</div>
+    </a>
+    <a class="app-card c-gold" href="#">
+      <div class="app-icon">🎪</div>
+      <div class="app-name">イベント管理</div>
+      <div class="app-desc">リコー工業<br>売上・経費</div>
+    </a>
+  </div>
+
+  <div class="scroll-divider"><span>✦</span></div>
+
+  <!-- ④ 事務・財務 -->
+  <div class="sec-head" style="margin-top:16px;">
+    <div class="sec-mark sec-mark-kon">🗂</div>
+    <span class="sec-title-text">事務・財務</span>
+    <div class="sec-rule"></div>
+  </div>
+
+  <div class="app-grid">
+    <a class="app-card c-kon" href="fks-office-v1.1.html">
+      <div class="app-icon">📊</div>
+      <div class="app-name">事務アプリ</div>
+      <div class="app-desc">損益・経費<br>支払管理</div>
+    </a>
+    <a class="app-card c-kon" href="#">
+      <div class="app-icon">📄</div>
+      <div class="app-name">請求管理</div>
+      <div class="app-desc">請求書<br>入金確認</div>
+    </a>
+    <a class="app-card c-kon" href="#">
+      <div class="app-icon">🏦</div>
+      <div class="app-name">資金繰り</div>
+      <div class="app-desc">現金残高<br>予測</div>
+    </a>
+  </div>
+
+  <div class="scroll-divider"><span>✦</span></div>
+
+  <!-- ⑤ 管理・設定 -->
+  <div class="sec-head" style="margin-top:16px;">
+    <div class="sec-mark sec-mark-sumi">⚙️</div>
+    <span class="sec-title-text">管理・設定</span>
+    <div class="sec-rule"></div>
+  </div>
+
+  <div class="app-grid">
+    <a class="app-card c-sumi" href="#">
+      <div class="app-icon">👷</div>
+      <div class="app-name">スタッフ</div>
+      <div class="app-desc">人員・勤務</div>
+    </a>
+    <a class="app-card c-sumi" href="#">
+      <div class="app-icon">🔐</div>
+      <div class="app-name">権限管理</div>
+      <div class="app-desc">アクセス設定</div>
+    </a>
+    <a class="app-card c-sumi" href="#">
+      <div class="app-icon">⚙️</div>
+      <div class="app-name">設定</div>
+      <div class="app-desc">会社情報</div>
+    </a>
+  </div>
+
+</div><!-- /page-body -->
+
+<!-- FOOTER -->
+<div class="footer">
+  <span class="footer-mon">⚔️</span>
+  <div class="footer-txt">藤原グループ ／ 王道経営システム 十版</div>
+</div>
+
+</body>
+</html>
