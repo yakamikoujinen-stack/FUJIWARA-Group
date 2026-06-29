@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA 建設アプリ v1.1</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}
+header{background:#1f3a5f;color:#fff;text-align:center;padding:18px}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day,.head{background:#fff;border:1px solid #d6dde8;border-radius:10px;min-height:88px;padding:6px;font-size:13px}
+.head{min-height:auto;text-align:center;font-weight:bold;background:#1f3a5f;color:#fff}
+.num{font-weight:900}.job{margin-top:4px;background:#e8f1ff;border-left:4px solid #1f3a5f;border-radius:6px;padding:4px;font-size:12px}
+.report{background:#e9f9ef;border-left-color:#0a7a2f}
+input,textarea,button,select{width:100%;font-size:16px;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
+button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.btn2{background:#0a7a2f}.btn3{background:#777}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nav{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.small{font-size:12px;color:#666}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tab{background:#dbe7f7;color:#1f3a5f}.active{background:#1f3a5f;color:#fff}
+</style>
+</head>
+<body>
+<header>
+<h1>🏗 FUJIWARA 建設アプリ v1.1</h1>
+<p>現場予定・日報管理</p>
+</header>
+<main>
+
+<div class="card tabs">
+<button id="tabCal" class="tab active" onclick="mode='calendar';switchMode()">📅 予定</button>
+<button id="tabRep" class="tab" onclick="mode='report';switchMode()">📝 日報</button>
+</div>
+
+<section id="calendarMode">
+<div class="card nav">
+<button onclick="moveMonth(-1)">← 前月</button>
+<h2 id="monthTitle"></h2>
+<button onclick="moveMonth(1)">翌月 →</button>
+</div>
+
+<div class="card">
+<h3>現場予定を登録</h3>
+<div class="row"><input id="date" type="date"><input id="site" placeholder="現場名"></div>
+<input id="client" placeholder="元請・取引先">
+<div class="row"><input id="start" type="time"><input id="workers" placeholder="作業員"></div>
+<textarea id="work" placeholder="作業内容・持ち物・注意事項"></textarea>
+<button onclick="addJob()">予定を保存</button>
+</div>
+
+<div class="card"><div class="grid" id="calendarHead"></div><div class="grid" id="calendar"></div></div>
+<div class="card"><h3>選択日の予定</h3><div id="selectedList">日付を選択してください</div></div>
+</section>
+
+<section id="reportMode" style="display:none">
+<div class="card">
+<h3>日報入力</h3>
+<div class="row"><input id="rDate" type="date"><input id="rSite" placeholder="現場名"></div>
+<div class="row"><input id="rWorker" placeholder="作業者"><input id="rPeople" type="number" placeholder="人数"></div>
+<div class="row"><input id="rStart" type="time"><input id="rEnd" type="time"></div>
+<div class="row"><input id="rBreak" type="number" placeholder="休憩 分"><input id="rWeather" placeholder="天気"></div>
+<textarea id="rWork" placeholder="本日の作業内容"></textarea>
+<textarea id="rMemo" placeholder="連絡事項・問題点・明日の予定"></textarea>
+<button class="btn2" onclick="addReport()">日報を保存</button>
+</div>
+
+<div class="card">
+<h3>日報一覧</h3>
+<div id="reportList">日報なし</div>
+</div>
+</section>
+
+</main>
+
+<script>
+let current=new Date();let selectedDate="";let mode="calendar";
+function loadJobs(){return JSON.parse(localStorage.getItem("fks_construction_calendar")||"[]")}
+function saveJobs(v){localStorage.setItem("fks_construction_calendar",JSON.stringify(v));localStorage.setItem("fks_last_saved",new Date().toLocaleString())}
+function loadReports(){return JSON.parse(localStorage.getItem("fks_construction_reports")||"[]")}
+function saveReports(v){localStorage.setItem("fks_construction_reports",JSON.stringify(v));localStorage.setItem("fks_last_saved",new Date().toLocaleString())}
+function fmt(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+day}
+
+function switchMode(){
+ calendarMode.style.display=mode==="calendar"?"block":"none";
+ reportMode.style.display=mode==="report"?"block":"none";
+ tabCal.className=mode==="calendar"?"tab active":"tab";
+ tabRep.className=mode==="report"?"tab active":"tab";
+ if(mode==="report")renderReports();
+}
+
+function addJob(){
+ if(!date.value||!site.value){alert("日付と現場名を入力してください");return}
+ const jobs=loadJobs();
+ jobs.push({id:Date.now(),date:date.value,site:site.value,client:client.value,start:start.value,workers:workers.value,work:work.value});
+ saveJobs(jobs);
+ site.value=client.value=start.value=workers.value=work.value="";
+ render(); alert("予定を保存しました");
+}
+
+function addReport(){
+ if(!rDate.value||!rSite.value){alert("日付と現場名を入力してください");return}
+ const reps=loadReports();
+ reps.push({
+  id:Date.now(),date:rDate.value,site:rSite.value,worker:rWorker.value,people:rPeople.value,
+  start:rStart.value,end:rEnd.value,breakMin:rBreak.value,weather:rWeather.value,
+  work:rWork.value,memo:rMemo.value,approved:false,created:new Date().toLocaleString()
+ });
+ saveReports(reps);
+ rSite.value=rWorker.value=rPeople.value=rStart.value=rEnd.value=rBreak.value=rWeather.value=rWork.value=rMemo.value="";
+ renderReports(); alert("日報を保存しました");
+}
+
+function delJob(id){if(confirm("予定を削除しますか？")){saveJobs(loadJobs().filter(x=>x.id!==id));render();showDay(selectedDate)}}
+function delReport(id){if(confirm("日報を削除しますか？")){saveReports(loadReports().filter(x=>x.id!==id));renderReports();render()}}
+function approveReport(id){
+ const reps=loadReports().map(x=>x.id===id?{...x,approved:true}:x);
+ saveReports(reps);renderReports();render();
+}
+function copyToReport(j){
+ mode="report";switchMode();
+ rDate.value=j.date;rSite.value=j.site;rWorker.value=j.workers;rStart.value=j.start;rWork.value=j.work;
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function moveMonth(n){current.setMonth(current.getMonth()+n);render()}
+
+function showDay(ds){
+ selectedDate=ds;
+ const jobs=loadJobs().filter(x=>x.date===ds);
+ const reps=loadReports().filter(x=>x.date===ds);
+ selectedList.innerHTML=(jobs.length||reps.length)?`
+ ${jobs.map(j=>'<div class="card"><b>予定：'+j.site+'</b><br><span class="small">'+(j.start||"-")+' / '+(j.client||"-")+'</span><br>作業員：'+(j.workers||"-")+'<br>内容：'+(j.work||"-")+'<br><button onclick=\'copyToReport('+JSON.stringify(j).replace(/'/g,"&#39;")+')\'>この予定から日報作成</button><button class="btn3" onclick="delJob('+j.id+')">予定削除</button></div>').join("")}
+ ${reps.map(r=>'<div class="card"><b>日報：'+r.site+'</b><br><span class="small">'+(r.approved?"承認済み":"未承認")+'</span><br>作業者：'+(r.worker||"-")+'<br>内容：'+(r.work||"-")+'</div>').join("")}
+ `:"予定・日報なし";
+}
+
+function renderReports(){
+ const reps=loadReports().slice().reverse();
+ reportList.innerHTML=reps.length?reps.map(r=>`
+  <div class="card">
+   <b>${r.date}　${r.site}</b><br>
+   <span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 登録 ${r.created||"-"}</span><br>
+   作業者：${r.worker||"-"}　人数：${r.people||"-"}<br>
+   時間：${r.start||"-"}〜${r.end||"-"}　休憩：${r.breakMin||"0"}分　天気：${r.weather||"-"}<br>
+   作業内容：${r.work||"-"}<br>
+   連絡事項：${r.memo||"-"}<br>
+   <button onclick="approveReport(${r.id})">承認</button>
+   <button class="btn3" onclick="delReport(${r.id})">削除</button>
+  </div>`).join(""):"日報なし";
+}
+
+function render(){
+ const y=current.getFullYear(),m=current.getMonth();
+ monthTitle.textContent=y+"年 "+(m+1)+"月";
+ calendarHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>'<div class="head">'+x+'</div>').join("");
+ const first=new Date(y,m,1),last=new Date(y,m+1,0),jobs=loadJobs(),reps=loadReports();
+ let html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";
+ for(let d=1;d<=last.getDate();d++){
+  const ds=fmt(new Date(y,m,d));
+  const dayJobs=jobs.filter(x=>x.date===ds),dayReports=reps.filter(x=>x.date===ds);
+  html+='<div class="day" onclick="showDay(\''+ds+'\')"><div class="num">'+d+'</div>'+
+  dayJobs.slice(0,2).map(j=>'<div class="job">'+(j.start||"")+" "+j.site+'</div>').join("")+
+  dayReports.slice(0,2).map(r=>'<div class="job report">日報 '+r.site+'</div>').join("")+
+  '</div>';
+ }
+ calendar.innerHTML=html;
+}
+const today=fmt(new Date());date.value=today;rDate.value=today;
+render();renderReports();
+</script>
+</body>
+</html>
