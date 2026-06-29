@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA 建設アプリ Premium v2.0</title>
+<style>
+:root{
+  --bg:#07111d;--panel:#ffffff;--ink:#142033;--muted:#667085;
+  --blue:#1f3a5f;--blue2:#2f5f9f;--green:#0a7a2f;--yellow:#b7791f;--red:#b00020;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef2f7;color:var(--ink)}
+header{background:linear-gradient(135deg,var(--blue),#10243f);color:#fff;padding:18px;text-align:center}
+main{max-width:980px;margin:auto;padding:14px}
+.card{background:var(--panel);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 16px rgba(20,32,51,.10)}
+.hero{background:linear-gradient(135deg,#1f3a5f,#2f5f9f);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.btn{display:block;text-align:center;text-decoration:none;background:#fff;color:var(--blue);border:2px solid #d6e2f2;border-radius:16px;padding:18px 10px;font-weight:900;font-size:18px}
+.btn.primary{background:#0a7a2f;color:#fff;border:0}
+.btn.dark{background:#1f3a5f;color:#fff;border:0}
+.small{font-size:13px;color:var(--muted);line-height:1.6}
+.hero .small{color:#e8f1ff}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#e8f1ff;color:#1f3a5f;font-weight:800;font-size:12px;margin:3px}
+.status{border-left:8px solid var(--green)}
+.warn{border-left-color:var(--yellow)}
+.danger{border-left-color:var(--red)}
+input,textarea,button,select{width:100%;font-size:16px;padding:11px;margin-top:8px;border-radius:12px;border:1px solid #ccd3dd}
+button{background:var(--blue);color:#fff;border:0;font-weight:bold}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.site{border-left:6px solid var(--blue)}
+.footer{text-align:center;color:#667085;font-size:12px;margin:18px}
+@media(max-width:520px){.grid{grid-template-columns:1fr 1fr}.btn{font-size:16px;padding:16px 8px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🏗 FUJIWARA 建設</h1>
+<p>Premium v2.0 / 現場ホーム</p>
+</header>
+
+<main>
+<section class="card hero">
+<h2>おはようございます</h2>
+<p>今日の現場を確認して、出勤・写真・日報へ進みます。</p>
+<div id="todaySite"><b>📍 今日の現場：</b>未登録</div>
+<div class="small" id="todayInfo">カレンダーに今日の予定を登録すると表示されます。</div>
+</section>
+
+<section class="grid">
+<a class="btn primary" href="#" onclick="clockIn()">👷 出勤</a>
+<a class="btn dark" href="fujiwara-construction-app-v1.2.html">📅 カレンダー</a>
+<a class="btn" href="fujiwara-construction-app-v1.2.html">📝 日報</a>
+<a class="btn" href="#photo">📷 写真</a>
+<a class="btn" href="#vehicle">🚗 車両</a>
+<a class="btn" href="#notice">📢 お知らせ</a>
+</section>
+
+<section class="card status" id="clockCard">
+<h3>👷 出勤状態</h3>
+<div id="clockStatus">未出勤</div>
+</section>
+
+<section class="card site">
+<h3>📍 今日の現場カード</h3>
+<div id="siteCard">今日の現場予定はありません。</div>
+</section>
+
+<section class="card" id="photo">
+<h3>📷 写真メモ</h3>
+<p class="small">現場写真は次版で本格対応。今は写真メモを残します。</p>
+<select id="photoType">
+<option>作業前</option>
+<option>作業中</option>
+<option>作業後</option>
+</select>
+<input id="photoMemo" placeholder="写真メモ">
+<button onclick="savePhotoMemo()">写真メモ保存</button>
+<div id="photoList" class="small"></div>
+</section>
+
+<section class="card" id="vehicle">
+<h3>🚗 車両メモ</h3>
+<div class="row">
+<input id="vehicleName" placeholder="車両名">
+<input id="fuel" placeholder="給油・走行距離">
+</div>
+<button onclick="saveVehicleMemo()">車両メモ保存</button>
+<div id="vehicleList" class="small"></div>
+</section>
+
+<section class="card" id="notice">
+<h3>📢 今日のお知らせ</h3>
+<textarea id="noticeText" placeholder="スタッフへのお知らせ"></textarea>
+<button onclick="saveNotice()">お知らせ保存</button>
+<div id="noticeView" class="small"></div>
+</section>
+
+<div class="footer">FUJIWARA 建設アプリ / スタッフ配布用ホーム</div>
+</main>
+
+<script>
+function g(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function s(k,v){localStorage.setItem(k,JSON.stringify(v));localStorage.setItem("fks_last_saved",new Date().toLocaleString())}
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function loadToday(){
+ const jobs=g("fks_construction_calendar",[]);
+ const t=today();
+ const todays=jobs.filter(x=>x.date===t);
+ if(todays.length){
+  const j=todays[0];
+  todaySite.innerHTML="<b>📍 今日の現場：</b>"+j.site;
+  todayInfo.textContent=(j.start||"時間未定")+" / 作業員："+(j.workers||"-")+" / "+(j.work||"");
+  siteCard.innerHTML="<b>"+j.site+"</b><br><span class='badge'>"+(j.start||"時間未定")+"</span><span class='badge'>"+(j.client||"元請未登録")+"</span><br>作業員："+(j.workers||"-")+"<br>内容："+(j.work||"-");
+ }else{
+  todaySite.innerHTML="<b>📍 今日の現場：</b>未登録";
+  todayInfo.textContent="カレンダーに今日の予定を登録すると表示されます。";
+ }
+}
+function clockIn(){
+ const rec={date:new Date().toLocaleString(),type:"出勤"};
+ s("fks_construction_attendance",rec);
+ clockStatus.textContent="✅ 出勤済み："+rec.date;
+ alert("出勤しました");
+}
+function loadClock(){
+ const rec=g("fks_construction_attendance",null);
+ if(rec)clockStatus.textContent="✅ 出勤済み："+rec.date;
+}
+function savePhotoMemo(){
+ const arr=g("fks_construction_photo_memos",[]);
+ arr.unshift({date:new Date().toLocaleString(),type:photoType.value,memo:photoMemo.value});
+ s("fks_construction_photo_memos",arr);photoMemo.value="";renderLists();
+}
+function saveVehicleMemo(){
+ const arr=g("fks_construction_vehicle_memos",[]);
+ arr.unshift({date:new Date().toLocaleString(),vehicle:vehicleName.value,fuel:fuel.value});
+ s("fks_construction_vehicle_memos",arr);vehicleName.value=fuel.value="";renderLists();
+}
+function saveNotice(){
+ s("fks_construction_notice",{date:new Date().toLocaleString(),text:noticeText.value});
+ renderLists();
+}
+function renderLists(){
+ const photos=g("fks_construction_photo_memos",[]);
+ photoList.innerHTML=photos.slice(0,5).map(x=>"・"+x.date+" "+x.type+" "+(x.memo||"")).join("<br>");
+ const vehicles=g("fks_construction_vehicle_memos",[]);
+ vehicleList.innerHTML=vehicles.slice(0,5).map(x=>"・"+x.date+" "+(x.vehicle||"")+" "+(x.fuel||"")).join("<br>");
+ const n=g("fks_construction_notice",null);
+ noticeView.innerHTML=n?("最終更新："+n.date+"<br>"+n.text):"";
+}
+loadToday();loadClock();renderLists();
+</script>
+</body>
+</html>
