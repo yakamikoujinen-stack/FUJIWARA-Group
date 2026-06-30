@@ -2,7 +2,23 @@
 <title>FUJIWARA 建設アプリ 開発版</title>
 <style>
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}header{background:#1f3a5f;color:#fff;text-align:center;padding:18px}main{max-width:1000px;margin:auto;padding:14px}.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tab{background:#dbe7f7;color:#1f3a5f}.active{background:#1f3a5f!important;color:white!important}button,input,select,textarea{width:100%;font-size:16px;padding:11px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background:#0a7a2f}.red{background:#b00020}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.head,.day{background:white;border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}.head{background:#1f3a5f;color:white;text-align:center;font-weight:bold}.day{min-height:82px}.job{margin-top:4px;background:#e8f1ff;border-left:4px solid #1f3a5f;border-radius:6px;padding:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.report{background:#e9f9ef;border-left-color:#0a7a2f}.pill{display:inline-flex;align-items:center;gap:6px;background:#e8f1ff;color:#1f3a5f;padding:6px 10px;border-radius:999px;margin:4px;font-weight:bold}.pill button{width:auto;margin:0;padding:2px 8px;background:#b00020;border-radius:999px}.small{font-size:12px;color:#666}@media(max-width:720px){.row,.tabs{grid-template-columns:1fr}.day{min-height:70px}}
-</style></head><body><header><h1>🏗 FUJIWARA 建設アプリ</h1><p>開発版 construction-main.html</p></header><main>
+
+.fg-header{background:#eef2f7;color:#172033;text-align:left;padding:22px 16px}
+.fg-title-card{background:#fff;border-radius:26px;padding:30px 28px;box-shadow:0 8px 24px rgba(0,0,0,.08);max-width:1000px;margin:auto}
+.fg-main-title{font-size:32px;font-weight:800;letter-spacing:1px;color:#172033}
+.fg-sub-title{font-size:24px;letter-spacing:2px;color:#172033;margin-top:6px}
+.fg-version{display:inline-block;margin-top:12px;background:#0a7a2f;color:#fff;border-radius:999px;padding:6px 16px;font-weight:800;font-size:14px}
+.fg-system-name{margin-top:16px;color:#667085;font-size:14px;letter-spacing:1px}
+@media(max-width:720px){.fg-main-title{font-size:26px}.fg-sub-title{font-size:20px}.fg-title-card{padding:24px 22px}}
+
+</style></head><body><header class="fg-header">
+  <div class="fg-title-card">
+    <div class="fg-main-title">FUJIWARA Group</div>
+    <div class="fg-sub-title">- construction -</div>
+    <div class="fg-version">正規版</div>
+    <div class="fg-system-name">Construction Management System</div>
+  </div>
+</header><main>
 <div class="card tabs"><button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button><button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button><button id="bMas" class="tab" onclick="showTab('mas')">⚙️ 管理</button></div>
 <section id="cal"><div class="card row"><button onclick="moveMonth(-1)">← 前月</button><button onclick="moveMonth(1)">翌月 →</button></div><div class="card"><h2 id="monthTitle"></h2><div class="grid" id="calHead"></div><div class="grid" id="calendar"></div></div><div class="card"><h3>現場予定を登録</h3><div class="row"><input id="jDate" type="date"><input id="jSite" placeholder="現場名"></div><div class="row"><select id="jClient"></select><input id="jStart" type="time"></div><input id="jWorkers" placeholder="作業員（例：山田、田中）"><textarea id="jWork" placeholder="作業内容・持ち物・注意事項"></textarea><button onclick="addJob()">予定を保存</button></div><div class="card"><h3>選択日の予定・日報</h3><div id="dayList">日付を選択してください</div></div></section>
 <section id="rep" style="display:none"><div class="card"><h3>日報入力</h3><div class="row"><input id="rDate" type="date"><input id="rSite" placeholder="現場名"></div><div class="row"><select id="rClient"></select><input id="rPeople" type="number" placeholder="人数"></div><div class="row"><select id="rWorker"></select><select id="rWeather"><option value="">天気</option><option>晴れ</option><option>曇り</option><option>雨</option><option>雪</option></select></div><div class="row"><input id="rStart" type="time"><input id="rEnd" type="time"></div><input id="rBreak" type="number" placeholder="休憩 分"><textarea id="rWork" placeholder="本日の作業内容"></textarea><textarea id="rMemo" placeholder="連絡事項・問題点・明日の予定"></textarea><button class="green" onclick="addReport()">日報を保存</button></div><div class="card"><h3>日報一覧</h3><div id="reportList">日報なし</div></div></section>
