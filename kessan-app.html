@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>決算帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --paper: #f6f4ea;
+    --paper-card: #fffdf6;
+    --grid: #c3d9b8;
+    --grid-strong: #9dbd8e;
+    --ink: #202b22;
+    --ink-dim: #6b7a6c;
+    --red: #a3352f;
+    --red-deep: #7e241f;
+    --navy: #33473a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:'Noto Sans JP',sans-serif; min-height:100vh;}
+  body{
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0 27px, rgba(157,189,142,0.35) 27px 28px),
+      linear-gradient(90deg, transparent 0 40px, rgba(157,189,142,0.22) 40px 41px);
+    padding-bottom:90px;
+  }
+  .mincho{font-family:'Zen Old Mincho', serif;}
+  .mono{font-family:'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;}
+
+  /* ===== Header ===== */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:var(--paper-card);
+    border-bottom:2px solid var(--grid-strong);
+    padding:16px 16px 12px;
+  }
+  .brand{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .brand .hanko{
+    width:38px; height:38px; border-radius:4px; border:2px solid var(--red);
+    display:flex; align-items:center; justify-content:center; color:var(--red);
+    font-family:'Zen Old Mincho',serif; font-weight:700; font-size:16px; flex:none;
+    transform:rotate(-3deg); letter-spacing:-1px;
+  }
+  .brand h1{font-size:21px; margin:0; color:var(--ink); font-weight:700; letter-spacing:.04em;}
+  .brand small{color:var(--ink-dim); font-size:11px; letter-spacing:.06em; display:block; margin-top:2px;}
+
+  .selector-row{display:flex; gap:8px;}
+  select, input[type=month]{
+    background:var(--paper-card); border:1.5px solid var(--grid-strong); color:var(--ink);
+    padding:10px 10px; border-radius:4px; font-size:14px; font-family:'Noto Sans JP',sans-serif;
+    flex:1; min-width:0;
+  }
+  select:focus, input:focus{outline:2px solid var(--red); outline-offset:1px;}
+
+  /* ===== Tabs ===== */
+  nav.tabs{
+    display:flex; overflow-x:auto; gap:4px; padding:10px 16px 0; background:var(--paper-card);
+    scrollbar-width:none; border-bottom:2px solid var(--grid-strong);
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  nav.tabs button{
+    flex:none; background:#eef2e6; border:1.5px solid var(--grid-strong); border-bottom:none;
+    color:var(--ink-dim); padding:9px 14px; border-radius:6px 6px 0 0;
+    font-size:13.5px; font-weight:700; letter-spacing:.03em; cursor:pointer;
+    position:relative; top:2px;
+  }
+  nav.tabs button.active{
+    background:var(--paper-card); color:var(--red-deep); border-color:var(--grid-strong);
+    box-shadow: 0 -2px 0 var(--red) inset;
+  }
+
+  main{padding:16px 16px 20px; max-width:640px; margin:0 auto;}
+  .card{
+    background:var(--paper-card); border:1.5px solid var(--grid-strong); border-radius:8px;
+    padding:16px; margin-bottom:14px; position:relative;
+  }
+  .card h2{font-size:15px; color:var(--ink); margin:0 0 12px; letter-spacing:.04em;
+    font-family:'Zen Old Mincho',serif; font-weight:700;
+    display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--grid);}
+
+  .field{margin-bottom:9px; display:flex; align-items:center; gap:10px;
+    border-bottom:1px dotted var(--grid); padding-bottom:8px;}
+  .field label{flex:1; font-size:13px; color:var(--ink-dim);}
+  .field input[type=number]{
+    width:130px; text-align:right; background:transparent; border:none; border-bottom:1.5px solid var(--grid-strong);
+    color:var(--ink); padding:5px 2px; font-size:15px; font-family:'JetBrains Mono',monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .field input[type=number]:focus{border-bottom-color:var(--red); outline:none;}
+  .field input[readonly]{color:var(--red-deep); font-weight:700;}
+
+  .subhead{
+    font-size:11.5px; color:var(--ink-dim); letter-spacing:.12em; margin:16px 0 8px;
+    text-transform:uppercase; display:flex; align-items:center; gap:6px;
+  }
+  .subhead:first-of-type{margin-top:0;}
+  .subhead::after{content:''; flex:1; height:1px; background:var(--grid);}
+
+  .total-row{
+    display:flex; justify-content:space-between; align-items:center;
+    background:#f4ece4; border:1.5px solid var(--red); border-radius:4px;
+    padding:10px 12px; margin-top:8px;
+  }
+  .total-row .label{color:var(--red-deep); font-size:13px; font-weight:700;}
+  .total-row .value{color:var(--red-deep); font-weight:700; font-size:17px; font-family:'JetBrains Mono',monospace;}
+  .total-row.balance-ok{border-color:var(--navy); background:#eaf0e8;}
+  .total-row.balance-ok .label, .total-row.balance-ok .value{color:var(--navy);}
+  .total-row.balance-ng{border-color:var(--red); background:#f7e4e2;}
+
+  .btn{
+    width:100%; padding:13px; border-radius:6px; border:none;
+    font-size:15px; font-weight:700; letter-spacing:.06em; cursor:pointer; margin-top:10px;
+    font-family:'Noto Sans JP',sans-serif;
+  }
+  .btn-save{background:var(--navy); color:#fbf8ee;}
+  .btn-save:active{transform:scale(0.98);}
+  .btn-del{background:transparent; border:1.5px solid var(--red); color:var(--red-deep); margin-top:8px;}
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fbf8ee; padding:11px 20px; border-radius:4px; font-size:13.5px;
+    opacity:0; transition:.25s; pointer-events:none; z-index:100; white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ===== 保存スタンプ演出 ===== */
+  .stamp-overlay{
+    position:fixed; top:50%; left:50%; z-index:110; pointer-events:none;
+    width:96px; height:96px; border-radius:8px; border:4px solid var(--red);
+    color:var(--red); display:flex; align-items:center; justify-content:center;
+    font-family:'Zen Old Mincho',serif; font-weight:700; font-size:22px; letter-spacing:2px;
+    opacity:0; transform:translate(-50%,-50%) scale(2) rotate(-18deg);
+    box-shadow: 0 0 0 2px rgba(163,53,47,0.15) inset;
+  }
+  .stamp-overlay.play{ animation: stampIn 0.65s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes stampIn{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(2.4) rotate(-20deg); }
+    55%{ opacity:1; transform:translate(-50%,-50%) scale(0.92) rotate(-8deg); }
+    75%{ transform:translate(-50%,-50%) scale(1.06) rotate(-8deg); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1) rotate(-8deg); }
+  }
+
+  /* ===== List view ===== */
+  .list-filters{display:flex; gap:8px; margin-bottom:12px;}
+  .ledger{border:1.5px solid var(--grid-strong); border-radius:6px; overflow:hidden;}
+  .ledger-row{
+    display:flex; align-items:center; gap:12px; padding:12px 14px;
+    border-bottom:1px solid var(--grid); background:var(--paper-card); cursor:pointer;
+  }
+  .ledger-row:last-child{border-bottom:none;}
+  .ledger-row:active{background:#f0ece0;}
+  .stamp{
+    width:34px; height:34px; border-radius:4px; border:1.5px solid var(--red);
+    color:var(--red); display:flex; align-items:center; justify-content:center;
+    font-family:'Zen Old Mincho',serif; font-weight:700; font-size:12px; flex:none;
+    transform:rotate(-4deg);
+  }
+  .ledger-info{flex:1; min-width:0;}
+  .ledger-info .top{display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-dim);}
+  .ledger-info .main{font-size:14.5px; color:var(--ink); font-weight:500; margin-top:3px; font-family:'JetBrains Mono',monospace;}
+  .empty{padding:40px 20px; text-align:center; color:var(--ink-dim); font-size:13.5px; line-height:1.8;}
+  .empty .mincho{display:block; font-size:16px; color:var(--red-deep); margin-bottom:6px; font-weight:700;}
+
+  .badge{
+    display:inline-block; font-size:10.5px; padding:2px 7px; border-radius:3px;
+    border:1px solid var(--grid-strong); color:var(--ink-dim); margin-left:6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="hanko">決算</div>
+    <div>
+      <h1 class="mincho">決算帳</h1>
+      <small>財務諸表 入力・一覧アプリ</small>
+    </div>
+  </div>
+  <div class="selector-row">
+    <select id="companySel"></select>
+    <input type="month" id="periodSel">
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="list" class="active">一覧</button>
+  <button data-tab="pl">損益計算書</button>
+  <button data-tab="bs">貸借対照表</button>
+  <button data-tab="cogs">原価明細</button>
+</nav>
+
+<main>
+
+  <!-- ================= 一覧 ================= -->
+  <section id="tab-list">
+    <div class="card">
+      <h2>記帳一覧</h2>
+      <div class="list-filters">
+        <select id="filterCompany"><option value="all">全社</option></select>
+        <select id="filterType">
+          <option value="all">全種別</option>
+          <option value="pl">損益計算書</option>
+          <option value="bs">貸借対照表</option>
+          <option value="cogs">原価明細</option>
+        </select>
+      </div>
+      <div class="ledger" id="ledgerList">
+        <div class="empty">読み込み中...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PL ================= -->
+  <section id="tab-pl" style="display:none">
+    <div class="card">
+      <h2>損益計算書</h2>
+
+      <div class="subhead">売上・原価</div>
+      <div class="field"><label>売上高</label><input type="number" id="pl_sales" inputmode="numeric"></div>
+      <div class="field"><label>売上原価</label><input type="number" id="pl_cogs" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">売上総利益</span><span class="value" id="pl_grossProfit">¥0</span></div>
+
+      <div class="subhead">販管費・営業損益</div>
+      <div class="field"><label>販売費及び一般管理費</label><input type="number" id="pl_sga" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">営業利益</span><span class="value" id="pl_opIncome">¥0</span></div>
+
+      <div class="subhead">営業外損益</div>
+      <div class="field"><label>営業外収益</label><input type="number" id="pl_nonOpIncome" inputmode="numeric"></div>
+      <div class="field"><label>営業外費用</label><input type="number" id="pl_nonOpExpense" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">経常利益</span><span class="value" id="pl_ordinaryIncome">¥0</span></div>
+
+      <div class="subhead">特別損益・税金</div>
+      <div class="field"><label>特別利益</label><input type="number" id="pl_extraIncome" inputmode="numeric"></div>
+      <div class="field"><label>特別損失</label><input type="number" id="pl_extraLoss" inputmode="numeric"></div>
+      <div class="field"><label>法人税等</label><input type="number" id="pl_tax" inputmode="numeric"></div>
+
+      <div class="total-row"><span class="label">当期純利益</span><span class="value" id="pl_netIncome">¥0</span></div>
+
+      <button class="btn btn-save" id="pl_save">この内容で記帳する</button>
+      <button class="btn btn-del" id="pl_delete" style="display:none">この期のデータを削除</button>
+    </div>
+  </section>
+
+  <!-- ================= BS ================= -->
+  <section id="tab-bs" style="display:none">
+    <div class="card">
+      <h2>貸借対照表</h2>
+
+      <div class="subhead">資産の部｜流動資産</div>
+      <div class="field"><label>現金及び預金</label><input type="number" id="bs_cash" inputmode="numeric"></div>
+      <div class="field"><label>売掛金</label><input type="number" id="bs_ar" inputmode="numeric"></div>
+      <div class="field"><label>棚卸資産</label><input type="number" id="bs_inventory" inputmode="numeric"></div>
+      <div class="field"><label>その他流動資産</label><input type="number" id="bs_otherCA" inputmode="numeric"></div>
+
+      <div class="subhead">資産の部｜固定資産</div>
+      <div class="field"><label>有形固定資産</label><input type="number" id="bs_tangible" inputmode="numeric"></div>
+      <div class="field"><label>無形固定資産</label><input type="number" id="bs_intangible" inputmode="numeric"></div>
+      <div class="field"><label>投資その他の資産</label><input type="number" id="bs_investments" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">資産合計</span><span class="value" id="bs_totalAssets">¥0</span></div>
+
+      <div class="subhead">負債の部｜流動負債</div>
+      <div class="field"><label>買掛金</label><input type="number" id="bs_ap" inputmode="numeric"></div>
+      <div class="field"><label>短期借入金</label><input type="number" id="bs_stDebt" inputmode="numeric"></div>
+      <div class="field"><label>その他流動負債</label><input type="number" id="bs_otherCL" inputmode="numeric"></div>
+
+      <div class="subhead">負債の部｜固定負債</div>
+      <div class="field"><label>長期借入金</label><input type="number" id="bs_ltDebt" inputmode="numeric"></div>
+      <div class="field"><label>その他固定負債</label><input type="number" id="bs_otherFL" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">負債合計</span><span class="value" id="bs_totalLiab">¥0</span></div>
+
+      <div class="subhead">純資産の部</div>
+      <div class="field"><label>資本金</label><input type="number" id="bs_capital" inputmode="numeric"></div>
+      <div class="field"><label>利益剰余金</label><input type="number" id="bs_retained" inputmode="numeric"></div>
+      <div class="field"><label>その他純資産</label><input type="number" id="bs_otherNA" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">純資産合計</span><span class="value" id="bs_totalNA">¥0</span></div>
+
+      <div class="total-row" id="bs_balanceRow">
+        <span class="label">負債・純資産合計（検算）</span>
+        <span class="value" id="bs_totalLiabNA">¥0</span>
+      </div>
+
+      <button class="btn btn-save" id="bs_save">この内容で記帳する</button>
+      <button class="btn btn-del" id="bs_delete" style="display:none">この期のデータを削除</button>
+    </div>
+  </section>
+
+  <!-- ================= 原価明細 ================= -->
+  <section id="tab-cogs" style="display:none">
+    <div class="card">
+      <h2>売上原価明細</h2>
+
+      <div class="subhead">当期費用の内訳</div>
+      <div class="field"><label>材料費</label><input type="number" id="cg_material" inputmode="numeric"></div>
+      <div class="field"><label>労務費</label><input type="number" id="cg_labor" inputmode="numeric"></div>
+      <div class="field"><label>外注費</label><input type="number" id="cg_outsourcing" inputmode="numeric"></div>
+      <div class="field"><label>経費</label><input type="number" id="cg_expense" inputmode="numeric"></div>
+      <div class="total-row"><span class="label">当期総費用</span><span class="value" id="cg_totalCost">¥0</span></div>
+
+      <div class="subhead">棚卸高</div>
+      <div class="field"><label>期首棚卸高</label><input type="number" id="cg_begInv" inputmode="numeric"></div>
+      <div class="field"><label>期末棚卸高</label><input type="number" id="cg_endInv" inputmode="numeric"></div>
+
+      <div class="total-row"><span class="label">売上原価</span><span class="value" id="cg_cogs">¥0</span></div>
+
+      <button class="btn btn-save" id="cg_save">この内容で記帳する</button>
+      <button class="btn btn-del" id="cg_delete" style="display:none">この期のデータを削除</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="stamp-overlay" id="stampOverlay">記帳済</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   Firebase 設定（このアプリ専用の新規プロジェクト）
+   Firebase コンソールで新しいプロジェクトを作成し、
+   「プロジェクトの設定」→「マイアプリ」に表示される
+   firebaseConfig をそのままここに貼り付けてください。
+===================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCudEilARsaGwMzfYm4TaZb-oUFJj7ha5w",
+  authDomain: "fujiwara-group--kessann-app.firebaseapp.com",
+  databaseURL: "https://fujiwara-group--kessann-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "fujiwara-group--kessann-app",
+  storageBucket: "fujiwara-group--kessann-app.firebasestorage.app",
+  messagingSenderId: "30853218824",
+  appId: "1:30853218824:web:107705d7a265bce37507bd",
+  measurementId: "G-E07RN2TW15"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ===================== 会社マスタ ===================== */
+const COMPANIES = [
+  { id: 'fujiwara_ichi', name: '藤原一工業合同会社', seal: '藤' },
+  { id: 'rico',          name: 'リコー工業合同会社', seal: 'リ' },
+  { id: 'miraiso',       name: '株式会社ミライソ',   seal: '未' },
+];
+const TYPE_LABEL = { pl: '損益計算書', bs: '貸借対照表', cogs: '原価明細' };
+
+/* ===================== 初期化 ===================== */
+const companySel = document.getElementById('companySel');
+const filterCompany = document.getElementById('filterCompany');
+COMPANIES.forEach(c=>{
+  companySel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+  filterCompany.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+});
+
+const periodSel = document.getElementById('periodSel');
+(function initPeriod(){
+  const d = new Date();
+  periodSel.value = d.toISOString().slice(0,7);
+})();
+
+function ym(){ return periodSel.value.replace('-',''); }
+function companyId(){ return companySel.value; }
+
+function fmt(n){
+  n = Number(n)||0;
+  return '¥' + n.toLocaleString('ja-JP');
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function playStamp(){
+  const s = document.getElementById('stampOverlay');
+  s.classList.remove('play'); void s.offsetWidth; s.classList.add('play');
+}
+
+/* ===================== タブ切替 ===================== */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['list','pl','bs','cogs'].forEach(t=>{
+      document.getElementById('tab-'+t).style.display = (t===btn.dataset.tab) ? 'block' : 'none';
+    });
+    if(btn.dataset.tab !== 'list') loadForm(btn.dataset.tab);
+    if(btn.dataset.tab === 'list') renderList();
+  });
+});
+companySel.addEventListener('change', refreshActiveForm);
+periodSel.addEventListener('change', refreshActiveForm);
+function refreshActiveForm(){
+  const active = document.querySelector('nav.tabs button.active').dataset.tab;
+  if(active !== 'list') loadForm(active);
+}
+
+/* ===================== PL ===================== */
+const plIds = ['sales','cogs','sga','nonOpIncome','nonOpExpense','extraIncome','extraLoss','tax'];
+function plCalc(){
+  const v = id => Number(document.getElementById('pl_'+id).value)||0;
+  const grossProfit = v('sales') - v('cogs');
+  const opIncome = grossProfit - v('sga');
+  const ordinaryIncome = opIncome + v('nonOpIncome') - v('nonOpExpense');
+  const preTax = ordinaryIncome + v('extraIncome') - v('extraLoss');
+  const netIncome = preTax - v('tax');
+  document.getElementById('pl_grossProfit').textContent = fmt(grossProfit);
+  document.getElementById('pl_opIncome').textContent = fmt(opIncome);
+  document.getElementById('pl_ordinaryIncome').textContent = fmt(ordinaryIncome);
+  document.getElementById('pl_netIncome').textContent = fmt(netIncome);
+  return { grossProfit, opIncome, ordinaryIncome, preTax, netIncome };
+}
+plIds.forEach(id=>document.getElementById('pl_'+id).addEventListener('input', plCalc));
+document.getElementById('pl_save').addEventListener('click', ()=>{
+  const calc = plCalc();
+  const data = { updatedAt: Date.now(), calc };
+  plIds.forEach(id=> data[id] = Number(document.getElementById('pl_'+id).value)||0 );
+  db.ref(`kessan/${companyId()}/pl/${ym()}`).set(data)
+    .then(()=>{ toast('損益計算書を記帳しました'); playStamp(); document.getElementById('pl_delete').style.display='block'; })
+    .catch(e=>toast('保存に失敗: '+e.message));
+});
+document.getElementById('pl_delete').addEventListener('click', ()=>{
+  if(!confirm('この期の損益計算書データを削除しますか？')) return;
+  db.ref(`kessan/${companyId()}/pl/${ym()}`).remove().then(()=>{ toast('削除しました'); loadForm('pl'); });
+});
+
+/* ===================== BS ===================== */
+const bsIds = ['cash','ar','inventory','otherCA','tangible','intangible','investments',
+               'ap','stDebt','otherCL','ltDebt','otherFL','capital','retained','otherNA'];
+function bsCalc(){
+  const v = id => Number(document.getElementById('bs_'+id).value)||0;
+  const totalAssets = v('cash')+v('ar')+v('inventory')+v('otherCA')+v('tangible')+v('intangible')+v('investments');
+  const totalLiab = v('ap')+v('stDebt')+v('otherCL')+v('ltDebt')+v('otherFL');
+  const totalNA = v('capital')+v('retained')+v('otherNA');
+  const totalLiabNA = totalLiab + totalNA;
+  document.getElementById('bs_totalAssets').textContent = fmt(totalAssets);
+  document.getElementById('bs_totalLiab').textContent = fmt(totalLiab);
+  document.getElementById('bs_totalNA').textContent = fmt(totalNA);
+  document.getElementById('bs_totalLiabNA').textContent = fmt(totalLiabNA);
+  const row = document.getElementById('bs_balanceRow');
+  row.classList.remove('balance-ok','balance-ng');
+  row.classList.add(totalAssets === totalLiabNA ? 'balance-ok' : 'balance-ng');
+  return { totalAssets, totalLiab, totalNA, totalLiabNA };
+}
+bsIds.forEach(id=>document.getElementById('bs_'+id).addEventListener('input', bsCalc));
+document.getElementById('bs_save').addEventListener('click', ()=>{
+  const calc = bsCalc();
+  const data = { updatedAt: Date.now(), calc };
+  bsIds.forEach(id=> data[id] = Number(document.getElementById('bs_'+id).value)||0 );
+  db.ref(`kessan/${companyId()}/bs/${ym()}`).set(data)
+    .then(()=>{ toast('貸借対照表を記帳しました'); playStamp(); document.getElementById('bs_delete').style.display='block'; })
+    .catch(e=>toast('保存に失敗: '+e.message));
+});
+document.getElementById('bs_delete').addEventListener('click', ()=>{
+  if(!confirm('この期の貸借対照表データを削除しますか？')) return;
+  db.ref(`kessan/${companyId()}/bs/${ym()}`).remove().then(()=>{ toast('削除しました'); loadForm('bs'); });
+});
+
+/* ===================== 原価明細 ===================== */
+const cgIds = ['material','labor','outsourcing','expense','begInv','endInv'];
+function cgCalc(){
+  const v = id => Number(document.getElementById('cg_'+id).value)||0;
+  const totalCost = v('material')+v('labor')+v('outsourcing')+v('expense');
+  const cogs = v('begInv') + totalCost - v('endInv');
+  document.getElementById('cg_totalCost').textContent = fmt(totalCost);
+  document.getElementById('cg_cogs').textContent = fmt(cogs);
+  return { totalCost, cogs };
+}
+cgIds.forEach(id=>document.getElementById('cg_'+id).addEventListener('input', cgCalc));
+document.getElementById('cg_save').addEventListener('click', ()=>{
+  const calc = cgCalc();
+  const data = { updatedAt: Date.now(), calc };
+  cgIds.forEach(id=> data[id] = Number(document.getElementById('cg_'+id).value)||0 );
+  db.ref(`kessan/${companyId()}/cogs/${ym()}`).set(data)
+    .then(()=>{ toast('原価明細を記帳しました'); playStamp(); document.getElementById('cg_delete').style.display='block'; })
+    .catch(e=>toast('保存に失敗: '+e.message));
+});
+document.getElementById('cg_delete').addEventListener('click', ()=>{
+  if(!confirm('この期の原価明細データを削除しますか？')) return;
+  db.ref(`kessan/${companyId()}/cogs/${ym()}`).remove().then(()=>{ toast('削除しました'); loadForm('cogs'); });
+});
+
+/* ===================== フォーム読み込み ===================== */
+function clearForm(prefix, ids){ ids.forEach(id=> document.getElementById(prefix+'_'+id).value = ''); }
+function loadForm(type){
+  const refPath = `kessan/${companyId()}/${type}/${ym()}`;
+  const idsMap = { pl: plIds, bs: bsIds, cogs: cgIds };
+  const calcMap = { pl: plCalc, bs: bsCalc, cogs: cgCalc };
+  const delBtn = document.getElementById(type+'_delete');
+  clearForm(type, idsMap[type]);
+  db.ref(refPath).once('value').then(snap=>{
+    const data = snap.val();
+    if(data){
+      idsMap[type].forEach(id=>{ if(data[id] !== undefined) document.getElementById(type+'_'+id).value = data[id]; });
+      delBtn.style.display = 'block';
+    } else {
+      delBtn.style.display = 'none';
+    }
+    calcMap[type]();
+  }).catch(()=>{ calcMap[type](); });
+}
+
+/* ===================== 一覧表示 ===================== */
+function renderList(){
+  const listEl = document.getElementById('ledgerList');
+  listEl.innerHTML = '<div class="empty">読み込み中...</div>';
+  db.ref('kessan').once('value').then(snap=>{
+    const all = snap.val() || {};
+    let rows = [];
+    Object.keys(all).forEach(cid=>{
+      const types = all[cid] || {};
+      Object.keys(types).forEach(type=>{
+        const periods = types[type] || {};
+        Object.keys(periods).forEach(p=> rows.push({ cid, type, period: p, data: periods[p] }) );
+      });
+    });
+    const fc = document.getElementById('filterCompany').value;
+    const ft = document.getElementById('filterType').value;
+    rows = rows.filter(r => (fc==='all'||r.cid===fc) && (ft==='all'||r.type===ft));
+    rows.sort((a,b)=> b.period.localeCompare(a.period) || a.type.localeCompare(b.type));
+
+    if(rows.length===0){
+      listEl.innerHTML = '<div class="empty"><span class="mincho">記帳なし</span>決算データがまだ保存されていません。<br>各タブから入力・記帳してください。</div>';
+      return;
+    }
+    listEl.innerHTML = rows.map(r=>{
+      const c = COMPANIES.find(c=>c.id===r.cid) || {name:r.cid, seal:'?'};
+      const periodDisp = r.period.slice(0,4)+'年'+r.period.slice(4,6)+'月';
+      let headline = '';
+      if(r.type==='pl') headline = `売上 ${fmt(r.data.sales)} ／ 純利益 ${fmt(r.data.calc?.netIncome)}`;
+      if(r.type==='bs') headline = `資産合計 ${fmt(r.data.calc?.totalAssets)}`;
+      if(r.type==='cogs') headline = `売上原価 ${fmt(r.data.calc?.cogs)}`;
+      return `<div class="ledger-row" data-cid="${r.cid}" data-type="${r.type}" data-period="${r.period}">
+        <div class="stamp">${c.seal}</div>
+        <div class="ledger-info">
+          <div class="top"><span>${c.name}<span class="badge">${TYPE_LABEL[r.type]}</span></span><span>${periodDisp}</span></div>
+          <div class="main">${headline}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('.ledger-row').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        companySel.value = row.dataset.cid;
+        periodSel.value = row.dataset.period.slice(0,4)+'-'+row.dataset.period.slice(4,6);
+        document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+        document.querySelector(`nav.tabs button[data-tab="${row.dataset.type}"]`).classList.add('active');
+        ['list','pl','bs','cogs'].forEach(t=>{
+          document.getElementById('tab-'+t).style.display = (t===row.dataset.type) ? 'block' : 'none';
+        });
+        loadForm(row.dataset.type);
+      });
+    });
+  });
+}
+document.getElementById('filterCompany').addEventListener('change', renderList);
+document.getElementById('filterType').addEventListener('change', renderList);
+
+/* ===================== 起動 ===================== */
+renderList();
+plCalc(); bsCalc(); cgCalc();
+</script>
+</body>
+</html>
