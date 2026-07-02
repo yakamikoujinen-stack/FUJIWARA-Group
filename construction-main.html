@@ -1,19 +1,70 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FUJIWARA 建設アプリ 開発版</title>
 <style>
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}header{background:#1f3a5f;color:#fff;text-align:center;padding:18px}main{max-width:1000px;margin:auto;padding:14px}.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tab{background:#dbe7f7;color:#1f3a5f}.active{background:#1f3a5f!important;color:white!important}button,input,select,textarea{width:100%;font-size:16px;padding:11px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background:#0a7a2f}.red{background:#b00020}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.head,.day{background:white;border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}.head{background:#1f3a5f;color:white;text-align:center;font-weight:bold}.day{min-height:82px}.job{margin-top:4px;background:#e8f1ff;border-left:4px solid #1f3a5f;border-radius:6px;padding:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.report{background:#e9f9ef;border-left-color:#0a7a2f}.pill{display:inline-flex;align-items:center;gap:6px;background:#e8f1ff;color:#1f3a5f;padding:6px 10px;border-radius:999px;margin:4px;font-weight:bold}.pill button{width:auto;margin:0;padding:2px 8px;background:#b00020;border-radius:999px}.small{font-size:12px;color:#666}.label{font-weight:900;margin-top:10px;color:#172033}.hint{font-size:12px;color:#667085;margin-top:4px}@media(max-width:720px){.row,.tabs{grid-template-columns:1fr}.day{min-height:70px}}
-</style></head><body><header><h1>🏗 FUJIWARA 建設アプリ</h1><p>開発版 construction-main.html</p></header><main>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#eef2f7;color:#172033}header{background:#1f3a5f;color:#fff;text-align:center;padding:18px}main{max-width:1000px;margin:auto;padding:14px}.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tab{background:#dbe7f7;color:#1f3a5f}.active{background:#1f3a5f!important;color:white!important}button,input,select,textarea{width:100%;font-size:16px;padding:11px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background:#0a7a2f}.red{background:#b00020}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.head,.day{background:white;border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}.head{background:#1f3a5f;color:white;text-align:center;font-weight:bold}.day{min-height:82px}.job{margin-top:4px;background:#e8f1ff;border-left:4px solid #1f3a5f;border-radius:6px;padding:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.report{background:#e9f9ef;border-left-color:#0a7a2f}.pill{display:inline-flex;align-items:center;gap:6px;background:#e8f1ff;color:#1f3a5f;padding:6px 10px;border-radius:999px;margin:4px;font-weight:bold}.pill button{width:auto;margin:0;padding:2px 8px;background:#b00020;border-radius:999px}.small{font-size:12px;color:#666}@media(max-width:720px){.row,.tabs{grid-template-columns:1fr}.day{min-height:70px}}
+
+.fg-header{background:#eef2f7!important;color:#172033!important;text-align:left!important;padding:22px 16px!important}
+.fg-title-card{background:#fff;border-radius:26px;padding:30px 28px;box-shadow:0 8px 24px rgba(0,0,0,.08);max-width:1000px;margin:auto}
+.fg-main-title{font-size:32px;font-weight:800;letter-spacing:1px;color:#172033}
+.fg-sub-title{font-size:24px;letter-spacing:2px;color:#172033;margin-top:6px}
+.fg-version{display:inline-block;margin-top:12px;border-radius:999px;padding:6px 16px;font-weight:800;font-size:14px;color:#fff}
+.fg-version.dev{background:#b7791f}
+.fg-system-name{margin-top:16px;color:#667085;font-size:14px;letter-spacing:1px}
+@media(max-width:720px){.fg-main-title{font-size:26px}.fg-sub-title{font-size:20px}.fg-title-card{padding:24px 22px}}
+
+</style></head><body><header class="fg-header">
+  <div class="fg-title-card">
+    <div class="fg-main-title">FUJIWARA Group</div>
+    <div class="fg-sub-title">- construction -</div>
+    <div class="fg-version dev">開発版</div>
+    <div class="fg-system-name">Construction Management System</div>
+  </div>
+</header><main>
 <div class="card tabs"><button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button><button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button><button id="bMas" class="tab" onclick="showTab('mas')">⚙️ 管理</button></div>
 <section id="cal"><div class="card row"><button onclick="moveMonth(-1)">← 前月</button><button onclick="moveMonth(1)">翌月 →</button></div><div class="card"><h2 id="monthTitle"></h2><div class="grid" id="calHead"></div><div class="grid" id="calendar"></div></div><div class="card"><h3>現場予定を登録</h3><div class="row"><input id="jDate" type="date"><input id="jSite" placeholder="現場名"></div><div class="row"><select id="jClient"></select><input id="jStart" type="time"></div><input id="jWorkers" placeholder="作業員（例：山田、田中）"><textarea id="jWork" placeholder="作業内容・持ち物・注意事項"></textarea><button onclick="addJob()">予定を保存</button></div><div class="card"><h3>選択日の予定・日報</h3><div id="dayList">日付を選択してください</div></div></section>
-<section id="rep" style="display:none"><div class="card"><h3>日報入力</h3>
-<div class="row"><input id="rDate" type="date"><input id="rSite" placeholder="現場名"></div>
-<div class="label">当社の会社名</div>
-<select id="rCompany"></select>
-<div class="row"><select id="rClient"></select><input id="rPeople" type="number" placeholder="人数"></div>
-<div class="hint">左：取引先名　右：人数</div>
-<div class="row"><select id="rWorker"></select><select id="rWeather"><option value="">天気</option><option>晴れ</option><option>曇り</option><option>雨</option><option>雪</option></select></div>
-<div class="row"><input id="rStart" type="time"><input id="rEnd" type="time"></div><input id="rBreak" type="number" placeholder="休憩 分"><textarea id="rWork" placeholder="本日の作業内容"></textarea><textarea id="rMemo" placeholder="連絡事項・問題点・明日の予定"></textarea><button class="green" onclick="addReport()">日報を保存</button></div><div class="card"><h3>日報一覧</h3><div id="reportList">日報なし</div></div></section>
-<section id="mas" style="display:none"><div class="card"><h3>作業員管理</h3><input id="newWorker" placeholder="作業員名"><button class="green" onclick="addWorker()">作業員を登録</button><div id="workerList"></div></div><div class="card"><h3>取引先名 管理</h3><p class="small">取引先名はここで登録・削除できます。日報入力の「取引先名」に反映されます。</p><input id="newClient" placeholder="取引先名"><button class="green" onclick="addClient()">取引先を登録</button><div id="clientList"></div></div></section>
+<section id="rep" style="display:none">
+  <div class="card">
+    <h3>日報入力</h3>
+    <div class="row">
+      <input id="rDate" type="date">
+      <input id="rSite" placeholder="現場名">
+    </div>
+
+    <label class="small"><b>当社の会社名</b></label>
+    <select id="rCompany"></select>
+
+    <div class="row">
+      <select id="rReporter"></select>
+      <input id="rPeople" type="number" placeholder="人数">
+    </div>
+    <div class="small">左：当社の日報入力者　右：人数</div>
+
+    <div class="row">
+      <select id="rClient"></select>
+      <input id="rClientPerson" placeholder="取引先担当者名">
+    </div>
+    <div class="small">左：取引先名　右：取引先担当者</div>
+
+    <div class="row">
+      <select id="rWorker"></select>
+      <select id="rWeather">
+        <option value="">天気</option>
+        <option>晴れ</option><option>曇り</option><option>雨</option><option>雪</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <input id="rStart" type="time">
+      <input id="rEnd" type="time">
+    </div>
+    <input id="rBreak" type="number" placeholder="休憩 分">
+    <textarea id="rWork" placeholder="本日の作業内容"></textarea>
+    <textarea id="rMemo" placeholder="連絡事項・問題点・明日の予定"></textarea>
+    <button class="green" onclick="addReport()">日報を保存</button>
+  </div>
+  <div class="card"><h3>日報一覧</h3><div id="reportList">日報なし</div></div>
+</section>
+<section id="mas" style="display:none"><div class="card"><h3>作業員管理</h3><input id="newWorker" placeholder="作業員名"><button class="green" onclick="addWorker()">作業員を登録</button><div id="workerList"></div></div><div class="card"><h3>取引先管理</h3><input id="newClient" placeholder="取引先名"><button class="green" onclick="addClient()">取引先を登録</button><div id="clientList"></div></div></section>
 </main><script>
 let current=new Date(),selectedDate="";
 function get(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
@@ -22,21 +73,63 @@ function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"
 function jobs(){return get("fks_construction_calendar",[])}function reports(){return get("fks_construction_reports",[])}
 function workers(){return get("fks_construction_workers",["藤原","山田","田中"])}function clients(){return get("fks_construction_clients",["未登録"])}function companies(){return ["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"]}
 function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=t=="rep"?"block":"none";mas.style.display=t=="mas"?"block":"none";bCal.className=t=="cal"?"tab active":"tab";bRep.className=t=="rep"?"tab active":"tab";bMas.className=t=="mas"?"tab active":"tab";renderAll()}
-function renderSelects(){jClient.innerHTML='<option value="">取引先名を選択</option>'+clients().map(x=>`<option>${x}</option>`).join("");rClient.innerHTML=jClient.innerHTML;if(typeof rCompany!=="undefined"){rCompany.innerHTML=companies().map(x=>`<option>${x}</option>`).join("")}rWorker.innerHTML='<option value="">作業員を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("")}
+function renderSelects(){
+  jClient.innerHTML=clients().map(x=>`<option>${x}</option>`).join("");
+  rClient.innerHTML='<option value="">取引先名を選択</option>'+clients().map(x=>`<option>${x}</option>`).join("");
+  if(typeof rCompany!=="undefined"){rCompany.innerHTML=companies().map(x=>`<option>${x}</option>`).join("")}
+  if(typeof rReporter!=="undefined"){rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("")}
+  rWorker.innerHTML='<option value="">作業員を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("");
+}</option>`).join("");rClient.innerHTML=jClient.innerHTML;rWorker.innerHTML='<option value="">作業員を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("")}
 function addWorker(){let n=newWorker.value.trim();if(!n)return alert("作業員名を入力");let a=workers();if(!a.includes(n))a.push(n);set("fks_construction_workers",a);newWorker.value="";renderAll()}
 function delWorker(n){if(confirm(n+"を削除？")){set("fks_construction_workers",workers().filter(x=>x!=n));renderAll()}}
 function addClient(){let n=newClient.value.trim();if(!n)return alert("取引先名を入力");let a=clients();if(!a.includes(n))a.push(n);set("fks_construction_clients",a);newClient.value="";renderAll()}
 function delClient(n){if(confirm(n+"を削除？")){set("fks_construction_clients",clients().filter(x=>x!=n));renderAll()}}
 function addJob(){if(!jDate.value||!jSite.value)return alert("日付と現場名を入力");let a=jobs();a.push({id:Date.now(),date:jDate.value,site:jSite.value,client:jClient.value,start:jStart.value,workers:jWorkers.value,work:jWork.value});set("fks_construction_calendar",a);jSite.value=jStart.value=jWorkers.value=jWork.value="";renderAll()}
-function addReport(){if(!rDate.value||!rSite.value||!rWorker.value||!rPeople.value||!rStart.value||!rEnd.value||!rWork.value)return alert("必須項目を入力");let a=reports();a.push({id:Date.now(),date:rDate.value,site:rSite.value,company:rCompany.value,client:rClient.value,worker:rWorker.value,people:rPeople.value,start:rStart.value,end:rEnd.value,breakMin:rBreak.value,weather:rWeather.value,work:rWork.value,memo:rMemo.value,approved:false,created:new Date().toLocaleString()});set("fks_construction_reports",a);rSite.value=rPeople.value=rStart.value=rEnd.value=rBreak.value=rWork.value=rMemo.value="";renderAll()}
+function addReport(){
+  if(!rDate.value||!rSite.value||!rReporter.value||!rPeople.value||!rStart.value||!rEnd.value||!rWork.value)return alert("必須項目を入力");
+  let a=reports();
+  a.push({
+    id:Date.now(),
+    date:rDate.value,
+    site:rSite.value,
+    company:rCompany.value,
+    reporter:rReporter.value,
+    client:rClient.value,
+    clientPerson:rClientPerson.value,
+    worker:rWorker.value,
+    people:rPeople.value,
+    start:rStart.value,
+    end:rEnd.value,
+    breakMin:rBreak.value,
+    weather:rWeather.value,
+    work:rWork.value,
+    memo:rMemo.value,
+    approved:false,
+    created:new Date().toLocaleString()
+  });
+  set("fks_construction_reports",a);
+  rSite.value=rPeople.value=rStart.value=rEnd.value=rBreak.value=rWork.value=rMemo.value=rClientPerson.value="";
+  rReporter.value="";rClient.value="";rWorker.value="";
+  renderAll();
+}
 function delJob(id){if(confirm("予定を削除？")){set("fks_construction_calendar",jobs().filter(x=>x.id!=id));renderAll();showDay(selectedDate)}}
 function delReport(id){if(confirm("日報を削除？")){set("fks_construction_reports",reports().filter(x=>x.id!=id));renderAll();showDay(selectedDate)}}
 function approve(id){set("fks_construction_reports",reports().map(x=>x.id==id?{...x,approved:true}:x));renderAll();showDay(selectedDate)}
 function copyJob(j){showTab("rep");rDate.value=j.date;rSite.value=j.site;rClient.value=j.client||"";rStart.value=j.start||"";rWork.value=j.work||"";rPeople.value=(j.workers||"").split(/[、,]/).filter(Boolean).length||""}
 function moveMonth(n){current.setMonth(current.getMonth()+n);renderCalendar()}
-function showDay(ds){selectedDate=ds;let js=jobs().filter(x=>x.date==ds),rs=reports().filter(x=>x.date==ds);dayList.innerHTML=(js.length||rs.length)?js.map(j=>`<div class="card"><b>予定：${j.site}</b><br><span class="small">${j.start||"-"} / 取引先：${j.client||"-"}</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j)})'>この予定から日報作成</button><button class="red" onclick="delJob(${j.id})">予定削除</button></div>`).join("")+rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 取引先：${r.client||"-"}</span><br>作業員：${r.worker}<br>出勤：${r.start} 退場：${r.end}<br>内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">日報削除</button></div>`).join(""):"予定・日報なし"}
+function showDay(ds){
+  selectedDate=ds;
+  let js=jobs().filter(x=>x.date==ds),rs=reports().filter(x=>x.date==ds);
+  dayList.innerHTML=(js.length||rs.length)?
+    js.map(j=>`<div class="card"><b>予定：${j.site}</b><br><span class="small">${j.start||"-"} / 取引先：${j.client||"-"}</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j)})'>この予定から日報作成</button><button class="red" onclick="delJob(${j.id})">予定削除</button></div>`).join("")+
+    rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}<br>出勤：${r.start} 退場：${r.end}<br>内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">日報削除</button></div>`).join("")
+    :"予定・日報なし";
+}
 function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobs().filter(x=>x.date==ds),rs=reports().filter(x=>x.date==ds);html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b>`+js.slice(0,2).map(j=>`<div class="job">${j.start||""} ${j.site}</div>`).join("")+rs.slice(0,3).map(r=>`<div class="job report">${r.site}</div>`).join("")+"</div>"}calendar.innerHTML=html}
-function renderReports(){let a=reports().slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 取引先：${r.client||"-"}</span><br>作業員：${r.worker} 人数：${r.people}<br>出勤：${r.start} 退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">削除</button></div>`).join(""):"日報なし"}
+function renderReports(){
+  let a=reports().slice().reverse();
+  reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>出勤：${r.start} 退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">削除</button></div>`).join(""):"日報なし";
+}
 function renderMasters(){workerList.innerHTML=workers().map(x=>`<span class="pill">${x}<button onclick="delWorker('${x}')">×</button></span>`).join("");clientList.innerHTML=clients().map(x=>`<span class="pill">${x}<button onclick="delClient('${x}')">×</button></span>`).join("")}
 function renderAll(){renderSelects();renderCalendar();renderReports();renderMasters()}
 let t=fmt(new Date());jDate.value=t;rDate.value=t;renderAll();
