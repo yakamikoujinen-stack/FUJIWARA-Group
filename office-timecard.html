@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA Office Timecard</title>
+<style>
+:root{
+  --pink:#ff8fb3;--pink2:#ffd6e5;--lav:#f4edff;--mint:#dffbf2;--ink:#334155;
+  --blue:#6aa9ff;--green:#22a06b;--red:#ef4444;--yellow:#f59e0b;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 20% 0%,#ffe4ef,transparent 30%),
+radial-gradient(circle at 90% 10%,#e8ddff,transparent 28%),
+linear-gradient(135deg,#fff7fb,#f7fbff);color:var(--ink)}
+header{padding:22px 16px;text-align:center}
+.logo{max-width:860px;margin:auto;background:#fff;border-radius:30px;padding:26px 20px;box-shadow:0 10px 30px #00000012;border:2px solid #fff}
+.logo h1{margin:0;font-size:30px;color:#ff5f93}
+.logo p{margin:8px 0 0;color:#64748b}
+main{max-width:920px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:24px;padding:18px;margin-bottom:14px;box-shadow:0 8px 24px #00000010;border:1px solid #fff}
+h2,h3{margin-top:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+input,select,button{width:100%;font-size:16px;padding:13px;margin-top:8px;border-radius:16px;border:1px solid #e2e8f0}
+button{border:0;font-weight:900;color:#fff;background:var(--pink)}
+.btnIn{background:linear-gradient(135deg,#ff8fb3,#ff5f93)}
+.btnOut{background:linear-gradient(135deg,#6aa9ff,#5277ff)}
+.btnBreak{background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+.btnSave{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.btnGray{background:#94a3b8}
+.btnRed{background:#ef4444}
+.kpi{background:linear-gradient(135deg,#fff,#fff2f7);border:1px solid #ffe0ec;border-radius:20px;padding:14px;text-align:center}
+.big{font-size:24px;font-weight:950;color:#ff5f93}
+.small{font-size:12px;color:#64748b;line-height:1.6}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th,.table td{border-bottom:1px solid #eef2f7;padding:9px;text-align:left}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#ffe4ef;color:#ff5f93;font-weight:900;font-size:12px}
+.footer{text-align:center;color:#94a3b8;font-size:12px;margin:20px}
+@media(max-width:720px){.row{grid-template-columns:1fr}.logo h1{font-size:24px}.table{font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <h1>🌸 FUJIWARA Office Timecard</h1>
+    <p>事務員用タイムカード / かわいい勤務管理</p>
+  </div>
+</header>
+
+<main>
+<section class="card">
+  <h2>今日の打刻</h2>
+  <div class="row">
+    <div><label>スタッフ名</label><input id="staff" placeholder="例：事務員さん"></div>
+    <div><label>日付</label><input id="date" type="date"></div>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <button class="btnIn" onclick="stamp('in')">🌞 出勤</button>
+    <button class="btnBreak" onclick="stamp('breakStart')">☕ 休憩開始</button>
+    <button class="btnBreak" onclick="stamp('breakEnd')">🍰 休憩終了</button>
+    <button class="btnOut" onclick="stamp('out')">🌙 退勤</button>
+  </div>
+  <p id="msg" class="small"></p>
+</section>
+
+<section class="card">
+  <h2>手入力・修正</h2>
+  <div class="row">
+    <input id="inTime" type="time" placeholder="出勤">
+    <input id="outTime" type="time" placeholder="退勤">
+  </div>
+  <div class="row">
+    <input id="breakMin" type="number" placeholder="休憩 分" value="60">
+    <input id="memo" placeholder="メモ">
+  </div>
+  <button class="btnSave" onclick="saveManual()">💾 保存・修正</button>
+</section>
+
+<section class="card">
+  <h2>今月の集計</h2>
+  <div class="grid">
+    <div class="kpi"><div class="big" id="workDays">0</div><div class="small">勤務日数</div></div>
+    <div class="kpi"><div class="big" id="totalHours">0.0h</div><div class="small">総勤務時間</div></div>
+    <div class="kpi"><div class="big" id="totalBreak">0分</div><div class="small">休憩合計</div></div>
+    <div class="kpi"><div class="big" id="avgHours">0.0h</div><div class="small">平均勤務</div></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>勤務一覧 <span class="badge">localStorage保存</span></h2>
+  <div style="overflow:auto">
+    <table class="table">
+      <thead><tr><th>日付</th><th>名前</th><th>出勤</th><th>退勤</th><th>休憩</th><th>時間</th><th>メモ</th><th></th></tr></thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>CSV用コピー</h2>
+  <p class="small">Excelやスプレッドシートへ貼り付けできます。</p>
+  <button class="btnGray" onclick="copyCSV()">CSVをコピー</button>
+</section>
+
+<div class="footer">FUJIWARA Group / Office Timecard</div>
+</main>
+
+<script>
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function get(){try{return JSON.parse(localStorage.getItem("office_timecard")||"[]")}catch(e){return []}}
+function set(v){localStorage.setItem("office_timecard",JSON.stringify(v));localStorage.setItem("fks_last_saved",new Date().toLocaleString())}
+function mins(t){if(!t)return null;const [h,m]=t.split(":").map(Number);return h*60+m}
+function hours(r){const a=mins(r.inTime),b=mins(r.outTime);if(a===null||b===null)return 0;return Math.max(0,(b-a-Number(r.breakMin||0))/60)}
+function findRec(arr){return arr.find(x=>x.date===date.value && x.staff===staff.value)}
+function stamp(type){
+ if(!staff.value){alert("スタッフ名を入力してください");return}
+ const arr=get();let r=findRec(arr);
+ if(!r){r={id:Date.now(),date:date.value,staff:staff.value,inTime:"",outTime:"",breakStart:"",breakEnd:"",breakMin:60,memo:""};arr.push(r)}
+ if(type==="in")r.inTime=nowHM();
+ if(type==="out")r.outTime=nowHM();
+ if(type==="breakStart")r.breakStart=nowHM();
+ if(type==="breakEnd"){r.breakEnd=nowHM();const s=mins(r.breakStart),e=mins(r.breakEnd);if(s!==null&&e!==null)r.breakMin=Math.max(0,e-s)}
+ set(arr);loadForm();render();msg.textContent="✅ "+nowHM()+" に打刻しました";
+}
+function saveManual(){
+ if(!staff.value){alert("スタッフ名を入力してください");return}
+ const arr=get().filter(x=>!(x.date===date.value&&x.staff===staff.value));
+ arr.push({id:Date.now(),date:date.value,staff:staff.value,inTime:inTime.value,outTime:outTime.value,breakMin:Number(breakMin.value||0),memo:memo.value});
+ set(arr);render();msg.textContent="✅ 保存しました";
+}
+function del(id){if(confirm("削除しますか？")){set(get().filter(x=>x.id!==id));render()}}
+function loadForm(){
+ const r=findRec(get());
+ if(r){inTime.value=r.inTime||"";outTime.value=r.outTime||"";breakMin.value=r.breakMin||0;memo.value=r.memo||""}
+}
+function render(){
+ const ym=date.value.slice(0,7);
+ const arr=get().filter(x=>x.date&&x.date.startsWith(ym)).sort((a,b)=>a.date.localeCompare(b.date));
+ let th=0,tb=0; const days=new Set();
+ list.innerHTML=arr.map(r=>{const h=hours(r);th+=h;tb+=Number(r.breakMin||0);days.add(r.date);return `<tr><td>${r.date}</td><td>${r.staff}</td><td>${r.inTime||"-"}</td><td>${r.outTime||"-"}</td><td>${r.breakMin||0}分</td><td>${h.toFixed(2)}h</td><td>${r.memo||""}</td><td><button class="btnRed" onclick="del(${r.id})">削除</button></td></tr>`}).join("");
+ workDays.textContent=days.size;totalHours.textContent=th.toFixed(1)+"h";totalBreak.textContent=tb+"分";avgHours.textContent=days.size?(th/days.size).toFixed(1)+"h":"0.0h";
+}
+function copyCSV(){
+ const arr=get();
+ const csv=["日付,名前,出勤,退勤,休憩分,勤務時間,メモ"].concat(arr.map(r=>`${r.date},${r.staff},${r.inTime||""},${r.outTime||""},${r.breakMin||0},${hours(r).toFixed(2)},${r.memo||""}`)).join("\n");
+ navigator.clipboard.writeText(csv).then(()=>alert("コピーしました")).catch(()=>alert("コピーできない場合は長押しでコピーしてください"));
+}
+date.value=today();staff.value=localStorage.getItem("office_timecard_last_staff")||"";
+staff.onchange=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm()}
+date.onchange=()=>{loadForm();render()}
+loadForm();render();
+</script>
+</body>
+</html>
