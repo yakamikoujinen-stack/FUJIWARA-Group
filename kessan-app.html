@@ -169,6 +169,38 @@
     display:inline-block; font-size:10.5px; padding:2px 7px; border-radius:3px;
     border:1px solid var(--grid-strong); color:var(--ink-dim); margin-left:6px;
   }
+
+  /* ===== 現金出納帳・仕訳帳 共通 ===== */
+  .txn-form-row{display:flex; gap:8px; margin-bottom:9px;}
+  .txn-form-row .field{flex:1; margin-bottom:0; border-bottom:none; padding-bottom:0; display:block;}
+  .txn-form-row .field label{margin-bottom:4px;}
+  .txn-form-row input[type=text], .txn-form-row input[type=date], .txn-form-row input[type=number], .txn-form-row select{
+    width:100%; background:var(--paper); border:1.5px solid var(--grid-strong); color:var(--ink);
+    padding:9px 8px; border-radius:4px; font-size:14px; font-family:'Noto Sans JP',sans-serif;
+  }
+  .txn-form-row input[type=number]{font-family:'JetBrains Mono',monospace; text-align:right;}
+  .type-toggle{display:flex; gap:6px;}
+  .type-toggle button{
+    flex:1; padding:9px; border-radius:4px; border:1.5px solid var(--grid-strong);
+    background:var(--paper); color:var(--ink-dim); font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .type-toggle button.active.in{background:var(--navy); color:#fbf8ee; border-color:var(--navy);}
+  .type-toggle button.active.out{background:var(--red-deep); color:#fbf8ee; border-color:var(--red-deep);}
+
+  .txn-list{border:1.5px solid var(--grid-strong); border-radius:6px; overflow:hidden; margin-top:14px;}
+  .txn-row{display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--grid); background:var(--paper-card);}
+  .txn-row:last-child{border-bottom:none;}
+  .txn-date{width:58px; font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace; flex:none; line-height:1.3;}
+  .txn-desc{flex:1; min-width:0;}
+  .txn-desc .main{font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .txn-desc .sub{font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .txn-amt{font-family:'JetBrains Mono',monospace; font-size:12.5px; text-align:right; flex:none; width:82px; line-height:1.3;}
+  .txn-amt .in{color:var(--navy); display:block;}
+  .txn-amt .out{color:var(--red-deep); display:block;}
+  .txn-amt .bal{color:var(--ink-dim); font-size:10.5px; margin-top:2px;}
+  .txn-del{flex:none; background:none; border:none; color:var(--ink-dim); font-size:15px; padding:4px 4px; cursor:pointer;}
+  .txn-summary{display:flex; justify-content:space-between; padding:10px 12px; background:#eef2e6; font-size:12.5px; color:var(--ink-dim); border-top:1.5px solid var(--grid-strong);}
+  .txn-summary b{color:var(--ink); font-family:'JetBrains Mono',monospace;}
 </style>
 </head>
 <body>
@@ -192,6 +224,8 @@
   <button data-tab="pl">損益計算書</button>
   <button data-tab="bs">貸借対照表</button>
   <button data-tab="cogs">原価明細</button>
+  <button data-tab="cashbook">現金出納帳</button>
+  <button data-tab="journal">仕訳帳</button>
 </nav>
 
 <main>
@@ -312,6 +346,84 @@
     </div>
   </section>
 
+  <!-- ================= 現金出納帳 ================= -->
+  <section id="tab-cashbook" style="display:none">
+    <div class="card">
+      <h2>現金出納帳 記帳</h2>
+      <div class="txn-form-row">
+        <div class="field"><label>日付</label><input type="date" id="cb_date"></div>
+      </div>
+      <div class="field" style="border-bottom:none; padding-bottom:0; margin-bottom:9px;">
+        <label style="display:block; margin-bottom:4px;">摘要</label>
+        <input type="text" id="cb_desc" placeholder="例）現場資材代 支払い">
+      </div>
+      <div class="txn-form-row">
+        <div class="field">
+          <label>区分</label>
+          <div class="type-toggle">
+            <button type="button" id="cb_typeIn" class="active in">入金</button>
+            <button type="button" id="cb_typeOut" class="out">出金</button>
+          </div>
+        </div>
+        <div class="field"><label>金額</label><input type="number" id="cb_amount" inputmode="numeric"></div>
+      </div>
+      <button class="btn btn-save" id="cb_save">この内容で記帳する</button>
+    </div>
+
+    <div class="card">
+      <h2>現金出納帳 一覧</h2>
+      <div class="txn-list" id="cashbookList">
+        <div class="empty">読み込み中...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 仕訳帳 ================= -->
+  <section id="tab-journal" style="display:none">
+    <div class="card">
+      <h2>仕訳帳 記帳</h2>
+      <div class="txn-form-row">
+        <div class="field"><label>日付</label><input type="date" id="jn_date"></div>
+      </div>
+      <div class="field" style="border-bottom:none; padding-bottom:0; margin-bottom:9px;">
+        <label style="display:block; margin-bottom:4px;">摘要</label>
+        <input type="text" id="jn_desc" placeholder="例）外注費の支払い">
+      </div>
+      <div class="subhead">借方（引き出す・費用が増える側）</div>
+      <div class="txn-form-row">
+        <div class="field"><label>勘定科目</label><input type="text" id="jn_debitAccount" list="accountList" placeholder="例）外注費"></div>
+        <div class="field"><label>金額</label><input type="number" id="jn_debitAmount" inputmode="numeric"></div>
+      </div>
+      <div class="subhead">貸方（支払う・収益が増える側）</div>
+      <div class="txn-form-row">
+        <div class="field"><label>勘定科目</label><input type="text" id="jn_creditAccount" list="accountList" placeholder="例）現金"></div>
+        <div class="field"><label>金額</label><input type="number" id="jn_creditAmount" inputmode="numeric"></div>
+      </div>
+      <button class="btn btn-save" id="jn_save">この内容で記帳する</button>
+    </div>
+
+    <div class="card">
+      <h2>仕訳帳 一覧</h2>
+      <div class="txn-list" id="journalList">
+        <div class="empty">読み込み中...</div>
+      </div>
+    </div>
+  </section>
+
+  <datalist id="accountList">
+    <option value="現金"><option value="普通預金"><option value="当座預金">
+    <option value="売掛金"><option value="買掛金"><option value="未収入金">
+    <option value="未払金"><option value="前受金"><option value="前払金">
+    <option value="仮払金"><option value="仮受金"><option value="貸付金">
+    <option value="借入金"><option value="資本金"><option value="売上高">
+    <option value="仕入高"><option value="外注費"><option value="給料手当">
+    <option value="法定福利費"><option value="地代家賃"><option value="水道光熱費">
+    <option value="通信費"><option value="消耗品費"><option value="旅費交通費">
+    <option value="接待交際費"><option value="広告宣伝費"><option value="支払手数料">
+    <option value="租税公課"><option value="減価償却費"><option value="支払利息">
+    <option value="雑費"><option value="雑収入">
+  </datalist>
+
 </main>
 
 <div class="stamp-overlay" id="stampOverlay">記帳済</div>
@@ -378,22 +490,28 @@ function playStamp(){
 }
 
 /* ===================== タブ切替 ===================== */
+const ALL_TABS = ['list','pl','bs','cogs','cashbook','journal'];
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    ['list','pl','bs','cogs'].forEach(t=>{
+    ALL_TABS.forEach(t=>{
       document.getElementById('tab-'+t).style.display = (t===btn.dataset.tab) ? 'block' : 'none';
     });
-    if(btn.dataset.tab !== 'list') loadForm(btn.dataset.tab);
-    if(btn.dataset.tab === 'list') renderList();
+    activateTab(btn.dataset.tab);
   });
 });
+function activateTab(tab){
+  if(tab === 'list') renderList();
+  else if(tab === 'cashbook') renderCashbook();
+  else if(tab === 'journal') renderJournal();
+  else loadForm(tab);
+}
 companySel.addEventListener('change', refreshActiveForm);
 periodSel.addEventListener('change', refreshActiveForm);
 function refreshActiveForm(){
   const active = document.querySelector('nav.tabs button.active').dataset.tab;
-  if(active !== 'list') loadForm(active);
+  if(active !== 'list') activateTab(active);
 }
 
 /* ===================== PL ===================== */
@@ -546,7 +664,7 @@ function renderList(){
         periodSel.value = row.dataset.period.slice(0,4)+'-'+row.dataset.period.slice(4,6);
         document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
         document.querySelector(`nav.tabs button[data-tab="${row.dataset.type}"]`).classList.add('active');
-        ['list','pl','bs','cogs'].forEach(t=>{
+        ALL_TABS.forEach(t=>{
           document.getElementById('tab-'+t).style.display = (t===row.dataset.type) ? 'block' : 'none';
         });
         loadForm(row.dataset.type);
@@ -556,6 +674,134 @@ function renderList(){
 }
 document.getElementById('filterCompany').addEventListener('change', renderList);
 document.getElementById('filterType').addEventListener('change', renderList);
+
+/* ===================== 現金出納帳 ===================== */
+(function initCashbookDate(){
+  document.getElementById('cb_date').value = new Date().toISOString().slice(0,10);
+})();
+let cbType = 'in';
+document.getElementById('cb_typeIn').addEventListener('click', ()=>{
+  cbType = 'in';
+  document.getElementById('cb_typeIn').classList.add('active');
+  document.getElementById('cb_typeOut').classList.remove('active');
+});
+document.getElementById('cb_typeOut').addEventListener('click', ()=>{
+  cbType = 'out';
+  document.getElementById('cb_typeOut').classList.add('active');
+  document.getElementById('cb_typeIn').classList.remove('active');
+});
+document.getElementById('cb_save').addEventListener('click', ()=>{
+  const date = document.getElementById('cb_date').value;
+  const desc = document.getElementById('cb_desc').value.trim();
+  const amount = Number(document.getElementById('cb_amount').value)||0;
+  if(!date){ toast('日付を入力してください'); return; }
+  if(!desc){ toast('摘要を入力してください'); return; }
+  if(amount<=0){ toast('金額を入力してください'); return; }
+  db.ref(`kessan/${companyId()}/cashbook`).push({
+    date, desc, type: cbType, amount, createdAt: Date.now()
+  }).then(()=>{
+    toast('記帳しました'); playStamp();
+    document.getElementById('cb_desc').value = '';
+    document.getElementById('cb_amount').value = '';
+    renderCashbook();
+  }).catch(e=>toast('保存に失敗: '+e.message));
+});
+function renderCashbook(){
+  const listEl = document.getElementById('cashbookList');
+  listEl.innerHTML = '<div class="empty">読み込み中...</div>';
+  db.ref(`kessan/${companyId()}/cashbook`).once('value').then(snap=>{
+    const all = snap.val() || {};
+    let rows = Object.keys(all).map(id=>({ id, ...all[id] }));
+    rows.sort((a,b)=> (a.date+String(a.createdAt)).localeCompare(b.date+String(b.createdAt)));
+    if(rows.length===0){
+      listEl.innerHTML = '<div class="empty"><span class="mincho">記帳なし</span>まだ記帳がありません。上のフォームから入力してください。</div>';
+      return;
+    }
+    let balance = 0, totalIn = 0, totalOut = 0;
+    const rowsHtml = rows.map(r=>{
+      if(r.type==='in'){ balance += r.amount; totalIn += r.amount; }
+      else { balance -= r.amount; totalOut += r.amount; }
+      const dateDisp = r.date.slice(5).replace('-','/');
+      return `<div class="txn-row">
+        <div class="txn-date">${dateDisp}</div>
+        <div class="txn-desc"><div class="main">${r.desc}</div></div>
+        <div class="txn-amt">
+          ${r.type==='in' ? `<span class="in">+${fmt(r.amount)}</span>` : `<span class="out">-${fmt(r.amount)}</span>`}
+          <span class="bal">残${fmt(balance)}</span>
+        </div>
+        <button class="txn-del" data-id="${r.id}">✕</button>
+      </div>`;
+    }).join('');
+    listEl.innerHTML = rowsHtml + `<div class="txn-summary"><span>入金合計 <b>${fmt(totalIn)}</b> ／ 出金合計 <b>${fmt(totalOut)}</b></span><span>残高 <b>${fmt(balance)}</b></span></div>`;
+    listEl.querySelectorAll('.txn-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('この記帳を削除しますか？')) return;
+        db.ref(`kessan/${companyId()}/cashbook/${btn.dataset.id}`).remove().then(renderCashbook);
+      });
+    });
+  });
+}
+
+/* ===================== 仕訳帳 ===================== */
+(function initJournalDate(){
+  document.getElementById('jn_date').value = new Date().toISOString().slice(0,10);
+})();
+document.getElementById('jn_save').addEventListener('click', ()=>{
+  const date = document.getElementById('jn_date').value;
+  const desc = document.getElementById('jn_desc').value.trim();
+  const debitAccount = document.getElementById('jn_debitAccount').value.trim();
+  const debitAmount = Number(document.getElementById('jn_debitAmount').value)||0;
+  const creditAccount = document.getElementById('jn_creditAccount').value.trim();
+  const creditAmount = Number(document.getElementById('jn_creditAmount').value)||0;
+  if(!date){ toast('日付を入力してください'); return; }
+  if(!debitAccount || !creditAccount){ toast('借方・貸方の勘定科目を入力してください'); return; }
+  if(debitAmount<=0 || creditAmount<=0){ toast('借方・貸方の金額を入力してください'); return; }
+  if(debitAmount !== creditAmount){ toast('借方と貸方の金額が一致していません'); return; }
+  db.ref(`kessan/${companyId()}/journal`).push({
+    date, desc, debitAccount, debitAmount, creditAccount, creditAmount, createdAt: Date.now()
+  }).then(()=>{
+    toast('記帳しました'); playStamp();
+    document.getElementById('jn_desc').value = '';
+    document.getElementById('jn_debitAccount').value = '';
+    document.getElementById('jn_debitAmount').value = '';
+    document.getElementById('jn_creditAccount').value = '';
+    document.getElementById('jn_creditAmount').value = '';
+    renderJournal();
+  }).catch(e=>toast('保存に失敗: '+e.message));
+});
+function renderJournal(){
+  const listEl = document.getElementById('journalList');
+  listEl.innerHTML = '<div class="empty">読み込み中...</div>';
+  db.ref(`kessan/${companyId()}/journal`).once('value').then(snap=>{
+    const all = snap.val() || {};
+    let rows = Object.keys(all).map(id=>({ id, ...all[id] }));
+    rows.sort((a,b)=> (a.date+String(a.createdAt)).localeCompare(b.date+String(b.createdAt)));
+    if(rows.length===0){
+      listEl.innerHTML = '<div class="empty"><span class="mincho">記帳なし</span>まだ仕訳がありません。上のフォームから入力してください。</div>';
+      return;
+    }
+    let totalAmount = 0;
+    const rowsHtml = rows.map(r=>{
+      totalAmount += r.debitAmount;
+      const dateDisp = r.date.slice(5).replace('-','/');
+      return `<div class="txn-row">
+        <div class="txn-date">${dateDisp}</div>
+        <div class="txn-desc">
+          <div class="main">${r.desc}</div>
+          <div class="sub">借）${r.debitAccount} ${fmt(r.debitAmount)} ／ 貸）${r.creditAccount} ${fmt(r.creditAmount)}</div>
+        </div>
+        <button class="txn-del" data-id="${r.id}">✕</button>
+      </div>`;
+    }).join('');
+    listEl.innerHTML = rowsHtml + `<div class="txn-summary"><span>仕訳件数 <b>${rows.length}</b>件</span><span>合計金額 <b>${fmt(totalAmount)}</b></span></div>`;
+    listEl.querySelectorAll('.txn-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('この仕訳を削除しますか？')) return;
+        db.ref(`kessan/${companyId()}/journal/${btn.dataset.id}`).remove().then(renderJournal);
+      });
+    });
+  });
+}
 
 /* ===================== 起動 ===================== */
 renderList();
