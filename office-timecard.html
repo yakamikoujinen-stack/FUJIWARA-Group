@@ -31,17 +31,22 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
 .btnSave{background:linear-gradient(135deg,#22c55e,#16a34a)}
 .btnGray{background:#94a3b8}
 .btnRed{background:#ef4444}
+.btnBig{font-size:22px;padding:20px;border-radius:22px;box-shadow:0 10px 20px #ff5f9330}
 .kpi{background:linear-gradient(135deg,#fff,#fff2f7);border:1px solid #ffe0ec;border-radius:20px;padding:14px;text-align:center}
 .big{font-size:24px;font-weight:950;color:#ff5f93}
 .small{font-size:12px;color:#64748b;line-height:1.6}
 .table{width:100%;border-collapse:collapse;font-size:14px}
 .table th,.table td{border-bottom:1px solid #eef2f7;padding:9px;text-align:left}
 .badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#ffe4ef;color:#ff5f93;font-weight:900;font-size:12px}
+.statusBox{background:#fff7fb;border:1px solid #ffd6e5;border-radius:18px;padding:14px;margin-top:12px}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#fff;border:2px solid #ffd6e5;color:#ff5f93;padding:12px 18px;border-radius:999px;box-shadow:0 10px 25px #0002;font-weight:900;opacity:0;pointer-events:none;transition:.35s;z-index:999}
+.toast.show{opacity:1;top:32px}
 .footer{text-align:center;color:#94a3b8;font-size:12px;margin:20px}
-@media(max-width:720px){.row{grid-template-columns:1fr}.logo h1{font-size:24px}.table{font-size:12px}}
+@media(max-width:720px){.row{grid-template-columns:1fr}.logo h1{font-size:24px}.table{font-size:12px}.btnBig{font-size:20px}}
 </style>
 </head>
 <body>
+<div id="toast" class="toast">🌸 保存しました</div>
 <header>
   <div class="logo">
     <h1>🌸 FUJIWARA Office Timecard</h1>
@@ -56,13 +61,13 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
     <div><label>スタッフ名</label><input id="staff" placeholder="例：事務員さん"></div>
     <div><label>日付</label><input id="date" type="date"></div>
   </div>
-  <div class="grid" style="margin-top:12px">
-    <button class="btnIn" onclick="stamp('in')">🌞 出勤</button>
-    <button class="btnBreak" onclick="stamp('breakStart')">☕ 休憩開始</button>
-    <button class="btnBreak" onclick="stamp('breakEnd')">🍰 休憩終了</button>
-    <button class="btnOut" onclick="stamp('out')">🌙 退勤</button>
+
+  <button id="mainBtn" class="btnIn btnBig" onclick="mainStamp()">🌞 出勤する</button>
+
+  <div class="statusBox">
+    <div id="todayStatus"><b>今日の状態：</b>未出勤</div>
+    <div class="small" id="timeLine">出勤・休憩・退勤がここに表示されます。</div>
   </div>
-  <p id="msg" class="small"></p>
 </section>
 
 <section class="card">
@@ -72,9 +77,10 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
     <input id="outTime" type="time" placeholder="退勤">
   </div>
   <div class="row">
-    <input id="breakMin" type="number" placeholder="休憩 分" value="60">
+    <input id="breakMin" type="number" placeholder="休憩 分" readonly>
     <input id="memo" placeholder="メモ">
   </div>
+  <p class="small">休憩時間はメインボタンで「休憩開始→休憩終了」を押すと自動計算します。</p>
   <button class="btnSave" onclick="saveManual()">💾 保存・修正</button>
 </section>
 
@@ -115,26 +121,59 @@ function set(v){localStorage.setItem("office_timecard",JSON.stringify(v));localS
 function mins(t){if(!t)return null;const [h,m]=t.split(":").map(Number);return h*60+m}
 function hours(r){const a=mins(r.inTime),b=mins(r.outTime);if(a===null||b===null)return 0;return Math.max(0,(b-a-Number(r.breakMin||0))/60)}
 function findRec(arr){return arr.find(x=>x.date===date.value && x.staff===staff.value)}
-function stamp(type){
- if(!staff.value){alert("スタッフ名を入力してください");return}
+function getOrCreate(){
+ if(!staff.value){alert("スタッフ名を入力してください");return null}
  const arr=get();let r=findRec(arr);
- if(!r){r={id:Date.now(),date:date.value,staff:staff.value,inTime:"",outTime:"",breakStart:"",breakEnd:"",breakMin:60,memo:""};arr.push(r)}
- if(type==="in")r.inTime=nowHM();
- if(type==="out")r.outTime=nowHM();
- if(type==="breakStart")r.breakStart=nowHM();
- if(type==="breakEnd"){r.breakEnd=nowHM();const s=mins(r.breakStart),e=mins(r.breakEnd);if(s!==null&&e!==null)r.breakMin=Math.max(0,e-s)}
- set(arr);loadForm();render();msg.textContent="✅ "+nowHM()+" に打刻しました";
+ if(!r){r={id:Date.now(),date:date.value,staff:staff.value,inTime:"",outTime:"",breakStart:"",breakEnd:"",breakMin:0,memo:""};arr.push(r);set(arr)}
+ return r;
+}
+function saveRec(r){
+ const arr=get().filter(x=>!(x.date===r.date&&x.staff===r.staff));
+ arr.push(r);set(arr);
+}
+function mainStamp(){
+ const r=getOrCreate(); if(!r)return;
+ const n=nowHM();
+ let message="";
+ if(!r.inTime){
+   r.inTime=n; message="🌞 おはようございます！出勤しました";
+ }else if(!r.breakStart){
+   r.breakStart=n; message="☕ 休憩開始しました";
+ }else if(!r.breakEnd){
+   r.breakEnd=n;
+   const s=mins(r.breakStart),e=mins(r.breakEnd);
+   if(s!==null&&e!==null)r.breakMin=Math.max(0,e-s);
+   message="🍰 休憩終了しました";
+ }else if(!r.outTime){
+   r.outTime=n; message="🌙 今日もお疲れさまでした！";
+ }else{
+   message="✅ 本日の打刻は完了しています";
+ }
+ saveRec(r);loadForm();render();showToast(message);
 }
 function saveManual(){
  if(!staff.value){alert("スタッフ名を入力してください");return}
  const arr=get().filter(x=>!(x.date===date.value&&x.staff===staff.value));
- arr.push({id:Date.now(),date:date.value,staff:staff.value,inTime:inTime.value,outTime:outTime.value,breakMin:Number(breakMin.value||0),memo:memo.value});
- set(arr);render();msg.textContent="✅ 保存しました";
+ arr.push({id:Date.now(),date:date.value,staff:staff.value,inTime:inTime.value,outTime:outTime.value,breakStart:"",breakEnd:"",breakMin:Number(breakMin.value||0),memo:memo.value});
+ set(arr);render();showToast("💾 保存しました");
 }
 function del(id){if(confirm("削除しますか？")){set(get().filter(x=>x.id!==id));render()}}
 function loadForm(){
  const r=findRec(get());
  if(r){inTime.value=r.inTime||"";outTime.value=r.outTime||"";breakMin.value=r.breakMin||0;memo.value=r.memo||""}
+ else{inTime.value="";outTime.value="";breakMin.value=0;memo.value=""}
+}
+function renderButton(){
+ const r=findRec(get());
+ if(!staff.value){mainBtn.textContent="🌸 スタッフ名を入力してね";mainBtn.className="btnIn btnBig";todayStatus.innerHTML="<b>今日の状態：</b>スタッフ名未入力";timeLine.textContent="";return}
+ if(!r||!r.inTime){mainBtn.textContent="🌞 出勤する";mainBtn.className="btnIn btnBig";todayStatus.innerHTML="<b>今日の状態：</b>未出勤"}
+ else if(!r.breakStart){mainBtn.textContent="☕ 休憩開始";mainBtn.className="btnBreak btnBig";todayStatus.innerHTML="<b>今日の状態：</b>出勤中"}
+ else if(!r.breakEnd){mainBtn.textContent="🍰 休憩終了";mainBtn.className="btnBreak btnBig";todayStatus.innerHTML="<b>今日の状態：</b>休憩中"}
+ else if(!r.outTime){mainBtn.textContent="🌙 退勤する";mainBtn.className="btnOut btnBig";todayStatus.innerHTML="<b>今日の状態：</b>勤務中"}
+ else{mainBtn.textContent="✅ 本日完了";mainBtn.className="btnSave btnBig";todayStatus.innerHTML="<b>今日の状態：</b>退勤済み"}
+ if(r){
+   timeLine.textContent=`出勤 ${r.inTime||"-"} / 休憩開始 ${r.breakStart||"-"} / 休憩終了 ${r.breakEnd||"-"} / 退勤 ${r.outTime||"-"} / 休憩 ${r.breakMin||0}分`;
+ }else{timeLine.textContent="出勤・休憩・退勤がここに表示されます。"}
 }
 function render(){
  const ym=date.value.slice(0,7);
@@ -142,14 +181,20 @@ function render(){
  let th=0,tb=0; const days=new Set();
  list.innerHTML=arr.map(r=>{const h=hours(r);th+=h;tb+=Number(r.breakMin||0);days.add(r.date);return `<tr><td>${r.date}</td><td>${r.staff}</td><td>${r.inTime||"-"}</td><td>${r.outTime||"-"}</td><td>${r.breakMin||0}分</td><td>${h.toFixed(2)}h</td><td>${r.memo||""}</td><td><button class="btnRed" onclick="del(${r.id})">削除</button></td></tr>`}).join("");
  workDays.textContent=days.size;totalHours.textContent=th.toFixed(1)+"h";totalBreak.textContent=tb+"分";avgHours.textContent=days.size?(th/days.size).toFixed(1)+"h":"0.0h";
+ renderButton();
 }
 function copyCSV(){
  const arr=get();
  const csv=["日付,名前,出勤,退勤,休憩分,勤務時間,メモ"].concat(arr.map(r=>`${r.date},${r.staff},${r.inTime||""},${r.outTime||""},${r.breakMin||0},${hours(r).toFixed(2)},${r.memo||""}`)).join("\n");
- navigator.clipboard.writeText(csv).then(()=>alert("コピーしました")).catch(()=>alert("コピーできない場合は長押しでコピーしてください"));
+ navigator.clipboard.writeText(csv).then(()=>showToast("📋 コピーしました")).catch(()=>alert("コピーできない場合は長押しでコピーしてください"));
+}
+function showToast(t){
+ toast.textContent=t;toast.classList.add("show");
+ setTimeout(()=>toast.classList.remove("show"),2200);
 }
 date.value=today();staff.value=localStorage.getItem("office_timecard_last_staff")||"";
-staff.onchange=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm()}
+staff.onchange=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm();render()}
+staff.oninput=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm();render()}
 date.onchange=()=>{loadForm();render()}
 loadForm();render();
 </script>
