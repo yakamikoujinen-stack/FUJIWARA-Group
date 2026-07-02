@@ -76,10 +76,11 @@ function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=
 function renderSelects(){
   jClient.innerHTML=clients().map(x=>`<option>${x}</option>`).join("");
   rClient.innerHTML='<option value="">取引先名を選択</option>'+clients().map(x=>`<option>${x}</option>`).join("");
-  if(typeof rCompany!=="undefined"){rCompany.innerHTML=companies().map(x=>`<option>${x}</option>`).join("")}
-  if(typeof rReporter!=="undefined"){rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("")}
+  if(typeof rCompany!=="undefined"){rCompany.innerHTML=companies().map(x=>`<option>${x}</option>`).join("");}
+  if(typeof rReporter!=="undefined"){rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("");}
   rWorker.innerHTML='<option value="">作業員を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("");
-}</option>`).join("");rClient.innerHTML=jClient.innerHTML;rWorker.innerHTML='<option value="">作業員を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("")}
+}
+
 function addWorker(){let n=newWorker.value.trim();if(!n)return alert("作業員名を入力");let a=workers();if(!a.includes(n))a.push(n);set("fks_construction_workers",a);newWorker.value="";renderAll()}
 function delWorker(n){if(confirm(n+"を削除？")){set("fks_construction_workers",workers().filter(x=>x!=n));renderAll()}}
 function addClient(){let n=newClient.value.trim();if(!n)return alert("取引先名を入力");let a=clients();if(!a.includes(n))a.push(n);set("fks_construction_clients",a);newClient.value="";renderAll()}
