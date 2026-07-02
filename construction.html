@@ -21,7 +21,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background
   </div>
 </header><main>
 <div class="card tabs staff-tabs"><button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button><button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button></div>
-<section class="card"><h3>スタッフ用</h3><p class="small">予定確認と日報入力のみ使用できます。管理機能は社長専用です。</p></section><section id="cal"><div class="card row"><button onclick="moveMonth(-1)">← 前月</button><button onclick="moveMonth(1)">翌月 →</button></div><div class="card"><h2 id="monthTitle"></h2><div class="grid" id="calHead"></div><div class="grid" id="calendar"></div></div><div class="card"><h3>現場予定を登録</h3><div class="row"><input id="jDate" type="date"><input id="jSite" placeholder="現場名"></div><div class="row"><select id="jClient"></select><input id="jStart" type="time"></div><input id="jWorkers" placeholder="作業員（例：山田、田中）"><textarea id="jWork" placeholder="作業内容・持ち物・注意事項"></textarea><button onclick="addJob()">予定を保存</button></div><div class="card"><h3>選択日の予定・日報</h3><div id="dayList">日付を選択してください</div></div></section>
+<section class="card"><h3>スタッフ用</h3><p class="small">予定確認と日報入力のみ使用できます。管理機能は社長専用です。</p><p class="small">※取引先名・作業員は同じ端末内の登録データを読み込みます。別端末とはまだ自動共有されません。</p></section><section id="cal"><div class="card row"><button onclick="moveMonth(-1)">← 前月</button><button onclick="moveMonth(1)">翌月 →</button></div><div class="card"><h2 id="monthTitle"></h2><div class="grid" id="calHead"></div><div class="grid" id="calendar"></div></div><div class="card"><h3>現場予定を登録</h3><div class="row"><input id="jDate" type="date"><input id="jSite" placeholder="現場名"></div><div class="row"><select id="jClient"></select><input id="jStart" type="time"></div><input id="jWorkers" placeholder="作業員（例：山田、田中）"><textarea id="jWork" placeholder="作業内容・持ち物・注意事項"></textarea><button onclick="addJob()">予定を保存</button></div><div class="card"><h3>選択日の予定・日報</h3><div id="dayList">日付を選択してください</div></div></section>
 <section id="rep" style="display:none">
   <div class="card">
     <h3>日報入力</h3>
@@ -54,8 +54,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background
     </div>
 
     <div class="row">
-      <input id="rStart" type="time">
-      <input id="rEnd" type="time">
+      <div><label class="small"><b>現場入場</b></label><input id="rStart" type="time"></div>
+      <div><label class="small"><b>現場退場</b></label><input id="rEnd" type="time"></div>
     </div>
     <input id="rBreak" type="number" placeholder="休憩 分">
     <textarea id="rWork" placeholder="本日の作業内容"></textarea>
@@ -71,7 +71,12 @@ function get(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(
 function set(k,v){localStorage.setItem(k,JSON.stringify(v));localStorage.setItem("fks_last_saved",new Date().toLocaleString())}
 function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function jobs(){return get("fks_construction_calendar",[])}function reports(){return get("fks_construction_reports",[])}
-function workers(){return get("fks_construction_workers",["藤原","山田","田中"])}function clients(){return get("fks_construction_clients",["未登録"])}function companies(){return ["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"]}
+function unique(a){return [...new Set(a.filter(Boolean))]}
+function defaultWorkers(){return ["藤原","山田","田中","繁充"]}
+function defaultClients(){return ["未登録","前田建設株式会社"]}
+function workers(){return unique(get("fks_construction_workers",[]).concat(defaultWorkers()))}
+function clients(){return unique(get("fks_construction_clients",[]).concat(defaultClients()))}
+function companies(){return ["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"]}
 function showTab(t){
   cal.style.display=t=="cal"?"block":"none";
   rep.style.display=t=="rep"?"block":"none";
@@ -80,11 +85,13 @@ function showTab(t){
   renderAll();
 }
 function renderSelects(){
-  jClient.innerHTML=clients().map(x=>`<option>${x}</option>`).join("");
-  rClient.innerHTML='<option value="">取引先名を選択</option>'+clients().map(x=>`<option>${x}</option>`).join("");
+  const cs=clients();
+  const ws=workers();
+  jClient.innerHTML='<option value="">取引先名を選択</option>'+cs.map(x=>`<option>${x}</option>`).join("");
+  rClient.innerHTML='<option value="">取引先名を選択</option>'+cs.map(x=>`<option>${x}</option>`).join("");
   if(typeof rCompany!=="undefined"){rCompany.innerHTML=companies().map(x=>`<option>${x}</option>`).join("")}
-  if(typeof rReporter!=="undefined"){rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("")}
-  rWorker.innerHTML='<option value="">作業員を選択</option>'+workers().map(x=>`<option>${x}</option>`).join("");
+  if(typeof rReporter!=="undefined"){rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+ws.map(x=>`<option>${x}</option>`).join("")}
+  rWorker.innerHTML='<option value="">作業員を選択</option>'+ws.map(x=>`<option>${x}</option>`).join("");
 }
 function addWorker(){let n=newWorker.value.trim();if(!n)return alert("作業員名を入力");let a=workers();if(!a.includes(n))a.push(n);set("fks_construction_workers",a);newWorker.value="";renderAll()}
 function delWorker(n){if(confirm(n+"を削除？")){set("fks_construction_workers",workers().filter(x=>x!=n));renderAll()}}
@@ -128,13 +135,13 @@ function showDay(ds){
   let js=jobs().filter(x=>x.date==ds),rs=reports().filter(x=>x.date==ds);
   dayList.innerHTML=(js.length||rs.length)?
     js.map(j=>`<div class="card"><b>予定：${j.site}</b><br><span class="small">${j.start||"-"} / 取引先：${j.client||"-"}</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j)})'>この予定から日報作成</button><button class="red" onclick="delJob(${j.id})">予定削除</button></div>`).join("")+
-    rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}<br>出勤：${r.start} 退場：${r.end}<br>内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">日報削除</button></div>`).join("")
+    rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}<br>現場入場：${r.start} 現場退場：${r.end}<br>内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">日報削除</button></div>`).join("")
     :"予定・日報なし";
 }
 function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobs().filter(x=>x.date==ds),rs=reports().filter(x=>x.date==ds);html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b>`+js.slice(0,2).map(j=>`<div class="job">${j.start||""} ${j.site}</div>`).join("")+rs.slice(0,3).map(r=>`<div class="job report">${r.site}</div>`).join("")+"</div>"}calendar.innerHTML=html}
 function renderReports(){
   let a=reports().slice().reverse();
-  reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>出勤：${r.start} 退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">削除</button></div>`).join(""):"日報なし";
+  reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve(${r.id})">承認</button><button class="red" onclick="delReport(${r.id})">削除</button></div>`).join(""):"日報なし";
 }
 function renderMasters(){workerList.innerHTML=workers().map(x=>`<span class="pill">${x}<button onclick="delWorker('${x}')">×</button></span>`).join("");clientList.innerHTML=clients().map(x=>`<span class="pill">${x}<button onclick="delClient('${x}')">×</button></span>`).join("")}
 function renderAll(){renderSelects();renderCalendar();renderReports()}
