@@ -716,8 +716,8 @@ body::before,#app::before,.page::before{
       </div>
       <button class="modal-close-btn" onclick="closeModal('modal-staff-route-login')">✕</button>
     </div>
-    <div class="staff-portal-note">ログイン可能：藤原・縁笑だるまや・まゆみ・龍来・想良</div>
-    <div id="staff-route-login-names"></div>
+    <div class="staff-portal-note">スタッフ名を入力してください。許可されたスタッフだけ行き先一覧を表示します。</div>
+    <div id="staff-route-login-names" style="display:none"></div>
     <div class="divider"></div>
     <div class="fg">
       <label>直接入力する場合</label>
@@ -2001,12 +2001,9 @@ function ensureRouteStaffNames(){
 }
 function openStaffRouteLogin(){
   ensureRouteStaffNames();
+  // v4.3.6：名前ボタンを表示しない。許可スタッフ本人が名前入力した時だけ表示。
   var box=document.getElementById('staff-route-login-names');
-  if(box){
-    box.innerHTML=STAFF_ROUTE_ALLOWED.map(function(n){
-      return '<button class="staff-login-name-btn" onclick="loginStaffRoute(\''+escAttr(n)+'\')">👤 '+escHtml(n)+'</button>';
-    }).join('');
-  }
+  if(box){ box.innerHTML=''; box.style.display='none'; }
   var inp=document.getElementById('staff-route-name-input'); if(inp) inp.value='';
   var err=document.getElementById('staff-route-login-err'); if(err) err.style.display='none';
   openModal('modal-staff-route-login');
