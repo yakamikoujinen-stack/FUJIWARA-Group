@@ -27,7 +27,7 @@
     </section>
     <section class="app-row">
       <div class="main-card gold"><div><div class="big-icon">🦁</div><h2>メイン アプリ</h2><p>イベント管理・売上・人員・在庫管理</p></div><a class="open-btn btn-gold" href="index.html">開く <span class="arrow">›</span></a></div>
-      <div class="main-card green"><div><div class="big-icon">👥</div><h2>事務員 アプリ</h2><p>勤怠・給与・書類・経理</p></div><a class="open-btn btn-green" href="office.html">開く <span class="arrow">›</span></a></div>
+      <div class="main-card green"><div><div class="big-icon">👥</div><h2>事務員 アプリ</h2><p>勤怠・給与・書類・経理・事務管理</p></div><a class="open-btn btn-green" href="office.html">開く <span class="arrow">›</span></a></div>
       <div class="main-card pink"><div><div class="big-icon">👩🏻‍💼</div><h2>MIYU 秘書</h2><p>AI秘書がサポートします！</p></div><a class="open-btn btn-pink" href="#" onclick="alert('MIYU秘書は次に会話機能を追加するで')">💬 話しかける</a></div>
       <div class="main-card blue"><div><div class="big-icon">🏗️</div><h2>建設 アプリ</h2><p>日報・現場管理・請求・写真管理</p></div><a class="open-btn btn-blue" href="construction.html">開く <span class="arrow">›</span></a></div>
     </section>
@@ -51,5 +51,7 @@
     function addPersonal(){const title=prompt("予定名を入力して");if(!title)return;const time=prompt("時間を入力して（例 13:00 - 14:00）")||"時間未設定";const place=prompt("場所・メモを入力して")||"";const li=document.createElement("li");li.innerHTML=`<span class="dot blue-bg"></span><div><b>${escapeHtml(title)}</b><small>${escapeHtml(time)}　${escapeHtml(place)}</small></div><div class="icons"><button>✎</button><button onclick="this.closest('li').remove();savePersonal();">🗑</button></div>`;document.getElementById("personalList").appendChild(li);savePersonal()}
     loadPersonal();updateClock();setInterval(updateClock,30000);
   </script>
+
+<!-- 事務員アプリ入口追加版 2026-07-03 21:06:25 / office.html -->
 </body>
 </html>
