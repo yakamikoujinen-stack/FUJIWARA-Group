@@ -288,13 +288,12 @@ h1{
     </div>
 
     <div class="card panel">
-      <div class="panel-head"><span>👥 スタッフ出勤状況</span><span class="more">もっと見る›</span></div>
-      <div class="staff-number">出勤 <b>10</b> 名　/　全体 15 名</div>
-      <div class="avatars">
-        <div class="avatar">👩</div><div class="avatar">👨</div><div class="avatar">👩</div>
-        <div class="avatar">👨</div><div class="avatar">👩</div><div class="avatar">👩</div><div class="avatar plus">+5</div>
+      <div class="panel-head"><span>👥 事務員タイムカード</span><span class="more">office-timecard連携</span></div>
+      <div class="staff-number">本日出勤 <b id="officeInCount">0</b> 名</div>
+      <div id="officeTimecardList" style="font-size:14px;font-weight:800;line-height:1.8;color:#334155;text-align:left;background:#fff7fb;border:1px solid #ffd6e5;border-radius:14px;padding:12px;margin:12px 0;">
+        まだタイムカード入力がありません
       </div>
-      <button class="staff-btn" onclick="alert('スタッフ出勤状況は次に個人別一覧を作るで')">出勤状況を確認する　›</button>
+      <button class="staff-btn" onclick="location.href='office-timecard.html'">事務員アプリを開く　›</button>
     </div>
   </section>
 
@@ -356,6 +355,42 @@ function updateClock(){
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[s]));
 }
+
+function loadOfficeTimecardToKing(){
+  const box = document.getElementById("officeTimecardList");
+  const count = document.getElementById("officeInCount");
+  if(!box || !count) return;
+
+  let arr = [];
+  try{
+    arr = JSON.parse(localStorage.getItem("office_timecard") || "[]");
+    if(!Array.isArray(arr)) arr = [];
+  }catch(e){
+    arr = [];
+  }
+
+  const now = new Date();
+  const today = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+  const todayRows = arr.filter(r => r.date === today);
+
+  const active = todayRows.filter(r => r.inTime && !r.outTime);
+  count.textContent = active.length;
+
+  if(!todayRows.length){
+    box.innerHTML = "まだタイムカード入力がありません";
+    return;
+  }
+
+  box.innerHTML = todayRows.map(r=>{
+    const status = r.outTime ? "退勤済" : r.inTime ? "出勤中" : "未出勤";
+    const mark = r.outTime ? "🌙" : r.inTime ? "🌞" : "⚪";
+    return `<div style="border-bottom:1px solid #ffe0ec;padding:6px 0;">
+      ${mark} <b>${escapeHtml(r.staff || "名前未入力")}</b>：${status}<br>
+      <small>出勤 ${escapeHtml(r.inTime || "-")} / 退勤 ${escapeHtml(r.outTime || "-")} / 休憩 ${escapeHtml(r.breakMin || 0)}分</small>
+    </div>`;
+  }).join("");
+}
+
 function savePersonal(){
   localStorage.setItem("king_private_schedule",document.getElementById("personalList").innerHTML);
 }
@@ -378,10 +413,14 @@ function addPersonal(){
   savePersonal();
 }
 loadPersonal();
+loadOfficeTimecardToKing();
 updateClock();
 setInterval(updateClock,30000);
+setInterval(loadOfficeTimecardToKing,10000);
 </script>
 
 <!-- office link fixed: office-timecard.html / 2026-07-03 22:37:54 -->
+
+<!-- office timecard reflected in king / 2026-07-03 23:05:47 -->
 </body>
 </html>
