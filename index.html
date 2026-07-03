@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.5</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1280,6 +1280,10 @@ function applyPermissions() {
   updateCalendarActionButton();
 }
 
+function currentUserCanUseStaffRoute(){
+  return isStaffRouteAllowed(userName);
+}
+
 function updateCalendarActionButton(){
   var btn=document.getElementById('btn-add-ev');
   if(!btn) return;
@@ -1287,15 +1291,22 @@ function updateCalendarActionButton(){
   if(role==='leader' || role==='staff'){
     btn.innerHTML='＋ 追加';
     btn.title='イベント追加';
-  }else{
+  }else if(currentUserCanUseStaffRoute()){
     btn.innerHTML='＋ 行き先';
-    btn.title='スタッフ行き先ログイン';
+    btn.title='自分の行き先一覧';
+  }else{
+    btn.style.display='none';
   }
 }
 
 function handleCalendarActionButton(){
-  if(role==='leader' || role==='staff'){ openEventForm(null); }
-  else { openStaffRouteLogin(); }
+  if(role==='leader' || role==='staff'){ openEventForm(null); return; }
+  if(!currentUserCanUseStaffRoute()){
+    toast('⛔ 行き先一覧は許可スタッフのみ表示できます');
+    return;
+  }
+  renderStaffRouteList(canonicalStaffRouteName(userName));
+  openModal('modal-staff-route-list');
 }
 
 function lockSection(id, msg) {
@@ -2001,7 +2012,16 @@ function ensureRouteStaffNames(){
 }
 function openStaffRouteLogin(){
   ensureRouteStaffNames();
-  // v4.3.6：名前ボタンを表示しない。許可スタッフ本人が名前入力した時だけ表示。
+  if(role !== 'leader' && role !== 'staff' && !currentUserCanUseStaffRoute()){
+    toast('⛔ 行き先一覧は許可スタッフのみ表示できます');
+    return;
+  }
+  if(role !== 'leader' && role !== 'staff' && currentUserCanUseStaffRoute()){
+    renderStaffRouteList(canonicalStaffRouteName(userName));
+    openModal('modal-staff-route-list');
+    return;
+  }
+  // リーダー・担当者用：名前ボタンは表示しない。許可スタッフ名を入力した時だけ表示。
   var box=document.getElementById('staff-route-login-names');
   if(box){ box.innerHTML=''; box.style.display='none'; }
   var inp=document.getElementById('staff-route-name-input'); if(inp) inp.value='';
@@ -2011,6 +2031,10 @@ function openStaffRouteLogin(){
 function loginStaffRouteFromInput(){ loginStaffRoute(document.getElementById('staff-route-name-input').value); }
 function loginStaffRoute(name){
   var err=document.getElementById('staff-route-login-err');
+  if(role !== 'leader' && role !== 'staff' && normalizeStaffRouteName(name) !== normalizeStaffRouteName(userName)){
+    if(err){ err.textContent='⛔ 自分の名前以外では開けません'; err.style.display='block'; }
+    return;
+  }
   if(!isStaffRouteAllowed(name)){
     if(err){ err.textContent='⛔ この名前ではログインできません'; err.style.display='block'; }
     return;
