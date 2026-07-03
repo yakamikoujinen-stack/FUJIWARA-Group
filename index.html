@@ -437,6 +437,37 @@ body::before,#app::before,.page::before{
 .staff-login-name-btn{width:100%;text-align:left;background:#fffdf6;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;font-size:15px;font-weight:900;color:#111;margin-bottom:8px;}
 .staff-login-name-btn:active{transform:scale(.99);}
 
+
+
+/* ===== 倉庫ストッカー・冷蔵配置管理 ===== */
+.inv-mode-tabs{display:flex;gap:7px;margin:8px 0 12px;}
+.inv-mode-tab{flex:1;padding:9px 10px;border-radius:12px;border:1.5px solid var(--border);background:#fffaf0;color:#6d5a2b;font-size:12px;font-weight:900;font-family:inherit;}
+.inv-mode-tab.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;border-color:#9c6b00;}
+.warehouse-share-box{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.warehouse-layout{background:#fff9c9;border:1.5px solid #b7aa70;border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.10);}
+.warehouse-title{text-align:center;font-size:13px;font-weight:900;margin-bottom:10px;color:#241900;}
+.warehouse-map{display:grid;grid-template-columns:1.2fr .7fr 1.2fr;gap:10px;align-items:stretch;}
+.wh-area{border:1.5px solid #8e875c;border-radius:6px;padding:10px;min-height:190px;position:relative;background:rgba(255,255,255,.18);}
+.wh-office{border:1.5px solid #8e875c;border-radius:6px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font-weight:900;color:#4a3a00;background:rgba(255,255,255,.25);}
+.wh-grid-left{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;}
+.wh-stack-col{display:grid;grid-template-rows:repeat(3,1fr);gap:0;border:1.5px solid #8e875c;}
+.wh-right-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:48px;gap:10px;align-items:center;}
+.wh-cell{border:1.5px solid #8e875c;background:#fffbe1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#6d5a2b;position:relative;min-height:44px;cursor:pointer;}
+.wh-cell.small{font-size:16px;}
+.wh-cell.cold{font-size:12px;line-height:1.2;}
+.wh-cell.active{background:#ffe28a;border-color:#9c6b00;box-shadow:0 0 0 3px rgba(184,134,11,.18);}
+.wh-count{position:absolute;top:-7px;right:-7px;background:#d64242;color:#fff;border-radius:999px;min-width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff9c9;}
+.wh-location-panel{background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin-bottom:12px;}
+.wh-location-title{font-size:15px;font-weight:900;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.wh-mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+.wh-mini-table th,.wh-mini-table td{border-bottom:1px solid #ead8a8;padding:8px 6px;text-align:left;}
+.wh-mini-table th{color:#6d5a2b;font-size:11px;font-weight:900;}
+.wh-list-table{width:100%;border-collapse:collapse;font-size:12px;background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;overflow:hidden;}
+.wh-list-table th,.wh-list-table td{border-bottom:1px solid #ead8a8;padding:9px 7px;text-align:left;}
+.wh-list-table th{background:#fff3d6;color:#4d3a00;font-size:11px;font-weight:900;}
+.wh-search{display:flex;gap:8px;margin-bottom:10px;}
+@media(max-width:520px){.warehouse-map{grid-template-columns:1fr}.wh-office{writing-mode:horizontal-tb;min-height:48px}.wh-area{min-height:auto}.wh-right-grid{grid-auto-rows:44px}.wh-cell{font-size:18px}}
+
 </style>
 </head>
 <body>
@@ -512,9 +543,60 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-inventory">
       <div class="pg">
         <p class="page-title">📦 在庫管理</p>
-        <p class="page-sub">今回の持出し数・在庫確認</p>
+        <p class="page-sub">ストッカー・冷蔵庫の場所と在庫確認</p>
         <div id="inv-lock"></div>
         <div id="inv-content">
+          <div class="inv-mode-tabs">
+            <button class="inv-mode-tab active" id="inv-tab-list" onclick="setInventoryMode('list')">📋 一覧表</button>
+            <button class="inv-mode-tab" id="inv-tab-map" onclick="setInventoryMode('map')">🗺️ 配置図</button>
+          </div>
+          <div class="warehouse-share-box">
+            <button class="btn btn-outline btn-sm" onclick="shareWarehouseToKing()">👑 キングアプリへ共有</button>
+            <span class="muted" style="font-size:11px">同じGitHub内なら共有データとして使えます</span>
+          </div>
+          <div id="warehouse-map-content" style="display:none">
+            <div class="wh-search">
+              <input type="text" id="wh-search-input" placeholder="商品検索：牛串・鶏肉など" oninput="renderWarehouseList()">
+              <button class="btn btn-gold btn-sm" onclick="warehouseFindItem()">検索</button>
+            </div>
+            <div class="warehouse-layout">
+              <div class="warehouse-title">冷凍・冷蔵庫保存位置</div>
+              <div class="warehouse-map">
+                <div class="wh-area">
+                  <div class="wh-grid-left">
+                    <div class="wh-stack-col">
+                      <div class="wh-cell" data-loc="A" onclick="selectWarehouseLoc('A')">A</div>
+                      <div class="wh-cell" data-loc="B" onclick="selectWarehouseLoc('B')">B</div>
+                      <div class="wh-cell" data-loc="C" onclick="selectWarehouseLoc('C')">C</div>
+                    </div>
+                    <div>
+                      <div class="wh-cell cold" data-loc="冷蔵①" onclick="selectWarehouseLoc('冷蔵①')">冷蔵①</div>
+                      <div style="height:18px"></div>
+                      <div class="wh-cell" data-loc="D" onclick="selectWarehouseLoc('D')">D</div>
+                      <div style="height:18px"></div>
+                      <div class="wh-cell" data-loc="E" onclick="selectWarehouseLoc('E')">E</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="wh-office">事務所</div>
+                <div class="wh-area">
+                  <div class="wh-right-grid">
+                    <div></div><div></div><div class="wh-cell" data-loc="L" onclick="selectWarehouseLoc('L')">L</div>
+                    <div class="wh-cell" data-loc="G" onclick="selectWarehouseLoc('G')">G</div><div class="wh-cell" data-loc="H" onclick="selectWarehouseLoc('H')">H</div><div></div>
+                    <div class="wh-cell" data-loc="F" onclick="selectWarehouseLoc('F')">F</div><div class="wh-cell" data-loc="I" onclick="selectWarehouseLoc('I')">I</div><div class="wh-cell cold" data-loc="冷蔵②" onclick="selectWarehouseLoc('冷蔵②')">冷蔵②</div>
+                    <div></div><div class="wh-cell cold" data-loc="製氷" onclick="selectWarehouseLoc('製氷')">製氷</div><div class="wh-cell" data-loc="K" onclick="selectWarehouseLoc('K')">K</div>
+                    <div></div><div class="wh-cell" data-loc="J" onclick="selectWarehouseLoc('J')">J</div><div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="wh-location-panel">
+              <div class="wh-location-title"><span id="wh-selected-title">場所を選択してください</span><button class="btn btn-gold btn-sm" onclick="openInvItemForm(null)">＋ この場所に追加</button></div>
+              <div id="wh-selected-list" class="muted" style="font-size:12px">A〜L・冷蔵を押すと中身が出ます。</div>
+            </div>
+            <div id="wh-all-list"></div>
+          </div>
+          <div id="inventory-list-content">
           <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
             <select id="inv-cat-select" onchange="setInvCatFromSelect()" style="flex:1;padding:8px 12px;font-size:13px">
               <option value="すべて">すべてのカテゴリ</option>
@@ -537,6 +619,7 @@ body::before,#app::before,.page::before{
           </div>
           <div style="margin-top:14px">
             <button class="btn btn-green btn-sm" onclick="toast('✅ 持出し数を確定しました')">✅ 持出し確定</button>
+          </div>
           </div>
         </div>
       </div>
@@ -782,6 +865,11 @@ body::before,#app::before,.page::before{
       </div>
       <div class="fg"><label>単位</label><input type="text" id="iif-unit" placeholder="袋 / 本 / kg"></div>
     </div>
+    <div class="fg"><label>保存場所（ストッカー・冷蔵）</label>
+      <select id="iif-location">
+        <option value="未設定">未設定</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option><option>J</option><option>K</option><option>L</option><option>冷蔵①</option><option>冷蔵②</option><option>製氷</option>
+      </select>
+    </div>
     <div class="fg2">
       <div class="fg"><label>在庫数</label><input type="number" id="iif-stock" placeholder="0" min="0"></div>
       <div class="fg"><label>今回持出し数</label><input type="number" id="iif-hakobi" placeholder="0" min="0"></div>
@@ -933,6 +1021,8 @@ var role = 'leader';
 var userName = '';
 var calYear, calMonth, selDate = null;
 var invCatFilter = 'すべて';
+var inventoryMode = 'list';
+var selectedWarehouseLoc = 'A';
 
 var state = {
   events: [
@@ -942,20 +1032,20 @@ var state = {
     { id:'3', name:'地域夏祭り', date:'2025-07-05', zone:'両方', place:'市民広場', status:'planned', memo:'', staff:['Aさん','Bさん','Cさん','Dさん','Eさん'], items:['1','2','3','4','5'], sales:null },
   ],
   invItems: [
-    { id:'1', name:'麺',      cat:'やきそば', unit:'袋', stock:10,  hakobi:0 },
-    { id:'2', name:'ソース',  cat:'やきそば', unit:'本', stock:15,  hakobi:2 },
-    { id:'3', name:'パック',  cat:'やきそば', unit:'枚', stock:600, hakobi:400 },
-    { id:'4', name:'はし',    cat:'やきそば', unit:'膳', stock:400, hakobi:200 },
-    { id:'5', name:'キャベツ',cat:'やきそば', unit:'個', stock:5,   hakobi:0 },
-    { id:'6', name:'肉',      cat:'やきそば', unit:'kg', stock:5,   hakobi:3 },
-    { id:'7', name:'牛串',    cat:'串',       unit:'本', stock:200, hakobi:100 },
-    { id:'8', name:'豚串',    cat:'串',       unit:'本', stock:100, hakobi:50 },
-    { id:'9', name:'鳥串',    cat:'串',       unit:'本', stock:200, hakobi:100 },
-    { id:'10',name:'容器',    cat:'串',       unit:'個', stock:300, hakobi:200 },
-    { id:'11',name:'氷',      cat:'かき氷', unit:'袋', stock:5,   hakobi:0 },
-    { id:'12',name:'カップ',  cat:'かき氷', unit:'個', stock:500, hakobi:300 },
-    { id:'13',name:'いちご',  cat:'かき氷', unit:'パック', stock:10, hakobi:2 },
-    { id:'14',name:'メロン',  cat:'かき氷', unit:'個', stock:8,   hakobi:2 },
+    { id:'1', loc:'A', name:'麺',      cat:'やきそば', unit:'袋', stock:10,  hakobi:0 },
+    { id:'2', loc:'A', name:'ソース',  cat:'やきそば', unit:'本', stock:15,  hakobi:2 },
+    { id:'3', loc:'B', name:'パック',  cat:'やきそば', unit:'枚', stock:600, hakobi:400 },
+    { id:'4', loc:'B', name:'はし',    cat:'やきそば', unit:'膳', stock:400, hakobi:200 },
+    { id:'5', loc:'冷蔵①', name:'キャベツ',cat:'やきそば', unit:'個', stock:5,   hakobi:0 },
+    { id:'6', loc:'冷蔵①', name:'肉',      cat:'やきそば', unit:'kg', stock:5,   hakobi:3 },
+    { id:'7', loc:'C', name:'牛串',    cat:'串',       unit:'本', stock:200, hakobi:100 },
+    { id:'8', loc:'C', name:'豚串',    cat:'串',       unit:'本', stock:100, hakobi:50 },
+    { id:'9', loc:'A', name:'鳥串',    cat:'串',       unit:'本', stock:200, hakobi:100 },
+    { id:'10',loc:'D', name:'容器',    cat:'串',       unit:'個', stock:300, hakobi:200 },
+    { id:'11',loc:'製氷', name:'氷',      cat:'かき氷', unit:'袋', stock:5,   hakobi:0 },
+    { id:'12',loc:'E', name:'カップ',  cat:'かき氷', unit:'個', stock:500, hakobi:300 },
+    { id:'13',loc:'冷蔵②', name:'いちご',  cat:'かき氷', unit:'パック', stock:10, hakobi:2 },
+    { id:'14',loc:'冷蔵②', name:'メロン',  cat:'かき氷', unit:'個', stock:8,   hakobi:2 },
   ],
   notices: [
     { time:'今日', text:'6/14 Aゾーン・Bゾーンで同日出店です ⚠️ 人員配置を確認してください' },
@@ -1246,6 +1336,7 @@ function initApp() {
   applyPermissions();
   renderCalendar();
   renderInventory();
+  setInventoryMode(inventoryMode);
   renderSalesPage();
   renderHome();
   renderSettings();
@@ -1909,7 +2000,7 @@ function copyBelongingsLineText(eventId){
 function makeBackupData(){
   return {
     app:'FUJIWARA GROUP 販売管理',
-    version:'v4.3.4',
+    version:'v4.3.6-warehouse',
     exportedAt:new Date().toISOString(),
     state:state,
     passwords:PW
@@ -2210,11 +2301,80 @@ function renderInventory() {
     editBtns='<button class="btn btn-icon btn-ghost" onclick="openStockModal(\''+item.id+'\')">±</button>';
     editBtns+='<button class="btn btn-icon btn-ghost" onclick="openInvItemForm(\''+item.id+'\')" style="margin-top:2px">✏️</button>';
     return '<tr><td style="font-weight:500">'+item.name+'</td>'
-      +'<td><span class="cat-tag">'+item.cat+'</span></td>'
+      +'<td><span class="cat-tag">'+(item.cat||'')+'</span><br><span class="muted" style="font-size:10px">📍 '+(item.loc||'未設定')+'</span></td>'
       +'<td><span class="mono" style="font-weight:700">'+item.hakobi+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
       +'<td><span class="mono" style="font-weight:700;color:'+(item.stock<5?'var(--red)':'var(--green)')+'">'+item.stock+'</span></td>'
       +'<td>'+editBtns+'</td></tr>';
   }).join('');
+  renderWarehouseMapCounts();
+  renderWarehouseList();
+}
+
+function setInventoryMode(mode){
+  inventoryMode=mode||'list';
+  var list=document.getElementById('inventory-list-content');
+  var map=document.getElementById('warehouse-map-content');
+  var t1=document.getElementById('inv-tab-list');
+  var t2=document.getElementById('inv-tab-map');
+  if(list) list.style.display=inventoryMode==='list'?'':'none';
+  if(map) map.style.display=inventoryMode==='map'?'':'none';
+  if(t1) t1.classList.toggle('active', inventoryMode==='list');
+  if(t2) t2.classList.toggle('active', inventoryMode==='map');
+  renderWarehouseMapCounts();
+  renderWarehouseList();
+}
+function warehouseLocations(){ return ['A','B','C','D','E','F','G','H','I','J','K','L','冷蔵①','冷蔵②','製氷','未設定']; }
+function itemsByLoc(loc){ return (state.invItems||[]).filter(function(i){ return (i.loc||'未設定')===loc; }); }
+function renderWarehouseMapCounts(){
+  document.querySelectorAll('.wh-cell[data-loc]').forEach(function(el){
+    var loc=el.getAttribute('data-loc');
+    var cnt=itemsByLoc(loc).length;
+    el.classList.toggle('active', loc===selectedWarehouseLoc);
+    var old=el.querySelector('.wh-count'); if(old) old.remove();
+    if(cnt>0){ var b=document.createElement('span'); b.className='wh-count'; b.textContent=cnt; el.appendChild(b); }
+  });
+}
+function selectWarehouseLoc(loc){
+  selectedWarehouseLoc=loc||'A';
+  renderWarehouseMapCounts();
+  renderWarehouseSelected();
+}
+function renderWarehouseSelected(){
+  var title=document.getElementById('wh-selected-title');
+  var box=document.getElementById('wh-selected-list');
+  if(!box) return;
+  var loc=selectedWarehouseLoc||'A';
+  if(title) title.textContent='📍 '+loc+' の中身';
+  var items=itemsByLoc(loc);
+  if(!items.length){ box.innerHTML='この場所にはまだ登録がありません。'; return; }
+  box.innerHTML='<table class="wh-mini-table"><thead><tr><th>商品</th><th>在庫</th><th>持出し</th><th></th></tr></thead><tbody>'+items.map(function(item){
+    return '<tr><td><b>'+item.name+'</b><br><span class="muted">'+(item.cat||'')+'</span></td><td>'+item.stock+' '+(item.unit||'')+'</td><td>'+item.hakobi+' '+(item.unit||'')+'</td><td><button class="btn btn-icon btn-ghost" onclick="openStockModal(\''+item.id+'\')">±</button></td></tr>';
+  }).join('')+'</tbody></table>';
+}
+function renderWarehouseList(){
+  renderWarehouseSelected();
+  var box=document.getElementById('wh-all-list');
+  if(!box) return;
+  var q=(document.getElementById('wh-search-input')&&document.getElementById('wh-search-input').value||'').trim();
+  var items=(state.invItems||[]).filter(function(i){ return !q || (String(i.name||'')+String(i.cat||'')+String(i.loc||'')).indexOf(q)>=0; });
+  if(!items.length){ box.innerHTML='<div class="empty-state"><div class="ei">📦</div>該当する在庫がありません</div>'; return; }
+  box.innerHTML='<table class="wh-list-table"><thead><tr><th>場所</th><th>商品</th><th>在庫</th><th>持出し</th></tr></thead><tbody>'+items.map(function(item){
+    return '<tr onclick="selectWarehouseLoc(\''+(item.loc||'未設定')+'\')"><td><b>📍 '+(item.loc||'未設定')+'</b></td><td>'+item.name+'<br><span class="muted">'+(item.cat||'')+'</span></td><td>'+item.stock+' '+(item.unit||'')+'</td><td>'+item.hakobi+' '+(item.unit||'')+'</td></tr>';
+  }).join('')+'</tbody></table>';
+}
+function warehouseFindItem(){
+  var q=(document.getElementById('wh-search-input')&&document.getElementById('wh-search-input').value||'').trim();
+  if(!q){ toast('🔍 商品名を入れてください'); return; }
+  var found=(state.invItems||[]).find(function(i){ return String(i.name||'').indexOf(q)>=0; });
+  if(found){ selectWarehouseLoc(found.loc||'未設定'); toast('📍 '+found.name+' は '+(found.loc||'未設定')+' にあります'); }
+  else toast('見つかりませんでした');
+}
+function shareWarehouseToKing(){
+  if(role!=='leader' && role!=='staff'){ toast('⛔ リーダー・担当者のみ共有できます'); return; }
+  var payload={updatedAt:new Date().toISOString(), invItems:state.invItems||[]};
+  try{ localStorage.setItem('fujiwara_warehouse_share_v1', JSON.stringify(payload)); }catch(e){}
+  if(typeof fbSave==='function') fbSave();
+  toast('👑 キングアプリ共有用データを更新しました');
 }
 
 function setInvCat(c){ invCatFilter=c; renderInventory(); }
@@ -2238,7 +2398,7 @@ function quickAddItem(){
   var name=document.getElementById('quick-item-name').value.trim();
   if(!name){ toast('⚠️ 品目名を入力してください'); return; }
   var cat=invCatFilter==='すべて'?'その他':invCatFilter;
-  state.invItems.push({id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0});
+  state.invItems.push({id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0,loc:selectedWarehouseLoc||'未設定'});
   addAudit('在庫品目追加', name+'（'+cat+'）');
   document.getElementById('quick-item-name').value='';
   renderInventory();
@@ -2283,6 +2443,7 @@ function openInvItemForm(id) {
   document.getElementById('iif-name').value=item?item.name:'';
   document.getElementById('iif-cat').value=item?item.cat:'やきそば';
   document.getElementById('iif-unit').value=item?item.unit:'';
+  document.getElementById('iif-location').value=item?(item.loc||'未設定'):(selectedWarehouseLoc||'未設定');
   document.getElementById('iif-stock').value=item?item.stock:'';
   document.getElementById('iif-hakobi').value=item?item.hakobi:'';
   document.getElementById('iif-del-btn').style.display=item?'':'none';
@@ -2293,7 +2454,7 @@ function saveInvItemForm() {
   var name=document.getElementById('iif-name').value.trim();
   if(!name){ toast('⚠️ 品目名は必須です'); return; }
   var rawId=document.getElementById('iif-id').value;
-  var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
+  var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,loc:document.getElementById('iif-location').value||'未設定',stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
     for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); break; } }
     addAudit('在庫品目編集', name);
