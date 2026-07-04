@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>イベント損益・預金管理</title>
+<style>
+  :root{
+    --bg:#f7f7fb; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --main:#2563eb; --good:#16a34a; --bad:#dc2626; --line:#e5e7eb;
+    --gold:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#111827,#2563eb);color:#fff;padding:16px 14px;box-shadow:0 4px 14px #0002}
+  h1{font-size:22px;margin:0 0 4px;font-weight:900}
+  .sub{font-size:13px;opacity:.9}
+  main{padding:14px;max-width:980px;margin:auto}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:820px){.grid.two{grid-template-columns:1fr 1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 6px 18px #00000010}
+  h2{font-size:18px;margin:0 0 10px;border-left:6px solid var(--main);padding-left:8px}
+  label{font-size:13px;font-weight:800;color:#374151;display:block;margin:8px 0 4px}
+  input,select,textarea{width:100%;font-size:17px;padding:12px;border:1px solid #d1d5db;border-radius:12px;background:#fff}
+  textarea{min-height:72px}
+  table{width:100%;border-collapse:collapse;margin-top:6px;overflow:hidden;border-radius:12px}
+  th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;font-size:14px}
+  th{background:#f3f4f6;font-weight:900}
+  td:last-child,th:last-child{text-align:right}
+  .row{display:grid;grid-template-columns:1.2fr 1fr;gap:8px;align-items:end}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button{border:0;border-radius:999px;padding:12px 16px;font-weight:900;font-size:15px;color:#fff;background:var(--main);box-shadow:0 3px 10px #0002}
+  button.good{background:var(--good)} button.bad{background:var(--bad)} button.gold{background:var(--gold);color:#111827} button.gray{background:#6b7280}
+  .summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .box{border-radius:16px;padding:14px;background:#f9fafb;border:1px solid var(--line)}
+  .box b{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
+  .yen{font-size:24px;font-weight:1000;letter-spacing:.3px}
+  .profit{color:var(--good)} .loss{color:var(--bad)} .save{color:#ca8a04}
+  .small{font-size:12px;color:var(--muted);line-height:1.5}
+  .history-item{border:1px solid var(--line);border-radius:14px;padding:10px;margin:8px 0;background:#fff}
+  .history-item strong{font-size:15px}
+  .pill{display:inline-block;border-radius:999px;padding:3px 8px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:800;margin-top:4px}
+  .danger-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:10px;font-size:13px;color:#9a3412;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>イベント損益・預金管理</h1>
+  <div class="sub">売上 − 経費 ＝ 利益　→　利益から預金額を自動計算</div>
+</header>
+<main>
+  <div class="grid two">
+    <section class="card">
+      <h2>イベント情報</h2>
+      <label>イベント日</label>
+      <input id="date" type="date">
+      <label>イベント名 / 場所</label>
+      <input id="eventName" placeholder="例：水島夜市 / サンドーム福井">
+      <label>販売メニュー</label>
+      <input id="menu" placeholder="例：かき氷・イカ焼き・牛串">
+      <label>メモ</label>
+      <textarea id="memo" placeholder="天気、客数、反省点など"></textarea>
+    </section>
+
+    <section class="card">
+      <h2>売上</h2>
+      <label>現金売上</label>
+      <input id="cashSales" type="number" inputmode="numeric" placeholder="0">
+      <label>PayPay・カード売上</label>
+      <input id="cashlessSales" type="number" inputmode="numeric" placeholder="0">
+      <label>その他売上</label>
+      <input id="otherSales" type="number" inputmode="numeric" placeholder="0">
+      <div class="danger-note">入力したら自動計算。スマホ・iPadのブラウザに保存されます。</div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>経費</h2>
+    <div class="grid two">
+      <div><label>食材仕入</label><input id="costFood" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label>人件費</label><input id="costLabor" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label>会場代</label><input id="costPlace" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label>高速・ガソリン</label><input id="costFuel" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label>ガス・炭・氷</label><input id="costGas" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label>その他経費</label><input id="costOther" type="number" inputmode="numeric" placeholder="0"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>計算結果</h2>
+    <div class="summary">
+      <div class="box"><b>売上合計</b><div id="totalSales" class="yen">¥0</div></div>
+      <div class="box"><b>経費合計</b><div id="totalCost" class="yen loss">¥0</div></div>
+      <div class="box"><b>利益</b><div id="profit" class="yen profit">¥0</div></div>
+      <div class="box"><b>利益率</b><div id="profitRate" class="yen">0%</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>利益の振り分け</h2>
+    <div class="grid two">
+      <div>
+        <label>預金割合</label>
+        <select id="savingRate">
+          <option value="30">30% 預金</option>
+          <option value="40">40% 預金</option>
+          <option value="50" selected>50% 預金</option>
+          <option value="60">60% 預金</option>
+          <option value="70">70% 預金</option>
+        </select>
+      </div>
+      <div>
+        <label>現在の預金残高</label>
+        <input id="bankBalance" type="number" inputmode="numeric" placeholder="0">
+      </div>
+    </div>
+    <table>
+      <tr><th>振り分け</th><th>金額</th></tr>
+      <tr><td>預金するお金</td><td id="savingAmount">¥0</td></tr>
+      <tr><td>次回仕入資金</td><td id="nextStock">¥0</td></tr>
+      <tr><td>会社運転資金</td><td id="companyMoney">¥0</td></tr>
+      <tr><td>自分の取り分</td><td id="ownerMoney">¥0</td></tr>
+      <tr><th>預金後の残高</th><th id="afterBank">¥0</th></tr>
+    </table>
+    <div class="btns">
+      <button class="good" onclick="saveEvent()">このイベントを保存</button>
+      <button class="gold" onclick="applySaving()">預金残高に反映</button>
+      <button class="gray" onclick="clearForm()">入力リセット</button>
+    </div>
+    <div class="small">※ 利益がマイナスの場合、預金額は0円で計算します。</div>
+  </section>
+
+  <section class="card">
+    <h2>保存したイベント</h2>
+    <div id="history"></div>
+    <div class="btns"><button class="bad" onclick="clearHistory()">履歴を全部削除</button></div>
+  </section>
+</main>
+
+<script>
+const ids = ['date','eventName','menu','memo','cashSales','cashlessSales','otherSales','costFood','costLabor','costPlace','costFuel','costGas','costOther','savingRate','bankBalance'];
+const yen = n => '¥' + Math.round(Number(n||0)).toLocaleString('ja-JP');
+const num = id => Number(document.getElementById(id).value || 0);
+
+function calc(){
+  const sales = num('cashSales') + num('cashlessSales') + num('otherSales');
+  const costs = num('costFood') + num('costLabor') + num('costPlace') + num('costFuel') + num('costGas') + num('costOther');
+  const profit = sales - costs;
+  const rate = sales > 0 ? (profit / sales * 100) : 0;
+  const safeProfit = Math.max(profit, 0);
+  const saving = Math.round(safeProfit * num('savingRate') / 100);
+  const remain = safeProfit - saving;
+  const nextStock = Math.round(remain * 0.4);
+  const company = Math.round(remain * 0.3);
+  const owner = remain - nextStock - company;
+  const bank = num('bankBalance');
+
+  document.getElementById('totalSales').textContent = yen(sales);
+  document.getElementById('totalCost').textContent = yen(costs);
+  document.getElementById('profit').textContent = yen(profit);
+  document.getElementById('profit').className = 'yen ' + (profit >= 0 ? 'profit' : 'loss');
+  document.getElementById('profitRate').textContent = rate.toFixed(1) + '%';
+  document.getElementById('savingAmount').textContent = yen(saving);
+  document.getElementById('nextStock').textContent = yen(nextStock);
+  document.getElementById('companyMoney').textContent = yen(company);
+  document.getElementById('ownerMoney').textContent = yen(owner);
+  document.getElementById('afterBank').textContent = yen(bank + saving);
+  localStorage.setItem('eventProfitDraft', JSON.stringify(Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value]))));
+}
+
+function getData(){
+  const sales = num('cashSales') + num('cashlessSales') + num('otherSales');
+  const costs = num('costFood') + num('costLabor') + num('costPlace') + num('costFuel') + num('costGas') + num('costOther');
+  const profit = sales - costs;
+  const saving = Math.round(Math.max(profit,0) * num('savingRate') / 100);
+  return {
+    date: document.getElementById('date').value,
+    name: document.getElementById('eventName').value || '無名イベント',
+    menu: document.getElementById('menu').value,
+    memo: document.getElementById('memo').value,
+    sales, costs, profit, saving,
+    savedAt: new Date().toLocaleString('ja-JP')
+  };
+}
+
+function saveEvent(){
+  const data = getData();
+  const list = JSON.parse(localStorage.getItem('eventProfitHistory') || '[]');
+  list.unshift(data);
+  localStorage.setItem('eventProfitHistory', JSON.stringify(list));
+  renderHistory();
+  alert('保存したで！');
+}
+
+function applySaving(){
+  const data = getData();
+  document.getElementById('bankBalance').value = num('bankBalance') + data.saving;
+  calc();
+  alert('預金残高に反映したで！');
+}
+
+function clearForm(){
+  if(!confirm('入力をリセットする？')) return;
+  ids.forEach(id=>{ if(id !== 'savingRate' && id !== 'bankBalance') document.getElementById(id).value=''; });
+  document.getElementById('date').valueAsDate = new Date();
+  calc();
+}
+
+function clearHistory(){
+  if(!confirm('保存履歴を全部削除する？')) return;
+  localStorage.removeItem('eventProfitHistory');
+  renderHistory();
+}
+
+function renderHistory(){
+  const list = JSON.parse(localStorage.getItem('eventProfitHistory') || '[]');
+  const el = document.getElementById('history');
+  if(list.length === 0){ el.innerHTML = '<div class="small">まだ保存はありません。</div>'; return; }
+  el.innerHTML = list.map(x=>`
+    <div class="history-item">
+      <strong>${x.date || '日付なし'}　${escapeHtml(x.name)}</strong><br>
+      <span class="pill">売上 ${yen(x.sales)}</span>
+      <span class="pill">経費 ${yen(x.costs)}</span>
+      <span class="pill">利益 ${yen(x.profit)}</span>
+      <span class="pill">預金 ${yen(x.saving)}</span>
+      <div class="small">${escapeHtml(x.menu || '')} ${x.memo ? ' / ' + escapeHtml(x.memo) : ''}<br>保存：${x.savedAt}</div>
+    </div>`).join('');
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+function load(){
+  const draft = JSON.parse(localStorage.getItem('eventProfitDraft') || '{}');
+  ids.forEach(id=>{ if(draft[id] !== undefined) document.getElementById(id).value = draft[id]; });
+  if(!document.getElementById('date').value) document.getElementById('date').valueAsDate = new Date();
+  ids.forEach(id=>document.getElementById(id).addEventListener('input', calc));
+  ids.forEach(id=>document.getElementById(id).addEventListener('change', calc));
+  renderHistory(); calc();
+}
+load();
+</script>
+</body>
+</html>
