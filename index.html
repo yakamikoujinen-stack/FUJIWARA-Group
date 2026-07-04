@@ -613,7 +613,7 @@ body::before,#app::before,.page::before{
           </div>
           <div class="scroll-x">
             <table class="inv-table">
-              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th></th></tr></thead>
+              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th></th></tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table>
           </div>
@@ -2304,6 +2304,7 @@ function renderInventory() {
       +'<td><span class="cat-tag">'+(item.cat||'')+'</span><br><span class="muted" style="font-size:10px">📍 '+(item.loc||'未設定')+'</span></td>'
       +'<td><span class="mono" style="font-weight:700">'+item.hakobi+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
       +'<td><span class="mono" style="font-weight:700;color:'+(item.stock<5?'var(--red)':'var(--green)')+'">'+item.stock+'</span></td>'
+      +'<td>'+warehouseLocationSelectHtml(item)+'</td>'
       +'<td>'+editBtns+'</td></tr>';
   }).join('');
   renderWarehouseMapCounts();
@@ -2324,6 +2325,29 @@ function setInventoryMode(mode){
   renderWarehouseList();
 }
 function warehouseLocations(){ return ['A','B','C','D','E','F','G','H','I','J','K','L','冷蔵①','冷蔵②','製氷','未設定']; }
+
+function warehouseLocationSelectHtml(item){
+  var cur=item.loc||'未設定';
+  return '<select onchange="updateInvItemLocation(\''+item.id+'\', this.value)" style="min-width:96px;padding:8px 10px;font-size:13px;border-radius:10px;background:#fffdfa;border:1.5px solid #d8bf75;color:#241900">'
+    + warehouseLocations().map(function(loc){
+      return '<option value="'+loc+'"'+(loc===cur?' selected':'')+'>'+loc+'</option>';
+    }).join('')
+    + '</select>';
+}
+function updateInvItemLocation(id, loc){
+  if(role==='user'){ toast('⛔ 在庫管理はリーダー・担当者のみ操作できます'); renderInventory(); return; }
+  var item=null;
+  for(var i=0;i<state.invItems.length;i++){
+    if(String(state.invItems[i].id)===String(id)){ item=state.invItems[i]; break; }
+  }
+  if(!item) return;
+  var oldLoc=item.loc||'未設定';
+  item.loc=loc||'未設定';
+  addAudit('在庫保存場所変更', item.name+'｜'+oldLoc+'→'+item.loc);
+  renderInventory();
+  toast('📍 '+item.name+' を '+item.loc+' に設定しました');
+  fbSave();
+}
 function itemsByLoc(loc){ return (state.invItems||[]).filter(function(i){ return (i.loc||'未設定')===loc; }); }
 function renderWarehouseMapCounts(){
   document.querySelectorAll('.wh-cell[data-loc]').forEach(function(el){
