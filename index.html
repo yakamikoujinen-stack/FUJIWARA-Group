@@ -2563,9 +2563,13 @@ function renderSalesPage() {
 
 function getSimpleSales(ev){
   ev.sales = ev.sales || {};
-  ev.sales.simple = ev.sales.simple || {items:{A:0,B:0,C:0,D:0,E:0}, memo:''};
+  ev.sales.simple = ev.sales.simple || {labels:{A:'',B:'',C:'',D:'',E:''}, items:{A:0,B:0,C:0,D:0,E:0}, memo:''};
+  ev.sales.simple.labels = ev.sales.simple.labels || {A:'',B:'',C:'',D:'',E:''};
   ev.sales.simple.items = ev.sales.simple.items || {A:0,B:0,C:0,D:0,E:0};
-  ['A','B','C','D','E'].forEach(function(k){ if(typeof ev.sales.simple.items[k] === 'undefined') ev.sales.simple.items[k]=0; });
+  ['A','B','C','D','E'].forEach(function(k){
+    if(typeof ev.sales.simple.labels[k] === 'undefined') ev.sales.simple.labels[k]='';
+    if(typeof ev.sales.simple.items[k] === 'undefined') ev.sales.simple.items[k]=0;
+  });
   return ev.sales.simple;
 }
 function calcSimpleSalesTotal(simple){
@@ -2590,8 +2594,10 @@ function renderSalesDetail() {
   }
   var total=calcSimpleSalesTotal(simple);
   var items=simple.items||{};
+  var labels=simple.labels||{};
   var rows=['A','B','C','D','E'].map(function(k){
-    return '<tr><td style="font-weight:900;text-align:center;width:70px">'+k+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
+    var name=(labels[k]&&String(labels[k]).trim())?String(labels[k]).replace(/</g,'&lt;'):k;
+    return '<tr><td style="font-weight:900;width:120px">'+name+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
   }).join('');
   container.innerHTML='<div class="notice-card" style="font-size:13px">'
     +'<div style="font-weight:900;font-size:16px;margin-bottom:8px">'+(simple.date||ev.date||'')+'　'+(ev.name||'')+'</div>'
@@ -2713,10 +2719,11 @@ function openSalesEdit(id) {
   var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
     +'<div class="fg"><label>日付</label><input type="date" id="simple-sales-date" value="'+(simple.date||ev.date||'')+'"></div>'
     +'<div class="fg"><label>イベント名</label><input type="text" value="'+String(ev.name||'').replace(/"/g,'&quot;')+'" readonly></div>'
-    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上 A〜E</div>'
+    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上項目（名称は自由入力）</div>'
     +['A','B','C','D','E'].map(function(k){
+      var label=(simple.labels&&simple.labels[k])||'';
       var v=(simple.items&&simple.items[k])||'';
-      return '<div class="fg2"><div style="display:flex;align-items:center;font-weight:900;font-size:22px;justify-content:center;background:#fff8e8;border:1px solid var(--border);border-radius:9px">'+k+'</div><div class="fg"><label>'+k+' 売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
+      return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
     }).join('')
     +'<div class="fg"><label>メモ</label><textarea id="simple-sales-memo" placeholder="メモ">'+(simple.memo||'')+'</textarea></div>'
     +'<div style="font-size:12px;color:var(--text2);line-height:1.7">※仕入・細かい経費はキングアプリ・事務員アプリで管理</div>'
@@ -2744,9 +2751,12 @@ function saveSalesEdit() {
   if(!ev) return;
   ev.sales=ev.sales||{};
   var items={};
+  var labels={};
+  document.querySelectorAll('.simple-sales-label').forEach(function(inp){ labels[inp.dataset.key]=(inp.value||'').trim(); });
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){ items[inp.dataset.key]=parseInt(inp.value)||0; });
   var simple={
     date:(document.getElementById('simple-sales-date')||{}).value || ev.date || '',
+    labels:labels,
     items:items,
     memo:(document.getElementById('simple-sales-memo')||{}).value || '',
     updatedBy:userName||'未入力',
