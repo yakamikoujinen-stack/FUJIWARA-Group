@@ -625,11 +625,11 @@ body::before,#app::before,.page::before{
     <!-- SALES -->
     <div class="page" id="page-sales">
       <div class="pg">
-        <p class="page-title">📈 売上・損益</p>
-        <p class="page-sub">日次実績・損益計算</p>
+        <p class="page-title">📈 売上・経費</p>
+        <p class="page-sub">まゆみ・藤原・将・文太専用：かんたん売上表</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
-          <div class="admin-badge">🔒 リーダーのみ閲覧</div>
+          <div class="admin-badge">🔒 まゆみ＝編集 / 藤原＝閲覧 / 将・文太＝編集｜仕入・経費はキング/事務員アプリで管理</div>
           <div class="fg">
             <label>対象イベント</label>
             <select id="sales-ev-select" onchange="renderSalesDetail()"></select>
@@ -1049,7 +1049,7 @@ var state = {
     { time:'昨日', text:'持出し数が確定しました ✅' },
     { time:'2日前', text:'7月のイベントが新たに登録されました 📅' },
   ],
-  staffList: ['藤原','縁笑だるまや','まゆみ','龍来','想良'],
+  staffList: ['藤原','縁笑だるまや','まゆみ','龍来','想良','将','文太'],
   auditLogs: [],
 };
 
@@ -1058,7 +1058,7 @@ var NAV = {
   leader:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
-    {id:'sales',    icon:'📊', label:'売上・損益'},
+    {id:'sales',    icon:'📊', label:'売上・経費'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1079,6 +1079,39 @@ var LOGIN_PROFILE_KEY = 'fg_login_profile_v15';
 var manualLogout = false;
 
 function roleLabel(r){ return r==='leader'?'リーダー':(r==='staff'?'担当者':'一般'); }
+
+// 売上・経費の閲覧/編集を許可する名前
+// リーダーは全体管理のため常に許可。
+// 一般：まゆみ＝閲覧/編集、藤原＝閲覧のみ。担当者：将/文太＝閲覧/編集。
+var SALES_EXPENSE_ALLOWED = { userView:['まゆみ','藤原'], userEdit:['まゆみ'], staff:['将','文太'] };
+function normalizeAccessName(name){ return String(name||'').replace(/[\s　]+/g,'').trim(); }
+function isNameInListForAccess(name, list){
+  var n=normalizeAccessName(name);
+  return (list||[]).some(function(x){ return normalizeAccessName(x)===n; });
+}
+function canAccessSalesExpense(){
+  if(role==='leader') return true;
+  if(role==='user') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.userView);
+  if(role==='staff') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.staff);
+  return false;
+}
+function canEditSalesExpense(){
+  if(role==='leader') return true;
+  if(role==='user') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.userEdit);
+  if(role==='staff') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.staff);
+  return false;
+}
+function salesExpenseAccessLabel(){
+  if(canEditSalesExpense()) return '閲覧・編集できます';
+  if(canAccessSalesExpense()) return '閲覧のみできます';
+  return '閲覧できません';
+}
+function ensureSalesExpenseStaffNames(){
+  if(!Array.isArray(state.staffList)) state.staffList=[];
+  SALES_EXPENSE_ALLOWED.userView.concat(SALES_EXPENSE_ALLOWED.staff).forEach(function(n){
+    if(!state.staffList.some(function(x){ return normalizeAccessName(x)===normalizeAccessName(n); })){ state.staffList.push(n); }
+  });
+}
 
 function normalizeNameForLogin(name){
   return String(name||'').replace(/\s+/g,'').trim();
@@ -1330,6 +1363,7 @@ function initApp() {
   calYear = now.getFullYear(); calMonth = now.getMonth();
 
   ensureRouteStaffNames();
+  ensureSalesExpenseStaffNames();
   applyPermissions();
   renderCalendar();
   renderInventory();
@@ -1351,8 +1385,8 @@ function applyPermissions() {
   }
   if(role==='user') hide('btn-add-inv-item');
   else show('btn-add-inv-item');
-  if(role!=='leader'){
-    lockSection('sales-lock','売上・損益データはリーダーのみ閲覧できます');
+  if(!canAccessSalesExpense()){
+    lockSection('sales-lock','売上・経費は、まゆみ/藤原（一般）・将/文太（担当者）・リーダーのみ閲覧できます');
     hide('sales-content');
   } else {
     show('sales-content');
@@ -1406,7 +1440,12 @@ function hide(id){ var e=document.getElementById(id); if(e) e.style.display='non
 
 // ════ NAV ════
 function buildNav() {
-  var items = NAV[role];
+  var items = (NAV[role]||[]).slice();
+  // 売上・経費は、まゆみ（一般）・将/文太（担当者）・リーダーだけ表示
+  if(role !== 'leader' && canAccessSalesExpense() && !items.some(function(n){ return n.id==='sales'; })){
+    var insertAt = Math.min(2, items.length);
+    items.splice(insertAt, 0, {id:'sales', icon:'📊', label:'売上・経費'});
+  }
   document.getElementById('bottom-nav').innerHTML = items.map(function(n){
     return '<button class="nav-item" id="nav-'+n.id+'" onclick="showPage(\''+n.id+'\')"><span class="ni">'+n.icon+'</span>'+n.label+'</button>';
   }).join('');
@@ -1421,6 +1460,11 @@ function showPage(id) {
     toast('⛔ 忘れ物リストはリーダー・担当者のみ閲覧できます');
     id='calendar';
   }
+  if(id==='sales' && !canAccessSalesExpense()){
+    toast('⛔ 売上・経費は許可された人だけ閲覧できます');
+    id='calendar';
+  }
+  if(id==='sales') renderSalesPage();
   if(id==='belongings') renderBelongingsPage();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
@@ -2507,7 +2551,7 @@ function deleteInvItem() {
 
 // ════ SALES ════
 function renderSalesPage() {
-  if(role!=='leader') return;
+  if(!canAccessSalesExpense()) return;
   var sel=document.getElementById('sales-ev-select');
   var cur=sel.value;
   sel.innerHTML=state.events.map(function(ev){
@@ -2517,37 +2561,51 @@ function renderSalesPage() {
   renderSalesDetail();
 }
 
+function getSimpleSales(ev){
+  ev.sales = ev.sales || {};
+  ev.sales.simple = ev.sales.simple || {items:{A:0,B:0,C:0,D:0,E:0}, memo:''};
+  ev.sales.simple.items = ev.sales.simple.items || {A:0,B:0,C:0,D:0,E:0};
+  ['A','B','C','D','E'].forEach(function(k){ if(typeof ev.sales.simple.items[k] === 'undefined') ev.sales.simple.items[k]=0; });
+  return ev.sales.simple;
+}
+function calcSimpleSalesTotal(simple){
+  var total=0;
+  var items=(simple&&simple.items)||{};
+  ['A','B','C','D','E'].forEach(function(k){ total += parseInt(items[k])||0; });
+  return total;
+}
 function renderSalesDetail() {
-  if(role!=='leader') return;
+  if(!canAccessSalesExpense()) return;
   var id=document.getElementById('sales-ev-select').value;
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   var container=document.getElementById('sales-detail');
   if(!ev){ container.innerHTML=''; return; }
-  if(!ev.sales){
-    container.innerHTML='<div class="empty-state"><div class="ei">📊</div><p>まだ売上データがありません</p><button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上を入力する</button></div>';
+  var simple=(ev.sales&&ev.sales.simple)?ev.sales.simple:null;
+  if(!simple){
+    container.innerHTML='<div class="empty-state"><div class="ei">📊</div><p>まだ売上表がありません</p>'
+      +(canEditSalesExpense()?'<button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上表を入力する</button>':'<div style="font-size:12px;color:var(--text2);margin-top:10px">'+salesExpenseAccessLabel()+'</div>')
+      +'</div>';
     return;
   }
-  var s=ev.sales;
-  var laborTotal=0;
-  if(s.labor){ Object.keys(s.labor).forEach(function(k){ laborTotal+=s.labor[k]; }); }
-  var totalExp=(s.basho||0)+(s.shiire||0)+(s.kotsu||0)+(s.other||0)+laborTotal;
-  var profit=(s.total||0)-totalExp;
-  container.innerHTML='<div class="stat-grid">'
-    +'<div class="stat-card"><div class="stat-label">売上合計</div><div class="stat-value" style="color:var(--green)">¥'+((s.total||0).toLocaleString())+'</div></div>'
-    +'<div class="stat-card"><div class="stat-label">純利益</div><div class="stat-value" style="color:'+(profit>=0?'var(--gold)':'var(--red)')+'">¥'+(Math.abs(profit).toLocaleString())+'</div><div style="font-size:10px;margin-top:3px;color:'+(profit>=0?'var(--green)':'var(--red)')+'"">'+(profit>=0?'▲ 黒字':'▼ 赤字')+'</div></div>'
+  var total=calcSimpleSalesTotal(simple);
+  var items=simple.items||{};
+  var rows=['A','B','C','D','E'].map(function(k){
+    return '<tr><td style="font-weight:900;text-align:center;width:70px">'+k+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
+  }).join('');
+  container.innerHTML='<div class="notice-card" style="font-size:13px">'
+    +'<div style="font-weight:900;font-size:16px;margin-bottom:8px">'+(simple.date||ev.date||'')+'　'+(ev.name||'')+'</div>'
+    +'<div class="scroll-x"><table class="bsheet-table" style="min-width:280px;background:#fffdf6">'
+    +'<tbody>'
+    +'<tr><th colspan="2" style="text-align:center;font-size:15px">売上</th></tr>'
+    +rows
+    +'<tr><th style="text-align:center">計</th><th class="mono" style="text-align:right;font-size:16px">¥'+total.toLocaleString()+'</th></tr>'
+    +'<tr><td style="font-weight:900;text-align:center">メモ</td><td>'+(simple.memo?String(simple.memo).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'')+'</td></tr>'
+    +'</tbody></table></div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div>'
     +'</div>'
-    +'<div class="profit-card">'
-    +'<div class="profit-row"><span>📈 売上合計</span><span class="mono" style="color:var(--green)">¥'+((s.total||0).toLocaleString())+'</span></div>'
-    +'<div class="profit-row" style="padding-left:12px;font-size:12px;color:var(--text2)"><span>やきそば</span><span class="mono">¥'+((s.yakisoba||0).toLocaleString())+'</span></div>'
-    +'<div class="profit-row" style="padding-left:12px;font-size:12px;color:var(--text2)"><span>串</span><span class="mono">¥'+((s.kushi||0).toLocaleString())+'</span></div>'
-    +'<div class="profit-row" style="padding-left:12px;font-size:12px;color:var(--text2)"><span>水・ドリンク</span><span class="mono">¥'+((s.mizu||0).toLocaleString())+'</span></div>'
-    +'<div class="profit-row"><span>💸 経費合計</span><span class="mono" style="color:var(--gold)">¥'+(totalExp.toLocaleString())+'</span></div>'
-    +'<div class="profit-row"><span>損益</span><span class="mono" style="color:'+(profit>=0?'var(--gold)':'var(--red)')+'">¥'+(profit.toLocaleString())+'</span></div>'
-    +'</div>'
-    +'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>';
+    +(canEditSalesExpense()?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">👁️ '+salesExpenseAccessLabel()+'</div>');
 }
-
 
 // 出店アイテム文字列を売上入力用の品目リストに変換
 function getEventSalesItems(ev){
@@ -2644,119 +2702,62 @@ function calcEventSalesSummary(ev){
 
 
 function openSalesEdit(id) {
-  if(role!=='leader'){ toast('⛔ リーダーのみ操作できます'); return; }
+  if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
-
-  var dates=dateListForEvent(ev);
-  document.getElementById('se-title').textContent='📊 '+ev.name+' 日別売上入力';
+  var simple=getSimpleSales(ev);
+  document.getElementById('se-title').textContent='📊 かんたん売上表';
   document.getElementById('se-ev-id').value=id;
 
-  // 旧固定入力欄は使わないので隠しつつ値を空にする
-  ['se-total','se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){
-    var el=document.getElementById(x);
-    if(el) el.value='';
-  });
+  var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
+    +'<div class="fg"><label>日付</label><input type="date" id="simple-sales-date" value="'+(simple.date||ev.date||'')+'"></div>'
+    +'<div class="fg"><label>イベント名</label><input type="text" value="'+String(ev.name||'').replace(/"/g,'&quot;')+'" readonly></div>'
+    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上 A〜E</div>'
+    +['A','B','C','D','E'].map(function(k){
+      var v=(simple.items&&simple.items[k])||'';
+      return '<div class="fg2"><div style="display:flex;align-items:center;font-weight:900;font-size:22px;justify-content:center;background:#fff8e8;border:1px solid var(--border);border-radius:9px">'+k+'</div><div class="fg"><label>'+k+' 売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
+    }).join('')
+    +'<div class="fg"><label>メモ</label><textarea id="simple-sales-memo" placeholder="メモ">'+(simple.memo||'')+'</textarea></div>'
+    +'<div style="font-size:12px;color:var(--text2);line-height:1.7">※仕入・細かい経費はキングアプリ・事務員アプリで管理</div>'
+    +'</div>';
 
-  var salesItems=getEventSalesItems(ev);
-  var dailyHtml=dates.map(function(ds,idx){
-    var d=getDaySales(ev,ds);
-    var itemHtml=salesItems.map(function(item){
-      var val=d.items && typeof d.items[item] !== 'undefined' ? d.items[item] : getSalesItemValue(d,item);
-      return '<div class="fg"><label>'+item+'（円）</label>'
-        +'<input type="number" class="day-sales-item" data-date="'+ds+'" data-name="'+item+'" placeholder="0" min="0" value="'+(val||'')+'"></div>';
-    }).join('');
-
-    var laborHtml=(ev.staff||[]).map(function(name){
-      var val=d.labor&&d.labor[name]||'';
-      return '<div class="fg"><label>'+name+'（円）</label><input type="number" class="day-labor-input" data-date="'+ds+'" data-name="'+name+'" placeholder="10000" min="0" value="'+val+'"></div>';
-    }).join('');
-
-    return '<div class="settings-group" style="padding:12px;margin-bottom:14px">'
-      +'<div style="font-size:14px;font-weight:900;color:var(--gold);margin-bottom:10px">📅 '+ds+(idx===0?'（初日）':idx===dates.length-1?'（最終日）':'')+'</div>'
-      +'<div class="fg"><label>売上合計（空欄なら個別売上の合計）</label><input type="number" class="day-total-input" data-date="'+ds+'" placeholder="0" min="0" value="'+(d.total||'')+'"></div>'
-      +'<div style="background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px;padding:12px;margin-bottom:12px">'
-      +'<label style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">個別売上（出店アイテム別）</label>'
-      +itemHtml
-      +'</div>'
-      +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" class="day-exp-input" data-date="'+ds+'" data-key="basho" value="'+(d.basho||'')+'" min="0"></div>'
-      +'<div class="fg"><label>仕入れ</label><input type="number" class="day-exp-input" data-date="'+ds+'" data-key="shiire" value="'+(d.shiire||'')+'" min="0"></div></div>'
-      +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" class="day-exp-input" data-date="'+ds+'" data-key="kotsu" value="'+(d.kotsu||'')+'" min="0"></div>'
-      +'<div class="fg"><label>その他</label><input type="number" class="day-exp-input" data-date="'+ds+'" data-key="other" value="'+(d.other||'')+'" min="0"></div></div>'
-      +'<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:8px">'
-      +'<label style="font-size:12px;color:var(--text2);font-weight:700;margin-bottom:10px">労務費</label>'
-      +laborHtml
-      +'</div>'
-      +'</div>';
-  }).join('');
-
-  var box=document.getElementById('se-daily-inputs');
-  if(box){
-    box.innerHTML=dailyHtml;
-  } else {
-    var laborBox=document.getElementById('se-labor-inputs');
-    if(laborBox){
-      laborBox.innerHTML='';
-      laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+dailyHtml+'</div>');
-    }
-  }
-
-  // 既存の動的個別売上欄・労務欄は日別入力に置き換える
   var itemBox=document.getElementById('se-item-inputs'); if(itemBox) itemBox.innerHTML='';
-  var labor=document.getElementById('se-labor-inputs'); if(labor) labor.innerHTML='';
-
+  var laborBox=document.getElementById('se-labor-inputs');
+  if(laborBox){
+    laborBox.innerHTML='';
+    var old=document.getElementById('se-daily-inputs'); if(old) old.remove();
+    laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>');
+  }
+  // 固定の古い入力欄を使わない
+  ['se-total','se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
   openModal('modal-sales-edit');
   showPage('sales');
   document.getElementById('sales-ev-select').value=id;
 }
 
 function saveSalesEdit() {
+  if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
   var id=document.getElementById('se-ev-id').value;
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
-
-  var days={};
-  dateListForEvent(ev).forEach(function(ds){
-    days[ds]={items:{}, labor:{}};
-  });
-
-  document.querySelectorAll('.day-sales-item').forEach(function(inp){
-    var ds=inp.dataset.date;
-    if(!days[ds]) days[ds]={items:{}, labor:{}};
-    days[ds].items[inp.dataset.name]=parseInt(inp.value)||0;
-  });
-  document.querySelectorAll('.day-total-input').forEach(function(inp){
-    var ds=inp.dataset.date;
-    if(!days[ds]) days[ds]={items:{}, labor:{}};
-    days[ds].total=parseInt(inp.value)||0;
-  });
-  document.querySelectorAll('.day-exp-input').forEach(function(inp){
-    var ds=inp.dataset.date;
-    if(!days[ds]) days[ds]={items:{}, labor:{}};
-    days[ds][inp.dataset.key]=parseInt(inp.value)||0;
-  });
-  document.querySelectorAll('.day-labor-input').forEach(function(inp){
-    var ds=inp.dataset.date;
-    if(!days[ds]) days[ds]={items:{}, labor:{}};
-    if(inp.value) days[ds].labor[inp.dataset.name]=parseInt(inp.value)||0;
-  });
-
-  var total=0;
-  Object.keys(days).forEach(function(ds){
-    total += calcDaySalesTotal(days[ds]);
-  });
-
-  ev.sales={
-    total:total,
-    days:days
+  ev.sales=ev.sales||{};
+  var items={};
+  document.querySelectorAll('.simple-sales-input').forEach(function(inp){ items[inp.dataset.key]=parseInt(inp.value)||0; });
+  var simple={
+    date:(document.getElementById('simple-sales-date')||{}).value || ev.date || '',
+    items:items,
+    memo:(document.getElementById('simple-sales-memo')||{}).value || '',
+    updatedBy:userName||'未入力',
+    updatedAt:new Date().toLocaleString('ja-JP')
   };
-
-  addAudit('売上入力・修正', ev.name+'｜日別売上合計 ¥'+((ev.sales.total||0).toLocaleString()));
+  ev.sales.simple=simple;
+  ev.sales.total=calcSimpleSalesTotal(simple);
+  addAudit('かんたん売上表入力/修正', ev.name+'｜入力者 '+(userName||'未入力')+'｜売上合計 ¥'+((ev.sales.total||0).toLocaleString()));
   closeModal('modal-sales-edit');
   renderSalesPage();
-  toast('✅ 日別売上データを保存しました');
+  toast('✅ かんたん売上表を保存しました');
   fbSave();
 }
 
