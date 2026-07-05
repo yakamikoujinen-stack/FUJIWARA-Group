@@ -639,6 +639,20 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
+    <!-- ATTENDANCE LIST -->
+    <div class="page" id="page-attendance">
+      <div class="pg">
+        <p class="page-title">👥 スタッフ出勤一覧</p>
+        <p class="page-sub">イベントごとの参加スタッフ・出勤回答・未回答を確認できます。</p>
+        <div id="attendance-lock"></div>
+        <div id="attendance-content">
+          <div class="admin-badge">🔒 リーダー専用</div>
+          <div class="settings-group" id="attendance-list-area"></div>
+          <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:16px" onclick="renderAttendancePage()">一覧を更新</button>
+        </div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="pg">
@@ -1059,6 +1073,7 @@ var NAV = {
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
     {id:'sales',    icon:'📊', label:'売上・経費'},
+    {id:'attendance', icon:'👥', label:'出勤一覧'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1487,7 +1502,12 @@ function showPage(id) {
     toast('⛔ 売上・経費は許可された人だけ閲覧できます');
     id='calendar';
   }
+  if(id==='attendance' && role!=='leader'){
+    toast('⛔ スタッフ出勤一覧はリーダー専用です');
+    id='calendar';
+  }
   if(id==='sales') renderSalesPage();
+  if(id==='attendance') renderAttendancePage();
   if(id==='belongings') renderBelongingsPage();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
@@ -2849,10 +2869,24 @@ function escHtml(s){
   });
 }
 
-function renderLeaderEventStaffList(){
-  if(role!=='leader') return;
-  var el=document.getElementById('leader-event-staff-area');
+function renderAttendancePage(){
+  var lock=document.getElementById('attendance-lock');
+  var content=document.getElementById('attendance-content');
+  if(role!=='leader'){
+    if(lock) lockSection('attendance-lock','スタッフ出勤一覧はリーダー専用です');
+    if(content) content.style.display='none';
+    return;
+  }
+  if(lock) lock.innerHTML='';
+  if(content) content.style.display='';
+  renderEventStaffListTo('attendance-list-area');
+}
+
+function renderEventStaffListTo(targetId){
+  var el=document.getElementById(targetId);
   if(!el) return;
+  var today=new Date();
+  today.setHours(0,0,0,0);
   var events=(state.events||[]).slice().sort(function(a,b){
     return String(a.date||'').localeCompare(String(b.date||''));
   });
@@ -2877,6 +2911,9 @@ function renderLeaderEventStaffList(){
     var dateText=String(ev.date||'').slice(5).replace('-','/');
     var endText=ev.dateEnd ? '〜'+String(ev.dateEnd).slice(5).replace('-','/') : '';
     var staffText=staff.length ? staff.map(escHtml).join('・') : '<span style="color:var(--red);font-weight:900">未設定</span>';
+    var okText=ok.length ? ok.map(escHtml).join('・') : 'なし';
+    var maybeText=maybe.length ? maybe.map(escHtml).join('・') : 'なし';
+    var noText=no.length ? no.map(escHtml).join('・') : 'なし';
     var unansweredText=unanswered.length ? unanswered.map(escHtml).join('・') : 'なし';
     return '<div style="padding:12px 14px;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
@@ -2888,11 +2925,18 @@ function renderLeaderEventStaffList(){
       +'</div>'
       +'<div style="margin-top:8px;font-size:12px;line-height:1.8">'
         +'<div><b>参加スタッフ：</b>'+staffText+'</div>'
-        +'<div><b>出勤回答：</b><span style="color:var(--green);font-weight:900">⭕ '+ok.length+'</span>　<span style="color:var(--gold);font-weight:900">△ '+maybe.length+'</span>　<span style="color:var(--red);font-weight:900">❌ '+no.length+'</span>　未回答 '+unanswered.length+'</div>'
+        +'<div><b>⭕ 出勤可：</b><span style="color:var(--green);font-weight:900">'+okText+'</span></div>'
+        +'<div><b>△ 未定：</b><span style="color:var(--gold);font-weight:900">'+maybeText+'</span></div>'
+        +'<div><b>❌ 出勤不可：</b><span style="color:var(--red);font-weight:900">'+noText+'</span></div>'
         +'<div style="font-size:11px;color:'+(unanswered.length?'var(--red)':'var(--text2)')+'"><b>未回答：</b>'+unansweredText+'</div>'
       +'</div>'
       +'</div>';
   }).join('');
+}
+
+function renderLeaderEventStaffList(){
+  if(role!=='leader') return;
+  renderEventStaffListTo('leader-event-staff-area');
 }
 
 function renderStaffList() {
