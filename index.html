@@ -1130,6 +1130,32 @@ function salesExpenseAccessLabel(){
   return '閲覧できません';
 }
 
+// 売上表の個別権限
+// ① 記入者（藤原・まゆみ・将・文太）は自分が記入した売上だけ閲覧・編集
+// ② リーダーは全売上を閲覧・編集
+// ③ 一般ユーザーはシークレットイベントを表示しない（canCurrentUserSeeEvent側でも保護）
+function salesRecordOwner(ev){
+  return normalizeAccessName(ev && ev.sales && ev.sales.simple && ev.sales.simple.updatedBy);
+}
+function isSalesRecordMine(ev){
+  var owner=salesRecordOwner(ev);
+  if(!owner) return true; // まだ未入力なら許可された記入者が入力できる
+  return owner===normalizeAccessName(userName);
+}
+function canViewSalesRecord(ev){
+  if(!ev) return false;
+  if(!canAccessSalesExpense()) return false;
+  if(!canCurrentUserSeeEvent(ev)) return false;
+  if(role==='leader') return true;
+  return isSalesRecordMine(ev);
+}
+function canEditSalesRecord(ev){
+  if(!ev) return false;
+  if(!canEditSalesExpense()) return false;
+  if(!canCurrentUserSeeEvent(ev)) return false;
+  if(role==='leader') return true;
+  return isSalesRecordMine(ev);
+}
 
 function isSecretEvent(ev){
   var v = ev && ev.secret;
@@ -1832,9 +1858,9 @@ function renderEventList(dateFilter) {
     }
 
     var salesActionHtml='';
-    if(canAccessSalesExpense()){
-      var salesLabel=canEditSalesExpense()?'📊 売上入力':'📊 売上確認';
-      var salesClick=canEditSalesExpense()?('openSalesEdit(\''+ev.id+'\')'):('openSalesView(\''+ev.id+'\')');
+    if(canViewSalesRecord(ev)){
+      var salesLabel=canEditSalesRecord(ev)?'📊 売上入力':'📊 売上確認';
+      var salesClick=canEditSalesRecord(ev)?('openSalesEdit(\''+ev.id+'\')'):('openSalesView(\''+ev.id+'\')');
       salesActionHtml='<div class="ev-actions" onclick="event.stopPropagation()" style="margin-top:8px">'
         +'<button class="btn btn-sm btn-outline" onclick="'+salesClick+'">'+salesLabel+'</button>'
         +'</div>';
@@ -2615,10 +2641,15 @@ function renderSalesPage(preselectId) {
   var sel=document.getElementById('sales-ev-select');
   if(!sel) return;
   var cur=preselectId || sel.value;
-  var visible=(state.events||[]).filter(function(ev){ return canCurrentUserSeeEvent(ev); });
+  var visible=(state.events||[]).filter(function(ev){ return canViewSalesRecord(ev); });
   sel.innerHTML=visible.map(function(ev){
     return '<option value="'+ev.id+'">'+(ev.date||'').slice(5).replace('-','/')+' '+eventNameSafe(ev)+'</option>';
   }).join('');
+  if(!visible.length){
+    var detail=document.getElementById('sales-detail');
+    if(detail) detail.innerHTML='<div class="lock-box">🔒 表示できる売上表はありません<br><span style="font-size:12px">記入者本人の売上、またはリーダーのみ全件表示されます。</span></div>';
+    return;
+  }
   if(cur && visible.some(function(ev){ return String(ev.id)===String(cur); })){ sel.value=cur; }
   renderSalesDetail();
 }
@@ -2647,11 +2678,11 @@ function renderSalesDetail() {
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   var container=document.getElementById('sales-detail');
   if(!ev){ container.innerHTML=''; return; }
-  if(!canCurrentUserSeeEvent(ev)){ container.innerHTML='<div class="lock-box">🔒 このイベントは閲覧できません</div>'; return; }
+  if(!canViewSalesRecord(ev)){ container.innerHTML='<div class="lock-box">🔒 この売上表は記入者本人とリーダーだけ閲覧できます</div>'; return; }
   var simple=(ev.sales&&ev.sales.simple)?ev.sales.simple:null;
   if(!simple){
     container.innerHTML='<div class="empty-state"><div class="ei">📊</div><p>まだ売上表がありません</p>'
-      +(canEditSalesExpense()?'<button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上表を入力する</button>':'<div style="font-size:12px;color:var(--text2);margin-top:10px">'+salesExpenseAccessLabel()+'</div>')
+      +(canEditSalesRecord(ev)?'<button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上表を入力する</button>':'<div style="font-size:12px;color:var(--text2);margin-top:10px">記入者本人とリーダーだけ編集できます</div>')
       +'</div>';
     return;
   }
@@ -2673,7 +2704,7 @@ function renderSalesDetail() {
     +'</tbody></table></div>'
     +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div>'
     +'</div>'
-    +(canEditSalesExpense()?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">👁️ '+salesExpenseAccessLabel()+'</div>');
+    +(canEditSalesRecord(ev)?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">🔒 記入者本人とリーダーだけ編集できます</div>');
 }
 
 // 出店アイテム文字列を売上入力用の品目リストに変換
@@ -2775,7 +2806,7 @@ function openSalesEdit(id) {
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
-  if(!canCurrentUserSeeEvent(ev)){ toast('⛔ このイベントは閲覧できません'); return; }
+  if(!canEditSalesRecord(ev)){ toast('⛔ この売上表は記入者本人とリーダーだけ編集できます'); return; }
   var simple=getSimpleSales(ev);
   document.getElementById('se-title').textContent='📊 かんたん売上表';
   document.getElementById('se-ev-id').value=id;
@@ -2814,6 +2845,7 @@ function saveSalesEdit() {
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
+  if(!canEditSalesRecord(ev)){ toast('⛔ この売上表は記入者本人とリーダーだけ編集できます'); return; }
   ev.sales=ev.sales||{};
   var items={};
   var labels={};
