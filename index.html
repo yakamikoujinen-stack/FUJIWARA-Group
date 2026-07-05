@@ -467,6 +467,14 @@ body::before,#app::before,.page::before{
 .wh-search{display:flex;gap:8px;margin-bottom:10px;}
 @media(max-width:520px){.warehouse-map{grid-template-columns:1fr}.wh-office{writing-mode:horizontal-tb;min-height:48px}.wh-area{min-height:260px}.wh-cell{font-size:18px}}
 
+
+/* ===== v5.0 出勤一覧：終了イベント色分け ===== */
+.att-card{padding:12px 14px;border-bottom:1px solid var(--border);background:#fffdfa;}
+.att-card.att-ended{background:#eeeeee!important;color:#777!important;opacity:.88;}
+.att-card.att-ended *{color:#777!important;}
+.att-card.att-ended .status-badge{background:#ddd!important;border:1px solid #bbb!important;color:#666!important;}
+.att-section-title{padding:10px 14px;font-size:12px;font-weight:900;background:#fff3d6;border-bottom:1px solid var(--border);color:#4d3a00;}
+.att-section-title.ended{background:#e5e5e5;color:#666;}
 </style>
 </head>
 <body>
@@ -2887,14 +2895,37 @@ function renderEventStaffListTo(targetId){
   if(!el) return;
   var today=new Date();
   today.setHours(0,0,0,0);
+
+  function toDateOnly(v){
+    if(!v) return null;
+    var d=new Date(String(v)+'T00:00:00');
+    if(isNaN(d.getTime())) return null;
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function isEndedEvent(ev){
+    if(ev.status==='done' || ev.status==='ended' || ev.finished===true) return true;
+    var d=toDateOnly(ev.dateEnd || ev.date);
+    return d ? d < today : false;
+  }
+
   var events=(state.events||[]).slice().sort(function(a,b){
+    var ae=isEndedEvent(a), be=isEndedEvent(b);
+    if(ae!==be) return ae?1:-1; // 今後→終了の順
     return String(a.date||'').localeCompare(String(b.date||''));
   });
   if(!events.length){
     el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">イベント未登録</div>';
     return;
   }
-  el.innerHTML=events.map(function(ev){
+
+  var html='';
+  var wroteActive=false, wroteEnded=false;
+  events.forEach(function(ev){
+    var ended=isEndedEvent(ev);
+    if(!ended && !wroteActive){ html+='<div class="att-section-title">これからのイベント</div>'; wroteActive=true; }
+    if(ended && !wroteEnded){ html+='<div class="att-section-title ended">終了したイベント</div>'; wroteEnded=true; }
+
     var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
     if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
     if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
@@ -2915,13 +2946,18 @@ function renderEventStaffListTo(targetId){
     var maybeText=maybe.length ? maybe.map(escHtml).join('・') : 'なし';
     var noText=no.length ? no.map(escHtml).join('・') : 'なし';
     var unansweredText=unanswered.length ? unanswered.map(escHtml).join('・') : 'なし';
-    return '<div style="padding:12px 14px;border-bottom:1px solid var(--border)">'
+
+    var badge = ended
+      ? '<span class="status-badge">終了</span>'
+      : (shortage>0?'<span class="status-badge" style="background:rgba(214,66,66,.12);color:var(--red);border:1px solid rgba(214,66,66,.25)">人員不足 '+shortage+'人</span>':'<span class="status-badge" style="background:rgba(22,138,88,.12);color:var(--green);border:1px solid rgba(22,138,88,.25)">人員OK</span>');
+
+    html += '<div class="att-card '+(ended?'att-ended':'')+'">'
       +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
         +'<div>'
           +'<div style="font-size:14px;font-weight:900;color:#111">'+escHtml(dateText+endText)+'　'+escHtml(ev.name||'名称未設定')+'</div>'
           +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📍 '+escHtml(ev.place||'場所未設定')+'　発注先：'+escHtml(ev.zone||'未設定')+'</div>'
         +'</div>'
-        +(shortage>0?'<span class="status-badge" style="background:rgba(214,66,66,.12);color:var(--red);border:1px solid rgba(214,66,66,.25)">人員不足 '+shortage+'人</span>':'<span class="status-badge" style="background:rgba(22,138,88,.12);color:var(--green);border:1px solid rgba(22,138,88,.25)">人員OK</span>')
+        +badge
       +'</div>'
       +'<div style="margin-top:8px;font-size:12px;line-height:1.8">'
         +'<div><b>参加スタッフ：</b>'+staffText+'</div>'
@@ -2931,7 +2967,8 @@ function renderEventStaffListTo(targetId){
         +'<div style="font-size:11px;color:'+(unanswered.length?'var(--red)':'var(--text2)')+'"><b>未回答：</b>'+unansweredText+'</div>'
       +'</div>'
       +'</div>';
-  }).join('');
+  });
+  el.innerHTML=html;
 }
 
 function renderLeaderEventStaffList(){
