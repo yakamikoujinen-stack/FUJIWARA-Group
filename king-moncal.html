@@ -48,6 +48,7 @@
 
 <div class="bottom">
   <button class="btn ghost" onclick="location.href='king.html'">👑 キングへ戻る</button>
+  <button class="btn ghost" id="todayBtn">今日</button>
   <button class="btn" id="bottomAdd">＋予定追加</button>
 </div>
 
@@ -70,6 +71,7 @@
 <script>
 (function(){
   const STORAGE_KEY='king_private_calendar_events';
+  const MIRROR_KEYS=['moncal_events','fujiwara_moncal_events','king_private_calendar'];
   const colors={family:'#2589e6',private:'#55bf60',golf:'#ff9f22',hospital:'#ff5368',anniversary:'#8d5cf6',other:'#b07a12'};
   const names={family:'家族',private:'私用',golf:'ゴルフ',hospital:'病院',anniversary:'記念日',other:'その他'};
   let view=new Date(); view.setDate(1);
@@ -80,11 +82,22 @@
   function ymd(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
   function jp(d){return `${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`}
   function load(){
-    try{events=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch(e){events=[]}
-    if(!Array.isArray(events))events=[];
-    if(events.length===0){seed()}
+    let best=[];
+    [STORAGE_KEY,...MIRROR_KEYS].forEach(k=>{
+      try{const arr=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(arr) && arr.length>best.length) best=arr;}catch(e){}
+    });
+    const map=new Map();
+    best.forEach(e=>{ if(e && (e.id||e.title)){ e.id=e.id||String(Date.now()+Math.random()); map.set(e.id,e); }});
+    events=[...map.values()];
+    if(events.length===0){seed()} else mirrorSave();
   }
-  function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(events));render();}
+  function mirrorSave(){
+    const data=JSON.stringify(events);
+    localStorage.setItem(STORAGE_KEY,data);
+    MIRROR_KEYS.forEach(k=>localStorage.setItem(k,data));
+    window.dispatchEvent(new CustomEvent('fujiwara-moncal-updated',{detail:{events}}));
+  }
+  function saveLocal(){mirrorSave();render();}
   function seed(){
     const now=new Date(); const d=ymd(now);
     events=[{id:crypto.randomUUID?crypto.randomUUID():Date.now()+'',date:d,start:'19:00',end:'21:00',title:'家族で食事',place:'',type:'family',memo:'サンプル。不要なら削除してください。',updatedAt:new Date().toISOString()}];
@@ -92,15 +105,15 @@
   }
   async function tryFirebase(){
     const cfg=window.FUJIWARA_FIREBASE_CONFIG||window.firebaseConfig;
-    if(!cfg){$('syncBadge').textContent='保存先: この端末';return false}
+    if(!cfg){$('syncBadge').textContent='保存先: 端末＋キング共有キー';return false}
     try{
       const {initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
       const {getFirestore,collection,onSnapshot,setDoc,doc,deleteDoc,serverTimestamp}=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
       const app=initializeApp(cfg); const db=getFirestore(app); const col=collection(db,'king_private_calendar_events');
       window.moncalFirebase={db,col,setDoc,doc,deleteDoc,serverTimestamp};
-      onSnapshot(col,snap=>{events=snap.docs.map(x=>({id:x.id,...x.data()}));localStorage.setItem(STORAGE_KEY,JSON.stringify(events));render();});
+      onSnapshot(col,snap=>{events=snap.docs.map(x=>({id:x.id,...x.data()}));mirrorSave();render();});
       $('syncBadge').textContent='保存先: Firebase共有中'; return true;
-    }catch(e){$('syncBadge').textContent='保存先: この端末';return false}
+    }catch(e){$('syncBadge').textContent='保存先: 端末＋キング共有キー';return false}
   }
   function render(){renderCalendar();renderAgenda();}
   function renderCalendar(){
@@ -133,19 +146,20 @@
   function close(){ $('modal').classList.remove('show') }
   async function persist(e){
     e.updatedAt=new Date().toISOString();
-    const i=events.findIndex(x=>x.id===e.id); if(i>=0)events[i]=e; else events.push(e); localStorage.setItem(STORAGE_KEY,JSON.stringify(events));
+    const i=events.findIndex(x=>x.id===e.id); if(i>=0)events[i]=e; else events.push(e); mirrorSave();
     if(window.moncalFirebase){const f=window.moncalFirebase; await f.setDoc(f.doc(f.col,e.id),{...e,serverUpdatedAt:f.serverTimestamp()});}
     close(); render();
   }
   async function remove(id){
-    if(!confirm('この予定を削除しますか？'))return; events=events.filter(e=>e.id!==id); localStorage.setItem(STORAGE_KEY,JSON.stringify(events));
+    if(!confirm('この予定を削除しますか？'))return; events=events.filter(e=>e.id!==id); mirrorSave();
     if(window.moncalFirebase){const f=window.moncalFirebase; await f.deleteDoc(f.doc(f.col,id));}
     close(); render();
   }
   $('prevBtn').onclick=()=>{view.setMonth(view.getMonth()-1);render()}; $('nextBtn').onclick=()=>{view.setMonth(view.getMonth()+1);render()};
-  $('addBtn').onclick=()=>openForm(); $('bottomAdd').onclick=()=>openForm(); $('cancelBtn').onclick=close; $('modal').onclick=e=>{if(e.target.id==='modal')close()};
+  $('addBtn').onclick=()=>openForm(); $('bottomAdd').onclick=()=>openForm(); $('todayBtn').onclick=()=>{selected=new Date(); view=new Date(); view.setDate(1); render();}; $('cancelBtn').onclick=close; $('modal').onclick=e=>{if(e.target.id==='modal')close()};
   $('saveBtn').onclick=()=>{const title=$('titleInput').value.trim(); if(!title){alert('予定名を入力してください');return} const id=$('eventId').value||((crypto.randomUUID&&crypto.randomUUID())||Date.now().toString()); persist({id,date:$('dateInput').value,start:$('startInput').value,end:$('endInput').value,title,place:$('placeInput').value.trim(),type:$('typeInput').value,memo:$('memoInput').value.trim()});};
   $('deleteBtn').onclick=()=>remove($('eventId').value);
+  window.addEventListener('storage',e=>{if([STORAGE_KEY,...MIRROR_KEYS].includes(e.key)){load();render();}});
   load(); render(); tryFirebase();
 })();
 </script>
