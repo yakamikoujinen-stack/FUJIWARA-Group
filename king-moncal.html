@@ -1,167 +1,34 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>FUJIWARA MonCal｜キングアプリ連携</title>
-  <style>
-    :root{
-      --bg:#f4f6fb;--card:#fff;--ink:#122044;--muted:#718096;--line:#e6ecf5;
-      --blue:#2589e6;--green:#55bf60;--orange:#ff9f22;--red:#ff5368;--purple:#8d5cf6;--gold:#b07a12;
-      --shadow:0 12px 35px rgba(17,35,65,.10);--radius:24px;
-    }
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:700}
-    .app{max-width:1120px;margin:0 auto;padding:18px 18px calc(92px + env(safe-area-inset-bottom))}
-    header{position:sticky;top:0;z-index:5;background:rgba(244,246,251,.92);backdrop-filter:blur(10px);padding:10px 0 12px;border-bottom:1px solid rgba(230,236,245,.8)}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px;font-size:22px;color:#064991}.brand small{display:block;font-size:12px;color:var(--muted);font-weight:800}.btn{border:0;border-radius:18px;padding:13px 18px;font-weight:900;font-size:16px;background:#0c72ce;color:#fff;box-shadow:0 8px 18px rgba(12,114,206,.20)}
-    .ghost{background:#fff;color:#0c5fae;border:1px solid #cfe1f7;box-shadow:none}.danger{background:#fff;color:#d3344b;border:1px solid #f3c7cf;box-shadow:none}.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin:18px 0}.monthbar{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:14px}.nav{width:44px;height:44px;border-radius:50%;border:0;background:#f1f6ff;font-size:28px;font-weight:900;color:#0a4b8d}.monthTitle{font-size:30px;min-width:210px;text-align:center}.week,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.week div{text-align:center;color:#68758b;padding:10px}.sun{color:#f04a61!important}.sat{color:#1b80d8!important}.day{min-height:100px;border-radius:22px;background:#fff;border:1px solid transparent;padding:8px;position:relative;cursor:pointer}.day:hover{background:#f8fbff}.day.other{color:#b8c0cc}.num{font-size:20px;text-align:center;padding:4px}.today .num{display:block;width:42px;margin:0 auto;border-radius:24px;background:var(--blue);color:#fff}.selected{outline:4px solid rgba(37,137,230,.18)}.dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:3px}.dot{width:12px;height:12px;border-radius:999px}.mini{font-size:11px;color:#5b6575;background:#f3f6fb;border-radius:10px;padding:2px 5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.agendaTitle{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px}.agendaTitle h2{margin:0;color:#084989}.event{display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:center;border-bottom:1px solid var(--line);padding:15px 0}.event:last-child{border-bottom:0}.event h3{margin:0 0 5px;font-size:18px}.event p{margin:0;color:#677386;font-weight:650}.round{width:20px;height:20px;border-radius:50%}.actions{display:flex;gap:8px}.iconbtn{width:44px;height:44px;border-radius:50%;border:1px solid #dde6f3;background:#fff;font-size:18px}.empty{padding:28px;text-align:center;color:#7a879b;background:#fafcff;border:1px dashed #d8e2f1;border-radius:20px}.modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(10,24,48,.35);z-index:20}.modal.show{display:flex}.sheet{width:min(760px,100%);background:#fff;border-radius:28px 28px 0 0;padding:22px;box-shadow:0 -10px 40px rgba(0,0,0,.18)}label{display:block;margin:14px 0 7px;color:#34405a}input,select,textarea{width:100%;border:1px solid #d9e3f0;border-radius:16px;padding:14px;font-size:17px;font-weight:700;background:#fbfdff;color:#14213d}textarea{min-height:90px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid #e6ecf5;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:10px;z-index:10}.bottom button{max-width:330px;width:45%}.status{font-size:13px;color:#6d7890;text-align:center;margin-top:8px}.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#f4eddf;color:#8b5c0a;padding:7px 12px;font-size:13px}
-    @media(max-width:720px){.app{padding:12px 10px 92px}.card{padding:14px;border-radius:20px}.day{min-height:72px;padding:4px}.num{font-size:17px}.mini{display:none}.monthTitle{font-size:24px;min-width:160px}.row{grid-template-columns:1fr}.brand{font-size:19px}.event{grid-template-columns:18px 1fr}.actions{grid-column:2}.bottom button{width:50%}}
-  </style>
-</head>
-<body>
-<div class="app">
-  <header>
-    <div class="top">
-      <div class="brand">📅 FUJIWARA MonCal <small>キングアプリ私用カレンダー連携</small></div>
-      <span class="badge" id="syncBadge">保存先: この端末</span>
-    </div>
-  </header>
-
-  <section class="card">
-    <div class="monthbar">
-      <button class="nav" id="prevBtn">‹</button>
-      <div class="monthTitle" id="monthTitle"></div>
-      <button class="nav" id="nextBtn">›</button>
-    </div>
-    <div class="week"><div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div></div>
-    <div class="grid" id="calendarGrid"></div>
-  </section>
-
-  <section class="card">
-    <div class="agendaTitle">
-      <h2 id="agendaTitle">予定</h2>
-      <button class="btn ghost" id="addBtn">＋予定を追加</button>
-    </div>
-    <div id="agenda"></div>
-  </section>
-</div>
-
-<div class="bottom">
-  <button class="btn ghost" onclick="location.href='king.html'">👑 キングへ戻る</button>
-  <button class="btn ghost" id="todayBtn">今日</button>
-  <button class="btn" id="bottomAdd">＋予定追加</button>
-</div>
-
-<div class="modal" id="modal">
-  <div class="sheet">
-    <h2 id="modalTitle">予定追加</h2>
-    <input type="hidden" id="eventId">
-    <label>日付</label><input type="date" id="dateInput">
-    <div class="row"><div><label>開始</label><input type="time" id="startInput"></div><div><label>終了</label><input type="time" id="endInput"></div></div>
-    <label>予定名</label><input id="titleInput" placeholder="例：家族で食事">
-    <label>場所</label><input id="placeInput" placeholder="例：丹波篠山市">
-    <label>種類</label><select id="typeInput"><option value="family">家族</option><option value="private">私用</option><option value="golf">ゴルフ</option><option value="hospital">病院</option><option value="anniversary">記念日</option><option value="other">その他</option></select>
-    <label>メモ</label><textarea id="memoInput" placeholder="メモ"></textarea>
-    <div class="row" style="margin-top:16px"><button class="btn ghost" id="cancelBtn">閉じる</button><button class="btn" id="saveBtn">保存</button></div>
-    <button class="btn danger" id="deleteBtn" style="width:100%;margin-top:10px;display:none">削除</button>
-    <div class="status">キングアプリ側は同じ保存キー「king_private_calendar_events」を読めば同期できます。</div>
-  </div>
-</div>
-
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FUJIWARA MonCal｜キング私用カレンダー</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#102043;--sub:#6b7485;--line:#e7edf6;--blue:#2589e6;--green:#55bf60;--orange:#ff9f22;--red:#ff5368;--purple:#8d5cf6;--gold:#b47c00;--shadow:0 12px 35px rgba(17,35,65,.10)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;font-weight:800}.app{max-width:1120px;margin:0 auto;padding:14px 14px 95px}header{position:sticky;top:0;z-index:5;background:rgba(244,247,251,.92);backdrop-filter:blur(12px);padding:10px 0;border-bottom:1px solid var(--line)}.top{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-size:22px;color:#064991}.brand small{display:block;font-size:12px;color:var(--sub)}.badge{border-radius:999px;background:#fff4dd;color:#865800;padding:8px 12px;font-size:13px}.btn{border:0;border-radius:17px;padding:13px 18px;font-size:16px;font-weight:950;background:#0c72ce;color:#fff;box-shadow:0 8px 18px rgba(12,114,206,.18)}.ghost{background:#fff;color:#0c5fae;border:1px solid #cfe1f7;box-shadow:none}.danger{background:#fff;color:#d3344b;border:1px solid #f3c7cf;box-shadow:none}.card{background:#fff;border-radius:24px;box-shadow:var(--shadow);padding:20px;margin:16px 0}.monthbar{display:flex;align-items:center;justify-content:center;gap:22px}.nav{width:46px;height:46px;border-radius:50%;border:0;background:#f1f6ff;font-size:30px;color:#0a4b8d;font-weight:950}.monthTitle{font-size:30px;min-width:210px;text-align:center}.week,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.week div{text-align:center;color:#677386;padding:12px 0}.sun{color:#f04a61!important}.sat{color:#1b80d8!important}.day{min-height:100px;border:1px solid transparent;border-radius:20px;padding:7px;cursor:pointer;background:#fff}.day.other{color:#b8c0cc}.day.selected{outline:4px solid rgba(37,137,230,.18)}.num{text-align:center;font-size:20px;padding:4px}.today .num{width:40px;margin:0 auto;border-radius:22px;background:var(--blue);color:#fff}.dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}.dot{width:12px;height:12px;border-radius:50%}.mini{font-size:11px;color:#5b6575;background:#f3f6fb;border-radius:10px;padding:2px 5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.agendaTitle{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:13px}.agendaTitle h2{margin:0;color:#084989}.event{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:14px 0}.event h3{margin:0 0 5px;font-size:18px}.event p{margin:0;color:#667386;font-weight:650}.round{width:18px;height:18px;border-radius:50%}.icons button{width:42px;height:42px;border-radius:50%;border:1px solid #dde6f3;background:#fff}.empty{text-align:center;color:#768295;background:#fafcff;border:1px dashed #d8e2f1;border-radius:18px;padding:24px}.modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(10,24,48,.35);z-index:20}.modal.show{display:flex}.sheet{width:min(760px,100%);background:#fff;border-radius:28px 28px 0 0;padding:20px;box-shadow:0 -10px 40px rgba(0,0,0,.18)}label{display:block;margin:13px 0 7px}input,select,textarea{width:100%;border:1px solid #d9e3f0;border-radius:15px;padding:13px;font-size:17px;font-weight:750}textarea{min-height:85px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:10px;z-index:10}.bottom button,.bottom a{max-width:330px;width:45%;text-align:center;text-decoration:none}
+@media(max-width:720px){.app{padding:10px 10px 92px}.card{padding:13px;border-radius:20px}.day{min-height:72px;padding:4px}.mini{display:none}.monthTitle{font-size:23px;min-width:150px}.row{grid-template-columns:1fr}.brand{font-size:19px}.event{grid-template-columns:18px 1fr}.icons{grid-column:2}.bottom button,.bottom a{width:50%}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head><body><div class="app"><header><div class="top"><div class="brand">📅 FUJIWARA MonCal <small>キングアプリ 私用カレンダー完全共有</small></div><span class="badge" id="syncBadge">同期準備中</span></div></header>
+<section class="card"><div class="monthbar"><button class="nav" id="prevBtn">‹</button><div class="monthTitle" id="monthTitle"></div><button class="nav" id="nextBtn">›</button></div><div class="week"><div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div></div><div class="grid" id="calendarGrid"></div></section>
+<section class="card"><div class="agendaTitle"><h2 id="agendaTitle"></h2><button class="btn" id="addBtn">＋予定</button></div><div id="agenda"></div></section></div>
+<div class="bottom"><a class="btn ghost" href="king.html">👑 キングへ</a><button class="btn" id="bottomAdd">＋ 予定追加</button></div>
+<div class="modal" id="modal"><div class="sheet"><h2 id="modalTitle">予定追加</h2><input type="hidden" id="eventId"><label>日付</label><input type="date" id="dateInput"><div class="row"><div><label>開始</label><input type="time" id="startInput"></div><div><label>終了</label><input type="time" id="endInput"></div></div><label>予定名</label><input id="titleInput" placeholder="例：家族で食事"><label>種類</label><select id="typeInput"><option value="family">家族</option><option value="private">私用</option><option value="golf">ゴルフ</option><option value="hospital">病院</option><option value="anniversary">記念日</option><option value="other">その他</option></select><label>場所</label><input id="placeInput" placeholder="場所"><label>メモ</label><textarea id="memoInput"></textarea><div class="row" style="margin-top:16px"><button class="btn ghost" id="cancelBtn">キャンセル</button><button class="btn" id="saveBtn">保存</button></div><button class="btn danger" id="deleteBtn" style="display:none;width:100%;margin-top:10px">削除</button></div></div>
 <script>
 (function(){
-  const STORAGE_KEY='king_private_calendar_events';
-  const MIRROR_KEYS=['moncal_events','fujiwara_moncal_events','king_private_calendar'];
-  const colors={family:'#2589e6',private:'#55bf60',golf:'#ff9f22',hospital:'#ff5368',anniversary:'#8d5cf6',other:'#b07a12'};
-  const names={family:'家族',private:'私用',golf:'ゴルフ',hospital:'病院',anniversary:'記念日',other:'その他'};
-  let view=new Date(); view.setDate(1);
-  let selected=new Date();
-  let events=[];
-  const $=id=>document.getElementById(id);
-  function pad(n){return String(n).padStart(2,'0')}
-  function ymd(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
-  function jp(d){return `${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`}
-  function load(){
-    let best=[];
-    [STORAGE_KEY,...MIRROR_KEYS].forEach(k=>{
-      try{const arr=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(arr) && arr.length>best.length) best=arr;}catch(e){}
-    });
-    const map=new Map();
-    best.forEach(e=>{ if(e && (e.id||e.title)){ e.id=e.id||String(Date.now()+Math.random()); map.set(e.id,e); }});
-    events=[...map.values()];
-    if(events.length===0){seed()} else mirrorSave();
-  }
-  function mirrorSave(){
-    const data=JSON.stringify(events);
-    localStorage.setItem(STORAGE_KEY,data);
-    MIRROR_KEYS.forEach(k=>localStorage.setItem(k,data));
-    window.dispatchEvent(new CustomEvent('fujiwara-moncal-updated',{detail:{events}}));
-  }
-  function saveLocal(){mirrorSave();render();}
-  function seed(){
-    const now=new Date(); const d=ymd(now);
-    events=[{id:crypto.randomUUID?crypto.randomUUID():Date.now()+'',date:d,start:'19:00',end:'21:00',title:'家族で食事',place:'',type:'family',memo:'サンプル。不要なら削除してください。',updatedAt:new Date().toISOString()}];
-    saveLocal();
-  }
-  async function tryFirebase(){
-    const cfg=window.FUJIWARA_FIREBASE_CONFIG||window.firebaseConfig;
-    if(!cfg){$('syncBadge').textContent='保存先: 端末＋キング共有キー';return false}
-    try{
-      const {initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
-      const {getFirestore,collection,onSnapshot,setDoc,doc,deleteDoc,serverTimestamp}=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
-      const app=initializeApp(cfg); const db=getFirestore(app); const col=collection(db,'king_private_calendar_events');
-      window.moncalFirebase={db,col,setDoc,doc,deleteDoc,serverTimestamp};
-      onSnapshot(col,snap=>{events=snap.docs.map(x=>({id:x.id,...x.data()}));mirrorSave();render();});
-      $('syncBadge').textContent='保存先: Firebase共有中'; return true;
-    }catch(e){$('syncBadge').textContent='保存先: 端末＋キング共有キー';return false}
-  }
-  function render(){renderCalendar();renderAgenda();}
-  function renderCalendar(){
-    $('monthTitle').textContent=`${view.getFullYear()}年　${view.getMonth()+1}月`;
-    const grid=$('calendarGrid'); grid.innerHTML='';
-    const first=new Date(view), start=new Date(view); start.setDate(1-first.getDay());
-    const today=ymd(new Date()), sel=ymd(selected);
-    for(let i=0;i<42;i++){
-      const d=new Date(start); d.setDate(start.getDate()+i); const key=ymd(d);
-      const cell=document.createElement('div'); cell.className='day'+(d.getMonth()!==view.getMonth()?' other':'')+(key===today?' today':'')+(key===sel?' selected':'');
-      const num=document.createElement('div'); num.className='num '+(d.getDay()==0?'sun':d.getDay()==6?'sat':''); num.textContent=d.getDate(); cell.appendChild(num);
-      const dayEvents=events.filter(e=>e.date===key).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-      const dots=document.createElement('div'); dots.className='dots'; dayEvents.slice(0,5).forEach(e=>{const dot=document.createElement('span');dot.className='dot';dot.style.background=colors[e.type]||colors.other;dots.appendChild(dot)}); cell.appendChild(dots);
-      dayEvents.slice(0,2).forEach(e=>{const m=document.createElement('div');m.className='mini';m.textContent=(e.start?e.start+' ':'')+e.title;cell.appendChild(m)});
-      cell.onclick=()=>{selected=d;render();}; grid.appendChild(cell);
-    }
-  }
-  function renderAgenda(){
-    $('agendaTitle').textContent=jp(selected)+' の予定'; const box=$('agenda'); box.innerHTML=''; const key=ymd(selected);
-    const list=events.filter(e=>e.date===key).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-    if(list.length===0){box.innerHTML='<div class="empty">この日の予定はありません</div>';return}
-    list.forEach(e=>{const row=document.createElement('div'); row.className='event'; row.innerHTML=`<span class="round" style="background:${colors[e.type]||colors.other}"></span><div><h3>${escapeHtml(e.title||'無題')} <small style="color:#7a879b">${names[e.type]||'その他'}</small></h3><p>${escapeHtml([e.start&&e.end?e.start+' - '+e.end:e.start||'',e.place].filter(Boolean).join('　'))}</p>${e.memo?`<p>${escapeHtml(e.memo)}</p>`:''}</div><div class="actions"><button class="iconbtn" title="編集">✎</button><button class="iconbtn" title="削除">🗑</button></div>`;
-      row.querySelectorAll('button')[0].onclick=()=>openForm(e); row.querySelectorAll('button')[1].onclick=()=>remove(e.id); box.appendChild(row);});
-  }
-  function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-  function openForm(e){
-    $('modal').classList.add('show'); $('modalTitle').textContent=e?'予定編集':'予定追加'; $('deleteBtn').style.display=e?'block':'none';
-    $('eventId').value=e?.id||''; $('dateInput').value=e?.date||ymd(selected); $('startInput').value=e?.start||''; $('endInput').value=e?.end||''; $('titleInput').value=e?.title||''; $('placeInput').value=e?.place||''; $('typeInput').value=e?.type||'private'; $('memoInput').value=e?.memo||'';
-  }
-  function close(){ $('modal').classList.remove('show') }
-  async function persist(e){
-    e.updatedAt=new Date().toISOString();
-    const i=events.findIndex(x=>x.id===e.id); if(i>=0)events[i]=e; else events.push(e); mirrorSave();
-    if(window.moncalFirebase){const f=window.moncalFirebase; await f.setDoc(f.doc(f.col,e.id),{...e,serverUpdatedAt:f.serverTimestamp()});}
-    close(); render();
-  }
-  async function remove(id){
-    if(!confirm('この予定を削除しますか？'))return; events=events.filter(e=>e.id!==id); mirrorSave();
-    if(window.moncalFirebase){const f=window.moncalFirebase; await f.deleteDoc(f.doc(f.col,id));}
-    close(); render();
-  }
-  $('prevBtn').onclick=()=>{view.setMonth(view.getMonth()-1);render()}; $('nextBtn').onclick=()=>{view.setMonth(view.getMonth()+1);render()};
-  $('addBtn').onclick=()=>openForm(); $('bottomAdd').onclick=()=>openForm(); $('todayBtn').onclick=()=>{selected=new Date(); view=new Date(); view.setDate(1); render();}; $('cancelBtn').onclick=close; $('modal').onclick=e=>{if(e.target.id==='modal')close()};
-  $('saveBtn').onclick=()=>{const title=$('titleInput').value.trim(); if(!title){alert('予定名を入力してください');return} const id=$('eventId').value||((crypto.randomUUID&&crypto.randomUUID())||Date.now().toString()); persist({id,date:$('dateInput').value,start:$('startInput').value,end:$('endInput').value,title,place:$('placeInput').value.trim(),type:$('typeInput').value,memo:$('memoInput').value.trim()});};
-  $('deleteBtn').onclick=()=>remove($('eventId').value);
-  window.addEventListener('storage',e=>{if([STORAGE_KEY,...MIRROR_KEYS].includes(e.key)){load();render();}});
-  load(); render(); tryFirebase();
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
+const PATH='fujiwara/king_private_calendar_events';const KEYS=['king_private_calendar_events','fujiwara_moncal_events','king_private_events'];const $=id=>document.getElementById(id);const colors={family:'#2589e6',private:'#55bf60',golf:'#ff9f22',hospital:'#ff5368',anniversary:'#8d5cf6',other:'#8994a7'};const names={family:'家族',private:'私用',golf:'ゴルフ',hospital:'病院',anniversary:'記念日',other:'その他'};let events=[],view=new Date(),selected=new Date(),ref=null;view.setDate(1);const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const jp=d=>`${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
+function mirror(){const data=JSON.stringify(events);KEYS.forEach(k=>localStorage.setItem(k,data));window.dispatchEvent(new CustomEvent('fujiwara-moncal-updated',{detail:{events}}));}
+function loadLocal(){let best=[];KEYS.forEach(k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(a)&&a.length>best.length)best=a}catch(e){}});events=best;mirror();}
+function connect(){try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);ref=firebase.database().ref(PATH);ref.on('value',s=>{const v=s.val()||{};events=Object.keys(v).map(id=>({id,...v[id]}));mirror();render();$('syncBadge').textContent='Firebase共有中';});}catch(e){$('syncBadge').textContent='この端末に保存';}}
+function render(){renderCal();renderAgenda();}
+function renderCal(){$('monthTitle').textContent=`${view.getFullYear()}年　${view.getMonth()+1}月`;const grid=$('calendarGrid');grid.innerHTML='';const first=new Date(view),start=new Date(view);start.setDate(1-first.getDay());const today=ymd(new Date()),sel=ymd(selected);for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=ymd(d);const cell=document.createElement('div');cell.className='day'+(d.getMonth()!==view.getMonth()?' other':'')+(key===today?' today':'')+(key===sel?' selected':'');cell.innerHTML=`<div class="num ${d.getDay()==0?'sun':d.getDay()==6?'sat':''}">${d.getDate()}</div>`;const list=events.filter(e=>e.date===key).sort((a,b)=>(a.start||'').localeCompare(b.start||''));const dots=document.createElement('div');dots.className='dots';list.slice(0,5).forEach(e=>{const dot=document.createElement('span');dot.className='dot';dot.style.background=colors[e.type]||colors.other;dots.appendChild(dot)});cell.appendChild(dots);list.slice(0,2).forEach(e=>{const m=document.createElement('div');m.className='mini';m.textContent=(e.start?e.start+' ':'')+e.title;cell.appendChild(m)});cell.onclick=()=>{selected=d;render()};grid.appendChild(cell)}}
+function renderAgenda(){$('agendaTitle').textContent=jp(selected)+' の予定';const box=$('agenda');box.innerHTML='';const list=events.filter(e=>e.date===ymd(selected)).sort((a,b)=>(a.start||'').localeCompare(b.start||''));if(!list.length){box.innerHTML='<div class="empty">この日の予定はありません</div>';return}list.forEach(e=>{const row=document.createElement('div');row.className='event';row.innerHTML=`<span class="round" style="background:${colors[e.type]||colors.other}"></span><div><h3>${esc(e.title||'無題')} <small style="color:#7a879b">${names[e.type]||'その他'}</small></h3><p>${esc([e.start&&e.end?e.start+' - '+e.end:e.start||'',e.place].filter(Boolean).join('　'))}</p>${e.memo?`<p>${esc(e.memo)}</p>`:''}</div><div class="icons"><button>✎</button><button>🗑</button></div>`;row.querySelectorAll('button')[0].onclick=()=>openForm(e);row.querySelectorAll('button')[1].onclick=()=>remove(e.id);box.appendChild(row)})}
+function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function openForm(e){$('modal').classList.add('show');$('modalTitle').textContent=e?'予定編集':'予定追加';$('deleteBtn').style.display=e?'block':'none';$('eventId').value=e?.id||'';$('dateInput').value=e?.date||ymd(selected);$('startInput').value=e?.start||'';$('endInput').value=e?.end||'';$('titleInput').value=e?.title||'';$('placeInput').value=e?.place||'';$('typeInput').value=e?.type||'private';$('memoInput').value=e?.memo||''}
+function close(){$('modal').classList.remove('show')}
+function save(){const title=$('titleInput').value.trim();if(!title){alert('予定名を入力して');return}const id=$('eventId').value||(crypto.randomUUID?crypto.randomUUID():Date.now().toString());const e={id,date:$('dateInput').value,start:$('startInput').value,end:$('endInput').value,title,place:$('placeInput').value.trim(),type:$('typeInput').value,memo:$('memoInput').value.trim(),updatedAt:new Date().toISOString()};const i=events.findIndex(x=>x.id===id);if(i>=0)events[i]=e;else events.push(e);mirror();render();if(ref)ref.child(id).set(e);close()}
+function remove(id){if(!confirm('削除しますか？'))return;events=events.filter(e=>e.id!==id);mirror();render();if(ref)ref.child(id).remove();close()}
+$('prevBtn').onclick=()=>{view.setMonth(view.getMonth()-1);render()};$('nextBtn').onclick=()=>{view.setMonth(view.getMonth()+1);render()};$('addBtn').onclick=()=>openForm();$('bottomAdd').onclick=()=>openForm();$('cancelBtn').onclick=close;$('saveBtn').onclick=save;$('deleteBtn').onclick=()=>remove($('eventId').value);$('modal').onclick=e=>{if(e.target.id==='modal')close()};window.addEventListener('storage',e=>{if(KEYS.includes(e.key)){loadLocal();render()}});loadLocal();render();connect();
 })();
-</script>
-</body>
-</html>
+</script></body></html>
