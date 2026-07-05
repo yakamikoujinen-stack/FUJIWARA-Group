@@ -208,6 +208,10 @@ h1{
   .nav{font-size:11px;flex-direction:column;gap:1px}.nav-icon{font-size:23px}
 }
 </style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
 </head>
 <body>
 <button class="menu-btn" onclick="alert('メニューは次に作るで')">≡</button>
@@ -288,7 +292,7 @@ h1{
     </div>
 
     <div class="card panel">
-      <div class="panel-head"><span>👥 事務員タイムカード</span><span class="more">office-timecard連携</span></div>
+      <div class="panel-head"><span>👥 事務員タイムカード</span><span class="more">Firebase連動</span></div>
       <div class="staff-number">本日出勤 <b id="officeInCount">0</b> 名</div>
       <div id="officeTimecardList" style="font-size:14px;font-weight:800;line-height:1.8;color:#334155;text-align:left;background:#fff7fb;border:1px solid #ffd6e5;border-radius:14px;padding:12px;margin:12px 0;">
         まだタイムカード入力がありません
@@ -346,6 +350,54 @@ h1{
 </nav>
 
 <script>
+
+const kingFirebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94",
+  measurementId:"G-1VHX1GQV0C"
+};
+if(typeof firebase!=="undefined" && !firebase.apps.length){firebase.initializeApp(kingFirebaseConfig)}
+let kingOfficeRows=[];
+function kingTodayKey(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function connectOfficeTimecardFirebase(){
+  if(typeof firebase==="undefined")return;
+  firebase.database().ref("fujiwara/office_timecard").on("value",s=>{
+    const v=s.val()||{};
+    kingOfficeRows=Object.keys(v).map(id=>({id,...v[id]}));
+    localStorage.setItem("office_timecard",JSON.stringify(kingOfficeRows));
+    renderOfficeTimecardKing();
+  });
+}
+function renderOfficeTimecardKing(){
+  const box=document.getElementById("officeTimecardList");
+  const count=document.getElementById("officeInCount");
+  if(!box||!count)return;
+  const rows=kingOfficeRows.filter(r=>r.date===kingTodayKey());
+  const active=rows.filter(r=>r.inTime&&!r.outTime);
+  count.textContent=active.length;
+  if(!rows.length){
+    box.innerHTML="本日の事務員タイムカード入力はまだありません";
+    return;
+  }
+  box.innerHTML=rows.map(r=>{
+    const status=r.outTime?"退勤済":r.inTime?"出勤中":"未出勤";
+    const mark=r.outTime?"🌙":r.inTime?"🌞":"⚪";
+    return `<div style="border-bottom:1px solid #ffe0ec;padding:6px 0;">
+      ${mark} <b>${escapeHtml(String(r.staff||"名前未入力"))}</b>：${status}<br>
+      <small>出勤 ${escapeHtml(String(r.inTime||"-"))} / 退勤 ${escapeHtml(String(r.outTime||"-"))} / 休憩 ${escapeHtml(String(r.breakMin||0))}分</small>
+    </div>`;
+  }).join("");
+}
+
+
 function updateClock(){
   const now=new Date();
   const weeks=["日","月","火","水","木","金","土"];
@@ -415,6 +467,7 @@ function addPersonal(){
 loadPersonal();
 loadOfficeTimecardToKing();
 updateClock();
+connectOfficeTimecardFirebase();
 setInterval(updateClock,30000);
 setInterval(loadOfficeTimecardToKing,10000);
 </script>
@@ -422,5 +475,7 @@ setInterval(loadOfficeTimecardToKing,10000);
 <!-- office link fixed: office-timecard.html / 2026-07-03 22:37:54 -->
 
 <!-- office timecard reflected in king / 2026-07-03 23:05:47 -->
-\n<!-- MIYU link added -->\n</body>
+\n<!-- MIYU link added -->\n
+<!-- Office Firebase linked 2026-07-05T22:24:53.210264 -->
+</body>
 </html>
