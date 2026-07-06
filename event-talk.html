@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>FUJIWARA イベント連絡</title>
+<link rel="apple-touch-icon" href="event-talk-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="イベント連絡">
+<style>
+:root{--green:#06a357;--dark:#075e36;--soft:#eaf8f1;--line:#e5e7eb;--red:#ef4444;--blue:#2563eb;--orange:#f97316;--gray:#6b7280;--bg:#f6f8f7;--card:#fff;}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',Meiryo,sans-serif;background:var(--bg);color:#111827}.app{max-width:480px;margin:auto;min-height:100vh;background:#fff;position:relative;box-shadow:0 0 30px #0001}.top{background:linear-gradient(135deg,var(--green),#078047);color:white;padding:18px 16px 14px;border-bottom-left-radius:24px;border-bottom-right-radius:24px;position:sticky;top:0;z-index:5}.top h1{margin:0;font-size:20px}.top p{margin:4px 0 0;font-size:12px;opacity:.9}.screen{display:none;padding:16px 14px 86px}.screen.active{display:block}.login-logo{width:108px;height:108px;border-radius:28px;background:linear-gradient(135deg,#08a85d,#087144);margin:24px auto 14px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px #08714433;color:white;font-size:52px;position:relative}.login-logo:before{content:'🎪';position:absolute;font-size:28px;top:5px;right:8px}.center{text-align:center}.input,select,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px;background:white;margin:8px 0}button{border:0;border-radius:14px;padding:13px 14px;font-weight:800;font-size:15px;background:var(--green);color:white}.btn{width:100%;margin:8px 0}.btn.white{background:white;color:var(--green);border:1px solid #b7e6cd}.btn.red{background:var(--red)}.btn.blue{background:var(--blue)}.role-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.role{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff;display:flex;justify-content:space-between;align-items:center}.role.active{border-color:var(--green);background:var(--soft);font-weight:800}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 6px 18px #00000008}.menu{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tile{background:var(--soft);border:1px solid #cfeedd;border-radius:18px;padding:16px 10px;text-align:center;font-weight:800;min-height:92px;display:flex;flex-direction:column;justify-content:center;gap:8px}.tile span{font-size:28px}.tile.lock{background:#f3f4f6;color:#9ca3af}.tabs{display:flex;background:#f3f4f6;border-radius:14px;padding:4px;gap:4px;margin:12px 0}.tabs button{flex:1;background:transparent;color:#555;padding:10px;border-radius:10px}.tabs button.active{background:var(--green);color:white}.chat-row{display:flex;gap:10px;padding:13px 4px;border-bottom:1px solid var(--line);align-items:center}.avatar{width:44px;height:44px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-weight:900;color:#047044;flex:0 0 auto}.chat-main{flex:1;min-width:0}.chat-main b{display:block}.chat-main small{display:block;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{background:var(--green);color:white;border-radius:99px;padding:3px 8px;font-size:12px}.msg{max-width:82%;padding:10px 12px;border-radius:16px;margin:9px 0;background:#f3f4f6}.msg.me{margin-left:auto;background:#d8f7e6}.msg small{display:block;color:#777;margin-top:4px;font-size:11px}.compose{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);width:min(480px,100%);display:none;padding:8px 12px;background:white;border-top:1px solid var(--line);gap:8px}.compose.active{display:flex}.compose input{flex:1;margin:0}.bottom{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(480px,100%);height:68px;background:#fff;border-top:1px solid var(--line);display:none;grid-template-columns:repeat(5,1fr);z-index:10}.bottom.active{display:grid}.nav{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:#6b7280;gap:3px}.nav.active{color:var(--green);font-weight:900}.nav i{font-style:normal;font-size:21px}.notice{border-left:5px solid var(--green);padding-left:10px}.notice.urgent{border-color:var(--red);background:#fff5f5}.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.photo-type{border-radius:16px;padding:18px 6px;text-align:center;background:#f0fdf4;border:1px solid #dcfce7;font-weight:800}.preview{height:86px;border-radius:14px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:12px;overflow:hidden}.preview img{width:100%;height:100%;object-fit:cover}.map{height:280px;background:linear-gradient(45deg,#e5e7eb 25%,#f9fafb 25%,#f9fafb 50%,#e5e7eb 50%,#e5e7eb 75%,#f9fafb 75%);background-size:40px 40px;border-radius:18px;position:relative;overflow:hidden}.pin{position:absolute;border-radius:50%;width:44px;height:44px;background:white;border:4px solid var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 6px 16px #0002}.pin.warn{border-color:var(--orange)}.pin.bad{border-color:var(--red)}.staffline{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:10px 0}.ok{color:var(--green);font-weight:900}.warn{color:var(--orange);font-weight:900}.bad{color:var(--red);font-weight:900}.hidden{display:none!important}.small{font-size:12px;color:var(--gray)}.pill{display:inline-block;border-radius:99px;padding:5px 9px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:800}.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{border:1px solid var(--line);padding:8px;text-align:center}.table th{background:#f9fafb}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#111827;color:white;padding:10px 14px;border-radius:99px;display:none;z-index:99;font-size:13px}.toast.show{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="login" class="screen active">
+    <div class="login-logo">💬</div>
+    <div class="center"><h2>FUJIWARA<br>イベント連絡</h2><p class="small">イベント専用LINE風アプリ</p></div>
+    <input id="name" class="input" placeholder="名前を入力 例：藤原 / まゆみ / 将 / 文太">
+    <input id="pass" class="input" placeholder="パスワード" type="password">
+    <div class="role-grid">
+      <div class="role active" data-role="leader">👑 リーダー <span>全部見れる</span></div>
+      <div class="role" data-role="manager">🧑‍💼 担当者 <span>担当イベントのみ</span></div>
+      <div class="role" data-role="staff">👤 一般スタッフ <span>必要な所だけ</span></div>
+    </div>
+    <button class="btn" onclick="loginApp()">ログイン</button>
+    <p class="small center">※今は試作版。Firebase連動前でもこの画面で動作確認できます。</p>
+  </div>
+
+  <div id="mainTop" class="top hidden"><h1 id="title">ホーム</h1><p id="userInfo">-</p></div>
+
+  <div id="home" class="screen">
+    <div class="card notice urgent"><b>【緊急】本日の一部イベント変更</b><br><span class="small">雨天のため集合時間・持ち場を確認してください。</span></div>
+    <div class="menu">
+      <div class="tile" onclick="show('chat')"><span>💬</span>チャット</div>
+      <div class="tile" onclick="show('notice')"><span>📣</span>会社連絡</div>
+      <div class="tile" onclick="show('photo')"><span>📷</span>写真アップ</div>
+      <div id="gpsTile" class="tile" onclick="show('gps')"><span>📍</span>GPS確認</div>
+      <div id="adminTile" class="tile" onclick="show('admin')"><span>👑</span>リーダー管理</div>
+      <div class="tile" onclick="show('perm')"><span>🔐</span>権限確認</div>
+    </div>
+    <div class="card"><b>今日のイベント</b><br><span class="pill">イベントA会場</span> <span class="pill">イベントB会場</span><p class="small">一般スタッフは自分に関係あるイベントのみ表示。</p></div>
+  </div>
+
+  <div id="chat" class="screen"><div class="tabs"><button class="active" onclick="chatTab('all',this)">全体</button><button onclick="chatTab('group',this)">グループ</button><button onclick="chatTab('private',this)">個別</button></div><div id="chatList"></div><div id="chatRoom" class="hidden"><button class="btn white" onclick="backChat()">← チャット一覧へ</button><div id="messages"></div></div></div>
+
+  <div id="notice" class="screen"><div class="card notice urgent"><b>緊急連絡</b><br>雨天のため一部配置変更。本日の集合時間を必ず確認。<br><span class="small">05/20 09:15 既読 12名</span></div><div class="card notice"><b>イベント連絡</b><br>明日のイベントは持ち物を確認してください。<br><span class="small">05/20 08:20 既読 8名</span></div><textarea id="noticeText" placeholder="リーダー・担当者用：連絡を書く"></textarea><button class="btn" onclick="toast('連絡を保存しました（試作版）')">連絡を追加</button></div>
+
+  <div id="photo" class="screen"><div class="photo-grid"><div class="photo-type">📷<br>現場写真</div><div class="photo-type">🏪<br>売場写真</div><div class="photo-type">⚠️<br>トラブル</div></div><div class="card"><b>写真アップロード</b><input class="input" type="file" accept="image/*" capture="environment" onchange="previewPhoto(event)"><div id="preview" class="preview">写真プレビュー</div><button class="btn" onclick="toast('写真をアップロードしました（試作版）')">送信</button></div></div>
+
+  <div id="gps" class="screen"><div class="card"><b>GPS確認（リーダー専用）</b><p class="small">スタッフの勤務中位置確認。本人同意・勤務中のみ運用推奨。</p></div><div class="map"><div class="pin" style="left:65%;top:18%">将</div><div class="pin warn" style="left:20%;top:48%">文</div><div class="pin bad" style="left:70%;top:68%">ま</div></div><div class="card"><div class="staffline"><b>将</b><span class="ok">イベントA 10m以内</span></div><div class="staffline"><b>文太</b><span class="warn">イベントB 180m</span></div><div class="staffline"><b>まゆみ</b><span class="bad">別現場の可能性</span></div></div></div>
+
+  <div id="admin" class="screen"><div class="card"><b>リーダー管理</b><p>全イベント・全チャット・既読・GPSを確認できます。</p></div><div class="card"><b>他の会話閲覧</b><div class="chat-row"><div class="avatar">A</div><div class="chat-main"><b>イベントAチーム</b><small>設営完了しました。既読 5</small></div></div><div class="chat-row"><div class="avatar">B</div><div class="chat-main"><b>イベントBチーム</b><small>材料が少ないです。既読 3</small></div></div></div></div>
+
+  <div id="perm" class="screen"><table class="table"><tr><th>機能</th><th>リーダー</th><th>担当者</th><th>一般</th></tr><tr><td>全体チャット</td><td>○</td><td>○</td><td>△</td></tr><tr><td>個別チャット</td><td>○</td><td>○</td><td>△</td></tr><tr><td>グループ</td><td>○</td><td>担当のみ</td><td>自分のみ</td></tr><tr><td>他の会話</td><td>○</td><td>×</td><td>×</td></tr><tr><td>GPS確認</td><td>○</td><td>×</td><td>×</td></tr><tr><td>写真アップ</td><td>○</td><td>○</td><td>○</td></tr></table></div>
+
+  <div id="compose" class="compose"><input id="messageInput" class="input" placeholder="メッセージ入力"><button onclick="sendMsg()">送信</button></div>
+  <div id="bottom" class="bottom"><div class="nav active" onclick="show('home')"><i>🏠</i>ホーム</div><div class="nav" onclick="show('chat')"><i>💬</i>チャット</div><div class="nav" onclick="show('notice')"><i>📣</i>連絡</div><div class="nav" onclick="show('photo')"><i>📷</i>写真</div><div class="nav" onclick="show('admin')"><i>☰</i>管理</div></div>
+  <div id="toast" class="toast"></div>
+</div>
+<script>
+let currentRole='leader', currentName='藤原', activeRoom='全体連絡';
+const rooms={all:[['全体連絡','明日のイベントについて…','12'],['緊急連絡','雨天のため確認お願いします','6']],group:[['イベントAチーム','よろしくお願いします！','5'],['イベントBチーム','設営完了しました。','3']],private:[['山田 太郎','了解しました！',''],['田中 花子','写真を送ります。','']]};
+document.querySelectorAll('.role').forEach(r=>r.onclick=()=>{document.querySelectorAll('.role').forEach(x=>x.classList.remove('active'));r.classList.add('active');currentRole=r.dataset.role;});
+function loginApp(){currentName=document.getElementById('name').value||'藤原';document.getElementById('login').classList.remove('active');document.getElementById('mainTop').classList.remove('hidden');document.getElementById('bottom').classList.add('active');document.getElementById('userInfo').textContent=currentName+' / '+roleName(currentRole);show('home');applyRole();}
+function roleName(r){return r==='leader'?'リーダー':r==='manager'?'担当者':'一般スタッフ'}
+function applyRole(){if(currentRole!=='leader'){document.getElementById('gpsTile').classList.add('lock');document.getElementById('adminTile').classList.add('lock');}else{document.getElementById('gpsTile').classList.remove('lock');document.getElementById('adminTile').classList.remove('lock');}}
+function show(id){if((id==='gps'||id==='admin')&&currentRole!=='leader'){toast('この機能はリーダー専用です');return;}document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.getElementById('title').textContent={home:'ホーム',chat:'チャット',notice:'会社連絡',photo:'写真アップロード',gps:'GPS確認',admin:'リーダー管理',perm:'権限確認'}[id];document.getElementById('compose').classList.toggle('active',id==='chat'&&!document.getElementById('chatRoom').classList.contains('hidden'));document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));}
+function chatTab(type,btn){document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderChats(type);}
+function renderChats(type='all'){document.getElementById('chatRoom').classList.add('hidden');let list=document.getElementById('chatList');list.classList.remove('hidden');list.innerHTML='';rooms[type].forEach(r=>{let div=document.createElement('div');div.className='chat-row';div.onclick=()=>openRoom(r[0]);div.innerHTML='<div class="avatar">'+r[0][0]+'</div><div class="chat-main"><b>'+r[0]+'</b><small>'+r[1]+'</small></div>'+(r[2]?'<span class="badge">'+r[2]+'</span>':'<span class="small">既読</span>');list.appendChild(div);});}
+function openRoom(name){activeRoom=name;document.getElementById('chatList').classList.add('hidden');document.getElementById('chatRoom').classList.remove('hidden');document.getElementById('compose').classList.add('active');document.getElementById('messages').innerHTML='<div class="msg"><b>'+name+'</b><br>本日の配置を確認お願いします。<small>10:25 既読 5</small></div><div class="msg me">了解しました。現場に向かいます。<small>10:30 既読</small></div>';}
+function backChat(){document.getElementById('chatRoom').classList.add('hidden');document.getElementById('chatList').classList.remove('hidden');document.getElementById('compose').classList.remove('active');}
+function sendMsg(){let v=document.getElementById('messageInput').value.trim();if(!v)return;let m=document.createElement('div');m.className='msg me';m.innerHTML=v+'<small>今送信・既読待ち</small>';document.getElementById('messages').appendChild(m);document.getElementById('messageInput').value='';}
+function previewPhoto(e){let f=e.target.files[0];if(!f)return;let img=document.createElement('img');img.src=URL.createObjectURL(f);let p=document.getElementById('preview');p.innerHTML='';p.appendChild(img);}
+function toast(t){let el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)}
+renderChats();
+</script>
+</body>
+</html>
