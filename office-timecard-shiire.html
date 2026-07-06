@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA Office Timecard</title>
+<style>
+:root{
+  --pink:#ff8fb3;--pink2:#ffd6e5;--lav:#f4edff;--mint:#dffbf2;--ink:#334155;
+  --blue:#6aa9ff;--green:#22a06b;--red:#ef4444;--yellow:#f59e0b;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 20% 0%,#ffe4ef,transparent 30%),
+radial-gradient(circle at 90% 10%,#e8ddff,transparent 28%),
+linear-gradient(135deg,#fff7fb,#f7fbff);color:var(--ink)}
+header{padding:22px 16px;text-align:center}
+.logo{max-width:860px;margin:auto;background:#fff;border-radius:30px;padding:26px 20px;box-shadow:0 10px 30px #00000012;border:2px solid #fff}
+.logo h1{margin:0;font-size:30px;color:#ff5f93}
+.logo p{margin:8px 0 0;color:#64748b}
+main{max-width:920px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:24px;padding:18px;margin-bottom:14px;box-shadow:0 8px 24px #00000010;border:1px solid #fff}
+h2,h3{margin-top:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+input,select,button{width:100%;font-size:16px;padding:13px;margin-top:8px;border-radius:16px;border:1px solid #e2e8f0}
+button{border:0;font-weight:900;color:#fff;background:var(--pink)}
+.btnIn{background:linear-gradient(135deg,#ff8fb3,#ff5f93)}
+.btnOut{background:linear-gradient(135deg,#6aa9ff,#5277ff)}
+.btnBreak{background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+.btnSave{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.btnGray{background:#94a3b8}
+.btnRed{background:#ef4444}
+.btnBig{font-size:22px;padding:20px;border-radius:22px;box-shadow:0 10px 20px #ff5f9330}
+.kpi{background:linear-gradient(135deg,#fff,#fff2f7);border:1px solid #ffe0ec;border-radius:20px;padding:14px;text-align:center}
+.big{font-size:24px;font-weight:950;color:#ff5f93}
+.small{font-size:12px;color:#64748b;line-height:1.6}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th,.table td{border-bottom:1px solid #eef2f7;padding:9px;text-align:left}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#ffe4ef;color:#ff5f93;font-weight:900;font-size:12px}
+.statusBox{background:#fff7fb;border:1px solid #ffd6e5;border-radius:18px;padding:14px;margin-top:12px}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#fff;border:2px solid #ffd6e5;color:#ff5f93;padding:12px 18px;border-radius:999px;box-shadow:0 10px 25px #0002;font-weight:900;opacity:0;pointer-events:none;transition:.35s;z-index:999}
+.toast.show{opacity:1;top:32px}
+.footer{text-align:center;color:#94a3b8;font-size:12px;margin:20px}
+@media(max-width:720px){.row{grid-template-columns:1fr}.logo h1{font-size:24px}.table{font-size:12px}.btnBig{font-size:20px}}
+
+
+/* ===== 仕入集計・レシート確認 ===== */
+.purchase-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.purchase-row{background:#fff7fb;border:1px solid #ffd6e5;border-radius:16px;padding:12px;margin-bottom:8px}.purchase-row b{color:#ff5f93}.receipt-img{max-width:100%;max-height:220px;border-radius:14px;border:1px solid #ffd6e5;margin-top:8px}.pill{display:inline-block;background:#ffe4ef;color:#ff5f93;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
+
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+</head>
+<body>
+<div id="toast" class="toast">🌸 保存しました</div>
+<header>
+  <div class="logo">
+    <h1>🌸 FUJIWARA Office Timecard</h1>
+    <p>事務員用タイムカード / Firebase共有版 / キングアプリ連動</p>
+  </div>
+</header>
+
+<main>
+<section class="card">
+  <h2>今日の打刻</h2>
+  <div class="row">
+    <div><label>スタッフ名</label><input id="staff" placeholder="例：事務員さん"></div>
+    <div><label>日付</label><input id="date" type="date"></div>
+  </div>
+
+  <button id="mainBtn" class="btnIn btnBig" onclick="mainStamp()">🌞 出勤する</button>
+
+  <div class="statusBox">
+    <div id="todayStatus"><b>今日の状態：</b>未出勤</div>
+    <div class="small" id="timeLine">出勤・休憩・退勤がここに表示されます。</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>手入力・修正</h2>
+  <div class="row">
+    <input id="inTime" type="time" placeholder="出勤">
+    <input id="outTime" type="time" placeholder="退勤">
+  </div>
+  <div class="row">
+    <input id="breakMin" type="number" placeholder="休憩 分" readonly>
+    <input id="memo" placeholder="メモ">
+  </div>
+  <p class="small">休憩時間はメインボタンで「休憩開始→休憩終了」を押すと自動計算します。</p>
+  <button class="btnSave" onclick="saveManual()">💾 保存・修正</button>
+</section>
+
+<section class="card">
+  <h2>今月の集計</h2>
+  <div class="grid">
+    <div class="kpi"><div class="big" id="workDays">0</div><div class="small">勤務日数</div></div>
+    <div class="kpi"><div class="big" id="totalHours">0.0h</div><div class="small">総勤務時間</div></div>
+    <div class="kpi"><div class="big" id="totalBreak">0分</div><div class="small">休憩合計</div></div>
+    <div class="kpi"><div class="big" id="avgHours">0.0h</div><div class="small">平均勤務</div></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>勤務一覧 <span class="badge">localStorage保存</span></h2>
+  <div style="overflow:auto">
+    <table class="table">
+      <thead><tr><th>日付</th><th>名前</th><th>出勤</th><th>退勤</th><th>休憩</th><th>時間</th><th>メモ</th><th></th></tr></thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>CSV用コピー</h2>
+  <p class="small">Excelやスプレッドシートへ貼り付けできます。</p>
+  <button class="btnGray" onclick="copyCSV()">CSVをコピー</button>
+</section>
+
+
+
+<section class="card">
+  <h2>📊 仕入集計 <span class="badge">キング/メイン連動</span></h2>
+  <p class="small">メインアプリのリーダー・担当者が登録した仕入がここに集まります。</p>
+  <div class="row">
+    <div><label>イベントで絞り込み</label><select id="purchaseEventFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
+    <div><label>担当者で絞り込み</label><select id="purchaseStaffFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
+  </div>
+  <div class="purchase-summary">
+    <div class="kpi"><div class="big" id="officePurchaseTotal">¥0</div><div class="small">仕入合計</div></div>
+    <div class="kpi"><div class="big" id="officePurchaseCount">0</div><div class="small">件数</div></div>
+  </div>
+  <div id="officePurchaseGroup"></div>
+  <div id="officePurchaseList"></div>
+</section>
+
+<div class="footer">FUJIWARA Group / Office Timecard</div>
+</main>
+
+<script>
+
+const firebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94",
+  measurementId:"G-1VHX1GQV0C"
+};
+if(!firebase.apps.length){firebase.initializeApp(firebaseConfig)}
+const officeDb=firebase.database().ref("fujiwara/office_timecard");
+function safeOfficeId(r){
+  return String((r.date||"")+"_"+(r.staff||"")).replace(/[.#$/\[\]\s　]/g,"_");
+}
+function startOfficeSync(){
+  officeDb.on("value",s=>{
+    const v=s.val()||{};
+    const arr=Object.keys(v).map(id=>({id: v[id].id || id, ...v[id]}));
+    localStorage.setItem("office_timecard",JSON.stringify(arr));
+    if(typeof loadForm==="function")loadForm();
+    if(typeof render==="function")render();
+  });
+}
+function pushAllOfficeRecords(arr){
+  const updates={};
+  (arr||[]).forEach(r=>{updates[safeOfficeId(r)]={...r,updatedAt:new Date().toISOString()}});
+  return officeDb.update(updates);
+}
+
+
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function get(){try{return JSON.parse(localStorage.getItem("office_timecard")||"[]")}catch(e){return []}}
+function set(v){
+ localStorage.setItem("office_timecard",JSON.stringify(v));
+ localStorage.setItem("fks_last_saved",new Date().toLocaleString());
+ if(typeof pushAllOfficeRecords==="function"){pushAllOfficeRecords(v).catch(e=>console.log(e))}
+}
+function mins(t){if(!t)return null;const [h,m]=t.split(":").map(Number);return h*60+m}
+function hours(r){const a=mins(r.inTime),b=mins(r.outTime);if(a===null||b===null)return 0;return Math.max(0,(b-a-Number(r.breakMin||0))/60)}
+function findRec(arr){return arr.find(x=>x.date===date.value && x.staff===staff.value)}
+function getOrCreate(){
+ if(!staff.value){alert("スタッフ名を入力してください");return null}
+ const arr=get();let r=findRec(arr);
+ if(!r){r={id:Date.now(),date:date.value,staff:staff.value,inTime:"",outTime:"",breakStart:"",breakEnd:"",breakMin:0,memo:""};arr.push(r);set(arr)}
+ return r;
+}
+function saveRec(r){
+ const arr=get().filter(x=>!(x.date===r.date&&x.staff===r.staff));
+ arr.push(r);set(arr);
+}
+function mainStamp(){
+ const r=getOrCreate(); if(!r)return;
+ const n=nowHM();
+ let message="";
+ if(!r.inTime){
+   r.inTime=n; message="🌞 おはようございます！出勤しました";
+ }else if(!r.breakStart){
+   r.breakStart=n; message="☕ 休憩開始しました";
+ }else if(!r.breakEnd){
+   r.breakEnd=n;
+   const s=mins(r.breakStart),e=mins(r.breakEnd);
+   if(s!==null&&e!==null)r.breakMin=Math.max(0,e-s);
+   message="🍰 休憩終了しました";
+ }else if(!r.outTime){
+   r.outTime=n; message="🌙 今日もお疲れさまでした！";
+ }else{
+   message="✅ 本日の打刻は完了しています";
+ }
+ saveRec(r);loadForm();render();startOfficeSync();showToast(message);
+}
+function saveManual(){
+ if(!staff.value){alert("スタッフ名を入力してください");return}
+ const arr=get().filter(x=>!(x.date===date.value&&x.staff===staff.value));
+ arr.push({id:Date.now(),date:date.value,staff:staff.value,inTime:inTime.value,outTime:outTime.value,breakStart:"",breakEnd:"",breakMin:Number(breakMin.value||0),memo:memo.value});
+ set(arr);render();showToast("💾 保存しました");
+}
+function del(id){
+ if(confirm("削除しますか？")){
+   const rec=get().find(x=>x.id===id);
+   set(get().filter(x=>x.id!==id));
+   if(rec && typeof officeDb!=="undefined"){officeDb.child(safeOfficeId(rec)).remove()}
+   render();
+ }
+}
+function loadForm(){
+ const r=findRec(get());
+ if(r){inTime.value=r.inTime||"";outTime.value=r.outTime||"";breakMin.value=r.breakMin||0;memo.value=r.memo||""}
+ else{inTime.value="";outTime.value="";breakMin.value=0;memo.value=""}
+}
+function renderButton(){
+ const r=findRec(get());
+ if(!staff.value){mainBtn.textContent="🌸 スタッフ名を入力してね";mainBtn.className="btnIn btnBig";todayStatus.innerHTML="<b>今日の状態：</b>スタッフ名未入力";timeLine.textContent="";return}
+ if(!r||!r.inTime){mainBtn.textContent="🌞 出勤する";mainBtn.className="btnIn btnBig";todayStatus.innerHTML="<b>今日の状態：</b>未出勤"}
+ else if(!r.breakStart){mainBtn.textContent="☕ 休憩開始";mainBtn.className="btnBreak btnBig";todayStatus.innerHTML="<b>今日の状態：</b>出勤中"}
+ else if(!r.breakEnd){mainBtn.textContent="🍰 休憩終了";mainBtn.className="btnBreak btnBig";todayStatus.innerHTML="<b>今日の状態：</b>休憩中"}
+ else if(!r.outTime){mainBtn.textContent="🌙 退勤する";mainBtn.className="btnOut btnBig";todayStatus.innerHTML="<b>今日の状態：</b>勤務中"}
+ else{mainBtn.textContent="✅ 本日完了";mainBtn.className="btnSave btnBig";todayStatus.innerHTML="<b>今日の状態：</b>退勤済み"}
+ if(r){
+   timeLine.textContent=`出勤 ${r.inTime||"-"} / 休憩開始 ${r.breakStart||"-"} / 休憩終了 ${r.breakEnd||"-"} / 退勤 ${r.outTime||"-"} / 休憩 ${r.breakMin||0}分`;
+ }else{timeLine.textContent="出勤・休憩・退勤がここに表示されます。"}
+}
+function render(){
+ const ym=date.value.slice(0,7);
+ const arr=get().filter(x=>x.date&&x.date.startsWith(ym)).sort((a,b)=>a.date.localeCompare(b.date));
+ let th=0,tb=0; const days=new Set();
+ list.innerHTML=arr.map(r=>{const h=hours(r);th+=h;tb+=Number(r.breakMin||0);days.add(r.date);return `<tr><td>${r.date}</td><td>${r.staff}</td><td>${r.inTime||"-"}</td><td>${r.outTime||"-"}</td><td>${r.breakMin||0}分</td><td>${h.toFixed(2)}h</td><td>${r.memo||""}</td><td><button class="btnRed" onclick="del(${r.id})">削除</button></td></tr>`}).join("");
+ workDays.textContent=days.size;totalHours.textContent=th.toFixed(1)+"h";totalBreak.textContent=tb+"分";avgHours.textContent=days.size?(th/days.size).toFixed(1)+"h":"0.0h";
+ renderButton();
+}
+function copyCSV(){
+ const arr=get();
+ const csv=["日付,名前,出勤,退勤,休憩分,勤務時間,メモ"].concat(arr.map(r=>`${r.date},${r.staff},${r.inTime||""},${r.outTime||""},${r.breakMin||0},${hours(r).toFixed(2)},${r.memo||""}`)).join("\n");
+ navigator.clipboard.writeText(csv).then(()=>showToast("📋 コピーしました")).catch(()=>alert("コピーできない場合は長押しでコピーしてください"));
+}
+function showToast(t){
+ toast.textContent=t;toast.classList.add("show");
+ setTimeout(()=>toast.classList.remove("show"),2200);
+}
+date.value=today();staff.value=localStorage.getItem("office_timecard_last_staff")||"";
+staff.onchange=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm();render()}
+staff.oninput=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm();render()}
+date.onchange=()=>{loadForm();render()}
+loadForm();render();startOfficeSync();
+
+
+// ===== 仕入集計・Firebase連動 =====
+const purchaseDb=firebase.database().ref("fujiwara/purchases");
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function safeText(s){return String(s||"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function getPurchases(){try{return JSON.parse(localStorage.getItem("fujiwara_purchases")||"[]")}catch(e){return []}}
+function setPurchases(v){localStorage.setItem("fujiwara_purchases",JSON.stringify(v||[]))}
+function startPurchaseSync(){
+  purchaseDb.on("value",s=>{
+    const v=s.val()||{};
+    const arr=Object.keys(v).map(id=>({id,...v[id]}));
+    setPurchases(arr);
+    renderOfficePurchases();
+  });
+}
+function renderOfficePurchases(){
+  const arr0=getPurchases().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  const evSel=document.getElementById("purchaseEventFilter");
+  const stSel=document.getElementById("purchaseStaffFilter");
+  if(!evSel||!stSel)return;
+  const oldEv=evSel.value, oldSt=stSel.value;
+  const events=[...new Set(arr0.map(r=>r.eventName||"その他"))].sort();
+  const staffs=[...new Set(arr0.map(r=>r.staff||"未入力"))].sort();
+  evSel.innerHTML='<option value="">すべて</option>'+events.map(x=>`<option value="${safeText(x)}">${safeText(x)}</option>`).join('');
+  stSel.innerHTML='<option value="">すべて</option>'+staffs.map(x=>`<option value="${safeText(x)}">${safeText(x)}</option>`).join('');
+  evSel.value=oldEv; stSel.value=oldSt;
+  const arr=arr0.filter(r=>(!evSel.value||(r.eventName||"その他")===evSel.value)&&(!stSel.value||(r.staff||"未入力")===stSel.value));
+  const total=arr.reduce((s,r)=>s+Number(r.amount||0),0);
+  officePurchaseTotal.textContent=yen(total); officePurchaseCount.textContent=arr.length;
+  const byEvent={}; arr.forEach(r=>{const e=r.eventName||"その他"; byEvent[e]=(byEvent[e]||0)+Number(r.amount||0)});
+  officePurchaseGroup.innerHTML=Object.keys(byEvent).length?'<h3>イベント別合計</h3>'+Object.keys(byEvent).map(e=>`<div class="purchase-row"><b>${safeText(e)}</b><br><span class="pill">${yen(byEvent[e])}</span></div>`).join(''):'';
+  officePurchaseList.innerHTML=arr.length?'<h3>明細・レシート</h3>'+arr.map(r=>`<div class="purchase-row"><b>${safeText(r.store||'店舗未入力')}</b> ${yen(r.amount)}<br><span class="small">${safeText(r.date)} / ${safeText(r.eventName||'その他')} / ${safeText(r.staff||'未入力')} / ${safeText(r.item||'未分類')} / ${safeText(r.pay||'')}</span>${r.memo?`<div class="small">📝 ${safeText(r.memo)}</div>`:''}${r.photo?`<img class="receipt-img" src="${r.photo}">`:''}</div>`).join(''):'<div class="small">まだ仕入登録がありません。</div>';
+}
+startPurchaseSync();
+
+</script>
+
+<!-- Firebase linked 2026-07-05T22:24:53.209004 -->
+</body>
+</html>

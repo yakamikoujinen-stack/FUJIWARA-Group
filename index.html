@@ -475,6 +475,18 @@ body::before,#app::before,.page::before{
 .att-card.att-ended .status-badge{background:#ddd!important;border:1px solid #bbb!important;color:#666!important;}
 .att-section-title{padding:10px 14px;font-size:12px;font-weight:900;background:#fff3d6;border-bottom:1px solid var(--border);color:#4d3a00;}
 .att-section-title.ended{background:#e5e5e5;color:#666;}
+
+
+/* ===== 仕入登録・レシート管理 ===== */
+.purchase-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.purchase-kpi{background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;text-align:center;}
+.purchase-kpi .num{font-size:22px;font-weight:900;color:#9c6b00;}
+.purchase-card{background:#fffdf6;border:1.5px solid #d8bf75;border-left:4px solid #b8860b;border-radius:12px;padding:12px;margin-bottom:9px;box-shadow:0 3px 12px rgba(80,55,0,.08);}
+.purchase-title{font-size:15px;font-weight:900;color:#111;margin-bottom:4px;}
+.purchase-meta{font-size:12px;color:#4b3a10;line-height:1.7;}
+.purchase-photo{max-width:100%;max-height:220px;border-radius:10px;border:1px solid #d8bf75;margin-top:8px;background:#fff;}
+.purchase-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+
 </style>
 </head>
 <body>
@@ -647,6 +659,30 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
+
+
+    <!-- PURCHASES -->
+    <div class="page" id="page-purchases">
+      <div class="pg">
+        <p class="page-title">📷 仕入登録</p>
+        <p class="page-sub">リーダー・担当者用：買い出しレシートを撮影して事務員アプリへ連動</p>
+        <div id="purchase-lock"></div>
+        <div id="purchase-content">
+          <div class="admin-badge">🔒 リーダーは全員分 / 担当者は自分の仕入を登録・確認</div>
+          <button class="btn btn-gold btn-full" style="margin-bottom:12px" onclick="openPurchaseForm(null)">＋ 仕入を登録する</button>
+          <div class="purchase-kpi-grid">
+            <div class="purchase-kpi"><div class="num" id="purchase-count">0</div><div class="muted" style="font-size:11px">件数</div></div>
+            <div class="purchase-kpi"><div class="num" id="purchase-total">¥0</div><div class="muted" style="font-size:11px">合計</div></div>
+          </div>
+          <div class="fg">
+            <label>イベントで絞り込み</label>
+            <select id="purchase-filter-event" onchange="renderPurchasesPage()"></select>
+          </div>
+          <div id="purchase-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ATTENDANCE LIST -->
     <div class="page" id="page-attendance">
       <div class="pg">
@@ -761,6 +797,37 @@ body::before,#app::before,.page::before{
 </div>
 
 <!-- MODALS -->
+
+
+
+<!-- PURCHASE FORM -->
+<div class="modal-overlay" id="modal-purchase-form">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <h2 class="modal-title" id="pf-title">仕入登録</h2>
+      <button class="modal-close-btn" onclick="closeModal('modal-purchase-form')">✕</button>
+    </div>
+    <input type="hidden" id="pf-id">
+    <div class="fg"><label>イベント名</label><select id="pf-event"></select></div>
+    <div class="fg2">
+      <div class="fg"><label>日付</label><input type="date" id="pf-date"></div>
+      <div class="fg"><label>担当者</label><input type="text" id="pf-staff" placeholder="例：将"></div>
+    </div>
+    <div class="fg"><label>店舗名</label><input type="text" id="pf-store" placeholder="例：業務スーパー"></div>
+    <div class="fg2">
+      <div class="fg"><label>品目・分類</label><input type="text" id="pf-item" placeholder="例：牛串・備品"></div>
+      <div class="fg"><label>金額（税込）</label><input type="number" id="pf-amount" placeholder="例：12850"></div>
+    </div>
+    <div class="fg"><label>支払方法</label><select id="pf-pay"><option>現金</option><option>カード</option><option>PayPay</option><option>振込</option><option>その他</option></select></div>
+    <div class="fg"><label>レシート写真</label><input type="file" id="pf-photo" accept="image/*" capture="environment" onchange="previewPurchasePhoto(event)"><img id="pf-photo-preview" class="purchase-photo" style="display:none"></div>
+    <div class="fg"><label>メモ</label><textarea id="pf-memo" placeholder="例：氷・炭も一緒に購入"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gold" style="flex:1" onclick="savePurchase()">💾 保存</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-purchase-form')">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- EVENT FORM -->
 <div class="modal-overlay" id="modal-event-form">
@@ -3357,5 +3424,142 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   });
 })();
 </script>
+
+
+<script>
+(function(){
+  function yen(n){ return '¥'+Number(n||0).toLocaleString(); }
+  function esc(s){ return String(s||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];}); }
+  function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function purchaseCanUse(){ return role==='leader' || role==='staff'; }
+  function getPurchases(){ try{return JSON.parse(localStorage.getItem('fujiwara_purchases')||'[]')}catch(e){return []} }
+  function setPurchases(arr){ localStorage.setItem('fujiwara_purchases',JSON.stringify(arr||[])); }
+  function purchaseRef(){ try{ if(window.firebase && firebase.apps && firebase.apps.length){ return firebase.database().ref('fujiwara/purchases'); } }catch(e){} return null; }
+  window._purchasePhotoData='';
+
+  function patchNav(){
+    if(window.NAV){
+      ['leader','staff'].forEach(function(r){
+        NAV[r]=NAV[r]||[];
+        if(!NAV[r].some(function(n){return n.id==='purchases'})){
+          var at = Math.min(3,NAV[r].length);
+          NAV[r].splice(at,0,{id:'purchases',icon:'📷',label:'仕入'});
+        }
+      });
+    }
+  }
+  patchNav();
+
+  var oldBuild=window.buildNav;
+  window.buildNav=function(){ patchNav(); if(oldBuild) oldBuild(); };
+  var oldShow=window.showPage;
+  window.showPage=function(id){
+    if(id==='purchases' && !purchaseCanUse()){ if(typeof toast==='function')toast('⛔ 仕入登録はリーダー・担当者のみです'); id='calendar'; }
+    if(oldShow) oldShow(id);
+    if(id==='purchases') renderPurchasesPage();
+  };
+
+  window.previewPurchasePhoto=function(ev){
+    var file=ev.target.files && ev.target.files[0];
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var max=900, w=img.width, h=img.height;
+        if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
+        else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+        var c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        window._purchasePhotoData=c.toDataURL('image/jpeg',0.72);
+        var p=document.getElementById('pf-photo-preview'); if(p){p.src=window._purchasePhotoData;p.style.display='block';}
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  function fillPurchaseEvents(selectId, includeAll){
+    var s=document.getElementById(selectId); if(!s) return;
+    var current=s.value;
+    var opts=includeAll?'<option value="">すべて</option>':'';
+    var events=(window.state && state.events)?state.events:[];
+    opts += events.map(function(ev){ return '<option value="'+esc(ev.name)+'">'+esc((ev.date||'')+' '+(ev.name||''))+'</option>'; }).join('');
+    if(!events.length) opts += '<option value="その他">その他</option>';
+    s.innerHTML=opts; if(current) s.value=current;
+  }
+
+  window.openPurchaseForm=function(id){
+    if(!purchaseCanUse()){ toast('⛔ 仕入登録はリーダー・担当者のみです'); return; }
+    fillPurchaseEvents('pf-event',false);
+    var arr=getPurchases(); var r=id?arr.find(function(x){return String(x.id)===String(id)}):null;
+    document.getElementById('pf-title').textContent=r?'仕入を編集':'仕入登録';
+    document.getElementById('pf-id').value=r?r.id:'';
+    document.getElementById('pf-event').value=r?(r.eventName||''):'';
+    document.getElementById('pf-date').value=r?(r.date||todayISO()):todayISO();
+    document.getElementById('pf-staff').value=r?(r.staff||userName||''):(userName||'');
+    if(role==='staff') document.getElementById('pf-staff').readOnly=true; else document.getElementById('pf-staff').readOnly=false;
+    document.getElementById('pf-store').value=r?(r.store||''):'';
+    document.getElementById('pf-item').value=r?(r.item||''):'';
+    document.getElementById('pf-amount').value=r?(r.amount||''):'';
+    document.getElementById('pf-pay').value=r?(r.pay||'現金'):'現金';
+    document.getElementById('pf-memo').value=r?(r.memo||''):'';
+    window._purchasePhotoData=r?(r.photo||''):'';
+    var p=document.getElementById('pf-photo-preview'); if(p){ if(window._purchasePhotoData){p.src=window._purchasePhotoData;p.style.display='block'}else{p.style.display='none';p.removeAttribute('src')} }
+    openModal('modal-purchase-form');
+  };
+
+  window.savePurchase=function(){
+    var id=document.getElementById('pf-id').value || String(Date.now());
+    var rec={
+      id:id, eventName:document.getElementById('pf-event').value||'その他', date:document.getElementById('pf-date').value||todayISO(),
+      staff:document.getElementById('pf-staff').value.trim()||userName||'', store:document.getElementById('pf-store').value.trim(),
+      item:document.getElementById('pf-item').value.trim(), amount:Number(document.getElementById('pf-amount').value||0),
+      pay:document.getElementById('pf-pay').value, memo:document.getElementById('pf-memo').value.trim(), photo:window._purchasePhotoData||'',
+      createdBy:userName||'', updatedAt:new Date().toISOString()
+    };
+    if(!rec.store || !rec.amount){ alert('店舗名と金額を入れてください'); return; }
+    var arr=getPurchases().filter(function(x){return String(x.id)!==String(id)}); arr.push(rec); setPurchases(arr);
+    var ref=purchaseRef(); if(ref) ref.child(id).set(rec).catch(function(e){ alert('Firebase保存エラー: '+e.message); });
+    if(typeof addAudit==='function') addAudit('仕入登録',(rec.eventName||'')+' / '+(rec.store||'')+' / '+yen(rec.amount));
+    if(typeof toast==='function') toast('📷 仕入を保存しました');
+    closeModal('modal-purchase-form'); renderPurchasesPage();
+  };
+
+  window.deletePurchase=function(id){
+    var arr=getPurchases(); var r=arr.find(function(x){return String(x.id)===String(id)});
+    if(!r) return;
+    if(role==='staff' && r.staff!==userName && r.createdBy!==userName){ toast('⛔ 担当者は自分の仕入だけ削除できます'); return; }
+    if(!confirm('この仕入を削除しますか？')) return;
+    setPurchases(arr.filter(function(x){return String(x.id)!==String(id)}));
+    var ref=purchaseRef(); if(ref) ref.child(id).remove();
+    renderPurchasesPage(); toast('削除しました');
+  };
+
+  window.renderPurchasesPage=function(){
+    var lock=document.getElementById('purchase-lock'), content=document.getElementById('purchase-content'); if(!lock||!content) return;
+    if(!purchaseCanUse()){ lock.innerHTML='<div class="lock-box"><div style="font-size:36px;margin-bottom:8px">🔒</div><div style="font-size:14px;font-weight:700">アクセス制限</div><div style="font-size:12px;color:var(--text2)">仕入登録はリーダー・担当者のみです。</div></div>'; content.style.display='none'; return; }
+    lock.innerHTML=''; content.style.display=''; fillPurchaseEvents('purchase-filter-event',true);
+    var filter=document.getElementById('purchase-filter-event').value||'';
+    var arr=getPurchases().filter(function(r){ if(role==='staff' && r.staff!==userName && r.createdBy!==userName) return false; if(filter && r.eventName!==filter) return false; return true; })
+      .sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+    var total=arr.reduce(function(s,r){return s+Number(r.amount||0)},0);
+    document.getElementById('purchase-count').textContent=arr.length; document.getElementById('purchase-total').textContent=yen(total);
+    document.getElementById('purchase-list').innerHTML=arr.length?arr.map(function(r){
+      return '<div class="purchase-card"><div class="purchase-title">'+esc(r.store)+'　'+yen(r.amount)+'</div>'
+      +'<div class="purchase-meta">📅 '+esc(r.date)+' / 🎪 '+esc(r.eventName)+'<br>👤 '+esc(r.staff)+' / 🧾 '+esc(r.item||'未分類')+' / '+esc(r.pay||'')+(r.memo?'<br>📝 '+esc(r.memo):'')+'</div>'
+      +(r.photo?'<img class="purchase-photo" src="'+r.photo+'">':'')
+      +'<div class="purchase-actions"><button class="btn btn-outline btn-sm" onclick="openPurchaseForm(\''+esc(r.id)+'\')">編集</button><button class="btn btn-danger btn-sm" onclick="deletePurchase(\''+esc(r.id)+'\')">削除</button></div></div>';
+    }).join(''):'<div class="empty-state"><div class="ei">📷</div>まだ仕入登録がありません</div>';
+  };
+
+  function startPurchaseSync(){
+    var ref=purchaseRef(); if(!ref) return;
+    ref.on('value',function(s){ var v=s.val()||{}; var arr=Object.keys(v).map(function(k){return Object.assign({id:k},v[k])}); setPurchases(arr); if(document.getElementById('page-purchases')&&document.getElementById('page-purchases').classList.contains('active')) renderPurchasesPage(); });
+  }
+  setTimeout(function(){ patchNav(); if(document.getElementById('app') && document.getElementById('app').style.display!=='none' && window.buildNav) buildNav(); startPurchaseSync(); },500);
+})();
+</script>
+
 </body>
 </html>
