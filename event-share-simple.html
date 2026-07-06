@@ -12,325 +12,61 @@ th{background:#f5d98a}
 input,select{width:100%;border:0;background:transparent;font-size:15px}
 .private{background:#e5e5e5;color:#777}
 button{padding:8px 12px;margin:6px 0}
-@media print{button{display:none}}
+@media print{button{display:none}.private{display:none!important}th:first-child,td:first-child{display:none}}
 </style>
 </head>
 <body>
-
 <h2>イベント共有表（7・8月）</h2>
 <button onclick="saveData()">保存</button>
 <button onclick="window.print()">印刷 / PDF</button>
-
 <table id="tbl">
 <tr><th>公開</th><th>日付</th><th>イベント名</th><th>ネタ</th><th>備考</th></tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/4</td>
-<td>サンドーム福井</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/4</td>
-<td>清心夜市</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/5</td>
-<td>サンドーム福井</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/5</td>
-<td>JAたんご</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/11</td>
-<td>清心夜市</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/11</td>
-<td>きちゃりーな</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/12</td>
-<td>きちゃりーな</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/12</td>
-<td>神戸敏馬神社</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/18</td>
-<td>清心夜市</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/18</td>
-<td>若狭花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/19</td>
-<td>浜坂花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/19</td>
-<td>川夏旅館</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/24</td>
-<td>大阪天神</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/24</td>
-<td>香住まつり</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/25</td>
-<td>大阪天神</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/25</td>
-<td>岩美花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/26</td>
-<td>日高まつり</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>7/28</td>
-<td>全農京都 展示</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/1</td>
-<td>柳まつり</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/1</td>
-<td>柳まつり(大開)</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/2</td>
-<td>柳まつり</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/2</td>
-<td>熊野神社</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/3</td>
-<td>熊野神社</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/6</td>
-<td>びわこ花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/7</td>
-<td>米子がいな祭</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/8</td>
-<td>大阪茨木</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/9</td>
-<td>久美浜</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/14</td>
-<td>しゃんしゃん</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/15</td>
-<td>千代川花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/16</td>
-<td>宮津花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/16</td>
-<td>黒田庄花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/17</td>
-<td>瀬田花火</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/22</td>
-<td>鳥取美萩野</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/22</td>
-<td>蒲田神社</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/23</td>
-<td>甲子園盆踊り</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/24</td>
-<td>甲子園盆踊り</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/28</td>
-<td>神戸田中盆踊り</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/29</td>
-<td>神戸田中盆踊り</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
-<tr>
-<td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td>
-<td>8/29</td>
-<td>エルムプラザ</td>
-<td><input oninput="saveData()"></td>
-<td><input oninput="saveData()"></td>
-</tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/4</td><td>サンドーム福井</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/4</td><td>清心夜市</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/5</td><td>サンドーム福井</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/5</td><td>JAたんご</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/11</td><td>清心夜市</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/11</td><td>きちゃりーな</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/12</td><td>きちゃりーな</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/12</td><td>神戸敏馬神社</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/18</td><td>清心夜市</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/18</td><td>若狭花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/19</td><td>浜坂花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/19</td><td>川夏旅館</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/24</td><td>大阪天神</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/24</td><td>香住まつり</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/25</td><td>大阪天神</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/25</td><td>岩美花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/26</td><td>日高まつり</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>7/28</td><td>全農京都 展示</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/1</td><td>柳まつり</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/1</td><td>柳まつり(大開)</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/2</td><td>柳まつり</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/2</td><td>熊野神社</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/3</td><td>熊野神社</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/6</td><td>びわこ花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/7</td><td>米子がいな祭</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/8</td><td>大阪茨木</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/9</td><td>久美浜</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/14</td><td>しゃんしゃん</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/15</td><td>千代川花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/16</td><td>宮津花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/16</td><td>黒田庄花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/17</td><td>瀬田花火</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/22</td><td>鳥取美萩野</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/22</td><td>蒲田神社</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/23</td><td>甲子園盆踊り</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/24</td><td>甲子園盆踊り</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/28</td><td>神戸田中盆踊り</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/29</td><td>神戸田中盆踊り</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
+<tr><td><select onchange="styleRow(this);saveData()"><option>公開</option><option>非公開</option></select></td><td>8/29</td><td>エルムプラザ</td><td><input oninput="saveData()"></td><td><input oninput="saveData()"></td></tr>
 </table>
-
 <script>
 const KEY="fujiwara_event_share_simple_v2";
-
-function styleRow(sel){
-  sel.closest("tr").classList.toggle("private", sel.value==="非公開");
-}
-
-function saveData(){
-  const rows=[...document.querySelectorAll("#tbl tr")].slice(1).map(tr=>({
-    pub:tr.cells[0].querySelector("select").value,
-    neta:tr.cells[3].querySelector("input").value,
-    note:tr.cells[4].querySelector("input").value
-  }));
-  localStorage.setItem(KEY,JSON.stringify(rows));
-}
-
-function loadData(){
-  const saved=localStorage.getItem(KEY);
-  if(!saved) return;
-  try{
-    const rows=JSON.parse(saved);
-    document.querySelectorAll("#tbl tr").forEach((tr,i)=>{
-      if(i===0 || !rows[i-1]) return;
-      tr.cells[0].querySelector("select").value=rows[i-1].pub||"公開";
-      tr.cells[3].querySelector("input").value=rows[i-1].neta||"";
-      tr.cells[4].querySelector("input").value=rows[i-1].note||"";
-      styleRow(tr.cells[0].querySelector("select"));
-    });
-  }catch(e){}
-}
-
+function styleRow(sel){sel.closest("tr").classList.toggle("private",sel.value==="非公開");}
+function saveData(){const rows=[...document.querySelectorAll("#tbl tr")].slice(1).map(tr=>({pub:tr.cells[0].querySelector("select").value,neta:tr.cells[3].querySelector("input").value,note:tr.cells[4].querySelector("input").value}));localStorage.setItem(KEY,JSON.stringify(rows));}
+function loadData(){const saved=localStorage.getItem(KEY);if(!saved)return;try{const rows=JSON.parse(saved);document.querySelectorAll("#tbl tr").forEach((tr,i)=>{if(i===0||!rows[i-1])return;tr.cells[0].querySelector("select").value=rows[i-1].pub||"公開";tr.cells[3].querySelector("input").value=rows[i-1].neta||"";tr.cells[4].querySelector("input").value=rows[i-1].note||"";styleRow(tr.cells[0].querySelector("select"));});}catch(e){}}
 loadData();
 </script>
-
 </body>
 </html>
