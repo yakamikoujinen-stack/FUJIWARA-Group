@@ -43,6 +43,11 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
 .toast.show{opacity:1;top:32px}
 .footer{text-align:center;color:#94a3b8;font-size:12px;margin:20px}
 @media(max-width:720px){.row{grid-template-columns:1fr}.logo h1{font-size:24px}.table{font-size:12px}.btnBig{font-size:20px}}
+
+
+/* ===== 仕入集計・レシート確認 ===== */
+.purchase-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.purchase-row{background:#fff7fb;border:1px solid #ffd6e5;border-radius:16px;padding:12px;margin-bottom:8px}.purchase-row b{color:#ff5f93}.receipt-img{max-width:100%;max-height:220px;border-radius:14px;border:1px solid #ffd6e5;margin-top:8px}.pill{display:inline-block;background:#ffe4ef;color:#ff5f93;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -112,6 +117,23 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
   <h2>CSV用コピー</h2>
   <p class="small">Excelやスプレッドシートへ貼り付けできます。</p>
   <button class="btnGray" onclick="copyCSV()">CSVをコピー</button>
+</section>
+
+
+
+<section class="card">
+  <h2>📊 仕入集計 <span class="badge">キング/メイン連動</span></h2>
+  <p class="small">メインアプリのリーダー・担当者が登録した仕入がここに集まります。</p>
+  <div class="row">
+    <div><label>イベントで絞り込み</label><select id="purchaseEventFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
+    <div><label>担当者で絞り込み</label><select id="purchaseStaffFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
+  </div>
+  <div class="purchase-summary">
+    <div class="kpi"><div class="big" id="officePurchaseTotal">¥0</div><div class="small">仕入合計</div></div>
+    <div class="kpi"><div class="big" id="officePurchaseCount">0</div><div class="small">件数</div></div>
+  </div>
+  <div id="officePurchaseGroup"></div>
+  <div id="officePurchaseList"></div>
 </section>
 
 <div class="footer">FUJIWARA Group / Office Timecard</div>
@@ -244,6 +266,42 @@ staff.onchange=()=>{localStorage.setItem("office_timecard_last_staff",staff.valu
 staff.oninput=()=>{localStorage.setItem("office_timecard_last_staff",staff.value);loadForm();render()}
 date.onchange=()=>{loadForm();render()}
 loadForm();render();startOfficeSync();
+
+
+// ===== 仕入集計・Firebase連動 =====
+const purchaseDb=firebase.database().ref("fujiwara/purchases");
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function safeText(s){return String(s||"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function getPurchases(){try{return JSON.parse(localStorage.getItem("fujiwara_purchases")||"[]")}catch(e){return []}}
+function setPurchases(v){localStorage.setItem("fujiwara_purchases",JSON.stringify(v||[]))}
+function startPurchaseSync(){
+  purchaseDb.on("value",s=>{
+    const v=s.val()||{};
+    const arr=Object.keys(v).map(id=>({id,...v[id]}));
+    setPurchases(arr);
+    renderOfficePurchases();
+  });
+}
+function renderOfficePurchases(){
+  const arr0=getPurchases().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  const evSel=document.getElementById("purchaseEventFilter");
+  const stSel=document.getElementById("purchaseStaffFilter");
+  if(!evSel||!stSel)return;
+  const oldEv=evSel.value, oldSt=stSel.value;
+  const events=[...new Set(arr0.map(r=>r.eventName||"その他"))].sort();
+  const staffs=[...new Set(arr0.map(r=>r.staff||"未入力"))].sort();
+  evSel.innerHTML='<option value="">すべて</option>'+events.map(x=>`<option value="${safeText(x)}">${safeText(x)}</option>`).join('');
+  stSel.innerHTML='<option value="">すべて</option>'+staffs.map(x=>`<option value="${safeText(x)}">${safeText(x)}</option>`).join('');
+  evSel.value=oldEv; stSel.value=oldSt;
+  const arr=arr0.filter(r=>(!evSel.value||(r.eventName||"その他")===evSel.value)&&(!stSel.value||(r.staff||"未入力")===stSel.value));
+  const total=arr.reduce((s,r)=>s+Number(r.amount||0),0);
+  officePurchaseTotal.textContent=yen(total); officePurchaseCount.textContent=arr.length;
+  const byEvent={}; arr.forEach(r=>{const e=r.eventName||"その他"; byEvent[e]=(byEvent[e]||0)+Number(r.amount||0)});
+  officePurchaseGroup.innerHTML=Object.keys(byEvent).length?'<h3>イベント別合計</h3>'+Object.keys(byEvent).map(e=>`<div class="purchase-row"><b>${safeText(e)}</b><br><span class="pill">${yen(byEvent[e])}</span></div>`).join(''):'';
+  officePurchaseList.innerHTML=arr.length?'<h3>明細・レシート</h3>'+arr.map(r=>`<div class="purchase-row"><b>${safeText(r.store||'店舗未入力')}</b> ${yen(r.amount)}<br><span class="small">${safeText(r.date)} / ${safeText(r.eventName||'その他')} / ${safeText(r.staff||'未入力')} / ${safeText(r.item||'未分類')} / ${safeText(r.pay||'')}</span>${r.memo?`<div class="small">📝 ${safeText(r.memo)}</div>`:''}${r.photo?`<img class="receipt-img" src="${r.photo}">`:''}</div>`).join(''):'<div class="small">まだ仕入登録がありません。</div>';
+}
+startPurchaseSync();
+
 </script>
 
 <!-- Firebase linked 2026-07-05T22:24:53.209004 -->
