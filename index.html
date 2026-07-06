@@ -1002,7 +1002,7 @@ body::before,#app::before,.page::before{
       <button class="modal-close-btn" onclick="closeModal('modal-sales-edit')">✕</button>
     </div>
     <input type="hidden" id="se-ev-id">
-    <div class="fg"><label>売上合計（円）</label><input type="number" id="se-total" placeholder="200000" min="0"></div>
+    <div class="fg"><label>売上合計（円）※個別売上A〜Eから自動集計</label><input type="number" id="se-total" placeholder="0" min="0" readonly></div>
     <div class="fg" style="background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px;padding:12px;margin-top:8px">
       <label style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">個別売上（出店アイテム別）</label>
       <div id="se-item-inputs"></div>
@@ -2746,8 +2746,18 @@ function getSimpleSales(ev){
 function calcSimpleSalesTotal(simple){
   var total=0;
   var items=(simple&&simple.items)||{};
-  ['A','B','C','D','E'].forEach(function(k){ total += parseInt(items[k])||0; });
+  ['A','B','C','D','E'].forEach(function(k){ total += Number(String(items[k]||0).replace(/[^0-9]/g,''))||0; });
   return total;
+}
+function updateSimpleSalesTotalLive(){
+  var total=0;
+  document.querySelectorAll('.simple-sales-input').forEach(function(inp){
+    total += Number(String(inp.value||0).replace(/[^0-9]/g,''))||0;
+  });
+  var el=document.getElementById('se-total');
+  if(el) el.value=total;
+  var disp=document.getElementById('simple-sales-total-live');
+  if(disp) disp.textContent='¥'+total.toLocaleString('ja-JP');
 }
 function renderSalesDetail() {
   if(!canAccessSalesExpense()) return;
@@ -2859,6 +2869,7 @@ function calcSalesTotalFromItems(items){
 }
 function calcDaySalesTotal(day){
   day=day||{};
+  if(day.simple) return calcSimpleSalesTotal(day.simple);
   return parseInt(day.total)||calcSalesTotalFromItems(day.items||{});
 }
 function calcDayExpense(day){
@@ -2892,11 +2903,15 @@ function openSalesEdit(id) {
   var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
     +'<div class="fg"><label>日付</label><input type="date" id="simple-sales-date" value="'+(simple.date||ev.date||'')+'"></div>'
     +'<div class="fg"><label>イベント名</label><input type="text" value="'+String(ev.name||'').replace(/"/g,'&quot;')+'" readonly></div>'
+    +'<div style="background:#fff3d6;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin-bottom:12px;text-align:center">'
+    +'<div style="font-size:12px;color:var(--text2);font-weight:900">個別売上 合計</div>'
+    +'<div id="simple-sales-total-live" class="mono" style="font-size:26px;font-weight:900;color:#9c6b00">¥'+calcSimpleSalesTotal(simple).toLocaleString('ja-JP')+'</div>'
+    +'</div>'
     +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上項目（名称は自由入力）</div>'
     +['A','B','C','D','E'].map(function(k){
       var label=(simple.labels&&simple.labels[k])||'';
       var v=(simple.items&&simple.items[k])||'';
-      return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
+      return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" value="'+v+'" oninput="updateSimpleSalesTotalLive()"></div></div>';
     }).join('')
     +'<div class="fg"><label>メモ</label><textarea id="simple-sales-memo" placeholder="メモ">'+(simple.memo||'')+'</textarea></div>'
     +'<div style="font-size:12px;color:var(--text2);line-height:1.7">※仕入・細かい経費はキングアプリ・事務員アプリで管理</div>'
@@ -2909,8 +2924,9 @@ function openSalesEdit(id) {
     var old=document.getElementById('se-daily-inputs'); if(old) old.remove();
     laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>');
   }
-  // 固定の古い入力欄を使わない
-  ['se-total','se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
+  // 固定の古い入力欄を使わない。ただし se-total は個別売上A〜Eの合計を表示する
+  ['se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
+  updateSimpleSalesTotalLive();
   openModal('modal-sales-edit');
   showPage('sales');
   var sel=document.getElementById('sales-ev-select');
@@ -2925,6 +2941,7 @@ function saveSalesEdit() {
   if(!ev) return;
   if(!canEditSalesRecord(ev)){ toast('⛔ この売上表は記入者本人とリーダーだけ編集できます'); return; }
   ev.sales=ev.sales||{};
+  updateSimpleSalesTotalLive();
   var items={};
   var labels={};
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){ labels[inp.dataset.key]=(inp.value||'').trim(); });
