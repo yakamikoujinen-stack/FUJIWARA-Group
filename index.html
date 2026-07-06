@@ -477,6 +477,11 @@ body::before,#app::before,.page::before{
 .att-section-title.ended{background:#e5e5e5;color:#666;}
 
 
+
+.ocr-box{background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:10px;margin-top:8px;font-size:12px;line-height:1.7;color:#241900;}
+.ocr-status{font-size:12px;color:#6d5a2b;margin-top:6px;font-weight:900;}
+.ocr-text{width:100%;min-height:70px;font-size:12px;margin-top:8px;display:none;}
+
 /* ===== 仕入登録・レシート管理 ===== */
 .purchase-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
 .purchase-kpi{background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;text-align:center;}
@@ -488,6 +493,7 @@ body::before,#app::before,.page::before{
 .purchase-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -821,6 +827,11 @@ body::before,#app::before,.page::before{
     </div>
     <div class="fg"><label>支払方法</label><select id="pf-pay"><option>現金</option><option>カード</option><option>PayPay</option><option>振込</option><option>その他</option></select></div>
     <div class="fg"><label>レシート写真</label><input type="file" id="pf-photo" accept="image/*" capture="environment" onchange="previewPurchasePhoto(event)"><img id="pf-photo-preview" class="purchase-photo" style="display:none"></div>
+    <div class="ocr-box">
+      <button type="button" class="btn btn-outline btn-full" onclick="readPurchaseReceipt()">🤖 レシートを読み取る</button>
+      <div id="pf-ocr-status" class="ocr-status">写真を撮ってから押すと、店舗名・日付・金額を候補入力します。</div>
+      <textarea id="pf-ocr-text" class="ocr-text" placeholder="OCR読み取り文字"></textarea>
+    </div>
     <div class="fg"><label>メモ</label><textarea id="pf-memo" placeholder="例：氷・炭も一緒に購入"></textarea></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-gold" style="flex:1" onclick="savePurchase()">💾 保存</button>
@@ -3479,6 +3490,64 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     reader.readAsDataURL(file);
   };
 
+
+  function normalizeReceiptText(t){ return String(t||'').replace(/[|｜]/g,'1').replace(/[，]/g,',').replace(/[￥]/g,'¥').replace(/\s+/g,' ').trim(); }
+  function parseReceiptDate(text){
+    var m=text.match(/(20\d{2})[\/\.\-年]\s*(\d{1,2})[\/\.\-月]\s*(\d{1,2})日?/);
+    if(m) return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+    m=text.match(/(?:^|\D)(\d{2})[\/\.\-]\s*(\d{1,2})[\/\.\-]\s*(\d{1,2})(?:\D|$)/);
+    if(m){ var yy=Number(m[1]); var yyyy=(yy<70?2000+yy:1900+yy); return yyyy+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'); }
+    return '';
+  }
+  function parseReceiptAmount(raw){
+    var text=String(raw||'').replace(/[ＯOo]/g,'0').replace(/[ｌＩI]/g,'1');
+    var lines=text.split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);
+    var best=0;
+    lines.forEach(function(line){
+      var key=/(合計|総合計|総計|現計|お買上げ|お買い上げ|税込|お支払|支払|計)/.test(line);
+      var nums=line.match(/[¥￥]?\s*\d{1,3}(?:[,，]\d{3})+|[¥￥]?\s*\d{3,7}/g)||[];
+      nums.forEach(function(n){
+        var v=Number(String(n).replace(/[^0-9]/g,''));
+        if(v>=1 && v<10000000){ best= key ? Math.max(best,v) : Math.max(best, v>=100? v:0); }
+      });
+    });
+    return best||'';
+  }
+  function parseReceiptStore(raw){
+    var lines=String(raw||'').split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);
+    var bad=/(領収|レシート|receipt|TEL|電話|〒|住所|登録番号|日時|日付|担当|レジ|合計|小計|税|現計|お釣|釣銭|クレジット|カード|ポイント|No\.|NO\.|[0-9]{4}[\/年\-.][0-9]{1,2})/i;
+    for(var i=0;i<Math.min(lines.length,8);i++){
+      var line=lines[i].replace(/[■□◆◇★☆]/g,'').trim();
+      if(line.length>=2 && line.length<=28 && !bad.test(line) && !/^[-=ー―]+$/.test(line)) return line;
+    }
+    return '';
+  }
+  window.readPurchaseReceipt=async function(){
+    var status=document.getElementById('pf-ocr-status');
+    var out=document.getElementById('pf-ocr-text');
+    if(!window._purchasePhotoData){ alert('先にレシート写真を撮ってください'); return; }
+    if(!window.Tesseract){ alert('OCR部品の読み込みに失敗しました。ネット接続を確認して、もう一度開いてください。'); return; }
+    try{
+      if(status) status.textContent='🤖 読み取り中… 初回は少し時間がかかります';
+      var result=await Tesseract.recognize(window._purchasePhotoData,'jpn+eng',{ logger:function(m){ if(status && m.status){ status.textContent='🤖 '+m.status+(m.progress?(' '+Math.round(m.progress*100)+'%'):''); } } });
+      var text=(result && result.data && result.data.text) ? result.data.text : '';
+      if(out){ out.style.display='block'; out.value=text; }
+      var clean=normalizeReceiptText(text);
+      var store=parseReceiptStore(text);
+      var date=parseReceiptDate(clean);
+      var amount=parseReceiptAmount(text);
+      if(store && !document.getElementById('pf-store').value) document.getElementById('pf-store').value=store;
+      if(date) document.getElementById('pf-date').value=date;
+      if(amount) document.getElementById('pf-amount').value=amount;
+      if(status) status.textContent='✅ 読み取り完了。間違いがないか確認して保存してください。';
+      if(typeof toast==='function') toast('🤖 レシート読取完了');
+    }catch(e){
+      console.log(e);
+      if(status) status.textContent='⚠️ 読み取りできませんでした。写真を明るく正面から撮り直してください。';
+      alert('読み取りできませんでした。写真を明るく正面から撮り直してください。');
+    }
+  };
+
   function fillPurchaseEvents(selectId, includeAll){
     var s=document.getElementById(selectId); if(!s) return;
     var current=s.value;
@@ -3506,6 +3575,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     document.getElementById('pf-memo').value=r?(r.memo||''):'';
     window._purchasePhotoData=r?(r.photo||''):'';
     var p=document.getElementById('pf-photo-preview'); if(p){ if(window._purchasePhotoData){p.src=window._purchasePhotoData;p.style.display='block'}else{p.style.display='none';p.removeAttribute('src')} }
+    var ocrs=document.getElementById('pf-ocr-status'); if(ocrs) ocrs.textContent='写真を撮ってから押すと、店舗名・日付・金額を候補入力します。';
+    var ocrt=document.getElementById('pf-ocr-text'); if(ocrt){ocrt.value=''; ocrt.style.display='none';}
     openModal('modal-purchase-form');
   };
 
