@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>資金センター - FUJIWARA Group</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+:root{--gold:#d6a21c;--blue:#1489e8;--green:#22a35a;--red:#ef4444;--orange:#f59e0b;--text:#102043;--sub:#647188;--line:#e8edf5;--card:rgba(255,255,255,.92);--shadow:0 12px 30px rgba(45,68,100,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--text);background:linear-gradient(180deg,#f2fbff,#fff 45%,#fff8ed);min-height:100vh}.wrap{max-width:1180px;margin:auto;padding:16px 14px 90px}.head{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}.title{font-size:30px;font-weight:950;color:#9b6b00}.sub{font-size:13px;color:var(--sub);font-weight:800}.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:950;font-size:15px;background:#fff;box-shadow:var(--shadow)}.primary{background:linear-gradient(90deg,#f6bd22,#eba300);color:#fff}.blue{background:linear-gradient(90deg,#1598ef,#0877d9);color:#fff}.green{background:linear-gradient(90deg,#34c76b,#16a34a);color:#fff}.redBtn{background:#ffe2e6;color:#d21b32}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:var(--card);border:1px solid rgba(255,255,255,.95);border-radius:22px;box-shadow:var(--shadow);padding:16px}.metric small{display:block;color:var(--sub);font-weight:900}.metric b{display:block;font-size:28px;margin-top:8px}.bank b{color:#1466c7}.cash b{color:#16823a}.event b{color:#d97706}.total b{color:#9b6b00;font-size:34px}.main{display:grid;grid-template-columns:1.05fr .95fr;gap:12px;margin-top:12px}.panel-title{font-size:20px;font-weight:950;color:#084da8;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}.row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-weight:900}.row small{display:block;color:var(--sub);font-weight:700;margin-top:3px}.yen{font-weight:950}.plus{color:#16823a}.minus{color:#d21b32}.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form label{font-size:13px;color:var(--sub);font-weight:950}.form input,.form select,.form textarea{width:100%;margin-top:5px;border:1px solid #dfe6ef;border-radius:12px;padding:12px;font-size:16px;background:#fff}.form textarea{grid-column:1/-1;min-height:70px}.wide{grid-column:1/-1}.flow{margin-top:12px;background:#fff;border:1px solid #e9edf5;border-radius:18px;padding:14px}.flowbox{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}.flowitem{border-radius:16px;padding:13px;background:#f8fbff;font-weight:950}.arrow{font-size:25px;color:#9ca3af}.listBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{border:1px solid #dfe6ef;background:#fff;border-radius:999px;padding:9px 12px;font-weight:900}.bottom{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(1180px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:rgba(255,255,255,.92);border-top:1px solid #eee2ca;padding:10px 12px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(14px)}.nav{border:0;background:transparent;font-weight:950;font-size:14px;color:#1d2435}.empty{color:#7a8494;text-align:center;padding:18px;font-weight:900}@media(max-width:820px){.grid,.main{grid-template-columns:1fr}.form{grid-template-columns:1fr}.title{font-size:25px}.flowbox{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><div class="title">💰 資金センター</div><div class="sub">イベント後のお金の行き先を一目で管理</div></div>
+    <button class="btn" onclick="location.href='king.html'">👑 キングへ戻る</button>
+  </div>
+  <section class="grid">
+    <div class="card metric bank"><small>🏦 銀行・預金</small><b id="bankTotal">¥0</b></div>
+    <div class="card metric cash"><small>💵 手元現金</small><b id="cashTotal">¥0</b></div>
+    <div class="card metric event"><small>🎪 未振分の利益</small><b id="unallocatedTotal">¥0</b></div>
+    <div class="card metric total"><small>👑 現在資産</small><b id="assetTotal">¥0</b></div>
+  </section>
+  <section class="main">
+    <div class="card">
+      <div class="panel-title">🎪 イベント精算を入力</div>
+      <div class="form">
+        <div><label>イベント名<input id="eventName" placeholder="例：丹波夏祭り"></label></div>
+        <div><label>日付<input id="eventDate" type="date"></label></div>
+        <div><label>売上<input id="sales" type="number" inputmode="numeric" placeholder="500000"></label></div>
+        <div><label>仕入<input id="purchase" type="number" inputmode="numeric" placeholder="120000"></label></div>
+        <div><label>人件費<input id="labor" type="number" inputmode="numeric" placeholder="160000"></label></div>
+        <div><label>出店料<input id="fee" type="number" inputmode="numeric" placeholder="20000"></label></div>
+        <div><label>燃料・交通<input id="fuel" type="number" inputmode="numeric" placeholder="10000"></label></div>
+        <div><label>その他<input id="other" type="number" inputmode="numeric" placeholder="15000"></label></div>
+        <textarea id="memo" placeholder="メモ：雨、在庫、反省点など"></textarea>
+        <button class="btn primary wide" onclick="saveEvent()">イベント精算を保存</button>
+      </div>
+      <div class="flow">
+        <div class="flowbox">
+          <div class="flowitem">売上<br><span id="previewSales">¥0</span></div><div class="arrow">→</div>
+          <div class="flowitem">利益<br><span id="previewProfit">¥0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="panel-title">➡️ 利益の行き先を登録</div>
+      <div class="form">
+        <div class="wide"><label>対象イベント<select id="targetEvent"></select></label></div>
+        <div><label>行き先<select id="dest"><option>銀行・預金</option><option>手元現金</option><option>次回イベント資金</option><option>建設口座へ</option><option>会社運営費</option><option>借入返済</option><option>オーナー報酬</option></select></label></div>
+        <div><label>金額<input id="moveAmount" type="number" inputmode="numeric" placeholder="100000"></label></div>
+        <textarea id="moveMemo" placeholder="例：イベント利益から預金へ"></textarea>
+        <button class="btn green wide" onclick="saveMove()">行き先を保存</button>
+      </div>
+      <div class="listBtns">
+        <button class="pill" onclick="quickDest('銀行・預金')">🏦 預金</button>
+        <button class="pill" onclick="quickDest('手元現金')">💵 現金</button>
+        <button class="pill" onclick="quickDest('次回イベント資金')">🎪 次回資金</button>
+        <button class="pill" onclick="quickDest('会社運営費')">🏢 運営費</button>
+      </div>
+    </div>
+  </section>
+  <section class="main">
+    <div class="card"><div class="panel-title">📋 イベント別 精算一覧</div><div id="eventList" class="empty">まだ入力がありません</div></div>
+    <div class="card"><div class="panel-title">🏦 お金の移動履歴</div><div id="moveList" class="empty">まだ移動履歴がありません</div></div>
+  </section>
+</div>
+<nav class="bottom"><button class="nav" onclick="location.href='king.html'">👑 キング</button><button class="nav" onclick="window.scrollTo({top:0,behavior:'smooth'})">💰 資金</button><button class="nav" onclick="exportCSV()">📄 CSV</button></nav>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
+if(typeof firebase!=="undefined"&&!firebase.apps.length)firebase.initializeApp(firebaseConfig);const db=firebase.database();let events={},moves={};
+const yen=n=>'¥'+Number(n||0).toLocaleString('ja-JP');const num=id=>Number(document.getElementById(id).value||0);const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function today(){const d=new Date();return d.toISOString().slice(0,10)}document.getElementById('eventDate').value=today();
+['sales','purchase','labor','fee','fuel','other'].forEach(id=>document.getElementById(id).addEventListener('input',preview));function preview(){const s=num('sales'),c=num('purchase')+num('labor')+num('fee')+num('fuel')+num('other');document.getElementById('previewSales').textContent=yen(s);document.getElementById('previewProfit').textContent=yen(s-c)}
+function saveEvent(){const name=document.getElementById('eventName').value.trim();if(!name){alert('イベント名を入れて');return}const data={name,date:document.getElementById('eventDate').value||today(),sales:num('sales'),purchase:num('purchase'),labor:num('labor'),fee:num('fee'),fuel:num('fuel'),other:num('other'),memo:document.getElementById('memo').value.trim(),createdAt:Date.now()};data.cost=data.purchase+data.labor+data.fee+data.fuel+data.other;data.profit=data.sales-data.cost;db.ref('fujiwara/fund_center/events').push(data);['eventName','sales','purchase','labor','fee','fuel','other','memo'].forEach(id=>document.getElementById(id).value='');preview();alert('保存したで！次に利益の行き先を登録してな');}
+function saveMove(){const eventId=document.getElementById('targetEvent').value;if(!eventId){alert('対象イベントを選んで');return}const amount=num('moveAmount');if(!amount){alert('金額を入れて');return}db.ref('fujiwara/fund_center/moves').push({eventId,eventName:events[eventId]?.name||'',date:today(),dest:document.getElementById('dest').value,amount,memo:document.getElementById('moveMemo').value.trim(),createdAt:Date.now()});document.getElementById('moveAmount').value='';document.getElementById('moveMemo').value='';alert('行き先を保存したで！');}
+function quickDest(v){document.getElementById('dest').value=v;document.getElementById('moveAmount').focus()}
+function render(){let bank=0,cash=0,allocated=0,profit=0;Object.values(events).forEach(e=>profit+=Number(e.profit||0));Object.values(moves).forEach(m=>{allocated+=Number(m.amount||0);if(m.dest==='銀行・預金')bank+=Number(m.amount||0);if(m.dest==='手元現金')cash+=Number(m.amount||0)});document.getElementById('bankTotal').textContent=yen(bank);document.getElementById('cashTotal').textContent=yen(cash);document.getElementById('unallocatedTotal').textContent=yen(profit-allocated);document.getElementById('assetTotal').textContent=yen(bank+cash);
+const sel=document.getElementById('targetEvent');sel.innerHTML='<option value="">選択して</option>'+Object.entries(events).sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||'')).map(([id,e])=>`<option value="${id}">${esc(e.date)} ${esc(e.name)} 利益 ${yen(e.profit)}</option>`).join('');
+const byEvent={};Object.values(moves).forEach(m=>{byEvent[m.eventId]=(byEvent[m.eventId]||0)+Number(m.amount||0)});document.getElementById('eventList').innerHTML=Object.entries(events).length?Object.entries(events).sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||'')).map(([id,e])=>`<div class="row"><div>🎪 ${esc(e.name)}<small>${esc(e.date)} / 売上 ${yen(e.sales)} / 経費 ${yen(e.cost)} / メモ ${esc(e.memo)}</small></div><div class="yen plus">利益 ${yen(e.profit)}<br><small>振分 ${yen(byEvent[id]||0)} / 残 ${yen((e.profit||0)-(byEvent[id]||0))}</small></div></div>`).join(''):'まだ入力がありません';
+document.getElementById('moveList').innerHTML=Object.entries(moves).length?Object.values(moves).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(m=>`<div class="row"><div>➡️ ${esc(m.dest)}<small>${esc(m.date)} / ${esc(m.eventName)} / ${esc(m.memo)}</small></div><div class="yen plus">${yen(m.amount)}</div></div>`).join(''):'まだ移動履歴がありません'}
+db.ref('fujiwara/fund_center/events').on('value',s=>{events=s.val()||{};render()});db.ref('fujiwara/fund_center/moves').on('value',s=>{moves=s.val()||{};render()});
+function exportCSV(){const rows=[['種別','日付','イベント','行き先','売上','経費','利益','金額','メモ']];Object.values(events).forEach(e=>rows.push(['イベント精算',e.date,e.name,'',e.sales,e.cost,e.profit,'',e.memo||'']));Object.values(moves).forEach(m=>rows.push(['お金の移動',m.date,m.eventName,m.dest,'','','',m.amount,m.memo||'']));const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fund-center.csv';a.click()}
+preview();
+</script>
+</body>
+</html>
