@@ -1894,14 +1894,47 @@ function selectDate(d){
 }
 
 
+var PARTNER_SHARE_KEY='partner_events_v4';
+var PARTNER_FB_PATH='fujiwara/partner_shared_events';
+function partnerShareRef(id){
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length){
+      var ref=firebase.database().ref(PARTNER_FB_PATH);
+      return id ? ref.child(String(id).replace(/[.#$\[\]/]/g,'_')) : ref;
+    }
+  }catch(e){}
+  return null;
+}
 function getPartnerShareList(){
-  var key='partner_events_v4';
   var list=[];
-  try{ list=JSON.parse(localStorage.getItem(key)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
+  try{ list=JSON.parse(localStorage.getItem(PARTNER_SHARE_KEY)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
   return list;
 }
 function savePartnerShareList(list){
-  localStorage.setItem('partner_events_v4', JSON.stringify(Array.isArray(list)?list:[]));
+  localStorage.setItem(PARTNER_SHARE_KEY, JSON.stringify(Array.isArray(list)?list:[]));
+}
+function mergePartnerShareLocal(data){
+  if(!data) return;
+  var list=getPartnerShareList();
+  var id=String(data.mainId||data.id||'');
+  var i=list.findIndex(function(x){ return String(x.mainId||x.id||'')===id || String(x.id||'')===String(data.id||''); });
+  if(i>=0){ list[i]=Object.assign({},list[i],data); } else { list.push(data); }
+  savePartnerShareList(list);
+}
+function removePartnerShareLocal(id){
+  var sid=String(id);
+  savePartnerShareList(getPartnerShareList().filter(function(x){ return !(String(x.mainId||'')===sid || String(x.id||'')===('main_'+sid) || String(x.id||'')===sid); }));
+}
+function listenPartnerShareStatus(){
+  var ref=partnerShareRef();
+  if(!ref || listenPartnerShareStatus.started) return;
+  listenPartnerShareStatus.started=true;
+  ref.on('value',function(snap){
+    var v=snap.val()||{};
+    var list=Object.keys(v).map(function(k){ return v[k]; }).filter(Boolean);
+    savePartnerShareList(list);
+    try{ renderEventList(selDate||null); }catch(e){}
+  });
 }
 function isEventSharedToPartner(id){
   return getPartnerShareList().some(function(x){ return String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id)); });
@@ -1912,39 +1945,48 @@ function shareEventToPartner(id){
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
   if(isSecretEvent(ev) && !confirm('シークレットイベントです。partnerへ共有しますか？')) return;
   var list=getPartnerShareList();
-  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id) || String(x.id||'')===('main_'+String(ev.id)); });
+  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id) || String(x.id||'')===('main_'+String(ev.id)); }) || {};
   var data={
-    id: existing ? existing.id : ('main_'+ev.id),
+    id:'main_'+String(ev.id),
     mainId:String(ev.id),
     date:ev.date||'',
     title:ev.name||'イベント',
     place:ev.place||'',
-    client:'FUJIWARA Group',
-    detail:'',
-    sales: existing ? Number(existing.sales||0) : 0,
-    fee: existing ? Number(existing.fee||0) : 0,
-    cost: existing ? Number(existing.cost||0) : 0,
-    labor: existing ? Number(existing.labor||0) : 0,
-    other: existing ? Number(existing.other||0) : 0,
-    secret:false
+    sales:Number(existing.sales||0),
+    fee:Number(existing.fee||0),
+    cost:Number(existing.cost||0),
+    labor:Number(existing.labor||0),
+    other:Number(existing.other||0),
+    secret:false,
+    updatedAt:Date.now()
   };
-  if(existing){ Object.assign(existing,data); } else { list.push(data); }
-  savePartnerShareList(list);
-  toast('🐩 partnerへ共有しました');
-  renderEventList(selDate||null);
-  if(confirm('partnerアプリを開きますか？')) location.href='partner.html';
+  mergePartnerShareLocal(data);
+  var ref=partnerShareRef(ev.id);
+  if(ref){
+    ref.set(data).then(function(){ toast('🐩 partnerへ共有しました'); renderEventList(selDate||null); if(confirm('partnerアプリを開きますか？')) location.href='partner.html'; })
+    .catch(function(){ toast('⚠️ Firebase保存できません。ローカル保存しました'); renderEventList(selDate||null); });
+  }else{
+    toast('🐩 partnerへ共有しました（この端末のみ）');
+    renderEventList(selDate||null);
+    if(confirm('partnerアプリを開きますか？')) location.href='partner.html';
+  }
 }
 function unshareEventFromPartner(id){
   if(role!=='leader'){ toast('⛔ リーダーのみ解除できます'); return; }
   var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
   var name=ev && ev.name ? ev.name : 'このイベント';
-  if(!confirm('「'+name+'」のpartner共有を解除しますか？\n※partner側の損益入力も一覧から消えます。')) return;
-  var before=getPartnerShareList();
-  var after=before.filter(function(x){ return !(String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id))); });
-  savePartnerShareList(after);
-  toast(before.length===after.length?'共有データはありません':'🐩 partner共有を解除しました');
-  renderEventList(selDate||null);
+  if(!confirm('「'+name+'」のpartner共有を解除しますか？\n※partner側の表示から消えます。')) return;
+  removePartnerShareLocal(id);
+  var ref=partnerShareRef(id);
+  if(ref){
+    ref.remove().then(function(){ toast('🐩 partner共有を解除しました'); renderEventList(selDate||null); })
+    .catch(function(){ toast('⚠️ Firebase解除に失敗しました'); renderEventList(selDate||null); });
+  }else{
+    toast('🐩 partner共有を解除しました（この端末のみ）');
+    renderEventList(selDate||null);
+  }
 }
+listenPartnerShareStatus();
 
 function renderEventList(dateFilter) {
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
