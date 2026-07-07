@@ -2072,8 +2072,7 @@ function unshareEventFromPartnerMen(id){
   if(role!=='leader'){ toast('⛔ リーダーのみ解除できます'); return; }
   var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
   var name=ev && ev.name ? ev.name : 'このイベント';
-  if(!confirm('「'+name+'」のpartner men共有を解除しますか？
-※partner men側の表示から消えます。')) return;
+  if(!confirm('「'+name+'」のpartner men共有を解除しますか？\n※partner men側の表示から消えます。')) return;
   removePartnerMenShareLocal(id);
   var ref=partnerMenShareRef(id);
   if(ref){ ref.remove().then(function(){ toast('🦍🐷 partner men共有を解除しました'); renderEventList(selDate||null); }).catch(function(){ toast('⚠️ Firebase解除に失敗しました'); renderEventList(selDate||null); }); }
