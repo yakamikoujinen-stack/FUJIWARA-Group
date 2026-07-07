@@ -1894,16 +1894,25 @@ function selectDate(d){
 }
 
 
+function getPartnerShareList(){
+  var key='partner_events_v4';
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(key)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
+  return list;
+}
+function savePartnerShareList(list){
+  localStorage.setItem('partner_events_v4', JSON.stringify(Array.isArray(list)?list:[]));
+}
+function isEventSharedToPartner(id){
+  return getPartnerShareList().some(function(x){ return String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id)); });
+}
 function shareEventToPartner(id){
   if(role!=='leader'){ toast('⛔ リーダーのみ共有できます'); return; }
   var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
   if(isSecretEvent(ev) && !confirm('シークレットイベントです。partnerへ共有しますか？')) return;
-  var key='partner_events_v4';
-  var list=[];
-  try{ list=JSON.parse(localStorage.getItem(key)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
-  var detail=[ev.memo||'', ev.itemsText?('持ち物・メニュー：'+ev.itemsText):''].filter(Boolean).join('\n');
-  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id); });
+  var list=getPartnerShareList();
+  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id) || String(x.id||'')===('main_'+String(ev.id)); });
   var data={
     id: existing ? existing.id : ('main_'+ev.id),
     mainId:String(ev.id),
@@ -1911,7 +1920,7 @@ function shareEventToPartner(id){
     title:ev.name||'イベント',
     place:ev.place||'',
     client:'FUJIWARA Group',
-    detail:detail,
+    detail:'',
     sales: existing ? Number(existing.sales||0) : 0,
     fee: existing ? Number(existing.fee||0) : 0,
     cost: existing ? Number(existing.cost||0) : 0,
@@ -1920,9 +1929,21 @@ function shareEventToPartner(id){
     secret:false
   };
   if(existing){ Object.assign(existing,data); } else { list.push(data); }
-  localStorage.setItem(key, JSON.stringify(list));
+  savePartnerShareList(list);
   toast('🐩 partnerへ共有しました');
+  renderEventList(selDate||null);
   if(confirm('partnerアプリを開きますか？')) location.href='partner.html';
+}
+function unshareEventFromPartner(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ解除できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  var name=ev && ev.name ? ev.name : 'このイベント';
+  if(!confirm('「'+name+'」のpartner共有を解除しますか？\n※partner側の損益入力も一覧から消えます。')) return;
+  var before=getPartnerShareList();
+  var after=before.filter(function(x){ return !(String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id))); });
+  savePartnerShareList(after);
+  toast(before.length===after.length?'共有データはありません':'🐩 partner共有を解除しました');
+  renderEventList(selDate||null);
 }
 
 function renderEventList(dateFilter) {
@@ -1964,7 +1985,7 @@ function renderEventList(dateFilter) {
       actionsHtml='<div class="ev-actions" onclick="event.stopPropagation()">'
         +'<button class="btn btn-sm btn-ghost" onclick="openEventForm(\''+ev.id+'\')">✏️ 編集</button>'
         +'<button class="btn btn-sm btn-ghost" onclick="quickStatus(\''+ev.id+'\')">🔄 状態変更</button>'
-        +(role==='leader'?'<button class="btn btn-sm btn-outline" onclick="shareEventToPartner(\''+ev.id+'\')">🐩 partner共有</button>':'')
+        +(role==='leader'?(isEventSharedToPartner(ev.id)?'<button class="btn btn-sm btn-danger" onclick="unshareEventFromPartner(\''+ev.id+'\')">🐩 共有解除</button>':'<button class="btn btn-sm btn-outline" onclick="shareEventToPartner(\''+ev.id+'\')">🐩 partner共有</button>'):'')
         +'</div>';
     }
 
