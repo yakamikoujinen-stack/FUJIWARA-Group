@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
 
-<title>建設アプリ</title>
-<link rel="apple-touch-icon" sizes="180x180" href="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/icon-construction-dev.png?v=20260703-2">
-<link rel="apple-touch-icon-precomposed" sizes="180x180" href="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/icon-construction-dev.png?v=20260703-2">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-construction-dev.png?v=20260703-2">
-<meta name="apple-mobile-web-app-title" content="建設開発">
+<title>建設スタッフ v2</title>
+<link rel="apple-touch-icon" sizes="180x180" href="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/icon-construction-staff.png?v=20260703-2">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/icon-construction-staff.png?v=20260703-2">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-construction-staff.png?v=20260703-2">
+<meta name="apple-mobile-web-app-title" content="建設スタッフv2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#9b1111">
@@ -23,7 +23,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .head,.day{background:white;border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}.head{background:#1f3a5f;color:white;text-align:center;font-weight:bold}.day{min-height:82px}
 .job{margin-top:4px;background:#e8f1ff;border-left:4px solid #1f3a5f;border-radius:6px;padding:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.report{background:#e9f9ef;border-left-color:#0a7a2f}
-.clientMark{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px;background:#777}.client-maeda{background:#e53935}.client-yusei{background:#20a354}.client-blue{background:#2563eb}.client-yellow{background:#f59e0b}.client-purple{background:#7c3aed}.client-gray{background:#64748b}
+.mark{font-size:16px;margin-right:4px}.master-list{display:grid;gap:8px}.master-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:8px}.master-item button{width:auto;margin:0;padding:8px 12px}.warnbox{background:#fff7ed;border-left:5px solid #f59e0b;border-radius:12px;padding:10px;margin-top:8px}
 .small{font-size:12px;color:#666;line-height:1.6}.status{display:inline-block;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold;background:#fff4db;color:#b7791f}.status.ok{background:#e9f9ef;color:#0a7a2f}.status.ng{background:#ffe4e6;color:#b00020}
 .fg-header{background:#eef2f7;color:#172033;text-align:left;padding:22px 16px}.fg-title-card{background:#fff;border-radius:26px;padding:30px 28px;box-shadow:0 8px 24px rgba(0,0,0,.08);max-width:1000px;margin:auto}
 .fg-main-title{font-size:32px;font-weight:800;color:#172033}.fg-sub-title{font-size:24px;letter-spacing:2px;color:#172033;margin-top:6px}.fg-version{display:inline-block;margin-top:12px;border-radius:999px;padding:6px 16px;font-weight:800;font-size:14px;color:#fff;background:#0a7a2f}.fg-system-name{margin-top:16px;color:#667085;font-size:14px;letter-spacing:1px}
@@ -34,108 +34,88 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 </head>
 <body>
-<header class="fg-header"><div class="fg-title-card"><div class="fg-main-title">FUJIWARA Group</div><div class="fg-sub-title">- construction -</div><div class="fg-version">正規版 / Firebase共有版</div><div class="fg-system-name">Construction Management System</div></div></header>
+<header class="fg-header"><div class="fg-title-card"><div class="fg-main-title">FUJIWARA Group</div><div class="fg-sub-title">- construction -</div><div class="fg-version">スタッフ正規版 v2 / Firebase安定版</div><div class="fg-system-name">Construction Management System</div></div></header>
 <main>
 <section class="card"><h3>スタッフ用</h3><p class="small">予定確認と日報入力のみ使用できます。保存データはFirebaseで共有されます。</p><span id="cloudStatus" class="status">Firebase接続中...</span><button class="green" onclick="syncLocalMastersToFirebase()">この端末の作業員・取引先を共有へ反映</button><p class="small">開発版で登録した作業員・取引先が出ない時は、このボタンを1回押してください。</p><button onclick="rescueLocalReports()">この端末に残っている日報を復旧</button><p class="small">日報が消えた時だけ押してください。この端末の保存履歴を探してFirebaseへ戻します。</p></section>
-<div class="card tabs admin-tabs"><button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button><button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button><button id="bAdmin" class="tab" onclick="showTab('admin')">⚙️ 管理者</button></div>
+<div class="card tabs"><button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button><button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button></div>
 <section id="cal">
 <div class="card row"><button onclick="moveMonth(-1)">← 前月</button><button onclick="moveMonth(1)">翌月 →</button></div>
-<div class="card"><h2 id="monthTitle"></h2><p class="small"><span class="clientMark client-maeda"></span>前田建設　<span class="clientMark client-yusei"></span>優成建設　<span class="clientMark client-blue"></span>その他取引先</p><div class="grid" id="calHead"></div><div class="grid" id="calendar"></div></div>
-<div class="card"><h3>現場予定を登録</h3><div class="row"><input id="jDate" type="date"><input id="jSite" placeholder="現場名"></div><div class="row"><select id="jClient"></select><input id="jStart" type="time"></div><input id="jClientCustom" placeholder="取引先名を直接入力（例：優成建設）"><input id="jWorkers" placeholder="作業員（例：山田、田中）"><textarea id="jWork" placeholder="作業内容・持ち物・注意事項"></textarea><button onclick="addJob()">予定を保存</button></div>
+<div class="card"><h2 id="monthTitle"></h2><div class="grid" id="calHead"></div><div class="grid" id="calendar"></div></div>
+<div class="card"><h3>現場予定を登録</h3><div class="row"><input id="jDate" type="date"><input id="jSite" placeholder="現場名"></div><div class="row"><select id="jClient"></select><input id="jStart" type="time"></div><input id="jWorkers" placeholder="作業員（例：山田、田中）"><textarea id="jWork" placeholder="作業内容・持ち物・注意事項"></textarea><button onclick="addJob()">予定を保存</button></div>
 <div class="card"><h3>選択日の予定・日報</h3><div id="dayList">日付を選択してください</div></div>
 </section>
 <section id="rep" style="display:none">
 <div class="card"><h3>日報入力</h3><div class="row"><input id="rDate" type="date"><input id="rSite" placeholder="現場名"></div>
 <label class="small"><b>当社の会社名</b></label><select id="rCompany"></select>
 <div class="row"><select id="rReporter"></select><input id="rPeople" type="number" placeholder="人数"></div><div class="small">左：当社の日報入力者　右：人数</div>
-<div class="row"><select id="rClient"></select><input id="rClientPerson" placeholder="取引先担当者名"></div><input id="rClientCustom" placeholder="取引先名を直接入力（例：優成建設）"><div class="small">上：取引先名　直接入力があれば直接入力を優先します</div>
+<div class="row"><select id="rClient"></select><input id="rClientPerson" placeholder="取引先担当者名"></div><div class="small">左：取引先名　右：取引先担当者</div>
 <div class="row"><select id="rWorker"></select><select id="rWeather"><option value="">天気</option><option>晴れ</option><option>曇り</option><option>雨</option><option>雪</option></select></div>
 <div class="row"><div><label class="small"><b>現場入場</b></label><input id="rStart" type="time"></div><div><label class="small"><b>現場退場</b></label><input id="rEnd" type="time"></div></div>
 <input id="rBreak" type="number" placeholder="休憩 分"><textarea id="rWork" placeholder="本日の作業内容"></textarea><textarea id="rMemo" placeholder="連絡事項・問題点・明日の予定"></textarea><button class="green" onclick="addReport()">日報を保存</button></div>
 <div class="card"><h3>日報一覧</h3><div id="reportList">日報なし</div></div>
 </section>
 
-<section id="admin" style="display:none">
-  <div class="card">
-    <h3>⚙️ 管理者ページ</h3>
-    <p class="small">取引先名別・取引先担当者別で、日報の出勤一覧を確認できます。</p>
-    <div class="row">
-      <div>
-        <label class="small"><b>取引先名で絞り込み</b></label>
-        <select id="adminClientFilter" onchange="renderAdminAttendance()"></select>
-      </div>
-      <div>
-        <label class="small"><b>取引先担当者で絞り込み</b></label>
-        <select id="adminPersonFilter" onchange="renderAdminAttendance()"></select>
-      </div>
-    </div>
-    <div class="row">
-      <div>
-        <label class="small"><b>月で絞り込み</b></label>
-        <input id="adminMonthFilter" type="month" onchange="renderAdminAttendance()">
-      </div>
-      <div>
-        <label class="small"><b>検索</b></label>
-        <input id="adminSearch" placeholder="現場名・入力者・作業員" oninput="renderAdminAttendance()">
-      </div>
-    </div>
-  </div>
 
-  <div class="card">
-    <h3>出勤集計</h3>
-    <div class="grid">
-      <div class="card"><b id="adminCount">0</b><br><span class="small">日報件数</span></div>
-      <div class="card"><b id="adminPeople">0</b><br><span class="small">延べ人数</span></div>
-      <div class="card"><b id="adminHours">0.0h</b><br><span class="small">合計現場時間</span></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>出勤一覧表</h3>
-    <div style="overflow:auto">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>取引先名</th>
-            <th>担当者</th>
-            <th>現場名</th>
-            <th>入力者</th>
-            <th>作業員</th>
-            <th>人数</th>
-            <th>現場入場</th>
-            <th>現場退場</th>
-            <th>時間</th>
-            <th>天気</th>
-          </tr>
-        </thead>
-        <tbody id="adminAttendanceBody"></tbody>
-      </table>
-    </div>
-    <button onclick="copyAdminCSV()">一覧をCSVコピー</button>
-  </div>
-</section>
 
 </main>
 <script>
 const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database(), base="fujiwara/construction";
-let current=new Date(), selectedDate="", jobsData=[], reportsData=[], workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])), clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社","優成建設"]));
+let current=new Date(), selectedDate="", jobsData=[], reportsData=[], workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])), clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]));
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
-function esc(v){return String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
-function clientColorClass(name){
-  const n=String(name||"");
-  if(n.includes("前田"))return "client-maeda";      // 🔴 前田建設
-  if(n.includes("優成"))return "client-yusei";      // 🟢 優成建設
-  if(!n || n==="未登録")return "client-gray";
-  const classes=["client-blue","client-yellow","client-purple","client-gray"];
-  let sum=0; for(let i=0;i<n.length;i++)sum+=n.charCodeAt(i);
-  return classes[sum%classes.length];
+const clientMarks=["🔴","🟢","🟡","🔵","🟣","🟠","⚫","⚪","🟤","🔶","🔷","⭐"];
+function safeKey(name){return String(name||"").trim().replace(/[.#$\[\]\/]/g,"_")}
+function clientMark(name){
+  const n=String(name||"未登録");
+  const list=unique(clientsData.concat(["未登録"]));
+  let i=list.indexOf(n);
+  if(i<0)i=0;
+  return clientMarks[i%clientMarks.length];
 }
-function clientLabelHtml(name){const label=name||"取引先未登録";return `<span class="clientMark ${clientColorClass(label)}"></span>${esc(label)}`}
-function clientValue(selectEl, customEl){return (customEl&&customEl.value.trim()) || (selectEl&&selectEl.value) || "未登録"}
-function addClientMasterIfNeeded(name){name=String(name||"").trim();if(!name||name==="未登録")return;clientsData=unique(clientsData.concat([name]));syncList("clients",[name]).catch(()=>{});}
+function saveLocalList(key,arr){try{localStorage.setItem(key,JSON.stringify(unique(arr||[])))}catch(e){}}
+function pushOfflineQueue(kind,data){
+  try{const key="fks_construction_offline_queue";const arr=JSON.parse(localStorage.getItem(key)||"[]");arr.push({kind,data,queuedAt:new Date().toISOString()});localStorage.setItem(key,JSON.stringify(arr.slice(-500)));}catch(e){}
+}
+function syncOfflineQueue(){
+  let arr=[];try{arr=JSON.parse(localStorage.getItem("fks_construction_offline_queue")||"[]")}catch(e){arr=[]}
+  if(!arr.length)return;
+  const rest=[];
+  const tasks=arr.map(item=>{
+    if(item.kind==="report")return R("reports").push(item.data).catch(()=>rest.push(item));
+    if(item.kind==="job")return R("jobs").push(item.data).catch(()=>rest.push(item));
+    return Promise.resolve();
+  });
+  Promise.all(tasks).then(()=>{localStorage.setItem("fks_construction_offline_queue",JSON.stringify(rest)); if(!rest.length)setStatus("Firebase接続OK / 未送信データ同期済み","ok")});
+}
+function addWorkerMaster(){
+  const name=(newWorkerName.value||"").trim(); if(!name)return alert("作業員名を入力してください");
+  workersData=unique(workersData.concat([name])); saveLocalList("fks_construction_workers",workersData);
+  R("workers/"+safeKey(name)).set({name,updatedAt:new Date().toISOString()}).then(()=>{newWorkerName.value="";renderAll();alert("作業員を保存しました")}).catch(e=>{newWorkerName.value="";renderAll();alert("端末に保存しました。通信が戻ったら共有します: "+e.message)});
+}
+function delWorkerMaster(name){
+  if(!confirm(name+" を削除しますか？"))return;
+  workersData=workersData.filter(x=>x!==name); saveLocalList("fks_construction_workers",workersData);
+  R("workers/"+safeKey(name)).remove().then(renderAll).catch(()=>renderAll());
+}
+function addClientMaster(){
+  const name=(newClientName.value||"").trim(); if(!name)return alert("取引先名を入力してください");
+  clientsData=unique(clientsData.concat([name])); saveLocalList("fks_construction_clients",clientsData);
+  R("clients/"+safeKey(name)).set({name,updatedAt:new Date().toISOString()}).then(()=>{newClientName.value="";renderAll();alert("取引先を保存しました")}).catch(e=>{newClientName.value="";renderAll();alert("端末に保存しました。通信が戻ったら共有します: "+e.message)});
+}
+function delClientMaster(name){
+  if(name==="未登録")return alert("未登録は削除できません");
+  if(!confirm(name+" を削除しますか？"))return;
+  clientsData=clientsData.filter(x=>x!==name); saveLocalList("fks_construction_clients",clientsData);
+  R("clients/"+safeKey(name)).remove().then(renderAll).catch(()=>renderAll());
+}
+function renderMasters(){
+  if(typeof workerMasterList==="undefined")return;
+  workerMasterList.innerHTML=workersData.map(w=>`<div class="master-item"><b>${w}</b><button class="red" onclick="delWorkerMaster('${String(w).replace(/'/g,"&#39;")}')">削除</button></div>`).join("")||"未登録";
+  clientMasterList.innerHTML=clientsData.map(c=>`<div class="master-item"><b><span class="mark">${clientMark(c)}</span>${c}</b><button class="red" onclick="delClientMaster('${String(c).replace(/'/g,"&#39;")}')">削除</button></div>`).join("")||"未登録";
+  clientColorLegend.innerHTML="予定表の表示："+clientsData.map(c=>`${clientMark(c)}＝${c}`).join("　/　");
+}
+
 function R(p){return db.ref(base+"/"+p)}
 function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function unique(a){return [...new Set(a.filter(Boolean))]}
@@ -157,40 +137,55 @@ function syncLocalMastersToFirebase(){
     alert("この端末の作業員・取引先をFirebase共有へ反映しました");
   }).catch(e=>alert("共有エラー: "+e.message));
 }
-function readLocalReportBackups(){
-  const keys=["fks_construction_report_backups","fks_construction_reports","construction_reports","dailyReports","reports"];
-  let all=[];
-  keys.forEach(key=>{
-    try{
-      const v=JSON.parse(localStorage.getItem(key)||"[]");
-      if(Array.isArray(v))all=all.concat(v);
-      else if(v&&typeof v==="object")all=all.concat(Object.values(v));
-    }catch(e){}
-  });
-  return all.filter(r=>r&&r.date&&r.site);
-}
+
 function saveLocalReportBackup(report){
   try{
-    const list=readLocalReportBackups().filter(r=>localReportSignature(r)!==localReportSignature(report));
-    list.push({...report,localSavedAt:new Date().toISOString()});
-    localStorage.setItem("fks_construction_report_backups",JSON.stringify(list.slice(-300)));
+    const key="fks_construction_report_backups";
+    const arr=JSON.parse(localStorage.getItem(key)||"[]");
+    arr.push(report);
+    localStorage.setItem(key,JSON.stringify(arr.slice(-300)));
   }catch(e){}
 }
-function localReportSignature(r){return [r.date||"",r.site||"",r.reporter||"",r.start||"",r.end||"",r.work||""].join("|")}
+function localReportSignature(r){
+  return [r.date||"",r.site||"",r.reporter||"",r.start||"",r.end||"",r.work||""].join("|");
+}
+function findLocalReportsFromAllKeys(){
+  const out=[];
+  const seen=new Set();
+  function addOne(x,fromKey){
+    if(!x||typeof x!=="object")return;
+    const hasReport=(x.date&&x.site&&(x.work||x.memo||x.reporter||x.start||x.end));
+    if(!hasReport)return;
+    const r={...x,restoredFrom:fromKey,restoredAt:new Date().toISOString()};
+    const sig=localReportSignature(r);
+    if(!seen.has(sig)){seen.add(sig);out.push(r)}
+  }
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    let v;
+    try{v=JSON.parse(localStorage.getItem(k)||"");}catch(e){continue;}
+    if(Array.isArray(v))v.forEach(x=>addOne(x,k));
+    else if(v&&typeof v==="object"){
+      Object.values(v).forEach(x=>addOne(x,k));
+      addOne(v,k);
+    }
+  }
+  return out;
+}
 function rescueLocalReports(){
-  const locals=readLocalReportBackups();
-  if(!locals.length)return alert("この端末には復旧できる日報の控えが見つかりませんでした。入力した本人のスマホで押してください。");
+  const locals=findLocalReportsFromAllKeys();
+  if(!locals.length)return alert("この端末内には復旧できる日報が見つかりませんでした。入力したスタッフ本人のスマホで押してください。");
   const existing=new Set(reportsData.map(localReportSignature));
   const targets=locals.filter(r=>!existing.has(localReportSignature(r)));
-  if(!targets.length)return alert("この端末の控えは、すでにFirebaseに入っています。");
-  if(!confirm(targets.length+"件の日報控えをFirebaseへ復旧しますか？"))return;
+  if(!targets.length)return alert("この端末の日報はすでにFirebaseへ入っています。日付を選び直してください。");
+  if(!confirm("端末内から日報候補が "+targets.length+" 件見つかりました。Firebaseへ復旧しますか？"))return;
   const updates={};
-  targets.forEach(r=>{const id=R("reports").push().key;updates[id]={...r,rescued:true,rescuedAt:new Date().toISOString()};});
-  R("reports").update(updates).then(()=>alert("日報を復旧しました。日報一覧とカレンダーを確認してください。"))
-    .catch(e=>alert("復旧エラー: "+e.message));
+  targets.forEach(r=>{updates[R("reports").push().key]=r});
+  R("reports").update(updates).then(()=>alert("日報を "+targets.length+" 件復旧しました。日報一覧を確認してください。"))
+  .catch(e=>alert("復旧エラー: "+e.message));
 }
 function autoRescueLocalReports(){
-  const locals=readLocalReportBackups();
+  const locals=findLocalReportsFromAllKeys();
   if(!locals.length)return;
   const existing=new Set(reportsData.map(localReportSignature));
   const targets=locals.filter(r=>!existing.has(localReportSignature(r)) && String(r.date||"").slice(0,4)>="2026");
@@ -207,16 +202,30 @@ function seed(){
   const localC=readLocal("fks_construction_clients");
   if(localW.length||localC.length){syncLocalMastersToFirebase();}
 }
-function startFirebase(){firebase.database().ref(".info/connected").on("value",s=>{s.val()?setStatus("Firebase接続OK / 共有中","ok"):setStatus("Firebase未接続 / 通信確認中","ng")});seed();R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});R("workers").on("value",s=>{workersData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")).concat(["藤原","山田","田中","繁充"]));renderAll()});R("clients").on("value",s=>{clientsData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社","優成建設"]));renderAll()})}
-function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=t=="rep"?"block":"none";admin.style.display=t=="admin"?"block":"none";bCal.className=t=="cal"?"tab active":"tab";bRep.className=t=="rep"?"tab active":"tab";bAdmin.className=t=="admin"?"tab active":"tab";renderAll()}
+function startFirebase(){firebase.database().ref(".info/connected").on("value",s=>{s.val()?(setStatus("Firebase接続OK / 共有中","ok"),syncOfflineQueue()):setStatus("Firebase未接続 / 通信確認中","ng")});seed();R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});R("workers").on("value",s=>{workersData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")).concat(["藤原","山田","田中","繁充"]));renderAll()});R("clients").on("value",s=>{clientsData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]));renderAll()})}
+function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=t=="rep"?"block":"none";if(typeof admin!=="undefined")admin.style.display=t=="admin"?"block":"none";bCal.className=t=="cal"?"tab active":"tab";bRep.className=t=="rep"?"tab active":"tab";if(typeof bAdmin!=="undefined")bAdmin.className=t=="admin"?"tab active":"tab";renderAll()}
 function renderSelects(){jClient.innerHTML='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${x}</option>`).join("");rClient.innerHTML=jClient.innerHTML;rCompany.innerHTML=companiesData.map(x=>`<option>${x}</option>`).join("");rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");rWorker.innerHTML='<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("")}
-function addJob(){if(!jDate.value||!jSite.value)return alert("日付と現場名を入力してください");const client=clientValue(jClient,jClientCustom);addClientMasterIfNeeded(client);R("jobs").push({date:jDate.value,site:jSite.value,client:client,start:jStart.value,workers:jWorkers.value,work:jWork.value,createdAt:new Date().toISOString()}).then(()=>{jSite.value=jStart.value=jWorkers.value=jWork.value=jClientCustom.value="";alert("予定をFirebaseへ保存しました")}).catch(e=>alert("保存エラー: "+e.message))}
-function addReport(){if(!rDate.value||!rSite.value||!rReporter.value||!rPeople.value||!rStart.value||!rEnd.value||!rWork.value)return alert("必須項目を入力してください");const client=clientValue(rClient,rClientCustom);addClientMasterIfNeeded(client);const report={date:rDate.value,site:rSite.value,company:rCompany.value,reporter:rReporter.value,client:client,clientPerson:rClientPerson.value,worker:rWorker.value,people:rPeople.value,start:rStart.value,end:rEnd.value,breakMin:rBreak.value,weather:rWeather.value,work:rWork.value,memo:rMemo.value,approved:false,createdAt:new Date().toISOString(),created:new Date().toLocaleString()};saveLocalReportBackup(report);R("reports").push(report).then(()=>{rSite.value=rPeople.value=rStart.value=rEnd.value=rBreak.value=rWork.value=rMemo.value=rClientPerson.value=rClientCustom.value="";rReporter.value="";rClient.value="";rWorker.value="";alert("日報をFirebaseへ保存しました。端末にも控えを残しました。")}).catch(e=>alert("保存エラー: "+e.message+"\n端末内バックアップは残っています。"))}
+function addJob(){
+  if(!jDate.value||!jSite.value)return alert("日付と現場名を入力してください");
+  const job={date:jDate.value,site:jSite.value,client:jClient.value||"未登録",mark:clientMark(jClient.value||"未登録"),start:jStart.value,workers:jWorkers.value,work:jWork.value,createdAt:new Date().toISOString()};
+  try{const arr=JSON.parse(localStorage.getItem("fks_construction_job_backups")||"[]");arr.push(job);localStorage.setItem("fks_construction_job_backups",JSON.stringify(arr.slice(-300)));}catch(e){}
+  R("jobs").push(job).then(()=>{jSite.value=jStart.value=jWorkers.value=jWork.value="";alert("予定をFirebaseへ保存しました")}).catch(e=>{pushOfflineQueue("job",job);jSite.value=jStart.value=jWorkers.value=jWork.value="";alert("通信エラーのため端末に保存しました。ネットが戻ると自動同期します。")})
+}
+function addReport(){
+  if(!rDate.value||!rSite.value||!rReporter.value||!rPeople.value||!rStart.value||!rEnd.value||!rWork.value)return alert("必須項目を入力してください");
+  const report={date:rDate.value,site:rSite.value,company:rCompany.value,reporter:rReporter.value,client:rClient.value||"未登録",clientPerson:rClientPerson.value,worker:rWorker.value,people:rPeople.value,start:rStart.value,end:rEnd.value,breakMin:rBreak.value,weather:rWeather.value,work:rWork.value,memo:rMemo.value,approved:false,createdAt:new Date().toISOString(),created:new Date().toLocaleString()};
+  saveLocalReportBackup(report);
+  R("reports").push(report).then(()=>{rSite.value=rPeople.value=rStart.value=rEnd.value=rBreak.value=rWork.value=rMemo.value=rClientPerson.value="";rReporter.value="";rClient.value="";rWorker.value="";alert("日報をFirebaseへ保存しました。端末にも控えを残しました。")}).catch(e=>{pushOfflineQueue("report",report);rSite.value=rPeople.value=rStart.value=rEnd.value=rBreak.value=rWork.value=rMemo.value=rClientPerson.value="";rReporter.value="";rClient.value="";rWorker.value="";alert("通信エラーのため端末に保存しました。ネットが戻ると自動同期します。端末バックアップも残っています。")})
+}
 function delJob(id){if(confirm("予定を削除しますか？"))R("jobs/"+id).remove()} function delReport(id){if(confirm("日報を削除しますか？"))R("reports/"+id).remove()} function approve(id){R("reports/"+id).update({approved:true,approvedAt:new Date().toISOString()})}
-function copyJob(j){showTab("rep");rDate.value=j.date;rSite.value=j.site;rClient.value=j.client||"";rClientCustom.value=rClient.value?"":(j.client||"");rStart.value=j.start||"";rWork.value=j.work||"";rPeople.value=(j.workers||"").split(/[、,]/).filter(Boolean).length||""}
+function copyJob(j){showTab("rep");rDate.value=j.date;rSite.value=j.site;rClient.value=j.client||"";rStart.value=j.start||"";rWork.value=j.work||"";rPeople.value=(j.workers||"").split(/[、,]/).filter(Boolean).length||""}
 function moveMonth(n){current.setMonth(current.getMonth()+n);renderCalendar()}
-function showDay(ds){selectedDate=ds;const js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);dayList.innerHTML=(js.length||rs.length)?js.map(j=>`<div class="card"><b>予定：${j.site}</b><br><span class="small">${j.start||"-"} / 取引先：${j.client||"-"}</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>この予定から日報作成</button><button class="red" onclick="delJob('${j.id}')">予定削除</button></div>`).join("")+rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}<br>現場入場：${r.start} 現場退場：${r.end}<br>内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">日報削除</button></div>`).join(""):"予定・日報なし"}
-function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b>`+js.slice(0,2).map(j=>`<div class="job">${j.start||""} ${clientLabelHtml(j.client||j.site)}</div>`).join("")+rs.slice(0,4).map(r=>`<div class="job report">${clientLabelHtml(r.client||r.site)}</div>`).join("")+"</div>"}calendar.innerHTML=html}
+function showDay(ds){
+  selectedDate=ds;
+  const js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);
+  dayList.innerHTML=(js.length||rs.length)?js.map(j=>`<div class="card"><b>予定：<span class="mark">${clientMark(j.client)}</span>${j.site}</b><br><span class="small">${j.start||"-"} / 取引先名は非表示</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>この予定から日報作成</button><button class="red" onclick="delJob('${j.id}')">予定削除</button></div>`).join("")+rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>作業員：${r.worker||"-"}<br>現場入場：${r.start} 現場退場：${r.end}<br>内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">日報削除</button></div>`).join(""):"予定・日報なし"
+}
+function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b>`+js.slice(0,3).map(j=>`<div class="job"><span class="mark">${clientMark(j.client)}</span>${j.start||""} ${j.site}</div>`).join("")+rs.slice(0,3).map(r=>`<div class="job report">📝 ${r.site}</div>`).join("")+"</div>"}calendar.innerHTML=html}
 function renderReports(){let a=reportsData.slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">削除</button></div>`).join(""):"日報なし"}
 
 function timeToMin(t){if(!t)return null;const p=String(t).split(":").map(Number);if(p.length<2||isNaN(p[0])||isNaN(p[1]))return null;return p[0]*60+p[1]}
@@ -269,8 +278,8 @@ function copyAdminCSV(){
   navigator.clipboard.writeText(csv).then(()=>alert("CSVをコピーしました")).catch(()=>alert("コピーできない場合は長押しコピーしてください"));
 }
 
-function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance()}
-let t=fmt(new Date());jDate.value=t;rDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
+function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance();renderMasters()}
+let t=fmt(new Date());jDate.value=t;rDate.value=t;if(typeof adminMonthFilter!=="undefined")adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
 </script>
 </body>
 </html>
