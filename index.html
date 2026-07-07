@@ -1925,6 +1925,20 @@ function removePartnerShareLocal(id){
   var sid=String(id);
   savePartnerShareList(getPartnerShareList().filter(function(x){ return !(String(x.mainId||'')===sid || String(x.id||'')===('main_'+sid) || String(x.id||'')===sid); }));
 }
+
+function syncLocalPartnerSharesToFirebase(){
+  try{
+    var ref=partnerShareRef();
+    if(!ref) return;
+    var list=getPartnerShareList().filter(Boolean);
+    if(!list.length) return;
+    list.forEach(function(x){
+      var key=String(x.mainId||x.id||'').replace(/^main_/,'').replace(/[.#$\[\]/]/g,'_');
+      if(key){ ref.child(key).update(x); }
+    });
+  }catch(e){ console.log('partner共有の再同期に失敗', e); }
+}
+
 function listenPartnerShareStatus(){
   var ref=partnerShareRef();
   if(!ref || listenPartnerShareStatus.started) return;
@@ -1964,7 +1978,7 @@ function shareEventToPartner(id){
   mergePartnerShareLocal(data);
   var ref=partnerShareRef(ev.id);
   if(ref){
-    ref.set(data).then(function(){ toast('🐩 partnerへ共有しました'); renderEventList(selDate||null); if(confirm('partnerアプリを開きますか？')) location.href='partner.html?from=main'; })
+    ref.update(data).then(function(){ toast('🐩 partnerへ共有しました（単独URLにも反映）'); renderEventList(selDate||null); if(confirm('partnerアプリを開きますか？')) location.href='partner.html?from=main'; })
     .catch(function(){ toast('⚠️ Firebase保存できません。ローカル保存しました'); renderEventList(selDate||null); });
   }else{
     toast('🐩 partnerへ共有しました（この端末のみ）');
@@ -3578,7 +3592,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       return;
     }
     showSync('🔄 保存中...');
-    db.ref('fujiwara').set({
+    db.ref('fujiwara').update({
       events:state.events,
       invItems:state.invItems,
       notices:state.notices,
@@ -3608,6 +3622,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(typeof ensureRouteStaffNames==='function') ensureRouteStaffNames();
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
+    try{ listenPartnerShareStatus(); syncLocalPartnerSharesToFirebase(); }catch(e){}
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
       renderInventory();

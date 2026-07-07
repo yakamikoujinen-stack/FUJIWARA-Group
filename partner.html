@@ -7,7 +7,7 @@
   var fromMain=p.get('from')==='main' || document.referrer.indexOf('index.html')!==-1;
   document.addEventListener('DOMContentLoaded',function(){
     var b=document.getElementById('backMainBtn');
-    if(b && fromMain) b.style.display='block';
+    if(b && fromMain) b.style.display='block'; var f=document.getElementById('footerMainBtn'); if(f && fromMain) f.style.display='block';
   });
 })();
 </script>
@@ -28,7 +28,7 @@
 <section id="monthSec" class="card page"><div class="between"><b>⭕ 月間 集計一覧</b><input id="monthPick" type="month" onchange="renderSummaries()" style="padding:9px;border-radius:12px;border:1px solid var(--line)"></div><div id="monthSummary"></div></section>
 <section id="yearSec" class="card page"><div class="between"><b>⭕ 年間 月別集計</b><select id="yearPick" onchange="renderSummaries()" style="padding:9px;border-radius:12px;border:1px solid var(--line)"></select></div><div id="yearSummary"></div></section>
 
-</main><nav class="footerNav"><button onclick="location.href='index.html'">メイン</button><button class="active" onclick="go('calendarSec',this)">カレンダー</button><button onclick="go('eventsSec',this)">詳細</button><button onclick="go('monthSec',this)">月間集計</button><button onclick="go('yearSec',this)">年間集計</button></nav>
+</main><nav class="footerNav"><button id="footerMainBtn" style="display:none" onclick="location.href='index.html'">戻る</button><button class="active" onclick="go('calendarSec',this)">カレンダー</button><button onclick="go('eventsSec',this)">詳細</button><button onclick="go('monthSec',this)">月間集計</button><button onclick="go('yearSec',this)">年間集計</button></nav>
 <script>
 const STORE_KEY='partner_events_v4';const PLAN_KEY='partner_personal_plans_v1';const FB_PATH='fujiwara/partner_shared_events';let selectedDate=new Date().toISOString().slice(0,10),events=[],plans=[],firebaseReady=false;const moneyKeys=['sales','fee','cost','labor','other'];
 function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}function uid(){return 'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)}function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
