@@ -2003,6 +2003,84 @@ function unshareEventFromPartner(id){
 }
 listenPartnerShareStatus();
 
+var PARTNER_MEN_SHARE_KEY='partner_men_events_v1';
+var PARTNER_MEN_FB_PATH='fujiwara/partner_men_shared_events';
+function partnerMenShareRef(id){
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length){
+      var ref=firebase.database().ref(PARTNER_MEN_FB_PATH);
+      return id ? ref.child(String(id).replace(/[.#$\[\]/]/g,'_')) : ref;
+    }
+  }catch(e){}
+  return null;
+}
+function getPartnerMenShareList(){
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(PARTNER_MEN_SHARE_KEY)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
+  return list;
+}
+function savePartnerMenShareList(list){ localStorage.setItem(PARTNER_MEN_SHARE_KEY, JSON.stringify(Array.isArray(list)?list:[])); }
+function mergePartnerMenShareLocal(data){
+  if(!data) return;
+  var list=getPartnerMenShareList();
+  var id=String(data.mainId||data.id||'');
+  var i=list.findIndex(function(x){ return String(x.mainId||x.id||'')===id || String(x.id||'')===String(data.id||''); });
+  if(i>=0){ list[i]=Object.assign({},list[i],data); } else { list.push(data); }
+  savePartnerMenShareList(list);
+}
+function removePartnerMenShareLocal(id){
+  var sid=String(id);
+  savePartnerMenShareList(getPartnerMenShareList().filter(function(x){ return !(String(x.mainId||'')===sid || String(x.id||'')===('main_'+sid) || String(x.id||'')===sid); }));
+}
+function listenPartnerMenShareStatus(){
+  var ref=partnerMenShareRef();
+  if(!ref || listenPartnerMenShareStatus.started) return;
+  listenPartnerMenShareStatus.started=true;
+  ref.on('value',function(snap){
+    var v=snap.val()||{};
+    var list=Object.keys(v).map(function(k){ return v[k]; }).filter(Boolean);
+    savePartnerMenShareList(list);
+    try{ renderEventList(selDate||null); }catch(e){}
+  });
+}
+function isEventSharedToPartnerMen(id){
+  return getPartnerMenShareList().some(function(x){ return String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id)); });
+}
+function shareEventToPartnerMen(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ共有できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  if(isSecretEvent(ev) && !confirm('シークレットイベントです。partner menへ共有しますか？')) return;
+  var list=getPartnerMenShareList();
+  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id) || String(x.id||'')===('main_'+String(ev.id)); }) || {};
+  var data={
+    id:'main_'+String(ev.id), mainId:String(ev.id), date:ev.date||'', dateEnd:ev.dateEnd||ev.endDate||ev.toDate||'',
+    title:ev.name||'イベント', place:ev.place||'', itemsText:ev.itemsText||ev.itemsName||ev.menu||'',
+    sales:Number(existing.sales||0), fee:Number(existing.fee||0), cost:Number(existing.cost||0), labor:Number(existing.labor||0), other:Number(existing.other||0),
+    secret:false, updatedAt:Date.now()
+  };
+  mergePartnerMenShareLocal(data);
+  var ref=partnerMenShareRef(ev.id);
+  if(ref){
+    ref.update(data).then(function(){ toast('🦍🐷 partner menへ共有しました（ネタも共有）'); renderEventList(selDate||null); if(confirm('partner menアプリを開きますか？')) location.href='partner-men.html?from=main'; })
+    .catch(function(){ toast('⚠️ Firebase保存できません。ローカル保存しました'); renderEventList(selDate||null); });
+  }else{
+    toast('🦍🐷 partner menへ共有しました（この端末のみ）'); renderEventList(selDate||null); if(confirm('partner menアプリを開きますか？')) location.href='partner-men.html?from=main';
+  }
+}
+function unshareEventFromPartnerMen(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ解除できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  var name=ev && ev.name ? ev.name : 'このイベント';
+  if(!confirm('「'+name+'」のpartner men共有を解除しますか？
+※partner men側の表示から消えます。')) return;
+  removePartnerMenShareLocal(id);
+  var ref=partnerMenShareRef(id);
+  if(ref){ ref.remove().then(function(){ toast('🦍🐷 partner men共有を解除しました'); renderEventList(selDate||null); }).catch(function(){ toast('⚠️ Firebase解除に失敗しました'); renderEventList(selDate||null); }); }
+  else{ toast('🦍🐷 partner men共有を解除しました（この端末のみ）'); renderEventList(selDate||null); }
+}
+listenPartnerMenShareStatus();
+
 function renderEventList(dateFilter) {
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
   var label=document.getElementById('ev-list-label');
@@ -2043,6 +2121,7 @@ function renderEventList(dateFilter) {
         +'<button class="btn btn-sm btn-ghost" onclick="openEventForm(\''+ev.id+'\')">✏️ 編集</button>'
         +'<button class="btn btn-sm btn-ghost" onclick="quickStatus(\''+ev.id+'\')">🔄 状態変更</button>'
         +(role==='leader'?(isEventSharedToPartner(ev.id)?'<button class="btn btn-sm btn-danger" onclick="unshareEventFromPartner(\''+ev.id+'\')">🐩 共有解除</button>':'<button class="btn btn-sm btn-outline" onclick="shareEventToPartner(\''+ev.id+'\')">🐩 partner共有</button>'):'')
+        +(role==='leader'?(isEventSharedToPartnerMen(ev.id)?'<button class="btn btn-sm btn-danger" onclick="unshareEventFromPartnerMen(\''+ev.id+'\')">🦍🐷 men解除</button>':'<button class="btn btn-sm btn-outline" onclick="shareEventToPartnerMen(\''+ev.id+'\')">🦍🐷 men共有</button>'):'')
         +'</div>';
     }
 
