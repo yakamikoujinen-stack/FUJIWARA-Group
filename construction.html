@@ -187,6 +187,29 @@ function allReports(){
   readLocalReportBackups().forEach(r=>add(r,"端末控え"));
   return out;
 }
+
+function escJs(s){return String(s||"").replace(/\/g,"\\").replace(/'/g,"\'").replace(/
+/g," ")}
+function delLocalReportBySig(sig){
+  if(!confirm("この端末控え・未送信の日報を削除しますか？"))return;
+  try{
+    const bKey="fks_construction_report_backups";
+    const backups=JSON.parse(localStorage.getItem(bKey)||"[]");
+    localStorage.setItem(bKey,JSON.stringify(backups.filter(r=>localReportSignature(r)!==sig)));
+  }catch(e){}
+  try{
+    const qKey="fks_construction_offline_queue";
+    const q=JSON.parse(localStorage.getItem(qKey)||"[]");
+    localStorage.setItem(qKey,JSON.stringify(q.filter(x=>!(x&&x.kind==="report"&&x.data&&localReportSignature(x.data)===sig))));
+  }catch(e){}
+  renderAll();
+  alert("端末内の日報控えを削除しました");
+}
+function deleteReportAny(r){
+  if(r&&r.id){delReport(r.id);return;}
+  delLocalReportBySig(localReportSignature(r||{}));
+}
+
 function findLocalReportsFromAllKeys(){
   const out=[];
   const seen=new Set();
@@ -318,7 +341,7 @@ function renderCalendar(){
   }
   calendar.innerHTML=html;
 }
-function renderReports(){let a=allReports().slice().sort((x,y)=>(String(y.date||"")+String(y.createdAt||"")).localeCompare(String(x.date||"")+String(x.createdAt||"")));reportList.innerHTML=a.length?a.map(r=>{const src=r.source&&r.source!=="firebase"?`<br><span class="small">💾 ${r.source}（Firebase未反映の可能性あり）</span>`:"";const del=r.id?`<button class="red" onclick="delReport('${r.id}')">削除</button>`:"";const app=r.id?`<button onclick="approve('${r.id}')">承認</button>`:"";return `<div class="card"><b>${r.date} <span class="mark">${clientMark(r.client)}</span>${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span>${src}<br>取引先：<span class="mark">${clientMark(r.client)}</span>（名称非表示）　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br>${app}${del}</div>`}).join(""):"日報なし"}
+function renderReports(){let a=allReports().slice().sort((x,y)=>(String(y.date||"")+String(y.createdAt||"")).localeCompare(String(x.date||"")+String(x.createdAt||"")));reportList.innerHTML=a.length?a.map(r=>{const src=r.source&&r.source!=="firebase"?`<br><span class="small">💾 ${r.source}（Firebase未反映の可能性あり）</span>`:"";const sig=escJs(localReportSignature(r));const del=r.id?`<button class="red" onclick="delReport('${r.id}')">🗑️ 日報削除</button>`:`<button class="red" onclick="delLocalReportBySig('${sig}')">🗑️ 端末控え削除</button>`;const app=r.id?`<button onclick="approve('${r.id}')">承認</button>`:"";return `<div class="card"><b>${r.date} <span class="mark">${clientMark(r.client)}</span>${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span>${src}<br>取引先：<span class="mark">${clientMark(r.client)}</span>（名称非表示）　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br>${app}${del}</div>`}).join(""):"日報なし"}
 
 function timeToMin(t){if(!t)return null;const p=String(t).split(":").map(Number);if(p.length<2||isNaN(p[0])||isNaN(p[1]))return null;return p[0]*60+p[1]}
 function reportHours(r){const s=timeToMin(r.start),e=timeToMin(r.end);if(s===null||e===null)return 0;return Math.max(0,(e-s-Number(r.breakMin||0))/60)}
