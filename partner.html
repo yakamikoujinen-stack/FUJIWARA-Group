@@ -22,11 +22,10 @@ main{padding:14px 12px 96px}.card{background:var(--card);border-radius:24px;padd
 </head>
 <body class="partnerOnly">
 <header>
-  <div class="logo"><div class="mark">🐩</div><div><h1>partner</h1><div class="sub">下請け業者用イベント共有アプリ</div><span class="tag">FUJIWARA Group</span></div></div>
-  <div class="rolebar"><button id="partnerBtn" class="active" onclick="setRole('partner')">業者表示</button><button id="leaderBtn" onclick="openLeader()">リーダー</button></div>
+  <div class="logo"><div class="mark">🐩</div><div><h1>partner</h1><span class="tag">FUJIWARA Group</span></div></div>
+  <div class="rolebar"><button id="partnerBtn" class="active" onclick="setRole('partner')">業者表示</button></div>
 </header>
 <main>
-  <section class="card poodleCard"><div class="poodleFace">🐾</div><div><b>共有イベントだけ表示</b><div class="muted">下請け業者には売上・場所代・利益は表示しません。リーダーだけ内密で確認できます。</div></div></section>
   <section id="calendarSec" class="card"><div class="between"><b>スライド式カレンダー</b><span class="muted" id="sourceNote">メインアプリ登録イベントのみ</span></div><div class="calendar-wrap" id="calendar"></div></section>
   <section id="eventsSec" class="card"><div class="between"><b id="selectedTitle">日にちを選択</b><button class="btn light small" onclick="todaySelect()">今日</button></div><div id="eventList" class="muted" style="padding:16px 4px">カレンダーの日にちをタップしてください。</div></section>
   <section class="card leaderOnly"><div class="between"><b>リーダー専用：イベント登録</b><span class="pill secret">内密</span></div><div class="form"><input id="fDate" type="date"><input id="fTitle" placeholder="イベント名"><input id="fPlace" placeholder="場所"><input id="fClient" placeholder="下請け業者・取引先（任意）"><textarea id="fDetail" placeholder="集合時間・搬入・注意事項など"></textarea><label class="muted"><input id="fSecret" type="checkbox"> 下請け業者には非表示にする</label><button class="btn gold full" onclick="addEvent()">このイベントを登録</button></div></section>
