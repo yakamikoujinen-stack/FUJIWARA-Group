@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>partner｜FUJIWARA Group</title>
+<link rel="manifest" href="partner-manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--ink:#111827;--muted:#6b7280;--main:#111827;--gold:#c89b3c;--line:#e5e7eb;--red:#dc2626;--green:#16a34a;--yellow:#ca8a04;--blue:#2563eb;}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#111827,#374151);color:#fff;padding:18px 16px 14px;border-bottom-left-radius:22px;border-bottom-right-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.logo{display:flex;align-items:center;gap:12px}.mark{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#d6aa45,#7a5418);display:grid;place-items:center;font-size:26px;font-weight:900;color:#111;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+h1{font-size:26px;margin:0;letter-spacing:.03em}.sub{font-size:13px;opacity:.9;margin-top:2px}.rolebar{display:flex;gap:8px;margin-top:14px}.rolebar button{flex:1;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:10px;font-weight:800}.rolebar button.active{background:#fff;color:#111827}
+main{padding:14px 12px 90px}.card{background:var(--card);border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 5px 16px rgba(17,24,39,.08);border:1px solid rgba(17,24,39,.05)}
+.row{display:flex;gap:10px;align-items:center}.between{display:flex;justify-content:space-between;align-items:center;gap:10px}.muted{color:var(--muted);font-size:13px}.pill{border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;background:#eef2ff;color:#3730a3}.secret{background:#fef3c7;color:#92400e}.btn{border:0;border-radius:13px;padding:11px 13px;font-weight:900;background:var(--main);color:#fff}.btn.light{background:#f3f4f6;color:#111;border:1px solid var(--line)}.btn.gold{background:linear-gradient(135deg,#c89b3c,#8a621e);color:#111}.btn.red{background:#fee2e2;color:#991b1b}.btn.full{width:100%;margin-top:10px}
+.calendar-wrap{overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:12px;padding-bottom:8px}.month{min-width:100%;scroll-snap-align:start}.month-title{text-align:center;font-weight:900;font-size:18px;margin-bottom:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.dow{text-align:center;font-size:12px;color:var(--muted);font-weight:800}.day{min-height:62px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;text-align:left}.day.today{outline:2px solid var(--gold)}.day.has{background:#fffbeb;border-color:#f2c96b}.day .num{font-weight:900;font-size:13px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--gold);margin-right:2px}.selected{background:#111827!important;color:#fff!important}
+.event{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:#fff}.event h3{margin:0 0 6px;font-size:17px}.kv{display:grid;grid-template-columns:94px 1fr;gap:7px;font-size:14px}.kv b{color:#374151}.detail{white-space:pre-wrap;background:#f9fafb;border-radius:14px;padding:10px;margin-top:8px;font-size:14px}.calc{display:none}.leader .calc{display:block}.partnerOnly .leaderOnly{display:none!important}.leaderOnly{display:block}.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.calc-grid label{font-size:12px;color:var(--muted);font-weight:800}.calc-grid input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px}.total{font-size:22px;font-weight:900}.profit{color:var(--green)}.loss{color:var(--red)}.hide{display:none!important}textarea,input,select{font-family:inherit}.form input,.form textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px;margin:6px 0 10px}.form textarea{min-height:80px}.small{font-size:12px}.footerNav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 10px env(safe-area-inset-bottom);border-top:1px solid var(--line)}.footerNav button{border:0;background:#f3f4f6;border-radius:14px;padding:10px;font-weight:900}.footerNav button.active{background:#111827;color:#fff}
+@media(min-width:760px){main{max-width:760px;margin:auto}.month{min-width:720px}.calendar-wrap{scroll-snap-type:none}}
+</style>
+</head>
+<body class="partnerOnly">
+<header>
+  <div class="logo"><div class="mark">一</div><div><h1>partner</h1><div class="sub">下請け業者用イベント共有アプリ</div></div></div>
+  <div class="rolebar">
+    <button id="partnerBtn" class="active" onclick="setRole('partner')">業者表示</button>
+    <button id="leaderBtn" onclick="openLeader()">リーダー</button>
+  </div>
+</header>
+<main>
+  <section id="calendarSec" class="card">
+    <div class="between"><b>スライド式カレンダー</b><span class="muted" id="sourceNote">メインアプリ登録イベントのみ</span></div>
+    <div class="calendar-wrap" id="calendar"></div>
+  </section>
+
+  <section id="eventsSec" class="card">
+    <div class="between"><b id="selectedTitle">日にちを選択</b><button class="btn light small" onclick="todaySelect()">今日</button></div>
+    <div id="eventList" class="muted" style="padding:16px 4px">カレンダーの日にちをタップしてください。</div>
+  </section>
+
+  <section class="card leaderOnly">
+    <div class="between"><b>リーダー専用：イベント登録</b><span class="pill secret">内密</span></div>
+    <div class="form">
+      <input id="fDate" type="date">
+      <input id="fTitle" placeholder="イベント名">
+      <input id="fPlace" placeholder="場所">
+      <input id="fClient" placeholder="取引先・下請け先（任意）">
+      <textarea id="fDetail" placeholder="集合時間・搬入・注意事項など"></textarea>
+      <button class="btn gold full" onclick="addEvent()">このイベントを登録</button>
+    </div>
+  </section>
+</main>
+<nav class="footerNav">
+  <button class="active" onclick="scrollToSec('calendarSec')">カレンダー</button>
+  <button onclick="scrollToSec('eventsSec')">詳細</button>
+  <button onclick="exportData()">保存確認</button>
+</nav>
+<script>
+const STORE_KEY='partner_events_v1';
+let role='partner';
+let selectedDate = new Date().toISOString().slice(0,10);
+let events=[];
+function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function uid(){return 'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)}
+function loadEvents(){
+  const own=JSON.parse(localStorage.getItem(STORE_KEY)||'[]');
+  const candidates=['fujiwara_events','fujiwaraEvents','events','mainEvents','leaderEvents','king_events','fujiwara_calendar_events'];
+  let imported=[];
+  for(const k of candidates){try{const v=JSON.parse(localStorage.getItem(k)||'null');if(Array.isArray(v)){imported=imported.concat(v.map(x=>normalizeEvent(x,k)).filter(Boolean));}}catch(e){}}
+  events=[...imported,...own].filter(e=>!e.secret || role==='leader');
+  if(!events.length){events=sampleEvents();localStorage.setItem(STORE_KEY,JSON.stringify(events));}
+}
+function normalizeEvent(x,src){
+ const date=x.date||x.eventDate||x.day||x.startDate||x.start||''; if(!date) return null;
+ return {id:x.id||uid(),date:String(date).slice(0,10),title:x.title||x.name||x.eventName||'イベント',place:x.place||x.location||x.address||'',client:x.client||x.customer||'',detail:x.detail||x.memo||x.note||'',sales:Number(x.sales||0),fee:Number(x.fee||x.placeFee||0),cost:Number(x.cost||x.expense||0),labor:Number(x.labor||0),other:Number(x.other||0),secret:!!x.secret,src};
+}
+function sampleEvents(){return [{id:uid(),date:selectedDate,title:'サンプルイベント',place:'会場名',client:'下請け業者共有用',detail:'集合 8:00\n搬入 8:30\n終了後に片付け確認',sales:0,fee:0,cost:0,labor:0,other:0,secret:false}];}
+function saveOwn(){localStorage.setItem(STORE_KEY,JSON.stringify(events.filter(e=>!e.src)));}
+function setRole(r){role=r;document.body.className=r==='leader'?'leader':'partnerOnly';document.getElementById('partnerBtn').classList.toggle('active',r==='partner');document.getElementById('leaderBtn').classList.toggle('active',r==='leader');loadEvents();renderCalendar();renderEvents();}
+function openLeader(){const pass=prompt('リーダーパスワードを入力'); if(pass==='1111'||pass==='fujiwara'){setRole('leader')}else{alert('パスワードが違います')}}
+function buildMonth(base,offset){const d=new Date(base.getFullYear(),base.getMonth()+offset,1);const y=d.getFullYear(),m=d.getMonth();const first=new Date(y,m,1).getDay();const last=new Date(y,m+1,0).getDate();let html=`<div class="month"><div class="month-title">${y}年 ${m+1}月</div><div class="grid">`;
+['日','月','火','水','木','金','土'].forEach(w=>html+=`<div class="dow">${w}</div>`);for(let i=0;i<first;i++)html+='<div></div>';
+for(let day=1;day<=last;day++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const cnt=events.filter(e=>e.date===ds).length;const today=new Date().toISOString().slice(0,10)===ds;html+=`<button class="day ${cnt?'has':''} ${today?'today':''} ${selectedDate===ds?'selected':''}" onclick="selectDate('${ds}')"><div class="num">${day}</div>${cnt?'<div>'+Array(Math.min(cnt,4)).fill('<span class="dot"></span>').join('')+'</div><div class="small">'+cnt+'件</div>':''}</button>`}
+return html+'</div></div>'}
+function renderCalendar(){const cal=document.getElementById('calendar');const base=new Date();cal.innerHTML='';for(let i=-1;i<=4;i++)cal.innerHTML+=buildMonth(base,i)}
+function selectDate(ds){selectedDate=ds;renderCalendar();renderEvents();scrollToSec('eventsSec')}
+function todaySelect(){selectDate(new Date().toISOString().slice(0,10))}
+function renderEvents(){document.getElementById('selectedTitle').textContent=selectedDate+' のイベント';const list=document.getElementById('eventList');const dayEvents=events.filter(e=>e.date===selectedDate);if(!dayEvents.length){list.innerHTML='<div class="muted">この日の表示イベントはありません。</div>';return}
+list.innerHTML=dayEvents.map(e=>{const profit=(Number(e.sales)-Number(e.fee)-Number(e.cost)-Number(e.labor)-Number(e.other));return `<div class="event"><div class="between"><h3>${esc(e.title)}</h3>${e.secret?'<span class="pill secret">内密</span>':'<span class="pill">共有</span>'}</div><div class="kv"><b>場所</b><span>${esc(e.place||'未入力')}</span><b>取引先</b><span>${esc(e.client||'未入力')}</span><b>詳細</b><span>${esc(e.detail||'未入力')}</span></div><button class="btn full" onclick="toggleCalc('${e.id}')">損益計算書を開く</button><div class="calc" id="calc_${e.id}"><hr><div class="calc-grid"><div><label>売上</label><input type="number" value="${e.sales||0}" onchange="updateMoney('${e.id}','sales',this.value)"></div><div><label>場所代</label><input type="number" value="${e.fee||0}" onchange="updateMoney('${e.id}','fee',this.value)"></div><div><label>仕入・材料</label><input type="number" value="${e.cost||0}" onchange="updateMoney('${e.id}','cost',this.value)"></div><div><label>人件費</label><input type="number" value="${e.labor||0}" onchange="updateMoney('${e.id}','labor',this.value)"></div><div><label>その他</label><input type="number" value="${e.other||0}" onchange="updateMoney('${e.id}','other',this.value)"></div><div><label>利益</label><div class="total ${profit>=0?'profit':'loss'}" id="profit_${e.id}">${yen(profit)}</div></div></div><button class="btn red full" onclick="deleteEvent('${e.id}')">削除</button></div></div>`}).join('')}
+function toggleCalc(id){const el=document.getElementById('calc_'+id);if(role!=='leader'){alert('損益計算書はリーダー専用です');return}el.style.display=el.style.display==='block'?'none':'block'}
+function updateMoney(id,key,val){const e=events.find(x=>x.id===id);if(!e)return;e[key]=Number(val||0);saveOwn();renderEvents()}
+function addEvent(){const e={id:uid(),date:fDate.value||selectedDate,title:fTitle.value||'イベント',place:fPlace.value,client:fClient.value,detail:fDetail.value,sales:0,fee:0,cost:0,labor:0,other:0,secret:false};events.push(e);saveOwn();selectedDate=e.date;fTitle.value=fPlace.value=fClient.value=fDetail.value='';renderCalendar();renderEvents();alert('登録しました')}
+function deleteEvent(id){if(!confirm('削除しますか？'))return;events=events.filter(e=>e.id!==id);saveOwn();renderCalendar();renderEvents()}
+function exportData(){alert('partner保存イベント数：'+events.length+'件\nリーダーパスワード初期値：1111')}
+function scrollToSec(id){document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'})}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+loadEvents();renderCalendar();renderEvents();
+</script>
+</body>
+</html>
