@@ -210,7 +210,25 @@ function seed(){
 }
 function startFirebase(){firebase.database().ref(".info/connected").on("value",s=>{s.val()?(setStatus("Firebase接続OK / 共有中","ok"),syncOfflineQueue()):setStatus("Firebase未接続 / 通信確認中","ng")});seed();R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});R("workers").on("value",s=>{workersData=filterDeleted(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")),"fks_construction_deleted_workers");renderAll()});R("clients").on("value",s=>{clientsData=filterDeleted(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]),"fks_construction_deleted_clients");renderAll()})}
 function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=t=="rep"?"block":"none";if(typeof admin!=="undefined")admin.style.display=t=="admin"?"block":"none";bCal.className=t=="cal"?"tab active":"tab";bRep.className=t=="rep"?"tab active":"tab";if(typeof bAdmin!=="undefined")bAdmin.className=t=="admin"?"tab active":"tab";renderAll()}
-function renderSelects(){jClient.innerHTML='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${x}</option>`).join("");rClient.innerHTML=jClient.innerHTML;rCompany.innerHTML=companiesData.map(x=>`<option>${x}</option>`).join("");rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");rWorker.innerHTML='<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("")}
+function keepSelectValue(el, html, oldValue){
+  el.innerHTML = html;
+  if(oldValue){
+    const exists = Array.from(el.options).some(o=>o.value===oldValue || o.textContent===oldValue);
+    if(!exists){
+      el.insertAdjacentHTML('beforeend', `<option value="${String(oldValue).replace(/"/g,'&quot;')}" selected>${oldValue}</option>`);
+    }
+    el.value = oldValue;
+  }
+}
+function renderSelects(){
+  const oldJClient=jClient.value||"", oldRClient=rClient.value||"", oldRReporter=rReporter.value||"", oldRWorker=rWorker.value||"", oldRCompany=rCompany.value||"";
+  const clientHtml='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${x}</option>`).join("");
+  keepSelectValue(jClient, clientHtml, oldJClient);
+  keepSelectValue(rClient, clientHtml, oldRClient);
+  keepSelectValue(rCompany, companiesData.map(x=>`<option>${x}</option>`).join(""), oldRCompany);
+  keepSelectValue(rReporter, '<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join(""), oldRReporter);
+  keepSelectValue(rWorker, '<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join(""), oldRWorker);
+}
 function addJob(){
   if(!jDate.value||!jSite.value)return alert("日付と現場名を入力してください");
   const job={date:jDate.value,site:jSite.value,client:jClient.value||"未登録",mark:clientMark(jClient.value||"未登録"),start:jStart.value,workers:jWorkers.value,work:jWork.value,createdAt:new Date().toISOString()};
