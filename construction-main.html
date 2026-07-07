@@ -23,6 +23,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .head,.day{background:white;border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}.head{background:#1f3a5f;color:white;text-align:center;font-weight:bold}.day{min-height:82px}
 .job{margin-top:4px;background:#e8f1ff;border-left:4px solid #1f3a5f;border-radius:6px;padding:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.report{background:#e9f9ef;border-left-color:#0a7a2f}
+.dot-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;align-items:center}.cal-dot{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:24px;line-height:1;background:transparent;border:0;padding:0;overflow:hidden;text-indent:0}.calendar-dot-only .job{font-size:0!important;color:transparent!important;width:28px;height:28px;padding:0!important;border:0!important;background:transparent!important}.calendar-dot-only .job::first-letter{font-size:24px;color:#172033}
 .dot-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.cal-dot{font-size:22px;line-height:1}.report-dot{opacity:.9}
 .mark{font-size:16px;margin-right:4px}.master-list{display:grid;gap:8px}.master-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:8px}.master-item button{width:auto;margin:0;padding:8px 12px}.warnbox{background:#fff7ed;border-left:5px solid #f59e0b;border-radius:12px;padding:10px;margin-top:8px}
 .small{font-size:12px;color:#666;line-height:1.6}.status{display:inline-block;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold;background:#fff4db;color:#b7791f}.status.ok{background:#e9f9ef;color:#0a7a2f}.status.ng{background:#ffe4e6;color:#b00020}
@@ -304,7 +305,20 @@ function showDay(ds){
   const js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);
   dayList.innerHTML=(js.length||rs.length)?js.map(j=>`<div class="card"><b>予定：<span class="mark">${clientMark(j.client)}</span>${j.site}</b><br><span class="small">${j.start||"-"} / 取引先名は非表示</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>この予定から日報作成</button><button class="red" onclick="delJob('${j.id}')">予定削除</button></div>`).join("")+rs.map(r=>`<div class="card"><b>日報：<span class="mark">${clientMark(r.client)}</span>${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>作業員：${r.worker||"-"}<br>現場入場：${r.start} 現場退場：${r.end}<br>内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">日報削除</button></div>`).join(""):"予定・日報なし"
 }
-function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);const marks=js.slice(0,6).map(j=>`<span class="cal-dot" title="予定">${clientMark(j.client)}</span>`).join("")+rs.slice(0,6).map(r=>`<span class="cal-dot report-dot" title="日報">${clientMark(r.client)}</span>`).join("");html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b><div class="dot-row">${marks}</div></div>`}calendar.innerHTML=html}
+function renderCalendar(){
+  let y=current.getFullYear(),m=current.getMonth();
+  monthTitle.textContent=y+"年 "+(m+1)+"月";
+  calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");
+  let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";
+  for(let i=0;i<first.getDay();i++)html+="<div></div>";
+  for(let d=1;d<=last.getDate();d++){
+    let ds=fmt(new Date(y,m,d));
+    let js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);
+    const marks=js.slice(0,8).map(j=>`<span class="cal-dot">${clientMark(j.client)}</span>`).join("")+rs.slice(0,8).map(r=>`<span class="cal-dot report-dot">${clientMark(r.client)}</span>`).join("");
+    html+=`<div class="day calendar-dot-only" onclick="showDay('${ds}')"><b>${d}</b><div class="dot-row">${marks}</div></div>`;
+  }
+  calendar.innerHTML=html;
+}
 function renderReports(){let a=reportsData.slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} <span class="mark">${clientMark(r.client)}</span>${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：<span class="mark">${clientMark(r.client)}</span>（名称非表示）　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">削除</button></div>`).join(""):"日報なし"}
 
 function timeToMin(t){if(!t)return null;const p=String(t).split(":").map(Number);if(p.length<2||isNaN(p[0])||isNaN(p[1]))return null;return p[0]*60+p[1]}
