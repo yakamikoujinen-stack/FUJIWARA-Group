@@ -38,7 +38,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <body>
 <header class="fg-header"><div class="fg-title-card"><div class="fg-main-title">FUJIWARA Group</div><div class="fg-sub-title">- construction -</div><div class="fg-version">スタッフ正規版 v2 / Firebase安定版</div><div class="fg-system-name">Construction Management System</div></div></header>
 <main>
-<section class="card"><h3>スタッフ用</h3><p class="small">予定確認と日報入力のみ使用できます。保存データはFirebaseで共有されます。</p><span id="cloudStatus" class="status">Firebase接続中...</span><p class="small"><b>取引先名はスタッフ画面には表示されません。予定・日報は🔴🟢🟡などの色で表示します。</b></p><button class="green" onclick="syncLocalMastersToFirebase()">この端末の作業員・取引先を共有へ反映</button><p class="small">開発版で登録した作業員・取引先が出ない時は、このボタンを1回押してください。</p><button onclick="rescueLocalReports()">この端末に残っている日報を復旧</button><p class="small">日報が消えた時だけ押してください。この端末の保存履歴を探してFirebaseへ戻します。</p></section>
+<section class="card"><h3>スタッフ用</h3><p class="small">予定確認と日報入力のみ使用できます。保存データはFirebaseで共有されます。</p><span id="cloudStatus" class="status">Firebase接続中...</span><p class="small"><b>取引先名はスタッフ画面には表示されません。予定・日報は🔴🟢🟡などの色で表示します。</b></p><button class="green" onclick="forceReloadMastersFromFirebase()">作業員・取引先を最新に更新</button><p class="small">管理者が追加した取引先・作業員が出ない時は、このボタンを押してください。端末内の古い名簿を消してFirebaseから読み直します。</p><button onclick="syncLocalMastersToFirebase()">この端末の作業員・取引先を共有へ反映</button><p class="small">この端末で登録した名前を共有に反映します。</p><button onclick="rescueLocalReports()">この端末に残っている日報を復旧</button><p class="small">日報が消えた時だけ押してください。この端末の保存履歴を探してFirebaseへ戻します。</p></section>
 <div class="card tabs"><button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button><button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button></div>
 <section id="cal">
 <div class="card row"><button onclick="moveMonth(-1)">← 前月</button><button onclick="moveMonth(1)">翌月 →</button></div>
@@ -136,6 +136,27 @@ function syncList(path,names){
   });
   return R(path).update(updates);
 }
+
+function clearLocalMasterCache(){
+  try{
+    localStorage.removeItem("fks_construction_workers");
+    localStorage.removeItem("fks_construction_clients");
+    localStorage.removeItem("fks_construction_deleted_workers");
+    localStorage.removeItem("fks_construction_deleted_clients");
+  }catch(e){}
+}
+function forceReloadMastersFromFirebase(){
+  clearLocalMasterCache();
+  Promise.all([R("workers").once("value"),R("clients").once("value")]).then(([ws,cs])=>{
+    workersData=unique(asArray(ws.val()).map(x=>x.name).filter(Boolean));
+    clientsData=unique(asArray(cs.val()).map(x=>x.name).filter(Boolean).concat(["未登録"]));
+    saveLocalList("fks_construction_workers",workersData);
+    saveLocalList("fks_construction_clients",clientsData);
+    renderAll();
+    alert("作業員・取引先をFirebaseから最新に更新しました");
+  }).catch(e=>alert("更新エラー: "+e.message));
+}
+
 function syncLocalMastersToFirebase(){
   const ws=filterDeleted(normalizeNameArray(readLocal("fks_construction_workers").concat(workersData)),"fks_construction_deleted_workers");
   const cs=filterDeleted(normalizeNameArray(readLocal("fks_construction_clients").concat(clientsData)),"fks_construction_deleted_clients");
@@ -219,7 +240,24 @@ function seed(){
   const localC=readLocal("fks_construction_clients");
   /* 自動反映は削除復活防止のため停止。必要時だけボタンで反映。 */
 }
-function startFirebase(){firebase.database().ref(".info/connected").on("value",s=>{s.val()?(setStatus("Firebase接続OK / 共有中","ok"),syncOfflineQueue()):setStatus("Firebase未接続 / 通信確認中","ng")});seed();R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});R("workers").on("value",s=>{const remote=asArray(s.val()).map(x=>x.name).filter(Boolean); workersData=unique(remote.concat(readLocal("fks_construction_workers"))); saveLocalList("fks_construction_workers",workersData); renderAll()});R("clients").on("value",s=>{const remote=asArray(s.val()).map(x=>x.name).filter(Boolean); clientsData=unique(remote.concat(readLocal("fks_construction_clients")).concat(["未登録"])); saveLocalList("fks_construction_clients",clientsData); renderAll()})}
+function startFirebase(){
+  firebase.database().ref(".info/connected").on("value",s=>{s.val()?(setStatus("Firebase接続OK / 共有中","ok"),syncOfflineQueue()):setStatus("Firebase未接続 / 通信確認中","ng")});
+  seed();
+  R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});
+  R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});
+  R("workers").on("value",s=>{
+    const remote=asArray(s.val()).map(x=>x.name).filter(Boolean);
+    // Firebaseを正として使う。端末の古い名簿で上書きしない。
+    if(remote.length){workersData=unique(remote);saveLocalList("fks_construction_workers",workersData);}else{workersData=unique(readLocal("fks_construction_workers"));}
+    renderAll();
+  });
+  R("clients").on("value",s=>{
+    const remote=asArray(s.val()).map(x=>x.name).filter(Boolean);
+    // Firebaseを正として使う。スタッフ端末の古い名簿・削除履歴で邪魔しない。
+    if(remote.length){clientsData=unique(remote.concat(["未登録"]));saveLocalList("fks_construction_clients",clientsData);}else{clientsData=unique(readLocal("fks_construction_clients").concat(["未登録"]));}
+    renderAll();
+  });
+}
 function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=t=="rep"?"block":"none";if(typeof admin!=="undefined")admin.style.display=t=="admin"?"block":"none";bCal.className=t=="cal"?"tab active":"tab";bRep.className=t=="rep"?"tab active":"tab";if(typeof bAdmin!=="undefined")bAdmin.className=t=="admin"?"tab active":"tab";renderAll()}
 function keepSelectValue(el, html, oldValue){
   el.innerHTML = html;
@@ -232,13 +270,19 @@ function keepSelectValue(el, html, oldValue){
   }
 }
 function renderSelects(){
-  const oldJClient=jClient.value||"", oldRClient=rClient.value||"", oldRReporter=rReporter.value||"", oldRWorker=rWorker.value||"", oldRCompany=rCompany.value||"";
-  const clientHtml='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${x}</option>`).join("");
-  keepSelectValue(jClient, clientHtml, oldJClient);
-  keepSelectValue(rClient, clientHtml, oldRClient);
-  keepSelectValue(rCompany, companiesData.map(x=>`<option>${x}</option>`).join(""), oldRCompany);
-  keepSelectValue(rReporter, '<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join(""), oldRReporter);
-  keepSelectValue(rWorker, '<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join(""), oldRWorker);
+  const keepJ=jClient&&jClient.value||"";
+  const keepRC=rClient&&rClient.value||"";
+  const keepRep=rReporter&&rReporter.value||"";
+  const keepRW=rWorker&&rWorker.value||"";
+  const clientHtml='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option value="${String(x).replace(/"/g,'&quot;')}">${x}</option>`).join("");
+  jClient.innerHTML=clientHtml;rClient.innerHTML=clientHtml;
+  if(keepJ && clientsData.includes(keepJ))jClient.value=keepJ;
+  if(keepRC && clientsData.includes(keepRC))rClient.value=keepRC;
+  rCompany.innerHTML=companiesData.map(x=>`<option>${x}</option>`).join("");
+  rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");
+  rWorker.innerHTML='<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");
+  if(keepRep && workersData.includes(keepRep))rReporter.value=keepRep;
+  if(keepRW && workersData.includes(keepRW))rWorker.value=keepRW;
 }
 function addJob(){
   if(!jDate.value||!jSite.value)return alert("日付と現場名を入力してください");
