@@ -136,7 +136,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database(), base="fujiwara/construction";
-let current=new Date(), selectedDate="", jobsData=[], reportsData=[], workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])), clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]));
+let current=new Date(), selectedDate="", jobsData=[], reportsData=[], workersData=filterDeleted(readLocal("fks_construction_workers"),"fks_construction_deleted_workers"), clientsData=filterDeleted(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]),"fks_construction_deleted_clients");
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
 const clientMarks=["🔴","🟢","🟡","🔵","🟣","🟠","⚫","⚪","🟤","🔶","🔷","⭐"];
 function safeKey(name){return String(name||"").trim().replace(/[.#$\[\]\/]/g,"_")}
@@ -148,6 +148,10 @@ function clientMark(name){
   return clientMarks[i%clientMarks.length];
 }
 function saveLocalList(key,arr){try{localStorage.setItem(key,JSON.stringify(unique(arr||[])))}catch(e){}}
+function readDeletedList(key){try{const v=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(v)?v:[]}catch(e){return []}}
+function markDeletedLocal(key,name){try{const arr=readDeletedList(key); if(!arr.includes(name))arr.push(name); localStorage.setItem(key,JSON.stringify(arr));}catch(e){}}
+function unmarkDeletedLocal(key,name){try{const arr=readDeletedList(key).filter(x=>x!==name); localStorage.setItem(key,JSON.stringify(arr));}catch(e){}}
+function filterDeleted(list,deletedKey){const del=new Set(readDeletedList(deletedKey));return unique((list||[]).filter(x=>!del.has(x)));}
 function pushOfflineQueue(kind,data){
   try{const key="fks_construction_offline_queue";const arr=JSON.parse(localStorage.getItem(key)||"[]");arr.push({kind,data,queuedAt:new Date().toISOString()});localStorage.setItem(key,JSON.stringify(arr.slice(-500)));}catch(e){}
 }
@@ -164,23 +168,23 @@ function syncOfflineQueue(){
 }
 function addWorkerMaster(){
   const name=(newWorkerName.value||"").trim(); if(!name)return alert("作業員名を入力してください");
-  workersData=unique(workersData.concat([name])); saveLocalList("fks_construction_workers",workersData);
+  unmarkDeletedLocal("fks_construction_deleted_workers",name); workersData=unique(workersData.concat([name])); saveLocalList("fks_construction_workers",workersData);
   R("workers/"+safeKey(name)).set({name,updatedAt:new Date().toISOString()}).then(()=>{newWorkerName.value="";renderAll();alert("作業員を保存しました")}).catch(e=>{newWorkerName.value="";renderAll();alert("端末に保存しました。通信が戻ったら共有します: "+e.message)});
 }
 function delWorkerMaster(name){
   if(!confirm(name+" を削除しますか？"))return;
-  workersData=workersData.filter(x=>x!==name); saveLocalList("fks_construction_workers",workersData);
+  markDeletedLocal("fks_construction_deleted_workers",name); workersData=workersData.filter(x=>x!==name); saveLocalList("fks_construction_workers",workersData);
   R("workers/"+safeKey(name)).remove().then(renderAll).catch(()=>renderAll());
 }
 function addClientMaster(){
   const name=(newClientName.value||"").trim(); if(!name)return alert("取引先名を入力してください");
-  clientsData=unique(clientsData.concat([name])); saveLocalList("fks_construction_clients",clientsData);
+  unmarkDeletedLocal("fks_construction_deleted_clients",name); clientsData=unique(clientsData.concat([name])); saveLocalList("fks_construction_clients",clientsData);
   R("clients/"+safeKey(name)).set({name,updatedAt:new Date().toISOString()}).then(()=>{newClientName.value="";renderAll();alert("取引先を保存しました")}).catch(e=>{newClientName.value="";renderAll();alert("端末に保存しました。通信が戻ったら共有します: "+e.message)});
 }
 function delClientMaster(name){
   if(name==="未登録")return alert("未登録は削除できません");
   if(!confirm(name+" を削除しますか？"))return;
-  clientsData=clientsData.filter(x=>x!==name); saveLocalList("fks_construction_clients",clientsData);
+  markDeletedLocal("fks_construction_deleted_clients",name); clientsData=clientsData.filter(x=>x!==name); saveLocalList("fks_construction_clients",clientsData);
   R("clients/"+safeKey(name)).remove().then(renderAll).catch(()=>renderAll());
 }
 function renderMasters(){
@@ -205,8 +209,8 @@ function syncList(path,names){
   return R(path).update(updates);
 }
 function syncLocalMastersToFirebase(){
-  const ws=normalizeNameArray(readLocal("fks_construction_workers").concat(workersData));
-  const cs=normalizeNameArray(readLocal("fks_construction_clients").concat(clientsData));
+  const ws=filterDeleted(normalizeNameArray(readLocal("fks_construction_workers").concat(workersData)),"fks_construction_deleted_workers");
+  const cs=filterDeleted(normalizeNameArray(readLocal("fks_construction_clients").concat(clientsData)),"fks_construction_deleted_clients");
   Promise.all([syncList("workers",ws),syncList("clients",cs)]).then(()=>{
     alert("この端末の作業員・取引先をFirebase共有へ反映しました");
   }).catch(e=>alert("共有エラー: "+e.message));
@@ -270,13 +274,13 @@ function autoRescueLocalReports(){
 
 function setStatus(t,c){cloudStatus.textContent=t;cloudStatus.className="status "+(c||"")}
 function seed(){
-  R("workers").once("value").then(s=>{if(!s.exists())R("workers").set({w1:{name:"藤原"},w2:{name:"山田"},w3:{name:"田中"},w4:{name:"繁充"}})});
+  R("workers").once("value").then(s=>{if(!s.exists())R("workers").set({w1:{name:"藤原"}})});
   R("clients").once("value").then(s=>{if(!s.exists())R("clients").set({c1:{name:"未登録"},c2:{name:"前田建設株式会社"}})});
   const localW=readLocal("fks_construction_workers");
   const localC=readLocal("fks_construction_clients");
-  if(localW.length||localC.length){syncLocalMastersToFirebase();}
+  /* 自動反映は削除復活防止のため停止。必要時だけボタンで反映。 */
 }
-function startFirebase(){firebase.database().ref(".info/connected").on("value",s=>{s.val()?(setStatus("Firebase接続OK / 共有中","ok"),syncOfflineQueue()):setStatus("Firebase未接続 / 通信確認中","ng")});seed();R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});R("workers").on("value",s=>{workersData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")).concat(["藤原","山田","田中","繁充"]));renderAll()});R("clients").on("value",s=>{clientsData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]));renderAll()})}
+function startFirebase(){firebase.database().ref(".info/connected").on("value",s=>{s.val()?(setStatus("Firebase接続OK / 共有中","ok"),syncOfflineQueue()):setStatus("Firebase未接続 / 通信確認中","ng")});seed();R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll();autoRescueLocalReports()});R("workers").on("value",s=>{workersData=filterDeleted(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")),"fks_construction_deleted_workers");renderAll()});R("clients").on("value",s=>{clientsData=filterDeleted(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]),"fks_construction_deleted_clients");renderAll()})}
 function showTab(t){cal.style.display=t=="cal"?"block":"none";rep.style.display=t=="rep"?"block":"none";admin.style.display=t=="admin"?"block":"none";bCal.className=t=="cal"?"tab active":"tab";bRep.className=t=="rep"?"tab active":"tab";bAdmin.className=t=="admin"?"tab active":"tab";renderAll()}
 function renderSelects(){jClient.innerHTML='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${x}</option>`).join("");rClient.innerHTML=jClient.innerHTML;rCompany.innerHTML=companiesData.map(x=>`<option>${x}</option>`).join("");rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");rWorker.innerHTML='<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("")}
 function addJob(){
