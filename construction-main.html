@@ -262,8 +262,7 @@ function allReports(){
   return out;
 }
 
-function escJs(s){return String(s||"").replace(/\/g,"\\").replace(/'/g,"\'").replace(/
-/g," ")}
+function escJs(s){return String(s||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/[\r\n]/g," ")}
 function delLocalReportBySig(sig){
   if(!confirm("この端末控え・未送信の日報を削除しますか？"))return;
   try{
