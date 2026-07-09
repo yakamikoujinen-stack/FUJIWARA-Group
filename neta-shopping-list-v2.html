@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ネタ買い物一覧</title>
+<style>
+:root{--bg:#fff7df;--card:#fffdf5;--gold:#b8860b;--gold2:#d8a72b;--text:#221700;--muted:#6b5a31;--line:#dfc783;--green:#148a55;--red:#d64141}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(180deg,#fff9e8,#f6ebc9);color:var(--text);padding-bottom:80px}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(90deg,#fff2c8,#ffe09a,#fff2c8);border-bottom:2px solid rgba(184,134,11,.35);padding:14px 16px}
+.brand{font-size:22px;font-weight:900}.sub{font-size:12px;color:var(--muted);margin-top:3px}.wrap{padding:14px;max-width:900px;margin:0 auto}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 3px 12px rgba(80,55,0,.08)}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.menu-btn{border:1.5px solid var(--line);background:#fffaf0;border-radius:15px;padding:16px 10px;font-weight:900;font-size:17px;text-align:center;color:var(--text)}
+.menu-btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;border-color:#9c6b00}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,textarea{width:100%;font-size:16px;padding:11px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--text)}textarea{min-height:76px}
+button{font-size:15px;font-weight:900;border:0;border-radius:12px;padding:11px 14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff}.btn-light{background:#fffaf0;color:#8a6400;border:1.5px solid var(--line)}.btn-red{background:#ffe5e5;color:#b00000;border:1.5px solid #f1b2b2}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}th,td{border-bottom:1px solid #ead8a8;padding:9px;text-align:left;font-size:14px;vertical-align:middle}th{background:#fff0bf;color:#4c3500;font-weight:900}td input{font-size:14px;padding:8px;border-radius:9px}.money{text-align:right;font-weight:900;color:var(--green)}.total{font-size:24px;font-weight:900;color:#b00000;text-align:right}.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#fff2c8;color:#8a6400;font-size:12px;font-weight:900}.small{font-size:12px;color:var(--muted);line-height:1.7}.hidden{display:none}
+.footer-nav{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(90deg,#fff2c8,#ffe09a,#fff2c8);border-top:2px solid rgba(184,134,11,.35);display:flex;padding:7px 8px env(safe-area-inset-bottom)}.nav{flex:1;text-align:center;border:0;background:transparent;color:#6b5a31;font-size:12px;padding:8px}.nav.active{color:#9c6b00;font-weight:900}
+</style>
+</head>
+<body>
+<header><div class="brand">🛒 ネタ買い物一覧</div><div class="sub">ネタをタップ → 品目と在庫を表示 → 追加数量と単価で金額計算</div></header>
+<div class="wrap">
+<section class="card"><div class="small">ネタをタップしてください</div><div id="menuGrid" class="menu-grid"></div></section>
+<section id="sheetCard" class="card hidden">
+<div class="row" style="justify-content:space-between;margin-bottom:8px"><div><div style="font-size:20px;font-weight:900" id="selectedTitle"></div><div class="small">品目・在庫数を表示。追加数量と単価を入力すると金額が自動計算。</div></div><button class="btn-light" onclick="addRow()">＋ 品目追加</button></div>
+<div class="table-wrap"><table><thead><tr><th>① 品目</th><th>② 在庫数</th><th>③ 今回追加数量</th><th>④ 単価</th><th>⑤ 金額</th><th>⑥ 備考</th><th></th></tr></thead><tbody id="itemBody"></tbody></table></div>
+<div class="row" style="justify-content:space-between;margin-top:12px"><span class="badge">⑤ 金額の総計</span><div class="total" id="grandTotal">¥0</div></div>
+<div style="margin-top:12px"><label class="small">全体メモ</label><textarea id="memo" placeholder="買い物メモ・注意点"></textarea></div>
+<div class="row" style="margin-top:12px"><button onclick="saveCurrent()">💾 保存</button><button class="btn-light" onclick="print()">印刷</button><button class="btn-red" onclick="resetCurrent()">リセット</button></div>
+</section>
+</div>
+<nav class="footer-nav"><button class="nav active">🛒 買い物</button><button class="nav" onclick="alert('共有は次の段階でキング・事務員アプリに連動します')">👑 共有</button></nav>
+<script>
+const KEY="fujiwara_neta_shopping_v2";
+const defaultData={
+"チーズハットグ":{memo:"",items:[
+{name:"チーズハットグ",stock:135,add:0,unit:0,note:""},
+{name:"チーズブロック",stock:7,add:0,unit:0,note:""},
+{name:"ソーセージ",stock:0,add:0,unit:0,note:""},
+{name:"ミックス粉",stock:3,add:0,unit:0,note:""},
+{name:"パン粉",stock:2,add:0,unit:0,note:""},
+{name:"ケチャップ",stock:4,add:0,unit:0,note:""},
+{name:"マスタード",stock:4,add:0,unit:0,note:""},
+{name:"ハニーマスタード",stock:0,add:0,unit:0,note:""}]},
+"肉巻き":{memo:"",items:[{name:"豚バラ",stock:0,add:0,unit:0,note:""},{name:"ごはん",stock:0,add:0,unit:0,note:""},{name:"タレ",stock:0,add:0,unit:0,note:""},{name:"串",stock:0,add:0,unit:0,note:""},{name:"パック",stock:0,add:0,unit:0,note:""}]},
+"牛串":{memo:"",items:[{name:"牛串",stock:0,add:0,unit:0,note:""},{name:"塩こしょう",stock:0,add:0,unit:0,note:""},{name:"タレ",stock:0,add:0,unit:0,note:""}]},
+"からあげ":{memo:"",items:[{name:"鶏肉",stock:0,add:0,unit:0,note:""},{name:"からあげ粉",stock:0,add:0,unit:0,note:""},{name:"油",stock:0,add:0,unit:0,note:""}]},
+"りんご飴":{memo:"",items:[{name:"りんご",stock:0,add:0,unit:0,note:""},{name:"飴粉",stock:0,add:0,unit:0,note:""},{name:"袋",stock:0,add:0,unit:0,note:""}]}
+};
+let data=load(), current="チーズハットグ";
+function load(){try{return {...defaultData,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){return JSON.parse(JSON.stringify(defaultData))}}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function yen(n){return "¥"+(Number(n)||0).toLocaleString()}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function renderMenus(){const g=document.getElementById("menuGrid");g.innerHTML="";Object.keys(data).forEach(n=>{const b=document.createElement("button");b.className="menu-btn"+(n===current?" active":"");b.textContent=n;b.onclick=()=>selectMenu(n);g.appendChild(b)})}
+function selectMenu(n){current=n;document.getElementById("sheetCard").classList.remove("hidden");renderMenus();renderSheet()}
+function renderSheet(){const s=data[current];document.getElementById("selectedTitle").textContent=current;document.getElementById("memo").value=s.memo||"";const body=document.getElementById("itemBody");body.innerHTML="";s.items.forEach((it,i)=>{const amount=(Number(it.add)||0)*(Number(it.unit)||0);const tr=document.createElement("tr");tr.innerHTML=`<td><input value="${esc(it.name)}" oninput="upd(${i},'name',this.value)"></td><td><input type="number" value="${Number(it.stock)||0}" oninput="upd(${i},'stock',this.value)"></td><td><input type="number" value="${Number(it.add)||0}" oninput="upd(${i},'add',this.value)"></td><td><input type="number" value="${Number(it.unit)||0}" oninput="upd(${i},'unit',this.value)"></td><td class="money">${yen(amount)}</td><td><input value="${esc(it.note)}" oninput="upd(${i},'note',this.value)"></td><td><button class="btn-red" onclick="delRow(${i})">削除</button></td>`;body.appendChild(tr)});total()}
+function upd(i,k,v){if(["stock","add","unit"].includes(k))data[current].items[i][k]=Number(v)||0;else data[current].items[i][k]=v;save();renderSheet()}
+function total(){const t=data[current].items.reduce((s,it)=>s+(Number(it.add)||0)*(Number(it.unit)||0),0);document.getElementById("grandTotal").textContent=yen(t)}
+function addRow(){data[current].items.push({name:"",stock:0,add:0,unit:0,note:""});save();renderSheet()}
+function delRow(i){if(confirm("削除しますか？")){data[current].items.splice(i,1);save();renderSheet()}}
+function saveCurrent(){data[current].memo=document.getElementById("memo").value;save();alert("保存しました")}
+function resetCurrent(){if(confirm(current+"を初期状態に戻しますか？")){data[current]=JSON.parse(JSON.stringify(defaultData[current]));save();renderSheet()}}
+renderMenus();selectMenu(current);
+</script>
+</body></html>
