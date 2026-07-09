@@ -1,8 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>FUJIWARA Office Timecard</title>
 <style>
 :root{
@@ -49,96 +50,82 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
 .purchase-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.purchase-row{background:#fff7fb;border:1px solid #ffd6e5;border-radius:16px;padding:12px;margin-bottom:8px}.purchase-row b{color:#ff5f93}.receipt-img{max-width:100%;max-height:220px;border-radius:14px;border:1px solid #ffd6e5;margin-top:8px}.pill{display:inline-block;background:#ffe4ef;color:#ff5f93;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
 
 </style>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-
-</head>
+<link href="office-icon.png" rel="apple-touch-icon"/><link href="office-icon.png" rel="icon" type="image/png"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="default" name="apple-mobile-web-app-status-bar-style"/><meta content="事務員アプリ" name="apple-mobile-web-app-title"/><meta content="#ff8fb3" name="theme-color"/></head>
 <body>
-<div id="toast" class="toast">🌸 保存しました</div>
+<div class="toast" id="toast">🌸 保存しました</div>
 <header>
-  <div class="logo">
-    <h1>🌸 FUJIWARA Office Timecard</h1>
-    <p>事務員用タイムカード / Firebase共有版 / キングアプリ連動</p>
-  </div>
+<div class="logo">
+<h1>🌸 FUJIWARA Office Timecard</h1>
+<p>事務員用タイムカード / Firebase共有版 / キングアプリ連動</p>
+</div>
 </header>
-
 <main>
 <section class="card">
-  <h2>今日の打刻</h2>
-  <div class="row">
-    <div><label>スタッフ名</label><input id="staff" placeholder="例：事務員さん"></div>
-    <div><label>日付</label><input id="date" type="date"></div>
-  </div>
-
-  <button id="mainBtn" class="btnIn btnBig" onclick="mainStamp()">🌞 出勤する</button>
-
-  <div class="statusBox">
-    <div id="todayStatus"><b>今日の状態：</b>未出勤</div>
-    <div class="small" id="timeLine">出勤・休憩・退勤がここに表示されます。</div>
-  </div>
+<h2>今日の打刻</h2>
+<div class="row">
+<div><label>スタッフ名</label><input id="staff" placeholder="例：事務員さん"/></div>
+<div><label>日付</label><input id="date" type="date"/></div>
+</div>
+<button class="btnIn btnBig" id="mainBtn" onclick="mainStamp()">🌞 出勤する</button>
+<div class="statusBox">
+<div id="todayStatus"><b>今日の状態：</b>未出勤</div>
+<div class="small" id="timeLine">出勤・休憩・退勤がここに表示されます。</div>
+</div>
 </section>
-
 <section class="card">
-  <h2>手入力・修正</h2>
-  <div class="row">
-    <input id="inTime" type="time" placeholder="出勤">
-    <input id="outTime" type="time" placeholder="退勤">
-  </div>
-  <div class="row">
-    <input id="breakMin" type="number" placeholder="休憩 分" readonly>
-    <input id="memo" placeholder="メモ">
-  </div>
-  <p class="small">休憩時間はメインボタンで「休憩開始→休憩終了」を押すと自動計算します。</p>
-  <button class="btnSave" onclick="saveManual()">💾 保存・修正</button>
+<h2>手入力・修正</h2>
+<div class="row">
+<input id="inTime" placeholder="出勤" type="time"/>
+<input id="outTime" placeholder="退勤" type="time"/>
+</div>
+<div class="row">
+<input id="breakMin" placeholder="休憩 分" readonly="" type="number"/>
+<input id="memo" placeholder="メモ"/>
+</div>
+<p class="small">休憩時間はメインボタンで「休憩開始→休憩終了」を押すと自動計算します。</p>
+<button class="btnSave" onclick="saveManual()">💾 保存・修正</button>
 </section>
-
 <section class="card">
-  <h2>今月の集計</h2>
-  <div class="grid">
-    <div class="kpi"><div class="big" id="workDays">0</div><div class="small">勤務日数</div></div>
-    <div class="kpi"><div class="big" id="totalHours">0.0h</div><div class="small">総勤務時間</div></div>
-    <div class="kpi"><div class="big" id="totalBreak">0分</div><div class="small">休憩合計</div></div>
-    <div class="kpi"><div class="big" id="avgHours">0.0h</div><div class="small">平均勤務</div></div>
-  </div>
+<h2>今月の集計</h2>
+<div class="grid">
+<div class="kpi"><div class="big" id="workDays">0</div><div class="small">勤務日数</div></div>
+<div class="kpi"><div class="big" id="totalHours">0.0h</div><div class="small">総勤務時間</div></div>
+<div class="kpi"><div class="big" id="totalBreak">0分</div><div class="small">休憩合計</div></div>
+<div class="kpi"><div class="big" id="avgHours">0.0h</div><div class="small">平均勤務</div></div>
+</div>
 </section>
-
 <section class="card">
-  <h2>勤務一覧 <span class="badge">localStorage保存</span></h2>
-  <div style="overflow:auto">
-    <table class="table">
-      <thead><tr><th>日付</th><th>名前</th><th>出勤</th><th>退勤</th><th>休憩</th><th>時間</th><th>メモ</th><th></th></tr></thead>
-      <tbody id="list"></tbody>
-    </table>
-  </div>
+<h2>勤務一覧 <span class="badge">localStorage保存</span></h2>
+<div style="overflow:auto">
+<table class="table">
+<thead><tr><th>日付</th><th>名前</th><th>出勤</th><th>退勤</th><th>休憩</th><th>時間</th><th>メモ</th><th></th></tr></thead>
+<tbody id="list"></tbody>
+</table>
+</div>
 </section>
-
 <section class="card">
-  <h2>CSV用コピー</h2>
-  <p class="small">Excelやスプレッドシートへ貼り付けできます。</p>
-  <button class="btnGray" onclick="copyCSV()">CSVをコピー</button>
+<h2>CSV用コピー</h2>
+<p class="small">Excelやスプレッドシートへ貼り付けできます。</p>
+<button class="btnGray" onclick="copyCSV()">CSVをコピー</button>
 </section>
-
-
-
 <section class="card">
-  <h2>📊 仕入集計 <span class="badge">キング/メイン連動</span></h2>
-  <p class="small">メインアプリのリーダー・担当者が登録した仕入がここに集まります。</p>
-  <div class="row">
-    <div><label>イベントで絞り込み</label><select id="purchaseEventFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
-    <div><label>担当者で絞り込み</label><select id="purchaseStaffFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
-  </div>
-  <div class="purchase-summary">
-    <div class="kpi"><div class="big" id="officePurchaseTotal">¥0</div><div class="small">仕入合計</div></div>
-    <div class="kpi"><div class="big" id="officePurchaseCount">0</div><div class="small">件数</div></div>
-  </div>
-  <div id="officePurchaseGroup"></div>
-  <div id="officePurchaseList"></div>
+<h2>📊 仕入集計 <span class="badge">キング/メイン連動</span></h2>
+<p class="small">メインアプリのリーダー・担当者が登録した仕入がここに集まります。</p>
+<div class="row">
+<div><label>イベントで絞り込み</label><select id="purchaseEventFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
+<div><label>担当者で絞り込み</label><select id="purchaseStaffFilter" onchange="renderOfficePurchases()"><option value="">すべて</option></select></div>
+</div>
+<div class="purchase-summary">
+<div class="kpi"><div class="big" id="officePurchaseTotal">¥0</div><div class="small">仕入合計</div></div>
+<div class="kpi"><div class="big" id="officePurchaseCount">0</div><div class="small">件数</div></div>
+</div>
+<div id="officePurchaseGroup"></div>
+<div id="officePurchaseList"></div>
 </section>
-
 <div class="footer">FUJIWARA Group / Office Timecard</div>
 </main>
-
 <script>
 
 const firebaseConfig={
@@ -303,7 +290,6 @@ function renderOfficePurchases(){
 startPurchaseSync();
 
 </script>
-
 <!-- Firebase linked 2026-07-05T22:24:53.209004 -->
 </body>
 </html>
