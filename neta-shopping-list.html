@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>FUJIWARA ネタ買い物一覧</title>
+<style>
+:root{--bg:#f7f1df;--card:#fffdfa;--gold:#b8860b;--gold2:#d6a634;--text:#241900;--sub:#6d5a2b;--line:#d8bf75;--red:#d64242;--green:#168a58}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans JP',sans-serif;background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:28px}.top{position:sticky;top:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-bottom:2px solid rgba(184,134,11,.45);padding:14px 16px;z-index:5}.brand{font-weight:900;font-size:18px}.sub{font-size:12px;color:var(--sub);margin-top:3px}.wrap{padding:14px;max-width:900px;margin:auto}.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.10)}label{font-size:12px;color:var(--sub);font-weight:700;display:block;margin-bottom:5px}input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:none;border-radius:10px;padding:10px 14px;font-weight:900;font-size:13px;cursor:pointer}.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200}.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}.danger{background:rgba(214,66,66,.12);border:1px solid rgba(214,66,66,.35);color:var(--red)}.green{background:rgba(22,138,88,.12);border:1px solid rgba(22,138,88,.35);color:var(--green)}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px;background:#fffdfa}th{background:#fff3d6;border:1px solid var(--line);padding:8px 6px;font-size:12px;text-align:left}td{border:1px solid #ead8a8;padding:6px;vertical-align:middle}td input{padding:8px;font-size:13px}.money{text-align:right;font-weight:900}.readonly{background:#f7f1df!important;color:#5f512e!important}.total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(184,134,11,.12),rgba(184,134,11,.04));border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}.mini{font-size:12px;color:var(--sub);line-height:1.7}.pill{display:inline-block;background:rgba(184,134,11,.12);border:1px solid rgba(184,134,11,.28);border-radius:999px;padding:3px 9px;font-size:11px;color:var(--gold);font-weight:900;margin:2px}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">🛒 FUJIWARA ネタ買い物一覧</div><div class="sub">イベント実施前の追加購入リスト｜単独アプリ版</div></header>
+<div class="wrap">
+  <div class="card">
+    <div class="grid">
+      <div><label>イベント名</label><input id="eventName" placeholder="例：サンドーム福井"></div>
+      <div><label>実施日</label><input id="eventDate" type="date"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn gold" onclick="addRow()">＋ 行を追加</button>
+      <button class="btn green" onclick="saveAll()">💾 保存</button>
+      <button class="btn ghost" onclick="loadSampleItems()">📦 品目候補を入れる</button>
+      <button class="btn danger" onclick="clearAll()">全消去</button>
+    </div>
+    <div class="mini" style="margin-top:10px">品目候補：<span id="itemChips"></span></div>
+  </div>
+
+  <div class="card">
+    <datalist id="items"></datalist>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>①品目</th><th>②在庫数</th><th>③今回追加数量</th><th>④単価</th><th>⑤金額</th><th>⑥備考</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="total"><span>⑤ 金額の総計</span><span id="total">¥0</span></div>
+  </div>
+</div>
+<script>
+const KEY='fujiwara_neta_shopping_v1';
+const sample=['肉巻き','牛串','鶏肉','豚串','唐揚げ粉','カステラ粉','油','ソース','キャベツ','氷','カップ','割り箸','容器'];
+let rows=[];
+function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function loadSampleItems(){document.getElementById('items').innerHTML=sample.map(x=>`<option value="${esc(x)}">`).join('');document.getElementById('itemChips').innerHTML=sample.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}
+function addRow(r={item:'',stock:'',qty:'',price:'',note:''}){rows.push(r);render()}
+function delRow(i){rows.splice(i,1);if(!rows.length)addRow();render()}
+function setVal(i,k,v){rows[i][k]=(k==='qty'||k==='price'||k==='stock')?v:v;calc()}
+function render(){const tb=document.getElementById('tbody');tb.innerHTML=rows.map((r,i)=>{const amt=(Number(r.qty)||0)*(Number(r.price)||0);return `<tr><td><input list="items" value="${esc(r.item)}" oninput="setVal(${i},'item',this.value)" placeholder="肉巻きなど"></td><td><input value="${esc(r.stock)}" oninput="setVal(${i},'stock',this.value)" placeholder="在庫"></td><td><input type="number" min="0" value="${esc(r.qty)}" oninput="setVal(${i},'qty',this.value)" placeholder="0"></td><td><input type="number" min="0" value="${esc(r.price)}" oninput="setVal(${i},'price',this.value)" placeholder="0"></td><td class="money">${yen(amt)}</td><td><input value="${esc(r.note)}" oninput="setVal(${i},'note',this.value)" placeholder="備考"></td><td><button class="btn danger" onclick="delRow(${i})">削除</button></td></tr>`}).join('');calc()}
+function calc(){const total=rows.reduce((s,r)=>s+(Number(r.qty)||0)*(Number(r.price)||0),0);document.getElementById('total').textContent=yen(total)}
+function saveAll(){localStorage.setItem(KEY,JSON.stringify({eventName:eventName.value,eventDate:eventDate.value,rows}));alert('保存しました')}
+function loadAll(){loadSampleItems();try{const d=JSON.parse(localStorage.getItem(KEY)||'{}');eventName.value=d.eventName||'';eventDate.value=d.eventDate||'';rows=Array.isArray(d.rows)?d.rows:[]}catch(e){} if(!rows.length) addRow(); else render()}
+function clearAll(){if(confirm('買い物一覧を消しますか？')){rows=[];addRow();saveAll()}}
+loadAll();
+</script>
+</body>
+</html>
