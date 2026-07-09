@@ -49,6 +49,31 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
 /* ===== 仕入集計・レシート確認 ===== */
 .purchase-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.purchase-row{background:#fff7fb;border:1px solid #ffd6e5;border-radius:16px;padding:12px;margin-bottom:8px}.purchase-row b{color:#ff5f93}.receipt-img{max-width:100%;max-height:220px;border-radius:14px;border:1px solid #ffd6e5;margin-top:8px}.pill{display:inline-block;background:#ffe4ef;color:#ff5f93;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
 
+
+
+/* ===== 出勤予定・出勤日カレンダー ===== */
+.calendar-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;margin-bottom:12px}
+.calendar-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;text-align:center;font-weight:900;color:#ff5f93}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-day{min-height:92px;background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:8px;box-shadow:0 4px 12px #00000008;position:relative}
+.cal-day.muted{opacity:.35;background:#f8fafc}
+.cal-num{font-weight:950;color:#334155;margin-bottom:5px}
+.cal-tags{display:flex;flex-direction:column;gap:4px}
+.cal-tag{font-size:11px;font-weight:900;border-radius:999px;padding:4px 7px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-plan{background:#fff1c7;color:#b45309}
+.cal-work{background:#dffbf2;color:#15803d}
+.cal-both{background:#ffe4ef;color:#ff5f93}
+.cal-today{outline:3px solid #ff8fb355}
+.calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.legend-item{font-size:12px;font-weight:900;border-radius:999px;padding:6px 10px}
+.plan-list{margin-top:10px}
+.plan-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;background:#fff7fb;border:1px solid #ffd6e5;border-radius:14px;padding:9px;margin-bottom:7px}
+@media(max-width:720px){
+  .calendar-tools{grid-template-columns:1fr}
+  .cal-day{min-height:78px;padding:6px}
+  .cal-tag{font-size:10px;padding:3px 5px}
+  .plan-row{grid-template-columns:1fr}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -74,6 +99,37 @@ button{border:0;font-weight:900;color:#fff;background:var(--pink)}
 <div class="small" id="timeLine">出勤・休憩・退勤がここに表示されます。</div>
 </div>
 </section>
+<section class="card" id="attendanceCalendarCard">
+<h2>📅 出勤カレンダー <span class="badge">予定・実績</span></h2>
+<p class="small">黄色＝出勤予定、緑＝実際に出勤、ピンク＝予定も出勤もあり。事務員さんの予定管理に使えます。</p>
+<div class="calendar-tools">
+<div>
+<label>表示する月</label>
+<input id="calMonth" onchange="renderAttendanceCalendar()" type="month"/>
+</div>
+<div>
+<label>予定スタッフ名</label>
+<input id="planStaff" placeholder="例：事務員さん"/>
+</div>
+</div>
+<div class="row">
+<div><label>出勤予定日</label><input id="planDate" type="date"/></div>
+<div><label>予定メモ</label><input id="planMemo" placeholder="例：午前のみ / 請求書作成"/></div>
+</div>
+<button class="btnSave" onclick="addAttendancePlan()">➕ 出勤予定を追加</button>
+<div class="calendar-legend">
+<span class="legend-item cal-plan">黄色：出勤予定</span>
+<span class="legend-item cal-work">緑：出勤日</span>
+<span class="legend-item cal-both">ピンク：予定＋出勤</span>
+</div>
+<div class="calendar-head">
+<div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+</div>
+<div class="calendar-grid" id="attendanceCalendar"></div>
+<h3>この月の出勤予定</h3>
+<div class="plan-list" id="attendancePlanList"></div>
+</section>
+
 <section class="card">
 <h2>手入力・修正</h2>
 <div class="row">
@@ -289,6 +345,119 @@ function renderOfficePurchases(){
 }
 startPurchaseSync();
 
+
+
+// ===== 出勤予定・出勤日カレンダー =====
+const attendancePlanDb = firebase.database().ref("fujiwara/office_attendance_plans");
+
+function getAttendancePlans(){
+  try{return JSON.parse(localStorage.getItem("office_attendance_plans")||"[]")}catch(e){return []}
+}
+function setAttendancePlans(v){
+  localStorage.setItem("office_attendance_plans",JSON.stringify(v||[]));
+}
+function safePlanId(r){
+  return String((r.date||"")+"_"+(r.staff||"")+"_"+(r.id||Date.now())).replace(/[.#$/\[\]\s　]/g,"_");
+}
+function pushAttendancePlans(arr){
+  const updates={};
+  (arr||[]).forEach(r=>{updates[safePlanId(r)]={...r,updatedAt:new Date().toISOString()}});
+  return attendancePlanDb.update(updates);
+}
+function startAttendancePlanSync(){
+  attendancePlanDb.on("value",s=>{
+    const v=s.val()||{};
+    const arr=Object.keys(v).map(id=>({firebaseId:id,...v[id]}));
+    setAttendancePlans(arr);
+    if(typeof renderAttendanceCalendar==="function")renderAttendanceCalendar();
+  });
+}
+function monthStr(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function addAttendancePlan(){
+  const s=(document.getElementById("planStaff")?.value||staff.value||"").trim();
+  const d=document.getElementById("planDate")?.value||date.value;
+  if(!s){alert("スタッフ名を入力してください");return}
+  if(!d){alert("予定日を入力してください");return}
+  const arr=getAttendancePlans();
+  const r={id:Date.now(),date:d,staff:s,memo:document.getElementById("planMemo").value||""};
+  arr.push(r);
+  setAttendancePlans(arr);
+  pushAttendancePlans(arr).catch(e=>console.log(e));
+  document.getElementById("planMemo").value="";
+  renderAttendanceCalendar();
+  showToast("📅 出勤予定を追加しました");
+}
+function deleteAttendancePlan(id,firebaseId){
+  if(!confirm("この出勤予定を削除しますか？"))return;
+  const arr=getAttendancePlans().filter(x=>String(x.id)!==String(id));
+  setAttendancePlans(arr);
+  if(firebaseId){attendancePlanDb.child(firebaseId).remove()}
+  renderAttendanceCalendar();
+}
+function renderAttendanceCalendar(){
+  const calMonthEl=document.getElementById("calMonth");
+  const cal=document.getElementById("attendanceCalendar");
+  const planList=document.getElementById("attendancePlanList");
+  if(!calMonthEl||!cal||!planList)return;
+
+  if(!calMonthEl.value)calMonthEl.value=(date.value||today()).slice(0,7);
+  if(document.getElementById("planDate") && !document.getElementById("planDate").value)document.getElementById("planDate").value=date.value||today();
+  if(document.getElementById("planStaff") && !document.getElementById("planStaff").value)document.getElementById("planStaff").value=staff.value||localStorage.getItem("office_timecard_last_staff")||"";
+
+  const ym=calMonthEl.value;
+  const [y,m]=ym.split("-").map(Number);
+  const first=new Date(y,m-1,1);
+  const last=new Date(y,m,0);
+  const startDay=first.getDay();
+  const totalDays=last.getDate();
+  const todayStr=today();
+
+  const records=get().filter(r=>String(r.date||"").startsWith(ym));
+  const plans=getAttendancePlans().filter(r=>String(r.date||"").startsWith(ym));
+
+  const workByDate={}; records.forEach(r=>{
+    if(!workByDate[r.date])workByDate[r.date]=[];
+    workByDate[r.date].push(r);
+  });
+  const planByDate={}; plans.forEach(r=>{
+    if(!planByDate[r.date])planByDate[r.date]=[];
+    planByDate[r.date].push(r);
+  });
+
+  let html="";
+  for(let i=0;i<startDay;i++)html+=`<div class="cal-day muted"></div>`;
+  for(let day=1;day<=totalDays;day++){
+    const d=ym+"-"+String(day).padStart(2,"0");
+    const ws=workByDate[d]||[];
+    const ps=planByDate[d]||[];
+    const cls=d===todayStr?" cal-today":"";
+    html+=`<div class="cal-day${cls}"><div class="cal-num">${day}</div><div class="cal-tags">`;
+    if(ps.length&&ws.length){
+      html+=`<div class="cal-tag cal-both">予定＋出勤 ${ws.length}件</div>`;
+    }else if(ps.length){
+      html+=`<div class="cal-tag cal-plan">予定 ${ps.length}件</div>`;
+    }else if(ws.length){
+      html+=`<div class="cal-tag cal-work">出勤 ${ws.length}件</div>`;
+    }
+    ps.slice(0,2).forEach(p=>html+=`<div class="cal-tag cal-plan">${safeText(p.staff)} ${safeText(p.memo||"")}</div>`);
+    ws.slice(0,2).forEach(w=>html+=`<div class="cal-tag cal-work">${safeText(w.staff)} ${safeText(w.inTime||"")}</div>`);
+    html+=`</div></div>`;
+  }
+  cal.innerHTML=html;
+
+  const sorted=plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  planList.innerHTML=sorted.length?sorted.map(p=>`
+    <div class="plan-row">
+      <div><b>${safeText(p.date)}</b>　${safeText(p.staff)}</div>
+      <div class="small">${safeText(p.memo||"メモなし")}</div>
+      <button class="btnRed" onclick="deleteAttendancePlan('${p.id||""}','${p.firebaseId||""}')">削除</button>
+    </div>
+  `).join(""):`<div class="small">この月の出勤予定はまだありません。</div>`;
+}
+startAttendancePlanSync();
+setTimeout(renderAttendanceCalendar,300);
 </script>
 <!-- Firebase linked 2026-07-05T22:24:53.209004 -->
 </body>
