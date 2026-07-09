@@ -2,16 +2,35 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>FUJIWARA ネタ買い物一覧</title>
+<meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FUJIWARA ネタ買い物一覧 v1.1</title>
 <style>
 :root{--bg:#f7f1df;--card:#fffdfa;--gold:#b8860b;--gold2:#d6a634;--text:#241900;--sub:#6d5a2b;--line:#d8bf75;--red:#d64242;--green:#168a58}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans JP',sans-serif;background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:28px}.top{position:sticky;top:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-bottom:2px solid rgba(184,134,11,.45);padding:14px 16px;z-index:5}.brand{font-weight:900;font-size:18px}.sub{font-size:12px;color:var(--sub);margin-top:3px}.wrap{padding:14px;max-width:900px;margin:auto}.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.10)}label{font-size:12px;color:var(--sub);font-weight:700;display:block;margin-bottom:5px}input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:none;border-radius:10px;padding:10px 14px;font-weight:900;font-size:13px;cursor:pointer}.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200}.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}.danger{background:rgba(214,66,66,.12);border:1px solid rgba(214,66,66,.35);color:var(--red)}.green{background:rgba(22,138,88,.12);border:1px solid rgba(22,138,88,.35);color:var(--green)}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px;background:#fffdfa}th{background:#fff3d6;border:1px solid var(--line);padding:8px 6px;font-size:12px;text-align:left}td{border:1px solid #ead8a8;padding:6px;vertical-align:middle}td input{padding:8px;font-size:13px}.money{text-align:right;font-weight:900}.readonly{background:#f7f1df!important;color:#5f512e!important}.total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(184,134,11,.12),rgba(184,134,11,.04));border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}.mini{font-size:12px;color:var(--sub);line-height:1.7}.pill{display:inline-block;background:rgba(184,134,11,.12);border:1px solid rgba(184,134,11,.28);border-radius:999px;padding:3px 9px;font-size:11px;color:var(--gold);font-weight:900;margin:2px}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans JP',sans-serif;background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:28px}
+.top{position:sticky;top:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-bottom:2px solid rgba(184,134,11,.45);padding:14px 16px;z-index:5}
+.brand{font-weight:900;font-size:18px}.sub{font-size:12px;color:var(--sub);margin-top:3px}.wrap{padding:14px;max-width:980px;margin:auto}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.10)}
+label{font-size:12px;color:var(--sub);font-weight:700;display:block;margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:none;border-radius:10px;padding:10px 14px;font-weight:900;font-size:13px;cursor:pointer}
+.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200}.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}
+.danger{background:rgba(214,66,66,.12);border:1px solid rgba(214,66,66,.35);color:var(--red)}.green{background:rgba(22,138,88,.12);border:1px solid rgba(22,138,88,.35);color:var(--green)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px;background:#fffdfa}th{background:#fff3d6;border:1px solid var(--line);padding:8px 6px;font-size:12px;text-align:left}td{border:1px solid #ead8a8;padding:6px;vertical-align:middle}td input{padding:8px;font-size:13px}.money{text-align:right;font-weight:900}.readonly{background:#f7f1df!important;color:#5f512e!important}
+.total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(184,134,11,.12),rgba(184,134,11,.04));border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.mini{font-size:12px;color:var(--sub);line-height:1.7}.pill{display:inline-block;background:rgba(184,134,11,.12);border:1px solid rgba(184,134,11,.28);border-radius:999px;padding:3px 9px;font-size:11px;color:var(--gold);font-weight:900;margin:2px}
+.neta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin-top:8px}
+.neta-btn{background:#fffaf0;border:1.5px solid var(--line);color:var(--text);border-radius:12px;padding:13px 10px;font-size:15px;font-weight:900}
+.neta-btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;border-color:#9c6b00}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#fff2c8;color:#8a6400;font-size:12px;font-weight:900}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.brand{font-size:17px}}
 </style>
 </head>
 <body>
-<header class="top"><div class="brand">🛒 FUJIWARA ネタ買い物一覧</div><div class="sub">イベント実施前の追加購入リスト｜単独アプリ版</div></header>
+<header class="top"><div class="brand">🛒 FUJIWARA ネタ買い物一覧 v1.1</div><div class="sub">イベント実施前の追加購入リスト｜単独アプリ版</div></header>
 <div class="wrap">
   <div class="card">
     <div class="grid">
@@ -28,6 +47,16 @@
   </div>
 
   <div class="card">
+    <div style="font-weight:900;margin-bottom:4px">ネタから品目・在庫を呼び出し</div>
+    <div class="mini">例：チーズハットグを押すと、品目と在庫数が表に入ります。追加数量と単価を入力してください。</div>
+    <div id="netaGrid" class="neta-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar" style="justify-content:space-between;margin-top:0;margin-bottom:8px">
+      <div><span class="badge" id="selectedNeta">ネタ未選択</span></div>
+      <button class="btn ghost" onclick="saveNetaTemplate()">この表をネタに保存</button>
+    </div>
     <datalist id="items"></datalist>
     <div class="scroll">
       <table>
@@ -38,22 +67,119 @@
     <div class="total"><span>⑤ 金額の総計</span><span id="total">¥0</span></div>
   </div>
 </div>
+
 <script>
-const KEY='fujiwara_neta_shopping_v1';
-const sample=['肉巻き','牛串','鶏肉','豚串','唐揚げ粉','カステラ粉','油','ソース','キャベツ','氷','カップ','割り箸','容器'];
-let rows=[];
+const KEY='fujiwara_neta_shopping_v11';
+const sample=['肉巻き','チーズハットグ','牛串','鶏肉','豚串','唐揚げ粉','カステラ粉','油','ソース','キャベツ','氷','カップ','割り箸','容器'];
+const defaultTemplates={
+  'チーズハットグ':[
+    {item:'チーズハットグ',stock:135,qty:'',price:'',note:''},
+    {item:'チーズブロック',stock:7,qty:'',price:'',note:''},
+    {item:'ソーセージ',stock:0,qty:'',price:'',note:''},
+    {item:'ミックス粉',stock:3,qty:'',price:'',note:''},
+    {item:'パン粉',stock:2,qty:'',price:'',note:''},
+    {item:'ケチャップ',stock:4,qty:'',price:'',note:''},
+    {item:'マスタード',stock:4,qty:'',price:'',note:''},
+    {item:'ハニーマスタード',stock:0,qty:'',price:'',note:''}
+  ],
+  '肉巻き':[
+    {item:'豚バラ',stock:0,qty:'',price:'',note:''},
+    {item:'ごはん',stock:0,qty:'',price:'',note:''},
+    {item:'タレ',stock:0,qty:'',price:'',note:''},
+    {item:'串',stock:0,qty:'',price:'',note:''},
+    {item:'容器',stock:0,qty:'',price:'',note:''}
+  ],
+  '牛串':[
+    {item:'牛串',stock:0,qty:'',price:'',note:''},
+    {item:'塩こしょう',stock:0,qty:'',price:'',note:''},
+    {item:'タレ',stock:0,qty:'',price:'',note:''},
+    {item:'串',stock:0,qty:'',price:'',note:''}
+  ],
+  'からあげ':[
+    {item:'鶏肉',stock:0,qty:'',price:'',note:''},
+    {item:'唐揚げ粉',stock:0,qty:'',price:'',note:''},
+    {item:'油',stock:0,qty:'',price:'',note:''},
+    {item:'容器',stock:0,qty:'',price:'',note:''}
+  ],
+  'りんご飴':[
+    {item:'りんご',stock:0,qty:'',price:'',note:''},
+    {item:'飴粉',stock:0,qty:'',price:'',note:''},
+    {item:'袋',stock:0,qty:'',price:'',note:''},
+    {item:'棒',stock:0,qty:'',price:'',note:''}
+  ]
+};
+let rows=[], currentNeta='', templates=JSON.parse(JSON.stringify(defaultTemplates));
+
 function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function loadSampleItems(){document.getElementById('items').innerHTML=sample.map(x=>`<option value="${esc(x)}">`).join('');document.getElementById('itemChips').innerHTML=sample.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}
+function renderNetaGrid(){
+  const g=document.getElementById('netaGrid'); g.innerHTML='';
+  Object.keys(templates).forEach(n=>{
+    const b=document.createElement('button');
+    b.className='neta-btn'+(n===currentNeta?' active':'');
+    b.textContent=n;
+    b.onclick=()=>loadNeta(n);
+    g.appendChild(b);
+  });
+}
+function loadNeta(name){
+  if(rows.length && !confirm(name+' の品目を表に読み込みます。今の表は置き換わります。よろしいですか？')) return;
+  currentNeta=name;
+  rows=JSON.parse(JSON.stringify(templates[name]||[]));
+  document.getElementById('selectedNeta').textContent=name;
+  renderNetaGrid(); render(); saveAll(false);
+}
 function addRow(r={item:'',stock:'',qty:'',price:'',note:''}){rows.push(r);render()}
 function delRow(i){rows.splice(i,1);if(!rows.length)addRow();render()}
-function setVal(i,k,v){rows[i][k]=(k==='qty'||k==='price'||k==='stock')?v:v;calc()}
-function render(){const tb=document.getElementById('tbody');tb.innerHTML=rows.map((r,i)=>{const amt=(Number(r.qty)||0)*(Number(r.price)||0);return `<tr><td><input list="items" value="${esc(r.item)}" oninput="setVal(${i},'item',this.value)" placeholder="肉巻きなど"></td><td><input value="${esc(r.stock)}" oninput="setVal(${i},'stock',this.value)" placeholder="在庫"></td><td><input type="number" min="0" value="${esc(r.qty)}" oninput="setVal(${i},'qty',this.value)" placeholder="0"></td><td><input type="number" min="0" value="${esc(r.price)}" oninput="setVal(${i},'price',this.value)" placeholder="0"></td><td class="money">${yen(amt)}</td><td><input value="${esc(r.note)}" oninput="setVal(${i},'note',this.value)" placeholder="備考"></td><td><button class="btn danger" onclick="delRow(${i})">削除</button></td></tr>`}).join('');calc()}
-function calc(){const total=rows.reduce((s,r)=>s+(Number(r.qty)||0)*(Number(r.price)||0),0);document.getElementById('total').textContent=yen(total)}
-function saveAll(){localStorage.setItem(KEY,JSON.stringify({eventName:eventName.value,eventDate:eventDate.value,rows}));alert('保存しました')}
-function loadAll(){loadSampleItems();try{const d=JSON.parse(localStorage.getItem(KEY)||'{}');eventName.value=d.eventName||'';eventDate.value=d.eventDate||'';rows=Array.isArray(d.rows)?d.rows:[]}catch(e){} if(!rows.length) addRow(); else render()}
-function clearAll(){if(confirm('買い物一覧を消しますか？')){rows=[];addRow();saveAll()}}
-loadAll();
+function setVal(i,k,v){rows[i][k]=v;calc(); saveAll(false)}
+function calc(){let t=0; rows.forEach(r=>{t+=(Number(r.qty)||0)*(Number(r.price)||0)}); document.getElementById('total').textContent=yen(t)}
+function render(){
+  const tb=document.getElementById('tbody'); tb.innerHTML='';
+  rows.forEach((r,i)=>{
+    const amt=(Number(r.qty)||0)*(Number(r.price)||0);
+    tb.insertAdjacentHTML('beforeend',`<tr>
+      <td><input list="items" value="${esc(r.item)}" oninput="setVal(${i},'item',this.value)"></td>
+      <td><input type="number" value="${esc(r.stock)}" oninput="setVal(${i},'stock',this.value)"></td>
+      <td><input type="number" value="${esc(r.qty)}" oninput="setVal(${i},'qty',this.value)"></td>
+      <td><input type="number" value="${esc(r.price)}" oninput="setVal(${i},'price',this.value)"></td>
+      <td class="money">${yen(amt)}</td>
+      <td><input value="${esc(r.note)}" oninput="setVal(${i},'note',this.value)"></td>
+      <td><button class="btn danger" onclick="delRow(${i})">削除</button></td>
+    </tr>`);
+  });
+  calc();
+}
+function saveAll(show=true){
+  const data={eventName:document.getElementById('eventName').value,eventDate:document.getElementById('eventDate').value,rows,currentNeta,templates};
+  localStorage.setItem(KEY,JSON.stringify(data));
+  if(show) alert('保存しました');
+}
+function saveNetaTemplate(){
+  let name=currentNeta || prompt('保存するネタ名を入力してください');
+  if(!name) return;
+  templates[name]=JSON.parse(JSON.stringify(rows.map(r=>({item:r.item,stock:r.stock,qty:'',price:'',note:r.note||''}))));
+  currentNeta=name;
+  document.getElementById('selectedNeta').textContent=name;
+  renderNetaGrid(); saveAll(false);
+  alert(name+' の品目テンプレートを保存しました');
+}
+function clearAll(){if(confirm('入力内容を全消去しますか？')){rows=[];currentNeta='';document.getElementById('selectedNeta').textContent='ネタ未選択';addRow();saveAll(false);renderNetaGrid()}}
+function boot(){
+  loadSampleItems();
+  try{
+    const d=JSON.parse(localStorage.getItem(KEY)||'{}');
+    if(d.templates) templates={...templates,...d.templates};
+    if(d.rows) rows=d.rows;
+    if(d.currentNeta) currentNeta=d.currentNeta;
+    document.getElementById('eventName').value=d.eventName||'';
+    document.getElementById('eventDate').value=d.eventDate||'';
+  }catch(e){}
+  if(!rows.length)addRow();
+  document.getElementById('selectedNeta').textContent=currentNeta||'ネタ未選択';
+  renderNetaGrid(); render();
+}
+boot();
 </script>
 </body>
 </html>
