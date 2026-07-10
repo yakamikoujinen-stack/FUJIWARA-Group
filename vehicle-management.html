@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#12385d">
+<title>簡単車両点検・車検管理</title>
+<style>
+:root{
+  --navy:#12385d;--blue:#2d6ea3;--sky:#eef7ff;--green:#228b57;
+  --red:#d84c4c;--gold:#d6a634;--line:#d9e4ee;--text:#1c2a36;
+  --sub:#687b8c;--white:#fff;--bg:#f3f8fc;--shadow:0 8px 24px rgba(20,55,85,.12)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);
+  color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  padding-bottom:84px
+}
+header{
+  position:sticky;top:0;z-index:20;color:#fff;
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.2);
+  box-shadow:0 4px 16px rgba(17,50,80,.2)
+}
+.top{max-width:1000px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:22px;margin:0;font-weight:900}
+.header-sub{font-size:12px;color:#dcecff;margin-top:4px}
+.back{border:0;border-radius:11px;padding:9px 12px;background:rgba(255,255,255,.14);color:#fff;font-weight:900}
+.wrap{max-width:1000px;margin:auto;padding:14px}
+.card{
+  background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;
+  margin-bottom:13px;box-shadow:var(--shadow)
+}
+h2{font-size:19px;margin:0 0 12px}
+.grid2,.grid3,.grid4{display:grid;gap:10px}
+.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}
+label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:5px}
+input,select,textarea{
+  width:100%;padding:11px 12px;border:1.5px solid #cbd9e5;border-radius:11px;
+  font-size:16px;background:#fff;color:var(--text);outline:none
+}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(45,110,163,.12)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+button{border:0;border-radius:11px;padding:11px 14px;font-weight:900;font-size:14px;cursor:pointer}
+.primary{background:var(--navy);color:#fff}.green{background:var(--green);color:#fff}
+.ghost{background:#edf3f7;color:#30485d}.danger{background:#ffe8e8;color:var(--red);border:1px solid #efb9b9}
+.warn{background:#fff5d6;color:#775400;border:1px solid #ead283}
+.inspection-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:9px}
+.check{
+  border:1px solid var(--line);border-radius:13px;padding:11px;background:#f9fcff;
+  display:flex;align-items:center;gap:9px;font-weight:800;min-height:50px
+}
+.check input{width:22px;height:22px;flex:0 0 auto}
+.check.ng{background:#fff0f0;border-color:#efb4b4}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:920px;background:#fff}
+th{background:#edf5fb;color:#27445d;border:1px solid var(--line);padding:9px 7px;font-size:12px;text-align:left;white-space:nowrap}
+td{border:1px solid #e4ecf2;padding:7px;font-size:13px;vertical-align:middle}
+td input{font-size:15px;padding:8px}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}
+.ok{background:#e7f6ee;color:#167347}.soon{background:#fff4cc;color:#846000}.over{background:#ffe3e3;color:#b52f2f}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:11px}
+.sum{border:1px solid var(--line);border-radius:13px;padding:12px;background:#f8fbfd}
+.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:900;margin-top:4px}
+.saved-list{display:grid;gap:9px;margin-top:10px}
+.record{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fbfdff}
+.record-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.record-title{font-weight:900;font-size:17px}.record-meta{font-size:13px;color:var(--sub);line-height:1.7;margin-top:6px}
+.empty{color:var(--sub);text-align:center;padding:18px}
+.footer{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:4px;
+  background:#fff;border-top:1px solid var(--line);padding:7px 7px calc(7px + env(safe-area-inset-bottom))
+}
+.footer button{flex:1;background:transparent;color:#38546b;font-size:11px;padding:7px 3px}
+.note{font-size:12px;color:var(--sub);line-height:1.6}
+@media(max-width:700px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  h1{font-size:19px}
+}
+@media print{
+  header,.footer,.toolbar,.danger,.back{display:none!important}
+  body{background:#fff;padding:0}.wrap{max-width:none}.card{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1>🚚 簡単車両点検・車検管理</h1>
+      <div class="header-sub">担当：将｜点検記録と車検期限をまとめて管理</div>
+    </div>
+    <button class="back" onclick="goBack()">← 戻る</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section class="card" id="vehicleSec">
+  <h2>① 車両情報</h2>
+  <div class="grid4">
+    <div><label>車名</label><input id="carName" placeholder="例：ハイエース"></div>
+    <div><label>車番</label><input id="carNo" placeholder="例：神戸 100 あ 12-34"></div>
+    <div><label>点検日</label><input id="checkDate" type="date"></div>
+    <div><label>点検者</label><input id="checker" value="将"></div>
+  </div>
+  <div style="margin-top:10px">
+    <label>走行距離</label>
+    <input id="mileage" type="number" placeholder="km">
+  </div>
+</section>
+
+<section class="card" id="inspectionSec">
+  <h2>② 簡単車両点検表</h2>
+  <div class="note">正常ならチェック。異常があればチェックを外して、下の「異常・気になる所」に記入してください。</div>
+  <div class="inspection-grid" id="inspectionGrid"></div>
+  <div style="margin-top:11px">
+    <label>異常・気になる所</label>
+    <textarea id="inspectionNote" placeholder="例：右前タイヤの空気圧が少ない、ブレーキ音あり"></textarea>
+  </div>
+  <div class="toolbar">
+    <button class="green" onclick="saveInspection()">💾 点検記録を保存</button>
+    <button class="ghost" onclick="setAllChecks(true)">全て正常</button>
+    <button class="ghost" onclick="print()">印刷</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>③ 保存した点検記録</h2>
+  <div id="inspectionList" class="saved-list"></div>
+</section>
+
+<section class="card" id="shakenSec">
+  <h2>④ 車検管理</h2>
+  <div class="grid4">
+    <div><label>車名</label><input id="shakenCarName" placeholder="例：ハイエース"></div>
+    <div><label>車番</label><input id="shakenCarNo" placeholder="例：神戸 100 あ 12-34"></div>
+    <div><label>車検日</label><input id="shakenDate" type="date"></div>
+    <div><label>前回の総費用</label><input id="lastCost" type="number" placeholder="円"></div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
+    <div><label>車検業者・店</label><input id="shakenShop" placeholder="例：〇〇モータース"></div>
+    <div><label>メモ</label><input id="shakenMemo" placeholder="例：タイヤ交換込み"></div>
+  </div>
+  <div class="toolbar">
+    <button class="primary" onclick="saveShaken()">＋ 車検情報を登録</button>
+    <button class="ghost" onclick="clearShakenForm()">入力をクリア</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>⑤ 車検一覧</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>期限状況</th>
+          <th>車名</th>
+          <th>車番</th>
+          <th>車検日</th>
+          <th>前回の総費用</th>
+          <th>業者・店</th>
+          <th>メモ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="shakenBody"></tbody>
+    </table>
+  </div>
+  <div class="summary">
+    <div class="sum"><div class="k">登録車両</div><div class="v" id="carCount">0台</div></div>
+    <div class="sum"><div class="k">90日以内</div><div class="v" id="soonCount">0台</div></div>
+    <div class="sum"><div class="k">期限切れ</div><div class="v" id="overCount">0台</div></div>
+  </div>
+</section>
+
+</div>
+
+<nav class="footer">
+  <button onclick="jump('vehicleSec')">車両情報</button>
+  <button onclick="jump('inspectionSec')">点検表</button>
+  <button onclick="jump('shakenSec')">車検管理</button>
+  <button onclick="print()">印刷</button>
+</nav>
+
+<script>
+const KEY="fujiwara_vehicle_management_v1";
+const CHECK_ITEMS=[
+  "エンジンのかかり方","ブレーキの効き","タイヤの空気圧","タイヤの溝・傷",
+  "ライト・ウインカー","ブレーキランプ","ワイパー","ウォッシャー液",
+  "エンジンオイル","冷却水","異音・振動","車内・荷台の整理"
+];
+
+let state={inspections:[],shaken:[]};
+
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(KEY)||"{}");
+    state={...state,...s};
+  }catch(e){}
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function val(id){return document.getElementById(id)?.value||""}
+function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??""}
+function yen(n){return "¥"+(Number(n)||0).toLocaleString("ja-JP")}
+function today(){return new Date().toISOString().slice(0,10)}
+function jump(id){document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"})}
+function goBack(){if(history.length>1)history.back();else location.href="manager-app.html"}
+
+function renderChecks(){
+  const box=document.getElementById("inspectionGrid");
+  box.innerHTML=CHECK_ITEMS.map((item,i)=>`
+    <label class="check" id="checkWrap-${i}">
+      <input type="checkbox" id="check-${i}" checked onchange="paintCheck(${i})">
+      <span>${esc(item)}</span>
+    </label>
+  `).join("");
+}
+function paintCheck(i){
+  const checked=document.getElementById(`check-${i}`).checked;
+  document.getElementById(`checkWrap-${i}`).classList.toggle("ng",!checked);
+}
+function setAllChecks(on){
+  CHECK_ITEMS.forEach((_,i)=>{
+    document.getElementById(`check-${i}`).checked=on;
+    paintCheck(i);
+  });
+}
+function saveInspection(){
+  const carName=val("carName").trim();
+  const carNo=val("carNo").trim();
+  if(!carName||!carNo){alert("車名と車番を入力してください");return}
+  const checks=CHECK_ITEMS.map((item,i)=>({item,ok:document.getElementById(`check-${i}`).checked}));
+  state.inspections.unshift({
+    id:Date.now(),
+    carName,carNo,
+    date:val("checkDate")||today(),
+    checker:val("checker").trim()||"将",
+    mileage:Number(val("mileage"))||0,
+    note:val("inspectionNote").trim(),
+    checks
+  });
+  save();renderInspectionList();
+  setVal("inspectionNote","");setAllChecks(true);
+  alert("点検記録を保存しました");
+}
+function renderInspectionList(){
+  const box=document.getElementById("inspectionList");
+  if(!state.inspections.length){box.innerHTML='<div class="empty">点検記録はまだありません</div>';return}
+  box.innerHTML=state.inspections.map(r=>{
+    const ng=r.checks.filter(x=>!x.ok).map(x=>x.item);
+    return `<div class="record">
+      <div class="record-head">
+        <div class="record-title">${esc(r.carName)}　${esc(r.carNo)}</div>
+        <span class="badge ${ng.length?'over':'ok'}">${ng.length?'要確認 '+ng.length+'件':'異常なし'}</span>
+      </div>
+      <div class="record-meta">
+        点検日：${esc(r.date)}　点検者：${esc(r.checker)}　走行距離：${Number(r.mileage).toLocaleString()}km<br>
+        ${ng.length?'異常項目：'+esc(ng.join("、"))+'<br>':''}
+        ${r.note?'メモ：'+esc(r.note):''}
+      </div>
+      <div class="toolbar">
+        <button class="danger" onclick="deleteInspection(${r.id})">削除</button>
+      </div>
+    </div>`
+  }).join("");
+}
+function deleteInspection(id){
+  if(!confirm("この点検記録を削除しますか？"))return;
+  state.inspections=state.inspections.filter(x=>x.id!==id);
+  save();renderInspectionList();
+}
+
+function saveShaken(){
+  const carName=val("shakenCarName").trim();
+  const carNo=val("shakenCarNo").trim();
+  const date=val("shakenDate");
+  if(!carName||!carNo||!date){alert("車名・車番・車検日を入力してください");return}
+  state.shaken.push({
+    id:Date.now(),carName,carNo,date,
+    lastCost:Number(val("lastCost"))||0,
+    shop:val("shakenShop").trim(),
+    memo:val("shakenMemo").trim()
+  });
+  state.shaken.sort((a,b)=>a.date.localeCompare(b.date));
+  save();renderShaken();clearShakenForm();
+  alert("車検情報を登録しました");
+}
+function clearShakenForm(){
+  ["shakenCarName","shakenCarNo","shakenDate","lastCost","shakenShop","shakenMemo"].forEach(id=>setVal(id,""));
+}
+function statusOf(dateStr){
+  const now=new Date();now.setHours(0,0,0,0);
+  const d=new Date(dateStr+"T00:00:00");
+  const days=Math.ceil((d-now)/86400000);
+  if(days<0)return {text:"期限切れ",cls:"over",days};
+  if(days<=90)return {text:`あと${days}日`,cls:"soon",days};
+  return {text:"余裕あり",cls:"ok",days};
+}
+function renderShaken(){
+  const body=document.getElementById("shakenBody");
+  let soon=0,over=0;
+  if(!state.shaken.length){
+    body.innerHTML='<tr><td colspan="8" class="empty">車検情報はまだありません</td></tr>';
+  }else{
+    body.innerHTML=state.shaken.map(r=>{
+      const s=statusOf(r.date);if(s.cls==="soon")soon++;if(s.cls==="over")over++;
+      return `<tr>
+        <td><span class="badge ${s.cls}">${esc(s.text)}</span></td>
+        <td><input value="${esc(r.carName)}" onblur="updateShaken(${r.id},'carName',this.value)"></td>
+        <td><input value="${esc(r.carNo)}" onblur="updateShaken(${r.id},'carNo',this.value)"></td>
+        <td><input type="date" value="${esc(r.date)}" onchange="updateShaken(${r.id},'date',this.value)"></td>
+        <td><input type="number" value="${esc(r.lastCost)}" onblur="updateShaken(${r.id},'lastCost',this.value)"><div style="font-weight:900;margin-top:4px">${yen(r.lastCost)}</div></td>
+        <td><input value="${esc(r.shop)}" onblur="updateShaken(${r.id},'shop',this.value)"></td>
+        <td><input value="${esc(r.memo)}" onblur="updateShaken(${r.id},'memo',this.value)"></td>
+        <td><button class="danger" onclick="deleteShaken(${r.id})">削除</button></td>
+      </tr>`
+    }).join("");
+  }
+  document.getElementById("carCount").textContent=state.shaken.length+"台";
+  document.getElementById("soonCount").textContent=soon+"台";
+  document.getElementById("overCount").textContent=over+"台";
+}
+function updateShaken(id,key,value){
+  const r=state.shaken.find(x=>x.id===id);if(!r)return;
+  r[key]=key==="lastCost"?(Number(value)||0):value;
+  state.shaken.sort((a,b)=>a.date.localeCompare(b.date));
+  save();renderShaken();
+}
+function deleteShaken(id){
+  if(!confirm("この車検情報を削除しますか？"))return;
+  state.shaken=state.shaken.filter(x=>x.id!==id);
+  save();renderShaken();
+}
+
+function boot(){
+  load();renderChecks();renderInspectionList();renderShaken();
+  setVal("checkDate",today());
+}
+boot();
+</script>
+</body>
+</html>
