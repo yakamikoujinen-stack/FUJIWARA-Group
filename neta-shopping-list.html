@@ -38,7 +38,7 @@ let state={eventName:"",eventDate:"",buyer:"",place:"",shop:"",memo:"",selected:
 function normalizeInv(){for(const c in state.inventory){state.inventory[c]=state.inventory[c].map(x=>Array.isArray(x)?{name:x[0],stock:x[1]}:x)}}
 function flatInventory(){normalizeInv();const m={};Object.values(state.inventory).flat().forEach(x=>m[x.name]=Number(x.stock)||0);return m}
 function allItemNames(){return Object.keys(flatInventory()).sort()}
-function load(){try{let s=JSON.parse(localStorage.getItem(KEY)||"{}");state={...state,...s,inventory:{...state.inventory,...(s.inventory||{})},templates:{...state.templates,...(s.templates||{})}}catch(e){}normalizeInv()}
+function load(){try{let s=JSON.parse(localStorage.getItem(KEY)||"{}");state={...state,...s,inventory:{...state.inventory,...(s.inventory||{})},templates:{...state.templates,...(s.templates||{})}};}catch(e){}normalizeInv()}
 function saveAll(show=false){["eventName","eventDate","buyer","place","shop","memo"].forEach(id=>state[id]=val(id));localStorage.setItem(KEY,JSON.stringify(state));if(show)alert("保存しました")}
 function val(id){return document.getElementById(id)?.value||""}function setVal(id,v){let e=document.getElementById(id);if(e)e.value=v||""}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}function yen(n){return "¥"+(Number(n)||0).toLocaleString("ja-JP")}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:"smooth"})}
