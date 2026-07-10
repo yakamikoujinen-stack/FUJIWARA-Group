@@ -2,283 +2,66 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>FUJIWARA ネタ買い物一覧 POWER UP</title>
+<title>ネタ買い物一覧 v2.1</title>
 <style>
-:root{
-  --bg:#fff7df;--card:#fffdfa;--gold:#b8860b;--gold2:#d6a634;--text:#241900;
-  --sub:#6d5a2b;--line:#d8bf75;--red:#d64242;--green:#168a58;--blue:#1d6fd1;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:90px}
-.top{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-bottom:2px solid rgba(184,134,11,.45);padding:13px 16px}
-.brand{font-weight:900;font-size:19px}.sub{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.5}
-.wrap{padding:14px;max-width:1040px;margin:auto}
-.card{background:var(--card);border:1.5px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.10)}
-h2{font-size:18px;margin:0 0 8px} label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-bottom:5px}
-input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:14px}
-textarea{min-height:72px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-button{border:none;border-radius:10px;padding:10px 13px;font-weight:900;font-size:13px;cursor:pointer}
-.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200}.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}
-.danger{background:rgba(214,66,66,.12);border:1px solid rgba(214,66,66,.35);color:var(--red)}
-.green{background:rgba(22,138,88,.12);border:1px solid rgba(22,138,88,.35);color:var(--green)}
-.blue{background:rgba(29,111,209,.12);border:1px solid rgba(29,111,209,.35);color:var(--blue)}
-.neta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:8px}
-.neta{display:flex;gap:8px;align-items:center;background:#fffaf0;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-weight:900}
-.neta input{width:auto}.neta.on{background:linear-gradient(135deg,rgba(184,134,11,.25),rgba(214,166,52,.16));border-color:#b8860b}
-.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:1050px;background:#fffdfa}
-th{background:#fff3d6;border:1px solid var(--line);padding:8px 6px;font-size:12px;text-align:left;white-space:nowrap}
-td{border:1px solid #ead8a8;padding:6px;font-size:13px;vertical-align:middle}td input,td select{padding:8px;font-size:13px;border-radius:9px}
-.money{text-align:right;font-weight:900;color:var(--green)}.red{color:var(--red)}.muted{color:var(--sub)}
-.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px}
-.sum{background:#fff8e8;border:1.5px solid var(--line);border-radius:12px;padding:12px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:22px;font-weight:900;margin-top:3px}
-.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#fff2c8;color:#8a6400;font-size:12px;font-weight:900;margin:2px}
-.footer{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-top:2px solid rgba(184,134,11,.45);display:flex;gap:4px;padding:7px 7px env(safe-area-inset-bottom);z-index:30}
-.footer button{flex:1;background:transparent;color:#6d5a2b;padding:8px 4px;font-size:11px}.footer button.active{color:#9c6b00}
-.hide{display:none}
-@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}.brand{font-size:17px}}
-@media print{.top,.footer,.toolbar,.no-print{display:none!important}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #999}table{min-width:0;font-size:11px}input,select,textarea{border:0;padding:0}.wrap{max-width:none}}
-</style>
-</head>
+:root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:80px}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-bottom:2px solid rgba(184,134,11,.45);padding:13px 16px}.brand{font-size:19px;font-weight:900}.sub{font-size:12px;color:var(--sub);line-height:1.5}
+.wrap{padding:14px;max-width:1060px;margin:auto}.card{background:var(--card);border:1.5px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.1)}
+h2{font-size:18px;margin:0 0 8px}label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:16px}textarea{min-height:70px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{border:0;border-radius:10px;padding:10px 13px;font-weight:900;font-size:13px}.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200}.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}.danger{background:#ffe6e6;border:1px solid #e9aaaa;color:var(--red)}.green{background:#e8f7ef;border:1px solid #9dd9b8;color:var(--green)}
+.neta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.neta{display:flex;gap:8px;align-items:center;background:#fffaf0;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-weight:900}.neta input{width:auto}.neta.on{background:#ffe7a6}
+.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:1120px;background:#fff}th{background:#fff3d6;border:1px solid var(--line);padding:8px 6px;font-size:12px;text-align:left;white-space:nowrap}td{border:1px solid #ead8a8;padding:6px;font-size:13px}td input,td select{font-size:16px;padding:8px}.money{text-align:right;font-weight:900;color:var(--green)}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px}.sum{background:#fff8e8;border:1.5px solid var(--line);border-radius:12px;padding:12px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:22px;font-weight:900}.red{color:var(--red)}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#fff2c8;color:#8a6400;font-size:12px;font-weight:900;margin:2px}.hide{display:none}.cat-title{font-weight:900;margin:10px 0 5px}.itempick{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}.itempick label{background:#fffaf0;border:1px solid #ead8a8;border-radius:10px;padding:8px;color:var(--text);font-size:13px}.itempick input{width:auto;margin-right:5px}
+.footer{position:fixed;bottom:0;left:0;right:0;z-index:10;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-top:2px solid rgba(184,134,11,.45);display:flex;gap:4px;padding:7px 7px env(safe-area-inset-bottom)}.footer button{flex:1;background:transparent;color:#6d5a2b;padding:8px 4px;font-size:11px}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+</style></head>
 <body>
-<header class="top">
-  <div class="brand">🛒 ネタ買い物一覧 POWER UP</div>
-  <div class="sub">出店品目を複数選択 → 必要品目を自動作成 → 在庫・買い足し・単価・買った確認まで管理</div>
-</header>
-
+<header><div class="brand">🛒 ネタ買い物一覧 v2.1</div><div class="sub">入力しにくい問題を修正｜複数ネタ選択｜在庫カテゴリー対応</div></header>
 <div class="wrap">
-  <section class="card" id="eventSec">
-    <h2>① イベント情報</h2>
-    <div class="grid3">
-      <div><label>イベント名</label><input id="eventName" placeholder="例：サンドーム福井"></div>
-      <div><label>日付</label><input id="eventDate" type="date"></div>
-      <div><label>買い物担当</label><input id="buyer" placeholder="例：将・文太"></div>
-    </div>
-    <div class="grid2" style="margin-top:10px">
-      <div><label>会場</label><input id="place" placeholder="例：福井県越前市"></div>
-      <div><label>買った店</label><input id="shop" placeholder="例：業務スーパー・ラムー"></div>
-    </div>
-  </section>
-
-  <section class="card" id="netaSec">
-    <h2>② 出店品目を複数選択</h2>
-    <div class="muted" style="font-size:12px;line-height:1.7">一つのイベントで出すネタを全部チェック。選んだネタに必要な品目だけ表に出ます。</div>
-    <div id="netaGrid" class="neta-grid"></div>
-    <div class="toolbar">
-      <button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button>
-      <button class="ghost" onclick="openTemplateEditor()">ネタ設定</button>
-      <button class="ghost" onclick="selectAllNeta(false)">全部外す</button>
-    </div>
-  </section>
-
-  <section class="card" id="listSec">
-    <h2>③ 買い物一覧表</h2>
-    <div class="toolbar no-print">
-      <button class="gold" onclick="addRow()">＋ 品目追加</button>
-      <button class="green" onclick="saveAll(true)">💾 保存</button>
-      <button class="blue" onclick="copyText()">📋 文字コピー</button>
-      <button class="ghost" onclick="window.print()">印刷・PDF</button>
-      <button class="danger" onclick="clearRows()">表だけ消す</button>
-    </div>
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③今回追加数量</th><th>④単価</th><th>⑤金額</th><th>⑥備考</th><th>店</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-    <div class="summary">
-      <div class="sum"><div class="k">⑤ 金額の総計</div><div class="v red" id="total">¥0</div></div>
-      <div class="sum"><div class="k">買った品目</div><div class="v" id="boughtCount">0 / 0</div></div>
-      <div class="sum"><div class="k">不足注意</div><div class="v red" id="shortCount">0</div></div>
-    </div>
-    <div style="margin-top:12px"><label>全体メモ</label><textarea id="memo" placeholder="買い物メモ・注意事項"></textarea></div>
-  </section>
-
-  <section class="card hide" id="templateSec">
-    <h2>⚙️ ネタ設定</h2>
-    <div class="muted" style="font-size:12px;line-height:1.7">ネタごとの必要品目を編集できます。在庫管理で品目が増えた時は「在庫品目追加」で候補に追加できます。</div>
-    <div class="grid2">
-      <div><label>ネタ名</label><input id="tplNeta" placeholder="例：肉巻き"></div>
-      <div><label>必要品目（カンマ区切り）</label><input id="tplItems" placeholder="例：豚バラ,ごはん,タレ,串"></div>
-    </div>
-    <div class="toolbar">
-      <button class="gold" onclick="saveTemplate()">ネタ設定を保存</button>
-      <button class="ghost" onclick="closeTemplateEditor()">閉じる</button>
-    </div>
-    <div style="margin-top:12px">
-      <label>在庫品目追加</label>
-      <div class="grid2">
-        <input id="newInvName" placeholder="品目名">
-        <input id="newInvStock" type="number" placeholder="在庫数">
-      </div>
-      <div class="toolbar"><button class="green" onclick="addInventoryItem()">在庫品目を追加</button></div>
-    </div>
-    <div id="templateList" style="margin-top:10px"></div>
-  </section>
+<section class="card" id="eventSec"><h2>① イベント情報</h2><div class="grid3"><div><label>イベント名</label><input id="eventName"></div><div><label>日付</label><input id="eventDate" type="date"></div><div><label>買い物担当</label><input id="buyer"></div></div><div class="grid2" style="margin-top:10px"><div><label>会場</label><input id="place"></div><div><label>買った店</label><input id="shop"></div></div></section>
+<section class="card" id="netaSec"><h2>② 出店品目を複数選択</h2><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="openTemplateEditor()">ネタ設定</button><button class="ghost" onclick="openInventoryEditor()">在庫管理</button><button class="ghost" onclick="selectAllNeta(false)">全部外す</button></div></section>
+<section class="card" id="listSec"><h2>③ 買い物一覧表</h2><div class="toolbar"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" onclick="saveAll(true)">💾 保存</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③今回追加数量</th><th>④単価</th><th>⑤金額</th><th>⑥備考</th><th>店</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div><div class="summary"><div class="sum"><div class="k">⑤ 金額の総計</div><div class="v red" id="total">¥0</div></div><div class="sum"><div class="k">買った品目</div><div class="v" id="boughtCount">0 / 0</div></div><div class="sum"><div class="k">不足注意</div><div class="v red" id="shortCount">0</div></div></div><div style="margin-top:12px"><label>全体メモ</label><textarea id="memo"></textarea></div></section>
+<section class="card hide" id="templateSec"><h2>⚙️ ネタ設定</h2><div class="grid2"><div><label>ネタ名</label><input id="tplNeta" placeholder="例：チーズハットグ"></div><div><label>品目を文字で追加（カンマ区切り）</label><input id="tplItems"></div></div><div id="categoryPicker"></div><div class="toolbar"><button class="gold" onclick="saveTemplate()">ネタ設定を保存</button><button class="ghost" onclick="loadTemplateToEditor()">選択ネタを読み込み</button><button class="ghost" onclick="closeTemplateEditor()">閉じる</button></div><div id="templateList"></div></section>
+<section class="card hide" id="inventorySec"><h2>📦 在庫管理</h2><div class="grid3"><div><label>カテゴリー</label><input id="newCat" placeholder="例：チーズハットグ"></div><div><label>品目名</label><input id="newInvName" placeholder="例：パン"></div><div><label>在庫数</label><input id="newInvStock" type="number" placeholder="例：30"></div></div><div class="toolbar"><button class="green" onclick="addInventoryItem()">在庫品目を追加</button><button class="ghost" onclick="autoImportFromMainApp()">メインアプリ在庫を探す</button><button class="ghost" onclick="closeInventoryEditor()">閉じる</button></div><div id="inventoryList"></div></section>
 </div>
-
-<nav class="footer">
-  <button class="active" onclick="jump('eventSec')">イベント</button>
-  <button onclick="jump('netaSec')">ネタ選択</button>
-  <button onclick="jump('listSec')">買い物表</button>
-  <button onclick="jump('templateSec');openTemplateEditor()">設定</button>
-</nav>
-
+<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('listSec')">買い物表</button><button onclick="jump('templateSec');openTemplateEditor()">設定</button><button onclick="jump('inventorySec');openInventoryEditor()">在庫</button></nav>
 <script>
-const KEY="fujiwara_neta_powerup_v20";
-let state={
-  eventName:"",eventDate:"",buyer:"",place:"",shop:"",memo:"",
-  selected:[],
-  inventory:{
-    "チーズハットグ":135,"チーズブロック":7,"ソーセージ":0,"ミックス粉":3,"パン粉":2,"ケチャップ":4,"マスタード":4,"ハニーマスタード":0,
-    "牛串":100,"豚串":100,"鳥串":100,"容器":0,"ブロック氷":10,"そば玉":5,"豚バラ":0,"ごはん":0,"タレ":0,"串":0,
-    "いか":0,"ポテト":0,"カステラ粉":0,"鶏肉":0,"唐揚げ粉":0,"油":0,"りんご":0,"飴粉":0,"袋":0,"棒":0
-  },
-  templates:{
-    "チーズハットグ":["チーズハットグ","チーズブロック","ソーセージ","ミックス粉","パン粉","ケチャップ","マスタード","ハニーマスタード"],
-    "牛串":["牛串","タレ","串","容器"],
-    "豚串":["豚串","タレ","串","容器"],
-    "鳥串":["鳥串","タレ","串","容器"],
-    "かき氷":["ブロック氷","シロップ","カップ","スプーン","練乳"],
-    "いか焼き":["いか","タレ","串","容器"],
-    "ポテト":["ポテト","塩","ケチャップ","容器"],
-    "かすてら":["カステラ粉","卵","砂糖","袋"],
-    "からあげ":["鶏肉","唐揚げ粉","油","容器"],
-    "肉巻きおにぎり":["豚バラ","ごはん","タレ","容器"],
-    "りんご飴":["りんご","飴粉","袋","棒"]
-  },
-  rows:[]
-};
-
-function load(){
-  try{
-    const saved=JSON.parse(localStorage.getItem(KEY)||"{}");
-    state={...state,...saved,inventory:{...state.inventory,...(saved.inventory||{})},templates:{...state.templates,...(saved.templates||{})}};
-  }catch(e){}
-}
-function saveAll(show=false){
-  state.eventName=val("eventName");state.eventDate=val("eventDate");state.buyer=val("buyer");state.place=val("place");state.shop=val("shop");state.memo=val("memo");
-  localStorage.setItem(KEY,JSON.stringify(state));
-  if(show) alert("保存しました");
-}
-function val(id){return document.getElementById(id)?.value||""}
-function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v||""}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
-function yen(n){return "¥"+(Number(n)||0).toLocaleString("ja-JP")}
-function jump(id){document.getElementById(id)?.scrollIntoView({behavior:"smooth"});document.querySelectorAll(".footer button").forEach(b=>b.classList.remove("active"));event?.target?.classList.add("active")}
-
-function renderNeta(){
-  const g=document.getElementById("netaGrid");g.innerHTML="";
-  Object.keys(state.templates).forEach(n=>{
-    const on=state.selected.includes(n);
-    const lab=document.createElement("label");lab.className="neta"+(on?" on":"");
-    lab.innerHTML=`<input type="checkbox" ${on?"checked":""} onchange="toggleNeta('${esc(n)}',this.checked)"> ${esc(n)}`;
-    g.appendChild(lab);
-  });
-}
-function toggleNeta(n,on){
-  if(on && !state.selected.includes(n))state.selected.push(n);
-  if(!on)state.selected=state.selected.filter(x=>x!==n);
-  renderNeta();saveAll(false);
-}
-function selectAllNeta(on){
-  state.selected=on?Object.keys(state.templates):[];
-  renderNeta();saveAll(false);
-}
-function buildList(){
-  const oldMap={}; state.rows.forEach(r=>oldMap[r.item]=r);
-  const rows=[];
-  state.selected.forEach(neta=>{
-    (state.templates[neta]||[]).forEach(item=>{
-      if(!rows.some(r=>r.item===item)){
-        const old=oldMap[item]||{};
-        rows.push({bought:!!old.bought,neta,item,stock:state.inventory[item]??0,need:old.need||"",add:old.add||"",unit:old.unit||"",note:old.note||"",shop:old.shop||val("shop")});
-      }
-    });
-  });
-  state.rows=rows;renderRows();saveAll(false);
-}
-function addRow(){
-  const first=Object.keys(state.inventory)[0]||"";
-  state.rows.push({bought:false,neta:"追加",item:first,stock:state.inventory[first]??0,need:"",add:"",unit:"",note:"",shop:val("shop")});
-  renderRows();saveAll(false);
-}
+const KEY="fujiwara_neta_powerup_v21";
+let state={eventName:"",eventDate:"",buyer:"",place:"",shop:"",memo:"",selected:[],inventory:{"チーズハットグ":[["チーズハットグ",135],["チーズブロック",7],["ソーセージ",0],["ミックス粉",3],["パン粉",2],["ケチャップ",4],["マスタード",4],["ハニーマスタード",0],["砂糖",0],["串",0],["袋",0]],"串物":[["牛串",100],["豚串",100],["鳥串",100],["タレ",0],["塩こしょう",0],["容器",0]],"かき氷":[["ブロック氷",10],["シロップ",0],["カップ",0],["スプーン",0],["練乳",0]],"揚げ物":[["鶏肉",0],["唐揚げ粉",0],["ポテト",0],["油",0],["容器",0]],"その他":[["いか",0],["カステラ粉",0],["卵",0],["りんご",0],["飴粉",0],["棒",0],["ごはん",0],["豚バラ",0],["パン",0]]},templates:{"チーズハットグ":["チーズハットグ","チーズブロック","ソーセージ","ミックス粉","パン粉","ケチャップ","マスタード","ハニーマスタード","砂糖","串","袋","パン"],"牛串":["牛串","タレ","塩こしょう","串","容器"],"豚串":["豚串","タレ","塩こしょう","串","容器"],"鳥串":["鳥串","タレ","塩こしょう","串","容器"],"かき氷":["ブロック氷","シロップ","カップ","スプーン","練乳"],"いか焼き":["いか","タレ","串","容器"],"ポテト":["ポテト","塩こしょう","ケチャップ","容器"],"からあげ":["鶏肉","唐揚げ粉","油","容器"],"肉巻きおにぎり":["豚バラ","ごはん","タレ","容器"],"りんご飴":["りんご","飴粉","袋","棒"]},rows:[]};
+function normalizeInv(){for(const c in state.inventory){state.inventory[c]=state.inventory[c].map(x=>Array.isArray(x)?{name:x[0],stock:x[1]}:x)}}
+function flatInventory(){normalizeInv();const m={};Object.values(state.inventory).flat().forEach(x=>m[x.name]=Number(x.stock)||0);return m}
+function allItemNames(){return Object.keys(flatInventory()).sort()}
+function load(){try{let s=JSON.parse(localStorage.getItem(KEY)||"{}");state={...state,...s,inventory:{...state.inventory,...(s.inventory||{})},templates:{...state.templates,...(s.templates||{})}}catch(e){}normalizeInv()}
+function saveAll(show=false){["eventName","eventDate","buyer","place","shop","memo"].forEach(id=>state[id]=val(id));localStorage.setItem(KEY,JSON.stringify(state));if(show)alert("保存しました")}
+function val(id){return document.getElementById(id)?.value||""}function setVal(id,v){let e=document.getElementById(id);if(e)e.value=v||""}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}function yen(n){return "¥"+(Number(n)||0).toLocaleString("ja-JP")}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:"smooth"})}
+function renderNeta(){let g=document.getElementById("netaGrid");g.innerHTML="";Object.keys(state.templates).forEach(n=>{let on=state.selected.includes(n);let lab=document.createElement("label");lab.className="neta"+(on?" on":"");lab.innerHTML=`<input type="checkbox" ${on?"checked":""} onchange="toggleNeta('${esc(n)}',this.checked)"> ${esc(n)}`;g.appendChild(lab)})}
+function toggleNeta(n,on){if(on&&!state.selected.includes(n))state.selected.push(n);if(!on)state.selected=state.selected.filter(x=>x!==n);renderNeta();saveAll(false)}function selectAllNeta(on){state.selected=on?Object.keys(state.templates):[];renderNeta();saveAll(false)}
+function buildList(){let sm=flatInventory(),old={};state.rows.forEach(r=>old[r.item]=r);let rows=[];state.selected.forEach(neta=>(state.templates[neta]||[]).forEach(item=>{if(!rows.some(r=>r.item===item)){let o=old[item]||{};rows.push({bought:!!o.bought,neta,item,stock:sm[item]??0,need:o.need||"",add:o.add||"",unit:o.unit||"",note:o.note||"",shop:o.shop||val("shop")})}}));state.rows=rows;renderRows();saveAll(false);jump("listSec")}
+function addRow(){let f=allItemNames()[0]||"";state.rows.push({bought:false,neta:"追加",item:f,stock:flatInventory()[f]??0,need:"",add:"",unit:"",note:"",shop:val("shop")});renderRows();saveAll(false)}
 function clearRows(){if(confirm("表だけ消しますか？")){state.rows=[];renderRows();saveAll(false)}}
-function updateRow(i,k,v){
-  if(["stock","need","add","unit"].includes(k)) state.rows[i][k]=Number(v)||0;
-  else if(k==="bought") state.rows[i][k]=!!v;
-  else state.rows[i][k]=v;
-  if(k==="item"){state.rows[i].stock=state.inventory[v]??0}
-  renderRows();saveAll(false);
-}
+function updateRow(i,k,v){if(!state.rows[i])return;if(["stock","need","add","unit"].includes(k))state.rows[i][k]=Number(v)||0;else if(k==="bought")state.rows[i][k]=!!v;else state.rows[i][k]=v;if(k==="item"){state.rows[i].stock=flatInventory()[v]??0;renderRows();return}calc();saveAll(false)}
 function delRow(i){state.rows.splice(i,1);renderRows();saveAll(false)}
-function renderRows(){
-  const invNames=Object.keys(state.inventory).sort();
-  const tb=document.getElementById("tbody");tb.innerHTML="";
-  state.rows.forEach((r,i)=>{
-    const amount=(Number(r.add)||0)*(Number(r.unit)||0);
-    const short=(Number(r.need)||0) > (Number(r.stock)||0)+(Number(r.add)||0);
-    tb.insertAdjacentHTML("beforeend",`<tr>
-      <td><input type="checkbox" ${r.bought?"checked":""} onchange="updateRow(${i},'bought',this.checked)"></td>
-      <td><input value="${esc(r.neta)}" oninput="updateRow(${i},'neta',this.value)"></td>
-      <td><select onchange="updateRow(${i},'item',this.value)">${invNames.map(x=>`<option value="${esc(x)}" ${x===r.item?"selected":""}>${esc(x)}</option>`).join("")}</select></td>
-      <td><input type="number" value="${esc(r.stock)}" oninput="updateRow(${i},'stock',this.value)"></td>
-      <td><input type="number" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)" class="${short?'red':''}"></td>
-      <td><input type="number" value="${esc(r.add)}" oninput="updateRow(${i},'add',this.value)"></td>
-      <td><input type="number" value="${esc(r.unit)}" oninput="updateRow(${i},'unit',this.value)"></td>
-      <td class="money">${yen(amount)}</td>
-      <td><input value="${esc(r.note)}" oninput="updateRow(${i},'note',this.value)"></td>
-      <td><input value="${esc(r.shop)}" oninput="updateRow(${i},'shop',this.value)"></td>
-      <td><button class="danger" onclick="delRow(${i})">削除</button></td>
-    </tr>`);
-  });
-  calc();
-}
-function calc(){
-  const total=state.rows.reduce((s,r)=>s+(Number(r.add)||0)*(Number(r.unit)||0),0);
-  const bought=state.rows.filter(r=>r.bought).length;
-  const short=state.rows.filter(r=>(Number(r.need)||0) > (Number(r.stock)||0)+(Number(r.add)||0)).length;
-  document.getElementById("total").textContent=yen(total);
-  document.getElementById("boughtCount").textContent=bought+" / "+state.rows.length;
-  document.getElementById("shortCount").textContent=short;
-}
-function copyText(){
-  saveAll(false);
-  let txt=`${state.eventName||"イベント"} ${state.eventDate||""}\n買い物担当：${state.buyer||""}\n\n`;
-  state.rows.forEach(r=>{txt+=`${r.bought?"☑":"□"} ${r.item}　在庫:${r.stock}　追加:${r.add}　単価:${r.unit}　金額:${yen((Number(r.add)||0)*(Number(r.unit)||0))}　${r.note||""}\n`});
-  txt+=`\n合計：${document.getElementById("total").textContent}\nメモ：${val("memo")}`;
-  navigator.clipboard?.writeText(txt).then(()=>alert("コピーしました")).catch(()=>prompt("コピーしてください",txt));
-}
-function openTemplateEditor(){document.getElementById("templateSec").classList.remove("hide");renderTemplates()}
-function closeTemplateEditor(){document.getElementById("templateSec").classList.add("hide")}
-function renderTemplates(){
-  document.getElementById("templateList").innerHTML=Object.entries(state.templates).map(([n,items])=>`<div class="badge">${esc(n)}：${esc(items.join("、"))}</div>`).join("");
-}
-function saveTemplate(){
-  const n=val("tplNeta").trim(); const items=val("tplItems").split(",").map(x=>x.trim()).filter(Boolean);
-  if(!n||!items.length){alert("ネタ名と品目を入れてください");return}
-  state.templates[n]=items;items.forEach(it=>{if(state.inventory[it]===undefined)state.inventory[it]=0});
-  renderNeta();renderTemplates();saveAll(false);alert("保存しました");
-}
-function addInventoryItem(){
-  const n=val("newInvName").trim(); if(!n){alert("品目名を入れてください");return}
-  state.inventory[n]=Number(val("newInvStock"))||0;
-  renderRows();saveAll(false);alert("在庫品目を追加しました");
-}
-function boot(){
-  load();
-  setVal("eventName",state.eventName);setVal("eventDate",state.eventDate);setVal("buyer",state.buyer);setVal("place",state.place);setVal("shop",state.shop);setVal("memo",state.memo);
-  renderNeta();renderRows();
-}
+function renderRows(){let names=allItemNames(),tb=document.getElementById("tbody");tb.innerHTML="";state.rows.forEach((r,i)=>{let amt=(Number(r.add)||0)*(Number(r.unit)||0),short=(Number(r.need)||0)>(Number(r.stock)||0)+(Number(r.add)||0);tb.insertAdjacentHTML("beforeend",`<tr><td><input type="checkbox" ${r.bought?"checked":""} onchange="updateRow(${i},'bought',this.checked)"></td><td><input value="${esc(r.neta)}" onblur="updateRow(${i},'neta',this.value)"></td><td><select onchange="updateRow(${i},'item',this.value)">${names.map(x=>`<option value="${esc(x)}" ${x===r.item?"selected":""}>${esc(x)}</option>`).join("")}</select></td><td><input type="number" value="${esc(r.stock)}" oninput="updateRow(${i},'stock',this.value)"></td><td><input type="number" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)" class="${short?'red':''}"></td><td><input type="number" value="${esc(r.add)}" oninput="updateRow(${i},'add',this.value)"></td><td><input type="number" value="${esc(r.unit)}" oninput="updateRow(${i},'unit',this.value)"></td><td class="money" id="amount-${i}">${yen(amt)}</td><td><input value="${esc(r.note)}" onblur="updateRow(${i},'note',this.value)"></td><td><input value="${esc(r.shop)}" onblur="updateRow(${i},'shop',this.value)"></td><td><button class="danger" onclick="delRow(${i})">削除</button></td></tr>`)});calc()}
+function calc(){let total=0,short=0;state.rows.forEach((r,i)=>{let amt=(Number(r.add)||0)*(Number(r.unit)||0);total+=amt;if((Number(r.need)||0)>(Number(r.stock)||0)+(Number(r.add)||0))short++;let e=document.getElementById("amount-"+i);if(e)e.textContent=yen(amt)});document.getElementById("total").textContent=yen(total);document.getElementById("boughtCount").textContent=state.rows.filter(r=>r.bought).length+" / "+state.rows.length;document.getElementById("shortCount").textContent=short}
+function copyText(){saveAll(false);let txt=`${state.eventName||"イベント"} ${state.eventDate||""}\n買い物担当：${state.buyer||""}\n\n`;state.rows.forEach(r=>txt+=`${r.bought?"☑":"□"} ${r.item}　在庫:${r.stock}　追加:${r.add}　単価:${r.unit}　金額:${yen((Number(r.add)||0)*(Number(r.unit)||0))}　${r.note||""}\n`);txt+=`\n合計：${document.getElementById("total").textContent}`;navigator.clipboard?.writeText(txt).then(()=>alert("コピーしました")).catch(()=>prompt("コピーしてください",txt))}
+function openTemplateEditor(){document.getElementById("templateSec").classList.remove("hide");renderCategoryPicker();renderTemplates()}function closeTemplateEditor(){document.getElementById("templateSec").classList.add("hide")}
+function renderCategoryPicker(selected=[]){let box=document.getElementById("categoryPicker");box.innerHTML=Object.entries(state.inventory).map(([cat,items])=>`<div class="cat-title">${esc(cat)}</div><div class="itempick">${items.map(it=>`<label><input type="checkbox" class="tplPick" value="${esc(it.name)}" ${selected.includes(it.name)?"checked":""}>${esc(it.name)} <span class="muted">(${it.stock})</span></label>`).join("")}</div>`).join("")}
+function loadTemplateToEditor(){let n=val("tplNeta").trim();if(!n||!state.templates[n]){alert("読み込むネタ名を入れてください");return}document.getElementById("tplItems").value=state.templates[n].join(",");renderCategoryPicker(state.templates[n])}
+function renderTemplates(){document.getElementById("templateList").innerHTML=Object.entries(state.templates).map(([n,items])=>`<div class="badge">${esc(n)}：${esc(items.join("、"))}</div>`).join("")}
+function saveTemplate(){let n=val("tplNeta").trim();let items=val("tplItems").split(",").map(x=>x.trim()).filter(Boolean);document.querySelectorAll(".tplPick:checked").forEach(c=>{if(!items.includes(c.value))items.push(c.value)});if(!n||!items.length){alert("ネタ名と品目を入れてください");return}state.templates[n]=items;items.forEach(it=>{if(flatInventory()[it]===undefined){state.inventory["その他"].push({name:it,stock:0})}});if(!state.selected.includes(n))state.selected.push(n);renderNeta();renderTemplates();renderRows();saveAll(false);alert("保存しました")}
+function openInventoryEditor(){document.getElementById("inventorySec").classList.remove("hide");renderInventory()}function closeInventoryEditor(){document.getElementById("inventorySec").classList.add("hide")}
+function renderInventory(){document.getElementById("inventoryList").innerHTML=Object.entries(state.inventory).map(([cat,items])=>`<div class="cat-title">${esc(cat)}</div>${items.map(it=>`<span class="badge">${esc(it.name)}：${esc(it.stock)}</span>`).join("")}`).join("")}
+function addInventoryItem(){let cat=val("newCat").trim()||"その他",n=val("newInvName").trim();if(!n){alert("品目名を入れてください");return}if(!state.inventory[cat])state.inventory[cat]=[];let hit=state.inventory[cat].find(x=>x.name===n);if(hit)hit.stock=Number(val("newInvStock"))||0;else state.inventory[cat].push({name:n,stock:Number(val("newInvStock"))||0});renderInventory();renderCategoryPicker();renderRows();saveAll(false);alert("在庫品目を追加しました")}
+function autoImportFromMainApp(){let count=0;for(let i=0;i<localStorage.length;i++){let key=localStorage.key(i);if(key===KEY)continue;try{let data=JSON.parse(localStorage.getItem(key));let arrs=[];collectArrays(data,arrs);arrs.forEach(arr=>arr.forEach(x=>{if(!x||typeof x!=="object")return;let name=x.name||x.item||x.title||x.productName||x.品目;if(!name||String(name).length>30)return;let stock=Number(x.stock??x.qty??x.quantity??x.count??x.在庫数??0)||0;let cat=x.category||x.cat||x.type||x.カテゴリ||"取り込み";if(!state.inventory[cat])state.inventory[cat]=[];if(!state.inventory[cat].some(y=>y.name===name)){state.inventory[cat].push({name:String(name),stock});count++}}))}catch(e){}}renderInventory();renderCategoryPicker();renderRows();saveAll(false);alert(count?count+"件取り込みました":"自動で見つけられませんでした。品目追加から入れてください。")}
+function collectArrays(obj,arrs,d=0){if(d>4||!obj)return;if(Array.isArray(obj)){arrs.push(obj);obj.forEach(x=>collectArrays(x,arrs,d+1));return}if(typeof obj==="object")Object.values(obj).forEach(v=>collectArrays(v,arrs,d+1))}
+function boot(){load();["eventName","eventDate","buyer","place","shop","memo"].forEach(id=>setVal(id,state[id]));renderNeta();renderRows()}
 boot();
-</script>
-</body>
-</html>
+</script></body></html>
