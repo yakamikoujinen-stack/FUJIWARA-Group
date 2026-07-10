@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#17324d" />
+  <title>担当者専用アプリ</title>
+  <style>
+    :root{
+      --navy:#17324d; --blue:#2f6fa7; --sky:#eaf4ff; --gold:#f4b942;
+      --green:#2e8b57; --red:#d9534f; --text:#1c2733; --muted:#66788a;
+      --line:#dbe5ee; --white:#fff; --shadow:0 10px 28px rgba(18,46,72,.12);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0; min-height:100vh; color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+      background:linear-gradient(180deg,#f6fbff 0%,#eef6fb 100%);
+    }
+    button,input{font:inherit}
+    .app{max-width:780px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
+    header{
+      background:linear-gradient(135deg,var(--navy),#285f8c);
+      color:#fff; border-radius:0 0 24px 24px; padding:22px 18px 20px;
+      box-shadow:var(--shadow); margin:0 -14px 18px;
+    }
+    .topline{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    h1{font-size:clamp(23px,5vw,34px);margin:0;font-weight:900;letter-spacing:.04em}
+    .subtitle{margin:8px 0 0;color:#dcecff;font-size:14px}
+    .back{
+      border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;
+      padding:10px 13px;font-weight:800;cursor:pointer
+    }
+    .notice{
+      background:#fff8df;border:1px solid #f6dc8c;border-radius:16px;padding:13px 15px;
+      margin-bottom:15px;font-weight:700;color:#6d5411;
+    }
+    .grid{display:grid;grid-template-columns:1fr;gap:15px}
+    .card{
+      background:var(--white);border:1px solid var(--line);border-radius:22px;padding:18px;
+      box-shadow:var(--shadow);position:relative;overflow:hidden
+    }
+    .card:before{
+      content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--blue)
+    }
+    .card:nth-child(2):before{background:var(--green)}
+    .card:nth-child(3):before{background:var(--gold)}
+    .card-head{display:flex;align-items:center;gap:13px;margin-bottom:10px}
+    .icon{
+      width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:31px;
+      background:var(--sky);flex:0 0 auto
+    }
+    .card:nth-child(2) .icon{background:#e9f7ef}
+    .card:nth-child(3) .icon{background:#fff5d6}
+    .title{margin:0;font-size:23px;font-weight:900}
+    .owner{font-size:16px;color:var(--muted);margin-top:4px}
+    .owner strong{color:var(--text);font-size:18px}
+    .desc{margin:10px 0 15px;line-height:1.7;color:#425568}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .open-btn,.edit-btn,.save-btn,.cancel-btn{
+      border:0;border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer;min-height:48px
+    }
+    .open-btn{background:var(--navy);color:#fff;flex:1;min-width:170px}
+    .edit-btn{background:#eef3f7;color:#294055}
+    .settings{
+      margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:20px;
+      padding:16px;box-shadow:var(--shadow)
+    }
+    .settings summary{cursor:pointer;font-weight:900;font-size:18px}
+    .setting-row{display:grid;grid-template-columns:1fr;gap:10px;padding:14px 0;border-bottom:1px solid #edf1f5}
+    .setting-row:last-child{border-bottom:0}
+    label{font-weight:800;font-size:14px;color:#425568}
+    input{
+      width:100%;border:1px solid #cfdbe6;border-radius:12px;padding:12px 13px;
+      background:#fff;font-size:17px;outline:none
+    }
+    input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,167,.12)}
+    .settings-actions{display:flex;gap:10px;margin-top:14px}
+    .save-btn{background:var(--green);color:#fff;flex:1}
+    .cancel-btn{background:#eef3f7;color:#33485c}
+    .toast{
+      position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);
+      background:#163149;color:#fff;padding:12px 18px;border-radius:999px;font-weight:800;
+      opacity:0;pointer-events:none;transition:.25s;z-index:10;white-space:nowrap
+    }
+    .toast.show{opacity:1}
+    footer{text-align:center;color:#7b8d9e;font-size:12px;margin-top:20px}
+    @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}.card{display:flex;flex-direction:column}.desc{flex:1}.actions{flex-direction:column}.open-btn{min-width:0}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="topline">
+        <div>
+          <h1>担当者専用アプリ</h1>
+          <p class="subtitle">担当業務をここから開きます</p>
+        </div>
+        <button class="back" onclick="goBack()">← 戻る</button>
+      </div>
+    </header>
+
+    <div class="notice">担当者名・各アプリのURLは、下の「担当者・リンク設定」からいつでも変更できます。</div>
+
+    <main class="grid" id="cards"></main>
+
+    <details class="settings" id="settings">
+      <summary>⚙️ 担当者・リンク設定</summary>
+      <div id="settingRows"></div>
+      <div class="settings-actions">
+        <button class="cancel-btn" onclick="loadSettingsForm()">元に戻す</button>
+        <button class="save-btn" onclick="saveSettings()">設定を保存</button>
+      </div>
+    </details>
+
+    <footer>FUJIWARA Group 担当者専用</footer>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+const DEFAULTS = [
+  {
+    key:"neta", icon:"📋", title:"ネタ一覧表アプリ", owner:"文太",
+    desc:"ネタ一覧・必要数量・買い出し・購入済みチェック",
+    url:"neta-list.html"
+  },
+  {
+    key:"vehicle", icon:"🚚", title:"車両管理アプリ", owner:"将",
+    desc:"車両点検・車検・保険・洗車・修理記録",
+    url:"vehicle-management.html"
+  },
+  {
+    key:"prepare", icon:"📦", title:"準備アプリ", owner:"繁充",
+    desc:"積込チェック・準備確認・シート記入・完了報告",
+    url:"preparation-app.html"
+  }
+];
+
+function getData(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("fujiwara_manager_apps_v1"));
+    if(Array.isArray(saved) && saved.length === 3) return saved;
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULTS));
+}
+
+let data = getData();
+
+function renderCards(){
+  const box = document.getElementById("cards");
+  box.innerHTML = data.map((item,i)=>`
+    <section class="card">
+      <div class="card-head">
+        <div class="icon">${item.icon}</div>
+        <div>
+          <h2 class="title">${escapeHtml(item.title)}</h2>
+          <div class="owner">担当：<strong>${escapeHtml(item.owner || "未設定")}</strong></div>
+        </div>
+      </div>
+      <p class="desc">${escapeHtml(item.desc)}</p>
+      <div class="actions">
+        <button class="open-btn" onclick="openApp(${i})">アプリを開く</button>
+        <button class="edit-btn" onclick="editItem(${i})">担当者を変更</button>
+      </div>
+    </section>
+  `).join("");
+}
+
+function renderSettings(){
+  const box = document.getElementById("settingRows");
+  box.innerHTML = data.map((item,i)=>`
+    <div class="setting-row">
+      <label>${escapeHtml(item.title)}の担当者名</label>
+      <input id="owner-${i}" value="${escapeAttr(item.owner)}" placeholder="担当者名">
+      <label>${escapeHtml(item.title)}のURL／ファイル名</label>
+      <input id="url-${i}" value="${escapeAttr(item.url)}" placeholder="例：sample.html">
+    </div>
+  `).join("");
+}
+
+function loadSettingsForm(){
+  data = getData();
+  renderCards();
+  renderSettings();
+  showToast("保存済み設定に戻しました");
+}
+
+function saveSettings(){
+  data = data.map((item,i)=>({
+    ...item,
+    owner: document.getElementById(`owner-${i}`).value.trim() || "未設定",
+    url: document.getElementById(`url-${i}`).value.trim()
+  }));
+  localStorage.setItem("fujiwara_manager_apps_v1", JSON.stringify(data));
+  renderCards();
+  showToast("担当者とリンクを保存しました");
+}
+
+function editItem(i){
+  document.getElementById("settings").open = true;
+  setTimeout(()=>{
+    const input = document.getElementById(`owner-${i}`);
+    input.scrollIntoView({behavior:"smooth",block:"center"});
+    input.focus();
+    input.select();
+  },100);
+}
+
+function openApp(i){
+  const url = (data[i].url || "").trim();
+  if(!url){ showToast("先にアプリのURLを設定してください"); return; }
+  window.location.href = url;
+}
+
+function goBack(){
+  if(history.length > 1) history.back();
+  else window.location.href = "index.html";
+}
+
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+function escapeHtml(s=""){
+  return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+function escapeAttr(s=""){ return escapeHtml(s); }
+
+renderCards();
+renderSettings();
+</script>
+</body>
+</html>
