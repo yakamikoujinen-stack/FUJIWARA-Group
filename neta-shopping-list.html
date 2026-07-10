@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v2.2</title>
+<title>ネタ買い物一覧 v2.4</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:80px}
@@ -23,18 +23,54 @@ button{border:0;border-radius:10px;padding:10px 13px;font-weight:900;font-size:1
 @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
 </style></head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v2.2</div><div class="sub">自動追加数量｜単価記憶｜全在庫カテゴリー表示｜文字切れ改善</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v2.4</div><div class="sub">自動追加数量｜単価記憶｜全カテゴリー表示｜手動品目追加｜文字切れ改善</div></header>
 <div class="wrap">
 <section class="card" id="eventSec"><h2>① イベント情報</h2><div class="grid3"><div><label>イベント名</label><input id="eventName"></div><div><label>日付</label><input id="eventDate" type="date"></div><div><label>買い物担当</label><input id="buyer"></div></div><div class="grid2" style="margin-top:10px"><div><label>会場</label><input id="place"></div><div><label>買った店</label><input id="shop"></div></div></section>
-<section class="card" id="netaSec"><h2>② 出店品目を複数選択</h2><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="openTemplateEditor()">ネタ設定</button><button class="ghost" onclick="openInventoryEditor()">在庫管理</button><button class="ghost" onclick="selectAllNeta(false)">全部外す</button></div></section>
-<section class="card" id="listSec"><h2>③ 買い物一覧表</h2><div class="toolbar"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" onclick="saveAll(true)">💾 保存</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③今回追加数量</th><th>④単価</th><th>⑤金額</th><th>⑥備考</th><th>店</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div><div class="summary"><div class="sum"><div class="k">⑤ 金額の総計</div><div class="v red" id="total">¥0</div></div><div class="sum"><div class="k">買った品目</div><div class="v" id="boughtCount">0 / 0</div></div><div class="sum"><div class="k">不足注意</div><div class="v red" id="shortCount">0</div></div></div><div style="margin-top:12px"><label>全体メモ</label><textarea id="memo"></textarea></div></section>
+<section class="card" id="netaSec"><h2>② 出店品目を複数選択</h2><div style="font-size:12px;color:#6d5a2b;line-height:1.7;margin-bottom:8px">在庫管理にあるカテゴリー・出店品目をすべて□で表示します。複数選択できます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="openTemplateEditor()">ネタ設定</button><button class="ghost" onclick="openInventoryEditor()">在庫管理</button><button class="ghost" onclick="selectAllNeta(false)">全部外す</button></div></section>
+<section class="card" id="listSec"><h2>③ 買い物一覧表</h2><div class="toolbar"><button class="gold" onclick="addRow()">＋ 品目追加</button><span style="font-size:12px;color:#6d5a2b;align-self:center">無い品目は直接入力できます</span><button class="green" onclick="saveAll(true)">💾 保存</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><datalist id="inventoryItemList"></datalist><div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③今回追加数量</th><th>④単価</th><th>⑤金額</th><th>⑥備考</th><th>店</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div><div class="summary"><div class="sum"><div class="k">⑤ 金額の総計</div><div class="v red" id="total">¥0</div></div><div class="sum"><div class="k">買った品目</div><div class="v" id="boughtCount">0 / 0</div></div><div class="sum"><div class="k">不足注意</div><div class="v red" id="shortCount">0</div></div></div><div style="margin-top:12px"><label>全体メモ</label><textarea id="memo"></textarea></div></section>
 <section class="card hide" id="templateSec"><h2>⚙️ ネタ設定</h2><div class="grid2"><div><label>ネタ名</label><input id="tplNeta" placeholder="例：チーズハットグ"></div><div><label>品目を文字で追加（カンマ区切り）</label><input id="tplItems"></div></div><div id="categoryPicker"></div><div class="toolbar"><button class="gold" onclick="saveTemplate()">ネタ設定を保存</button><button class="ghost" onclick="loadTemplateToEditor()">選択ネタを読み込み</button><button class="ghost" onclick="closeTemplateEditor()">閉じる</button></div><div id="templateList"></div></section>
 <section class="card hide" id="inventorySec"><h2>📦 在庫管理</h2><div class="grid3"><div><label>カテゴリー</label><input id="newCat" placeholder="例：チーズハットグ"></div><div><label>品目名</label><input id="newInvName" placeholder="例：パン"></div><div><label>在庫数</label><input id="newInvStock" type="number" placeholder="例：30"></div></div><div class="toolbar"><button class="green" onclick="addInventoryItem()">在庫品目を追加</button><button class="ghost" onclick="autoImportFromMainApp()">メインアプリ在庫を探す</button><button class="ghost" onclick="closeInventoryEditor()">閉じる</button></div><div id="inventoryList"></div></section>
 </div>
 <nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('listSec')">買い物表</button><button onclick="jump('templateSec');openTemplateEditor()">設定</button><button onclick="jump('inventorySec');openInventoryEditor()">在庫</button></nav>
 <script>
 const KEY="fujiwara_neta_powerup_v21";
-let state={eventName:"",eventDate:"",buyer:"",place:"",shop:"",memo:"",selected:[],unitPrices:{},inventory:{"チーズハットグ":[["チーズハットグ",135],["チーズブロック",7],["ソーセージ",0],["ミックス粉",3],["パン粉",2],["ケチャップ",4],["マスタード",4],["ハニーマスタード",0],["砂糖",0],["串",0],["袋",0]],"串物":[["牛串",100],["豚串",100],["鳥串",100],["タレ",0],["塩こしょう",0],["容器",0]],"かき氷":[["ブロック氷",10],["シロップ",0],["カップ",0],["スプーン",0],["練乳",0]],"揚げ物":[["鶏肉",0],["唐揚げ粉",0],["ポテト",0],["油",0],["容器",0]],"その他":[["いか",0],["カステラ粉",0],["卵",0],["りんご",0],["飴粉",0],["棒",0],["ごはん",0],["豚バラ",0],["パン",0]]},templates:{"チーズハットグ":["チーズハットグ","チーズブロック","ソーセージ","ミックス粉","パン粉","ケチャップ","マスタード","ハニーマスタード","砂糖","串","袋","パン"],"牛串":["牛串","タレ","塩こしょう","串","容器"],"豚串":["豚串","タレ","塩こしょう","串","容器"],"鳥串":["鳥串","タレ","塩こしょう","串","容器"],"かき氷":["ブロック氷","シロップ","カップ","スプーン","練乳"],"いか焼き":["いか","タレ","串","容器"],"ポテト":["ポテト","塩こしょう","ケチャップ","容器"],"からあげ":["鶏肉","唐揚げ粉","油","容器"],"肉巻きおにぎり":["豚バラ","ごはん","タレ","容器"],"りんご飴":["りんご","飴粉","袋","棒"]},rows:[]};
+let state={eventName:"",eventDate:"",buyer:"",place:"",shop:"",memo:"",selected:[],unitPrices:{},
+inventory:{
+"チーズハットグ":[["チーズハットグ",135],["チーズブロック",7],["ソーセージ",0],["ミックス粉",3],["パン粉",2],["ケチャップ",4],["マスタード",4],["ハニーマスタード",0],["砂糖",0],["串",0],["袋",0],["パン",0]],
+"串物":[["牛串",100],["豚串",100],["鳥串",100],["タレ",0],["塩こしょう",0],["串",0],["容器",0]],
+"かき氷":[["ブロック氷",10],["シロップ",0],["カップ",0],["スプーン",0],["練乳",0]],
+"揚げ物":[["鶏肉",0],["唐揚げ粉",0],["ポテト",0],["油",0],["容器",0]],
+"麺類":[["そば玉",5],["焼きそば麺",0],["ホルモン",0],["ラーメン麺",0],["スープ",0],["キャベツ",0],["ソース",0],["青のり",0],["紅しょうが",0]],
+"甘味":[["りんご",0],["飴粉",0],["だんご",0],["あんこ",0],["チョコレート",0],["バナナ",0],["コットンキャンディー用ザラメ",0],["カステラ粉",0],["卵",0],["砂糖",0],["袋",0],["棒",0]],
+"粉もの・焼き物":[["いか",0],["たこ",0],["小麦粉",0],["天かす",0],["かつお節",0],["青のり",0],["ソース",0],["マヨネーズ",0],["容器",0]],
+"ご飯もの":[["ごはん",0],["豚バラ",0],["タレ",0],["海苔",0],["容器",0]],
+"その他":[["割り箸",0],["手袋",0],["輪ゴム",0],["ラップ",0],["キッチンペーパー",0],["ゴミ袋",0]]
+},
+templates:{
+"チーズハットグ":["チーズハットグ","チーズブロック","ソーセージ","ミックス粉","パン粉","ケチャップ","マスタード","ハニーマスタード","砂糖","串","袋","パン"],
+"牛串":["牛串","タレ","塩こしょう","串","容器"],
+"豚串":["豚串","タレ","塩こしょう","串","容器"],
+"鳥串":["鳥串","タレ","塩こしょう","串","容器"],
+"かき氷":["ブロック氷","シロップ","カップ","スプーン","練乳"],
+"いか焼き":["いか","タレ","串","容器"],
+"ポテト":["ポテト","塩こしょう","ケチャップ","容器"],
+"からあげ":["鶏肉","唐揚げ粉","油","容器"],
+"肉巻きおにぎり":["豚バラ","ごはん","タレ","容器"],
+"りんご飴":["りんご","飴粉","袋","棒"],
+"やきそば":["焼きそば麺","豚バラ","キャベツ","ソース","青のり","紅しょうが","容器"],
+"ホルそば":["そば玉","ホルモン","キャベツ","ソース","青のり","紅しょうが","容器"],
+"串":["牛串","豚串","鳥串","タレ","塩こしょう","串","容器"],
+"かまぼこ":["かまぼこ","串","袋"],
+"だんご":["だんご","あんこ","串","容器"],
+"らーめん":["ラーメン麺","スープ","容器","割り箸"],
+"チョコバナナ":["バナナ","チョコレート","棒","袋"],
+"コットンキャンディー":["コットンキャンディー用ザラメ","棒","袋"],
+"かすてら":["カステラ粉","卵","砂糖","袋"],
+"たこ焼き":["たこ","小麦粉","卵","天かす","ソース","マヨネーズ","かつお節","青のり","容器"],
+"焼きとうもろこし":["とうもろこし","タレ","串","袋"],
+"フランクフルト":["フランクフルト","ケチャップ","マスタード","串","袋"],
+"クレープ":["クレープ粉","卵","牛乳","生クリーム","チョコレート","バナナ","容器"]
+},rows:[]};
 function normalizeInv(){for(const c in state.inventory){state.inventory[c]=state.inventory[c].map(x=>Array.isArray(x)?{name:x[0],stock:x[1]}:x)}}
 function flatInventory(){normalizeInv();const m={};Object.values(state.inventory).flat().forEach(x=>m[x.name]=Number(x.stock)||0);return m}
 function allItemNames(){return Object.keys(flatInventory()).sort()}
@@ -46,9 +82,21 @@ function renderNeta(){
   Object.entries(state.inventory).forEach(([cat,items])=>{
     if(!state.templates[cat]) state.templates[cat]=items.map(x=>x.name);
   });
-  let names=[...new Set([...Object.keys(state.templates),...Object.keys(state.inventory)])];
+  const preferred=[
+    "チーズハットグ","牛串","豚串","鳥串","かき氷","いか焼き","ポテト","からあげ",
+    "肉巻きおにぎり","りんご飴","やきそば","ホルそば","串","かまぼこ","だんご",
+    "らーめん","チョコバナナ","コットンキャンディー","かすてら","たこ焼き",
+    "焼きとうもろこし","フランクフルト","クレープ"
+  ];
+  let names=[...new Set([...preferred,...Object.keys(state.templates),...Object.keys(state.inventory)])];
   let g=document.getElementById("netaGrid");g.innerHTML="";
-  names.forEach(n=>{let on=state.selected.includes(n);let lab=document.createElement("label");lab.className="neta"+(on?" on":"");lab.innerHTML=`<input type="checkbox" ${on?"checked":""} onchange="toggleNeta('${esc(n)}',this.checked)"> ${esc(n)}`;g.appendChild(lab)});
+  names.forEach(n=>{
+    let on=state.selected.includes(n);
+    let lab=document.createElement("label");
+    lab.className="neta"+(on?" on":"");
+    lab.innerHTML=`<input type="checkbox" ${on?"checked":""} onchange="toggleNeta('${esc(n)}',this.checked)"> ${esc(n)}`;
+    g.appendChild(lab);
+  });
 }
 function toggleNeta(n,on){if(on&&!state.selected.includes(n))state.selected.push(n);if(!on)state.selected=state.selected.filter(x=>x!==n);renderNeta();saveAll(false)}function selectAllNeta(on){state.selected=on?Object.keys(state.templates):[];renderNeta();saveAll(false)}
 function buildList(){
@@ -61,17 +109,28 @@ function buildList(){
   }));
   state.rows=rows;renderRows();saveAll(false);jump("listSec")
 }
-function addRow(){let f=allItemNames()[0]||"";state.rows.push({bought:false,neta:"追加",item:f,stock:flatInventory()[f]??0,need:"",add:0,unit:state.unitPrices[f]||"",note:"",shop:val("shop")});renderRows();saveAll(false)}
+function addRow(){
+  state.rows.push({bought:false,neta:"追加",item:"",stock:0,need:"",add:0,unit:"",note:"",shop:val("shop")});
+  renderRows();saveAll(false);
+  setTimeout(()=>{const inputs=document.querySelectorAll('#tbody input[list="inventoryItemList"]');if(inputs.length)inputs[inputs.length-1].focus()},50)
+}
 function clearRows(){if(confirm("表だけ消しますか？")){state.rows=[];renderRows();saveAll(false)}}
 function updateRow(i,k,v){
   if(!state.rows[i])return;
   if(["stock","need","add","unit"].includes(k))state.rows[i][k]=Number(v)||0;
   else if(k==="bought")state.rows[i][k]=!!v;else state.rows[i][k]=v;
   if(k==="item"){
-    state.rows[i].stock=flatInventory()[v]??0;
-    state.rows[i].unit=state.unitPrices[v]||"";
+    const name=String(v||"").trim();
+    state.rows[i].item=name;
+    const stockMap=flatInventory();
+    if(stockMap[name]===undefined && name){
+      if(!state.inventory["手動追加"])state.inventory["手動追加"]=[];
+      if(!state.inventory["手動追加"].some(x=>x.name===name))state.inventory["手動追加"].push({name,stock:0});
+    }
+    state.rows[i].stock=flatInventory()[name]??0;
+    state.rows[i].unit=state.unitPrices[name]||state.rows[i].unit||"";
     state.rows[i].add=Math.max((Number(state.rows[i].need)||0)-(Number(state.rows[i].stock)||0),0);
-    renderRows();saveAll(false);return;
+    updateCalculatedCells(i);saveAll(false);return;
   }
   if(k==="stock"||k==="need") state.rows[i].add=Math.max((Number(state.rows[i].need)||0)-(Number(state.rows[i].stock)||0),0);
   if(k==="unit" && state.rows[i].item) state.unitPrices[state.rows[i].item]=Number(v)||0;
@@ -84,7 +143,16 @@ function updateCalculatedCells(i){
   calc();
 }
 function delRow(i){state.rows.splice(i,1);renderRows();saveAll(false)}
-function renderRows(){let names=allItemNames(),tb=document.getElementById("tbody");tb.innerHTML="";state.rows.forEach((r,i)=>{let amt=(Number(r.add)||0)*(Number(r.unit)||0),short=(Number(r.need)||0)>(Number(r.stock)||0)+(Number(r.add)||0);tb.insertAdjacentHTML("beforeend",`<tr><td><input type="checkbox" ${r.bought?"checked":""} onchange="updateRow(${i},'bought',this.checked)"></td><td><input title="${esc(r.neta)}" value="${esc(r.neta)}" onblur="updateRow(${i},'neta',this.value)"></td><td><select title="${esc(r.item)}" onchange="updateRow(${i},'item',this.value)">${names.map(x=>`<option value="${esc(x)}" ${x===r.item?"selected":""}>${esc(x)}</option>`).join("")}</select></td><td><input type="number" value="${esc(r.stock)}" oninput="updateRow(${i},'stock',this.value)"></td><td><input type="number" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)" class="${short?'red':''}"></td><td><input id="add-${i}" type="number" value="${esc(r.add)}" readonly style="background:#f4edda;font-weight:900"></td><td><input type="number" value="${esc(r.unit)}" oninput="updateRow(${i},'unit',this.value)"></td><td class="money" id="amount-${i}">${yen(amt)}</td><td><input value="${esc(r.note)}" onblur="updateRow(${i},'note',this.value)"></td><td><input value="${esc(r.shop)}" onblur="updateRow(${i},'shop',this.value)"></td><td><button class="danger" onclick="delRow(${i})">削除</button></td></tr>`)});calc()}
+function renderRows(){
+  const names=allItemNames();
+  const dl=document.getElementById("inventoryItemList");
+  if(dl)dl.innerHTML=names.map(x=>`<option value="${esc(x)}"></option>`).join("");
+  let tb=document.getElementById("tbody");tb.innerHTML="";
+  state.rows.forEach((r,i)=>{
+    let amt=(Number(r.add)||0)*(Number(r.unit)||0),short=(Number(r.need)||0)>(Number(r.stock)||0)+(Number(r.add)||0);
+    tb.insertAdjacentHTML("beforeend",`<tr><td><input type="checkbox" ${r.bought?"checked":""} onchange="updateRow(${i},'bought',this.checked)"></td><td><input title="${esc(r.neta)}" value="${esc(r.neta)}" onblur="updateRow(${i},'neta',this.value)"></td><td><input list="inventoryItemList" title="${esc(r.item)}" value="${esc(r.item)}" placeholder="品目を選択・直接入力" onblur="updateRow(${i},'item',this.value)"></td><td><input type="number" value="${esc(r.stock)}" oninput="updateRow(${i},'stock',this.value)"></td><td><input type="number" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)" class="${short?'red':''}"></td><td><input id="add-${i}" type="number" value="${esc(r.add)}" readonly style="background:#f4edda;font-weight:900"></td><td><input type="number" value="${esc(r.unit)}" oninput="updateRow(${i},'unit',this.value)"></td><td class="money" id="amount-${i}">${yen(amt)}</td><td><input value="${esc(r.note)}" onblur="updateRow(${i},'note',this.value)"></td><td><input value="${esc(r.shop)}" onblur="updateRow(${i},'shop',this.value)"></td><td><button class="danger" onclick="delRow(${i})">削除</button></td></tr>`)
+  });calc()
+}
 function calc(){let total=0,short=0;state.rows.forEach((r,i)=>{let amt=(Number(r.add)||0)*(Number(r.unit)||0);total+=amt;if((Number(r.need)||0)>(Number(r.stock)||0)+(Number(r.add)||0))short++;let e=document.getElementById("amount-"+i);if(e)e.textContent=yen(amt)});document.getElementById("total").textContent=yen(total);document.getElementById("boughtCount").textContent=state.rows.filter(r=>r.bought).length+" / "+state.rows.length;document.getElementById("shortCount").textContent=short}
 function copyText(){saveAll(false);let txt=`${state.eventName||"イベント"} ${state.eventDate||""}\n買い物担当：${state.buyer||""}\n\n`;state.rows.forEach(r=>txt+=`${r.bought?"☑":"□"} ${r.item}　在庫:${r.stock}　追加:${r.add}　単価:${r.unit}　金額:${yen((Number(r.add)||0)*(Number(r.unit)||0))}　${r.note||""}\n`);txt+=`\n合計：${document.getElementById("total").textContent}`;navigator.clipboard?.writeText(txt).then(()=>alert("コピーしました")).catch(()=>prompt("コピーしてください",txt))}
 function openTemplateEditor(){document.getElementById("templateSec").classList.remove("hide");renderCategoryPicker();renderTemplates()}function closeTemplateEditor(){document.getElementById("templateSec").classList.add("hide")}
