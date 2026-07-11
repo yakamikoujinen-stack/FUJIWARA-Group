@@ -18,7 +18,7 @@
   <div id="login" class="screen active">
     <div class="login-logo">💬</div>
     <div class="center"><h2>FUJIWARA<br>イベント連絡</h2><p class="small">イベント専用LINE風アプリ</p></div>
-    <input id="name" class="input" placeholder="名前を入力 例：藤原 / まゆみ / 将 / 文太">
+    <input id="name" class="input" placeholder="名前を入力">
     <input id="pass" class="input" placeholder="パスワード" type="password">
     <div class="role-grid">
       <div class="role active" data-role="leader">👑 リーダー <span>全部見れる</span></div>
@@ -61,10 +61,10 @@
   <div id="toast" class="toast"></div>
 </div>
 <script>
-let currentRole='leader', currentName='藤原', activeRoom='全体連絡';
+let currentRole='leader', currentName='', activeRoom='全体連絡';
 const rooms={all:[['全体連絡','明日のイベントについて…','12'],['緊急連絡','雨天のため確認お願いします','6']],group:[['イベントAチーム','よろしくお願いします！','5'],['イベントBチーム','設営完了しました。','3']],private:[['山田 太郎','了解しました！',''],['田中 花子','写真を送ります。','']]};
 document.querySelectorAll('.role').forEach(r=>r.onclick=()=>{document.querySelectorAll('.role').forEach(x=>x.classList.remove('active'));r.classList.add('active');currentRole=r.dataset.role;});
-function loginApp(){currentName=document.getElementById('name').value||'藤原';document.getElementById('login').classList.remove('active');document.getElementById('mainTop').classList.remove('hidden');document.getElementById('bottom').classList.add('active');document.getElementById('userInfo').textContent=currentName+' / '+roleName(currentRole);show('home');applyRole();}
+function loginApp(){currentName=document.getElementById('name').value.trim();if(!currentName){alert('名前を入力してください');document.getElementById('name').focus();return;}document.getElementById('login').classList.remove('active');document.getElementById('mainTop').classList.remove('hidden');document.getElementById('bottom').classList.add('active');document.getElementById('userInfo').textContent=currentName+' / '+roleName(currentRole);show('home');applyRole();}
 function roleName(r){return r==='leader'?'リーダー':r==='manager'?'担当者':'一般スタッフ'}
 function applyRole(){if(currentRole!=='leader'){document.getElementById('gpsTile').classList.add('lock');document.getElementById('adminTile').classList.add('lock');}else{document.getElementById('gpsTile').classList.remove('lock');document.getElementById('adminTile').classList.remove('lock');}}
 function show(id){if((id==='gps'||id==='admin')&&currentRole!=='leader'){toast('この機能はリーダー専用です');return;}document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.getElementById('title').textContent={home:'ホーム',chat:'チャット',notice:'会社連絡',photo:'写真アップロード',gps:'GPS確認',admin:'リーダー管理',perm:'権限確認'}[id];document.getElementById('compose').classList.toggle('active',id==='chat'&&!document.getElementById('chatRoom').classList.contains('hidden'));document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));}
