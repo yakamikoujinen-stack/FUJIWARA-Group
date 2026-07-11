@@ -35,6 +35,28 @@
       background:#fff8df;border:1px solid #f6dc8c;border-radius:16px;padding:13px 15px;
       margin-bottom:15px;font-weight:700;color:#6d5411;
     }
+    .main-app-card{
+      background:linear-gradient(135deg,#fffdf5,#fff6d7);
+      border:2px solid #e1b84f;border-radius:22px;padding:18px;
+      box-shadow:var(--shadow);margin-bottom:16px;display:flex;align-items:center;
+      gap:16px;position:relative;overflow:hidden
+    }
+    .main-app-card:before{
+      content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--gold)
+    }
+    .main-app-icon{
+      width:72px;height:72px;border-radius:20px;display:grid;place-items:center;
+      font-size:39px;background:linear-gradient(135deg,#17324d,#2f6fa7);
+      color:#ffd76a;flex:0 0 auto;box-shadow:0 6px 16px rgba(23,50,77,.22)
+    }
+    .main-app-info{flex:1}
+    .main-app-title{margin:0;font-size:25px;font-weight:900}
+    .main-app-text{margin:6px 0 12px;color:#5a4b23;line-height:1.6}
+    .main-app-btn{
+      border:0;border-radius:14px;padding:13px 18px;font-weight:900;
+      background:linear-gradient(135deg,#d5a62c,#f3c95e);color:#2d2100;
+      cursor:pointer;min-height:48px
+    }
     .grid{display:grid;grid-template-columns:1fr;gap:15px}
     .card{
       background:var(--white);border:1px solid var(--line);border-radius:22px;padding:18px;
@@ -85,6 +107,7 @@
     }
     .toast.show{opacity:1}
     footer{text-align:center;color:#7b8d9e;font-size:12px;margin-top:20px}
+    @media(max-width:560px){.main-app-card{align-items:flex-start}.main-app-icon{width:60px;height:60px;font-size:32px}.main-app-title{font-size:22px}}
     @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}.card{display:flex;flex-direction:column}.desc{flex:1}.actions{flex-direction:column}.open-btn{min-width:0}}
   </style>
 </head>
@@ -101,6 +124,15 @@
     </header>
 
     <div class="notice">担当者名・各アプリのURLは、下の「担当者・リンク設定」からいつでも変更できます。</div>
+
+    <section class="main-app-card">
+      <div class="main-app-icon">🏠</div>
+      <div class="main-app-info">
+        <h2 class="main-app-title">メインアプリ</h2>
+        <p class="main-app-text">イベント管理・カレンダー・売上・在庫など、メインアプリへ移動します。</p>
+        <button class="main-app-btn" onclick="window.location.href='index.html'">メインアプリを開く</button>
+      </div>
+    </section>
 
     <main class="grid" id="cards"></main>
 
