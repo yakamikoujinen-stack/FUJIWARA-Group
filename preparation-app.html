@@ -7,56 +7,151 @@
 <meta name="theme-color" content="#5b2a86">
 <title>準備アプリ</title>
 <style>
-:root{--purple:#5b2a86;--purple2:#7b3fb0;--bg:#f8f3fc;--card:#fff;--line:#dfd3ea;--text:#2b2034;--sub:#7a6a84;--green:#2f8f5b;--red:#d94f4f;--shadow:0 8px 24px rgba(72,38,96,.12)}
+:root{--purple:#5b2a86;--purple2:#7b3fb0;--bg:#f8f3fc;--card:#fff;--line:#dfd3ea;--text:#2b2034;--sub:#7a6a84;--green:#2f8f5b;--red:#d94f4f;--gold:#d8aa35;--shadow:0 8px 24px rgba(72,38,96,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:linear-gradient(180deg,#fbf8fd,#f2eaf8);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;padding-bottom:84px}
 header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;padding:15px 16px;box-shadow:0 4px 16px rgba(61,28,83,.22)}
-.top{max-width:900px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top{max-width:980px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
 h1{font-size:22px;margin:0;font-weight:900}.sub{font-size:12px;color:#eadcf6;margin-top:4px}
 .back{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:11px;padding:9px 12px;font-weight:900}
-.wrap{max-width:900px;margin:auto;padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
-h2{font-size:19px;margin:0 0 12px}label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:5px}
-input,textarea{width:100%;padding:11px 12px;border:1.5px solid #d8cbe3;border-radius:11px;background:#fff;font-size:16px;color:var(--text);outline:none}
-textarea{min-height:72px}.grid2,.grid3{display:grid;gap:10px}.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,1fr)}
+.wrap{max-width:980px;margin:auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
+h2{font-size:19px;margin:0 0 12px}
+label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1.5px solid #d8cbe3;border-radius:11px;background:#fff;font-size:16px;color:var(--text);outline:none}
+textarea{min-height:72px}
+.grid2,.grid3,.grid4{display:grid;gap:10px}.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}
 .category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}
 .cat{display:flex;align-items:center;gap:9px;border:1.5px solid var(--line);border-radius:13px;padding:12px;background:#fcf9ff;font-weight:900}
 .cat input{width:22px;height:22px}.cat.on{background:#f0e2fb;border-color:#b78bd4}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
 button{border:0;border-radius:11px;padding:11px 14px;font-size:14px;font-weight:900;cursor:pointer}
 .primary{background:var(--purple);color:#fff}.green{background:var(--green);color:#fff}.ghost{background:#f0eaf4;color:#4f3f59}.danger{background:#ffe8e8;color:var(--red);border:1px solid #efb9b9}.gold{background:linear-gradient(135deg,#d7a72c,#efc967);color:#352600}
-.list{display:grid;gap:9px}.item{border:1px solid var(--line);border-radius:14px;padding:11px;background:#fcfbfd;display:grid;grid-template-columns:auto 1fr 110px auto;gap:9px;align-items:center}
-.item.done{background:#eaf7ef;border-color:#a9d8be}.item input[type=checkbox]{width:24px;height:24px}.item .name{font-weight:900;font-size:16px}.item .qty{display:flex;align-items:center;gap:5px}.item .qty input{min-width:0;text-align:center}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}
+th{background:#f0e6f7;border:1px solid var(--line);padding:10px 8px;font-size:13px;text-align:left}
+td{border:1px solid var(--line);padding:8px;vertical-align:middle}
+td input{padding:9px;font-size:15px}
+td.checkcell{width:76px;text-align:center}
+td.checkcell input{width:25px;height:25px}
+.done-row{background:#eaf7ef}
 .progress-box{background:#f5eef9;border:1px solid var(--line);border-radius:14px;padding:13px}.progress-line{height:18px;background:#e6dcef;border-radius:999px;overflow:hidden}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#6a32a0,#a85bd4)}.progress-text{text-align:center;font-size:24px;font-weight:900;margin-top:8px}
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-top:10px}.sum{background:#faf7fc;border:1px solid var(--line);border-radius:13px;padding:12px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:900;margin-top:4px}
 .saved-list{display:grid;gap:8px}.record{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.record-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.record-title{font-weight:900}.record-meta{font-size:13px;color:var(--sub);line-height:1.6;margin-top:5px}
 .footer{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:4px;background:#fff;border-top:1px solid var(--line);padding:7px 7px calc(7px + env(safe-area-inset-bottom))}
 .footer button{flex:1;background:transparent;color:#5f4a6d;font-size:11px;padding:7px 3px}.empty{text-align:center;color:var(--sub);padding:18px}.note{font-size:12px;color:var(--sub);line-height:1.6}
-@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}.item{grid-template-columns:auto 1fr}.item .qty{grid-column:2}.item .danger{grid-column:2}}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#efe5f6;color:#5b2a86;font-size:12px;font-weight:900;margin:3px}
+@media(max-width:700px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜積込みチェックリスト</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+
 <div class="wrap">
-<section class="card" id="eventSec"><h2>① イベント情報</h2><div class="grid3"><div><label>イベント名</label><input id="eventName"></div><div><label>日付</label><input id="eventDate" type="date"></div><div><label>積込み担当</label><input id="staffName" value="繁充"></div></div><div class="grid2" style="margin-top:10px"><div><label>会場</label><input id="place"></div><div><label>車両</label><input id="vehicle"></div></div></section>
-<section class="card" id="categorySec"><h2>② カテゴリー選択</h2><div class="note">複数選択できます。選択したカテゴリーの標準項目を積込み表へ追加します。</div><div class="category-grid" id="categoryGrid"></div><div class="toolbar"><button class="gold" onclick="buildFromCategories()">選択カテゴリーを追加</button><button class="ghost" onclick="clearCategorySelection()">選択を外す</button></div></section>
-<section class="card" id="addSec"><h2>③ 項目と数量を自分で追加</h2><div class="grid3"><div><label>カテゴリー</label><input id="newCategory" placeholder="例：共通備品"></div><div><label>品名</label><input id="newItemName" placeholder="例：テント"></div><div><label>数量</label><input id="newQty" type="number" value="1" min="0"></div></div><div class="toolbar"><button class="primary" onclick="addManualItem()">＋ 項目を追加</button></div></section>
-<section class="card" id="listSec"><h2>④ 積込みチェックリスト</h2><div class="list" id="itemList"></div><div class="toolbar"><button class="green" onclick="saveCurrent()">💾 保存</button><button class="ghost" onclick="setAll(true)">全てチェック</button><button class="ghost" onclick="setAll(false)">全て外す</button><button class="danger" onclick="clearAllItems()">表を全部消す</button></div></section>
-<section class="card"><h2>⑤ 積込み進捗</h2><div class="progress-box"><div class="progress-line"><div class="progress-bar" id="progressBar"></div></div><div class="progress-text" id="progressText">0%</div></div><div class="summary"><div class="sum"><div class="k">全項目</div><div class="v" id="totalCount">0</div></div><div class="sum"><div class="k">積込み済み</div><div class="v" id="doneCount">0</div></div><div class="sum"><div class="k">未積込み</div><div class="v" id="remainCount">0</div></div></div><div style="margin-top:10px"><label>全体メモ</label><textarea id="memo"></textarea></div><div class="toolbar"><button class="green" onclick="completeLoading()">✅ 積込み完了として保存</button></div></section>
-<section class="card"><h2>⑥ 保存履歴</h2><div id="historyList" class="saved-list"></div></section>
+<section class="card" id="eventSec">
+<h2>① イベント情報</h2>
+<div class="grid3">
+<div><label>イベント名</label><input id="eventName"></div>
+<div><label>日付</label><input id="eventDate" type="date"></div>
+<div><label>積込み担当</label><input id="staffName" value="繁充"></div>
 </div>
-<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('categorySec')">カテゴリー</button><button onclick="jump('addSec')">項目追加</button><button onclick="jump('listSec')">積込み表</button></nav>
+<div class="grid2" style="margin-top:10px">
+<div><label>会場</label><input id="place"></div>
+<div><label>車両</label><input id="vehicle"></div>
+</div>
+</section>
+
+<section class="card" id="categorySec">
+<h2>② カテゴリー選択</h2>
+<div class="note">複数選択できます。選択したカテゴリーの項目を積込み表へ追加します。</div>
+<div class="category-grid" id="categoryGrid"></div>
+<div class="toolbar">
+<button class="gold" onclick="buildFromCategories()">選択カテゴリーを追加</button>
+<button class="ghost" onclick="clearCategorySelection()">選択を外す</button>
+</div>
+</section>
+
+<section class="card" id="commonSec">
+<h2>③ 共通項目を作成</h2>
+<div class="note">ここで登録した項目は「共通備品」として保存され、次回以降も使えます。</div>
+<div class="grid3">
+<div><label>共通項目名</label><input id="commonName" placeholder="例：テント"></div>
+<div><label>数量</label><input id="commonQty" type="number" value="1" min="0"></div>
+<div><label>確認者</label><input id="commonChecker" placeholder="例：繁充"></div>
+</div>
+<div class="toolbar">
+<button class="primary" onclick="addCommonItem()">＋ 共通項目に追加</button>
+<button class="ghost" onclick="addAllCommonToList()">共通項目を積込み表へ入れる</button>
+</div>
+<div id="commonList"></div>
+</section>
+
+<section class="card" id="addSec">
+<h2>④ 項目と数量を自分で追加</h2>
+<div class="grid4">
+<div><label>カテゴリー</label><input id="newCategory" placeholder="例：チーズハットグ"></div>
+<div><label>品名</label><input id="newItemName" placeholder="例：フライヤー"></div>
+<div><label>数量</label><input id="newQty" type="number" value="1" min="0"></div>
+<div><label>確認者</label><input id="newChecker" placeholder="例：繁充"></div>
+</div>
+<div class="toolbar"><button class="primary" onclick="addManualItem()">＋ 項目を追加</button></div>
+</section>
+
+<section class="card" id="listSec">
+<h2>⑤ 積込みチェック表</h2>
+<div class="note">図のように「確認・項目・数量・確認者」で一覧表示します。</div>
+<div class="scroll">
+<table>
+<thead><tr><th>確認</th><th>カテゴリー</th><th>項目</th><th>数量</th><th>確認者</th><th></th></tr></thead>
+<tbody id="itemBody"></tbody>
+</table>
+</div>
+<div class="toolbar">
+<button class="green" onclick="saveCurrent()">💾 保存</button>
+<button class="ghost" onclick="setAll(true)">全てチェック</button>
+<button class="ghost" onclick="setAll(false)">全て外す</button>
+<button class="danger" onclick="clearAllItems()">表を全部消す</button>
+</div>
+</section>
+
+<section class="card">
+<h2>⑥ 積込み進捗</h2>
+<div class="progress-box"><div class="progress-line"><div class="progress-bar" id="progressBar"></div></div><div class="progress-text" id="progressText">0%</div></div>
+<div class="summary">
+<div class="sum"><div class="k">全項目</div><div class="v" id="totalCount">0</div></div>
+<div class="sum"><div class="k">確認済み</div><div class="v" id="doneCount">0</div></div>
+<div class="sum"><div class="k">未確認</div><div class="v" id="remainCount">0</div></div>
+</div>
+<div style="margin-top:10px"><label>全体メモ</label><textarea id="memo"></textarea></div>
+<div class="toolbar"><button class="green" onclick="completeLoading()">✅ 積込み完了として保存</button></div>
+</section>
+
+<section class="card">
+<h2>⑦ 保存履歴</h2>
+<div id="historyList" class="saved-list"></div>
+</section>
+</div>
+
+<nav class="footer">
+<button onclick="jump('eventSec')">イベント</button>
+<button onclick="jump('categorySec')">カテゴリー</button>
+<button onclick="jump('commonSec')">共通項目</button>
+<button onclick="jump('listSec')">積込み表</button>
+</nav>
+
 <script>
-const KEY="fujiwara_preparation_app_v1";
-const CATEGORY_TEMPLATES={
+const KEY="fujiwara_preparation_app_v2";
+const DEFAULT_CATEGORIES={
 "チーズハットグ":[["フライヤー",1],["ガス台",1],["ガスボンベ",2],["油",1],["チーズ",1],["ソーセージ",1],["ミックス粉",1],["パン粉",1],["ケチャップ",1],["マスタード",1],["串",1],["袋",1]],
 "牛串":[["焼き台",1],["ガスボンベ",2],["牛串",1],["タレ",1],["塩こしょう",1],["トング",2],["容器",1]],
 "からあげ":[["フライヤー",1],["ガス台",1],["ガスボンベ",2],["油",1],["鶏肉",1],["唐揚げ粉",1],["トング",2],["容器",1]],
 "かき氷":[["かき氷機",1],["ブロック氷",1],["シロップ",1],["カップ",1],["スプーン",1],["練乳",1],["延長コード",1]],
 "いか焼き":[["焼き台",1],["ガスボンベ",2],["いか",1],["タレ",1],["串",1],["トング",2],["容器",1]],
-"カステラ":[["カステラ機",1],["ガスボンベ",2],["カステラ粉",1],["卵",1],["砂糖",1],["油",1],["袋",1],["ピック",1]],
-"共通備品":[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]]
+"カステラ":[["カステラ機",1],["ガスボンベ",2],["カステラ粉",1],["卵",1],["砂糖",1],["油",1],["袋",1],["ピック",1]]
 };
-let state={items:[],history:[]};
+const DEFAULT_COMMON=[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]];
+let state={items:[],history:[],commonItems:DEFAULT_COMMON.map(x=>({name:x[0],qty:x[1],checker:""}))};
+
 function load(){try{state={...state,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){}}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function val(id){return document.getElementById(id)?.value||""}
@@ -65,24 +160,102 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function today(){return new Date().toISOString().slice(0,10)}
 function jump(id){document.getElementById(id)?.scrollIntoView({behavior:"smooth"})}
 function goBack(){if(history.length>1)history.back();else location.href="manager-app.html"}
-function renderCategories(){document.getElementById("categoryGrid").innerHTML=Object.keys(CATEGORY_TEMPLATES).map((cat,i)=>`<label class="cat" id="catWrap-${i}"><input type="checkbox" class="catCheck" value="${esc(cat)}" onchange="paintCat(${i})"><span>${esc(cat)}</span></label>`).join("")}
+
+function renderCategories(){
+  const names=[...Object.keys(DEFAULT_CATEGORIES),"共通備品"];
+  document.getElementById("categoryGrid").innerHTML=names.map((cat,i)=>`<label class="cat" id="catWrap-${i}"><input type="checkbox" class="catCheck" value="${esc(cat)}" onchange="paintCat(${i})"><span>${esc(cat)}</span></label>`).join("")
+}
 function paintCat(i){const cb=document.querySelectorAll(".catCheck")[i];document.getElementById(`catWrap-${i}`).classList.toggle("on",cb.checked)}
 function clearCategorySelection(){document.querySelectorAll(".catCheck").forEach((cb,i)=>{cb.checked=false;paintCat(i)})}
-function buildFromCategories(){const selected=[...document.querySelectorAll(".catCheck:checked")].map(x=>x.value);if(!selected.length){alert("カテゴリーを選択してください");return}selected.forEach(cat=>(CATEGORY_TEMPLATES[cat]||[]).forEach(([name,qty])=>{if(!state.items.some(x=>x.category===cat&&x.name===name))state.items.push({category:cat,name,qty,done:false})}));save();renderItems();clearCategorySelection();jump("listSec")}
-function addManualItem(){const category=val("newCategory").trim()||"手動追加",name=val("newItemName").trim(),qty=Number(val("newQty"))||0;if(!name){alert("品名を入力してください");return}state.items.push({category,name,qty,done:false});save();renderItems();setVal("newItemName","");setVal("newQty",1)}
-function renderItems(){const box=document.getElementById("itemList");if(!state.items.length){box.innerHTML='<div class="empty">積込み項目はまだありません</div>';updateProgress();return}box.innerHTML=state.items.map((r,i)=>`<div class="item ${r.done?"done":""}"><input type="checkbox" ${r.done?"checked":""} onchange="toggleItem(${i},this.checked)"><div><div class="name">${esc(r.name)}</div><div style="font-size:12px;color:#7a6a84">${esc(r.category)}</div></div><div class="qty"><span>数量</span><input type="number" min="0" value="${esc(r.qty)}" oninput="updateQty(${i},this.value)"></div><button class="danger" onclick="deleteItem(${i})">削除</button></div>`).join("");updateProgress()}
-function toggleItem(i,on){state.items[i].done=on;save();renderItems()}
-function updateQty(i,v){state.items[i].qty=Number(v)||0;save();updateProgress()}
+
+function buildFromCategories(){
+  const selected=[...document.querySelectorAll(".catCheck:checked")].map(x=>x.value);
+  if(!selected.length){alert("カテゴリーを選択してください");return}
+  selected.forEach(cat=>{
+    const source=cat==="共通備品"?state.commonItems.map(x=>[x.name,x.qty,x.checker]):(DEFAULT_CATEGORIES[cat]||[]).map(x=>[x[0],x[1],""]);
+    source.forEach(([name,qty,checker])=>{
+      if(!state.items.some(x=>x.category===cat&&x.name===name))state.items.push({category:cat,name,qty,checker:checker||"",done:false})
+    })
+  });
+  save();renderItems();clearCategorySelection();jump("listSec")
+}
+
+function addCommonItem(){
+  const name=val("commonName").trim(),qty=Number(val("commonQty"))||0,checker=val("commonChecker").trim();
+  if(!name){alert("共通項目名を入力してください");return}
+  const hit=state.commonItems.find(x=>x.name===name);
+  if(hit){hit.qty=qty;hit.checker=checker}else state.commonItems.push({name,qty,checker});
+  save();renderCommon();setVal("commonName","");setVal("commonQty",1);setVal("commonChecker","")
+}
+function renderCommon(){
+  const box=document.getElementById("commonList");
+  if(!state.commonItems.length){box.innerHTML='<div class="empty">共通項目はありません</div>';return}
+  box.innerHTML=state.commonItems.map((x,i)=>`<span class="badge">${esc(x.name)} × ${esc(x.qty)} ${x.checker?"/ "+esc(x.checker):""} <button onclick="deleteCommon(${i})" style="padding:3px 7px;margin-left:5px">×</button></span>`).join("")
+}
+function deleteCommon(i){state.commonItems.splice(i,1);save();renderCommon()}
+function addAllCommonToList(){
+  state.commonItems.forEach(x=>{if(!state.items.some(r=>r.category==="共通備品"&&r.name===x.name))state.items.push({category:"共通備品",name:x.name,qty:x.qty,checker:x.checker||"",done:false})});
+  save();renderItems();jump("listSec")
+}
+
+function addManualItem(){
+  const category=val("newCategory").trim()||"手動追加",name=val("newItemName").trim(),qty=Number(val("newQty"))||0,checker=val("newChecker").trim();
+  if(!name){alert("品名を入力してください");return}
+  state.items.push({category,name,qty,checker,done:false});
+  save();renderItems();setVal("newItemName","");setVal("newQty",1);setVal("newChecker","")
+}
+function renderItems(){
+  const body=document.getElementById("itemBody");
+  if(!state.items.length){body.innerHTML='<tr><td colspan="6" class="empty">積込み項目はまだありません</td></tr>';updateProgress();return}
+  body.innerHTML=state.items.map((r,i)=>`<tr class="${r.done?"done-row":""}">
+    <td class="checkcell"><input type="checkbox" ${r.done?"checked":""} onchange="updateItem(${i},'done',this.checked)"></td>
+    <td><input value="${esc(r.category)}" onblur="updateItem(${i},'category',this.value)"></td>
+    <td><input value="${esc(r.name)}" onblur="updateItem(${i},'name',this.value)"></td>
+    <td><input type="number" min="0" value="${esc(r.qty)}" oninput="updateItem(${i},'qty',this.value)"></td>
+    <td><input value="${esc(r.checker||"")}" placeholder="確認者" onblur="updateItem(${i},'checker',this.value)"></td>
+    <td><button class="danger" onclick="deleteItem(${i})">削除</button></td>
+  </tr>`).join("");
+  updateProgress()
+}
+function updateItem(i,key,value){
+  if(key==="done")state.items[i][key]=!!value;
+  else if(key==="qty")state.items[i][key]=Number(value)||0;
+  else state.items[i][key]=value;
+  save();renderItems()
+}
 function deleteItem(i){if(confirm("この項目を削除しますか？")){state.items.splice(i,1);save();renderItems()}}
 function setAll(on){state.items.forEach(x=>x.done=on);save();renderItems()}
 function clearAllItems(){if(confirm("積込み表を全部消しますか？")){state.items=[];save();renderItems()}}
-function updateProgress(){const total=state.items.length,done=state.items.filter(x=>x.done).length,p=total?Math.round(done/total*100):0;document.getElementById("progressBar").style.width=p+"%";document.getElementById("progressText").textContent=p+"%";document.getElementById("totalCount").textContent=total;document.getElementById("doneCount").textContent=done;document.getElementById("remainCount").textContent=total-done}
+function updateProgress(){
+  const total=state.items.length,done=state.items.filter(x=>x.done).length,p=total?Math.round(done/total*100):0;
+  document.getElementById("progressBar").style.width=p+"%";
+  document.getElementById("progressText").textContent=p+"%";
+  document.getElementById("totalCount").textContent=total;
+  document.getElementById("doneCount").textContent=done;
+  document.getElementById("remainCount").textContent=total-done
+}
 function saveCurrent(){save();alert("保存しました")}
-function completeLoading(){if(!state.items.length){alert("積込み項目がありません");return}const remain=state.items.filter(x=>!x.done).length;if(remain>0&&!confirm(`未積込みが${remain}件あります。このまま保存しますか？`))return;state.history.unshift({id:Date.now(),eventName:val("eventName").trim()||"名称未設定",date:val("eventDate")||today(),staff:val("staffName").trim()||"繁充",place:val("place").trim(),vehicle:val("vehicle").trim(),memo:val("memo").trim(),total:state.items.length,done:state.items.filter(x=>x.done).length,items:JSON.parse(JSON.stringify(state.items))});save();renderHistory();alert("積込み完了として保存しました")}
-function renderHistory(){const box=document.getElementById("historyList");if(!state.history.length){box.innerHTML='<div class="empty">保存履歴はまだありません</div>';return}box.innerHTML=state.history.map(r=>`<div class="record"><div class="record-head"><div class="record-title">${esc(r.eventName)}</div><strong>${r.done}/${r.total}</strong></div><div class="record-meta">日付：${esc(r.date)}　担当：${esc(r.staff)}<br>${r.place?`会場：${esc(r.place)}<br>`:""}${r.vehicle?`車両：${esc(r.vehicle)}<br>`:""}${r.memo?`メモ：${esc(r.memo)}`:""}</div><div class="toolbar"><button class="ghost" onclick="restoreHistory(${r.id})">呼び出す</button><button class="danger" onclick="deleteHistory(${r.id})">履歴削除</button></div></div>`).join("")}
-function restoreHistory(id){const r=state.history.find(x=>x.id===id);if(!r)return;state.items=JSON.parse(JSON.stringify(r.items));setVal("eventName",r.eventName);setVal("eventDate",r.date);setVal("staffName",r.staff);setVal("place",r.place);setVal("vehicle",r.vehicle);setVal("memo",r.memo);save();renderItems();jump("listSec")}
+function completeLoading(){
+  if(!state.items.length){alert("積込み項目がありません");return}
+  const remain=state.items.filter(x=>!x.done).length;
+  if(remain>0&&!confirm(`未確認が${remain}件あります。このまま保存しますか？`))return;
+  state.history.unshift({id:Date.now(),eventName:val("eventName").trim()||"名称未設定",date:val("eventDate")||today(),staff:val("staffName").trim()||"繁充",place:val("place").trim(),vehicle:val("vehicle").trim(),memo:val("memo").trim(),total:state.items.length,done:state.items.filter(x=>x.done).length,items:JSON.parse(JSON.stringify(state.items))});
+  save();renderHistory();alert("積込み完了として保存しました")
+}
+function renderHistory(){
+  const box=document.getElementById("historyList");
+  if(!state.history.length){box.innerHTML='<div class="empty">保存履歴はまだありません</div>';return}
+  box.innerHTML=state.history.map(r=>`<div class="record"><div class="record-head"><div class="record-title">${esc(r.eventName)}</div><strong>${r.done}/${r.total}</strong></div><div class="record-meta">日付：${esc(r.date)}　担当：${esc(r.staff)}<br>${r.place?`会場：${esc(r.place)}<br>`:""}${r.vehicle?`車両：${esc(r.vehicle)}<br>`:""}${r.memo?`メモ：${esc(r.memo)}`:""}</div><div class="toolbar"><button class="ghost" onclick="restoreHistory(${r.id})">呼び出す</button><button class="danger" onclick="deleteHistory(${r.id})">履歴削除</button></div></div>`).join("")
+}
+function restoreHistory(id){
+  const r=state.history.find(x=>x.id===id);if(!r)return;
+  state.items=JSON.parse(JSON.stringify(r.items));
+  setVal("eventName",r.eventName);setVal("eventDate",r.date);setVal("staffName",r.staff);setVal("place",r.place);setVal("vehicle",r.vehicle);setVal("memo",r.memo);
+  save();renderItems();jump("listSec")
+}
 function deleteHistory(id){if(confirm("この履歴を削除しますか？")){state.history=state.history.filter(x=>x.id!==id);save();renderHistory()}}
-function boot(){load();renderCategories();renderItems();renderHistory();setVal("eventDate",val("eventDate")||today())}
+function boot(){load();renderCategories();renderCommon();renderItems();renderHistory();setVal("eventDate",val("eventDate")||today())}
 boot();
 </script>
-</body></html>
+</body>
+</html>
