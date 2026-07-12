@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.6</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.7</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1965,8 +1965,8 @@ function renderEventList(dateFilter) {
       var pOn=!!ev.partnerShared;
       var mOn=!!ev.partnerMenShared;
       partnerShareHtml='<div class="partner-share-row">'
-        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner" onclick="return directPartnerShare(this,event)">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
-        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men" onclick="return directPartnerShare(this,event)">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
         +'</div>';
     }
 
@@ -2067,27 +2067,33 @@ function togglePartnerShare(evt,eventId,target){
   return false;
 }
 
-// v4.4.6 共有ボタン直結。カード詳細より共有を必ず優先する
-function directPartnerShare(btn,e){
-  if(e){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation(); }
-  togglePartnerShare(e,btn.getAttribute('data-share-event-id'),btn.getAttribute('data-share-target'));
-  return false;
-}
-
-// v4.4.5 iPad/Safari対応: 各共有ボタンへ直接click処理を登録
+// v4.4.7 iPad/Safari対応：古いinline onclickを使わず、共有ボタンへ直接登録
 function bindPartnerShareButtons(){
   var buttons=document.querySelectorAll('.partner-share-btn');
-  buttons.forEach(function(btn){
-    if(btn.dataset.shareBound==='1') return;
-    btn.dataset.shareBound='1';
-    if(btn.getAttribute('onclick')) return;
-    btn.addEventListener('click',function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      var eventId=this.getAttribute('data-share-event-id');
-      var target=this.getAttribute('data-share-target');
-      togglePartnerShare(e,eventId,target);
+  Array.prototype.forEach.call(buttons,function(btn){
+    if(btn.__partnerShareBound) return;
+    btn.__partnerShareBound=true;
+    var lastTouch=0;
+    function run(e){
+      if(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      }
+      togglePartnerShare(null,btn.getAttribute('data-share-event-id'),btn.getAttribute('data-share-target'));
       return false;
+    }
+    btn.addEventListener('touchend',function(e){
+      lastTouch=Date.now();
+      run(e);
+    },{passive:false});
+    btn.addEventListener('click',function(e){
+      if(Date.now()-lastTouch<900){
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      return run(e);
     },false);
   });
 }
@@ -2098,9 +2104,9 @@ function downloadCurrentAppBackup(){
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.6-'+stamp+'.html';
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.7-'+stamp+'.html';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.6'); toast('🛟 アプリ本体を保存しました');
+  addAudit('アプリ本体保存','v4.4.7'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
