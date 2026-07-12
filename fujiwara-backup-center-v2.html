@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FUJIWARA Group Backup Center</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FG Backup">
+<meta name="theme-color" content="#07111f">
+<style>
+:root{--bg:#07111f;--panel:#0d1b2d;--panel2:#12253d;--line:#2a4564;--text:#f8fafc;--muted:#b8c7d9;--gold:#f8c84a;--green:#43d17b;--blue:#56b7ff;--red:#ff6464;--orange:#ffae57}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#06101d,#0a1828 55%,#07111f);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;padding-bottom:90px}
+header{position:sticky;top:0;z-index:20;background:rgba(7,17,31,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:14px 16px}
+.head{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand h1{font-size:22px;margin:0;color:var(--gold)}.brand p{font-size:12px;color:var(--muted);margin:4px 0 0}.status{font-size:12px;padding:7px 10px;border-radius:999px;background:#102a21;color:#9df5bb;border:1px solid #24553a;white-space:nowrap}
+main{max-width:1100px;margin:auto;padding:14px}.hero{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:13px}.metric b{font-size:22px;color:var(--gold)}.metric span{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.card{background:rgba(13,27,45,.96);border:1px solid var(--line);border-radius:20px;padding:15px;margin-top:13px;box-shadow:0 10px 30px rgba(0,0,0,.2)}.card h2{font-size:18px;margin:0 0 7px}.desc{font-size:13px;line-height:1.6;color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}button,.fileBtn{border:0;border-radius:13px;padding:11px 13px;font-weight:800;font-size:14px;cursor:pointer;background:var(--gold);color:#08111d}.secondary{background:var(--blue)}.green{background:var(--green)}.red{background:var(--red);color:white}.dark{background:#36506e;color:white}.orange{background:var(--orange)}button:disabled{opacity:.45;cursor:not-allowed}.fileBtn{display:inline-flex;align-items:center}.fileBtn input{display:none}
+.apps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}.app{background:#091727;border:1px solid var(--line);border-radius:16px;padding:12px}.appHead{display:flex;align-items:center;justify-content:space-between;gap:8px}.appName{font-weight:900}.badge{font-size:11px;border:1px solid var(--line);color:var(--muted);padding:4px 7px;border-radius:999px}.appMeta{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}.latest{color:#9df5bb}.missing{color:#ffd18a}
+input,select,textarea{width:100%;border:1px solid var(--line);background:#06101d;color:var(--text);border-radius:12px;padding:10px;font-size:15px}label{font-size:12px;color:var(--muted);display:block;margin:10px 0 5px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.list{margin-top:10px}.item{border-top:1px solid var(--line);padding:11px 0}.item:first-child{border-top:0}.itemTop{display:flex;justify-content:space-between;gap:10px}.title{font-weight:900}.meta{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}.gold{color:var(--gold)}.ok{color:#9df5bb}.warn{color:#ffd18a}.danger{color:#ffadad}.hidden{display:none}.notice{border-left:4px solid var(--gold);background:#17243a;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.6;margin-top:10px}.tabs{display:flex;gap:7px;overflow:auto;padding-bottom:3px}.tab{white-space:nowrap;background:#243b57;color:white;padding:9px 11px}.tab.active{background:var(--gold);color:#07111f}.panel{display:none}.panel.active{display:block}.progress{height:8px;background:#06101d;border-radius:99px;overflow:hidden;margin-top:7px}.bar{height:100%;background:var(--green);width:0}.small{font-size:12px;color:var(--muted)}code{background:#06101d;border:1px solid var(--line);border-radius:8px;padding:2px 5px}.footer{text-align:center;color:var(--muted);font-size:11px;margin-top:22px}
+@media(max-width:760px){.hero{grid-template-columns:1fr 1fr}.apps{grid-template-columns:1fr}.row{grid-template-columns:1fr}.brand p{display:none}.status{font-size:10px}.metric b{font-size:19px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="brand"><h1>🛡️ FUJIWARA Group Backup Center</h1><p>プログラム・データ・更新履歴を一括保護</p></div><div id="dbStatus" class="status">準備中…</div></div></header>
+<main>
+<section class="hero">
+ <div class="metric"><b id="mApps">0</b><span>登録アプリ</span></div>
+ <div class="metric"><b id="mVersions">0</b><span>保存バージョン</span></div>
+ <div class="metric"><b id="mSize">0 KB</b><span>保管容量</span></div>
+ <div class="metric"><b id="mLast">なし</b><span>最終バックアップ</span></div>
+</section>
+
+<section class="card">
+ <div class="tabs">
+  <button class="tab active" data-tab="dashboard">全体管理</button>
+  <button class="tab" data-tab="versions">履歴・復元</button>
+  <button class="tab" data-tab="data">アプリデータ</button>
+  <button class="tab" data-tab="pc">Windows同期</button>
+  <button class="tab" data-tab="settings">設定</button>
+ </div>
+</section>
+
+<section id="dashboard" class="panel active">
+ <div class="card">
+  <h2>① 最新HTMLをまとめて登録</h2>
+  <div class="desc">メイン・キングなどのHTMLを複数選択できます。ファイル名から自動判定し、同じアプリでも削除せず新しい履歴として保存します。</div>
+  <div class="toolbar">
+   <label class="fileBtn">📥 HTMLを複数選択<input id="multiFiles" type="file" accept=".html,.htm,.txt,.js,.css,.json" multiple></label>
+   <button class="green" id="snapshotAllBtn">💾 現在の全体バックアップ</button>
+   <button class="secondary" id="exportVaultBtn">📦 保管庫を書き出し</button>
+   <label class="fileBtn secondary">♻️ 保管庫を読み込む<input id="vaultImport" type="file" accept=".fgbackup,.json"></label>
+  </div>
+  <div id="importProgress" class="hidden"><div class="small" id="progressText"></div><div class="progress"><div id="progressBar" class="bar"></div></div></div>
+  <div class="notice"><b>安全ルール：</b>修正前に登録 → 修正後にも登録 → 完成版は「固定版」にする。保管庫ファイルはiCloud Driveの <code>FUJIWARA Group/Backup</code> に保存。</div>
+ </div>
+ <div class="card"><h2>② アプリ一覧</h2><div id="appsGrid" class="apps"></div></div>
+</section>
+
+<section id="versions" class="panel">
+ <div class="card">
+  <h2>バージョン履歴</h2>
+  <div class="row"><div><label>アプリ</label><select id="filterApp"></select></div><div><label>検索</label><input id="searchMemo" placeholder="例：完成、ログイン、共有"></div></div>
+  <div id="versionList" class="list"></div>
+ </div>
+</section>
+
+<section id="data" class="panel">
+ <div class="card">
+  <h2>アプリ入力データのバックアップ</h2>
+  <div class="desc">同じGitHub Pages内で使っているlocalStorageを保存します。イベント・日報・設定などがlocalStorage保存なら対象です。</div>
+  <div class="toolbar"><button id="saveDataBtn">📸 データ保存</button><button class="secondary" id="downloadDataBtn">⬇️ データのみ書き出し</button><label class="fileBtn orange">⬆️ データ復元<input id="dataImport" type="file" accept=".json"></label></div>
+  <div id="dataInfo" class="notice"></div>
+ </div>
+ <div class="card"><h2>保存済みデータ履歴</h2><div id="dataList" class="list"></div></div>
+</section>
+
+<section id="pc" class="panel">
+ <div class="card">
+  <h2>Windowsパソコンと自動同期</h2>
+  <div class="notice"><b>現在のiPadはiCloud同期済みです。</b><br>Windowsに「iCloud for Windows」を入れ、同じApple Accountでログインして「iCloud Drive」をONにすると、iPadで保存したファイルがパソコンにも自動反映されます。</div>
+  <h3>推奨フォルダ</h3>
+  <textarea readonly rows="12">iCloud Drive
+└─ FUJIWARA Group
+   ├─ Apps-Latest       ← 現在使う完成版
+   ├─ Backup            ← .fgbackup保管庫
+   ├─ Before-Update     ← 修正前HTML
+   ├─ After-Update      ← 修正後HTML
+   ├─ Icons
+   └─ Archive           ← 古い完成版</textarea>
+  <div class="desc">注意：iCloudは「同期」なので、誤って削除すると他端末でも消える場合があります。そのためBackupフォルダに日付付き保管庫を残し、GitHubにも完成版を置く二重管理が安全です。</div>
+  <div class="toolbar"><button id="launcherBtn" class="secondary">🖥️ パソコン用アプリ一覧HTMLを作る</button><button id="downloadLatestBtn" class="green">⬇️ 各アプリ最新版を保存</button></div>
+ </div>
+</section>
+
+<section id="settings" class="panel">
+ <div class="card"><h2>保管設定</h2>
+  <label>各アプリで残す通常履歴数（固定版は消しません）</label><input id="keepCount" type="number" min="3" max="100" value="20">
+  <label>GitHub Pages 基本URL</label><input id="baseUrl" value="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/">
+  <div class="toolbar"><button id="saveSettingsBtn">設定保存</button><button id="cleanupBtn" class="orange">古い通常履歴を整理</button><button id="resetBtn" class="red">保管庫を初期化</button></div>
+ </div>
+ <div class="card"><h2>容量と動作確認</h2><div id="quotaInfo" class="notice">確認中…</div><div class="toolbar"><button id="healthBtn" class="secondary">保管庫を点検</button></div></div>
+</section>
+<div class="footer">FUJIWARA Group Backup Center v2.0 / IndexedDB保管版</div>
+</main>
+<script>
+'use strict';
+const DB_NAME='FUJIWARA_BACKUP_CENTER_V2', DB_VERSION=1;
+const DEFAULT_APPS=[
+ {id:'main',name:'メインアプリ',icon:'📅',patterns:['index.html','main','fujiwara-group']},
+ {id:'king',name:'キングアプリ',icon:'👑',patterns:['king','president']},
+ {id:'construction',name:'建設アプリ',icon:'🏗️',patterns:['construction','kensetsu']},
+ {id:'office',name:'事務員アプリ',icon:'👩‍💼',patterns:['office','timecard']},
+ {id:'partner',name:'partnerアプリ',icon:'🐶',patterns:['partner.html','partner-app']},
+ {id:'partnermen',name:'partner menアプリ',icon:'🐷',patterns:['partnermen','partner-men','partner_men']},
+ {id:'list',name:'リストアプリ',icon:'📋',patterns:['list','shopping','neta']},
+ {id:'talk',name:'LINE風アプリ',icon:'💬',patterns:['event-talk','talk','chat']},
+ {id:'backup',name:'バックアップアプリ',icon:'🛡️',patterns:['backup-center','backup-manager']},
+ {id:'other',name:'その他',icon:'📦',patterns:[]}
+];
+let db;
+const $=id=>document.getElementById(id);
+function reqP(req){return new Promise((res,rej)=>{req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error)})}
+function txDone(tx){return new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)})}
+async function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('versions')){const s=d.createObjectStore('versions',{keyPath:'id'});s.createIndex('appId','appId');s.createIndex('createdAt','createdAt')}if(!d.objectStoreNames.contains('snapshots')){const s=d.createObjectStore('snapshots',{keyPath:'id'});s.createIndex('createdAt','createdAt')}if(!d.objectStoreNames.contains('settings'))d.createObjectStore('settings',{keyPath:'key'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function getAll(store){return reqP(db.transaction(store).objectStore(store).getAll())}
+async function put(store,obj){const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(obj);await txDone(tx)}
+async function del(store,id){const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(id);await txDone(tx)}
+async function getSetting(key,def){const v=await reqP(db.transaction('settings').objectStore('settings').get(key));return v?v.value:def}
+async function setSetting(key,value){await put('settings',{key,value})}
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(16).slice(2)}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]))}
+function fmtBytes(n){if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';return (n/1048576).toFixed(1)+' MB'}
+function fmtDate(x){if(!x)return'なし';return new Date(x).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function safeName(s){return String(s).replace(/[\\/:*?"<>|]+/g,'_')}
+async function sha256(text){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function detectApp(filename){const n=filename.toLowerCase();for(const a of DEFAULT_APPS.filter(x=>x.id!=='other')){if(a.patterns.some(p=>n.includes(p)))return a}return DEFAULT_APPS.find(x=>x.id==='other')}
+function download(text,name,type='application/octet-stream'){const blob=new Blob([text],{type});const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+async function readText(file){return await file.text()}
+async function importFiles(files){if(!files.length)return; $('importProgress').classList.remove('hidden');let i=0;for(const file of files){$('progressText').textContent=`${file.name} を保存中（${i+1}/${files.length}）`;$('progressBar').style.width=`${Math.round(i/files.length*100)}%`;const code=await readText(file);const app=detectApp(file.name);const hash=await sha256(code);const all=await getAll('versions');const duplicate=all.find(v=>v.hash===hash&&v.appId===app.id);if(!duplicate){await put('versions',{id:uid(),appId:app.id,appName:app.name,filename:file.name,memo:'ファイル登録',code,size:new Blob([code]).size,hash,createdAt:new Date().toISOString(),golden:false})}i++}$('progressBar').style.width='100%';$('progressText').textContent='登録完了';setTimeout(()=>$('importProgress').classList.add('hidden'),1200);await refresh()}
+async function saveLocalSnapshot(note='手動保存'){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);data[k]=localStorage.getItem(k)};await put('snapshots',{id:uid(),createdAt:new Date().toISOString(),note,url:location.href,data,size:new Blob([JSON.stringify(data)]).size});await refresh();alert('アプリ入力データを保存しました')}
+async function exportVault(){const versions=await getAll('versions'),snapshots=await getAll('snapshots');const settings={keepCount:await getSetting('keepCount',20),baseUrl:await getSetting('baseUrl','https://yakamikoujinen-stack.github.io/FUJIWARA-Group/')};const obj={format:'FUJIWARA_FGBACKUP_V2',createdAt:new Date().toISOString(),versions,snapshots,settings};download(JSON.stringify(obj,null,2),`FUJIWARA_完全保管庫_${new Date().toISOString().replace(/[:.]/g,'-')}.fgbackup`,'application/json')}
+async function importVault(file){try{const obj=JSON.parse(await file.text());if(obj.format!=='FUJIWARA_FGBACKUP_V2')throw Error('形式が違います');for(const v of obj.versions||[])await put('versions',v);for(const s of obj.snapshots||[])await put('snapshots',s);if(obj.settings){for(const[k,v]of Object.entries(obj.settings))await setSetting(k,v)}await refresh();alert('保管庫を復元しました')}catch(e){alert('読み込み失敗：'+e.message)}}
+async function renderApps(){const vs=await getAll('versions'),grid=$('appsGrid');grid.innerHTML='';for(const app of DEFAULT_APPS.filter(a=>a.id!=='other')){const arr=vs.filter(v=>v.appId===app.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));const latest=arr[0];const el=document.createElement('div');el.className='app';el.innerHTML=`<div class="appHead"><div class="appName">${app.icon} ${app.name}</div><span class="badge">${arr.length}版</span></div><div class="appMeta">${latest?`<span class="latest">最新：${esc(latest.filename)}</span><br>${fmtDate(latest.createdAt)}・${fmtBytes(latest.size)}`:`<span class="missing">未登録</span>`}</div><div class="toolbar">${latest?`<button class="secondary" onclick="downloadVersion('${latest.id}')">最新版保存</button><button class="dark" onclick="showVersions('${app.id}')">履歴</button>`:''}</div>`;grid.appendChild(el)}}
+async function renderMetrics(){const vs=await getAll('versions'),ss=await getAll('snapshots');const appCount=new Set(vs.map(v=>v.appId).filter(x=>x!=='other')).size,total=vs.reduce((s,v)=>s+(v.size||0),0)+ss.reduce((s,v)=>s+(v.size||0),0),latest=[...vs,...ss].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];$('mApps').textContent=appCount;$('mVersions').textContent=vs.length;$('mSize').textContent=fmtBytes(total);$('mLast').textContent=latest?fmtDate(latest.createdAt):'なし'}
+async function renderVersions(){const vs=(await getAll('versions')).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),filter=$('filterApp').value||'all',q=$('searchMemo').value.toLowerCase();const arr=vs.filter(v=>(filter==='all'||v.appId===filter)&&(!q||(v.memo+' '+v.filename+' '+v.appName).toLowerCase().includes(q)));$('versionList').innerHTML=arr.length?arr.map(v=>`<div class="item"><div class="itemTop"><div><div class="title">${v.golden?'⭐ ':''}${esc(v.appName)} — ${esc(v.filename)}</div><div class="meta">${fmtDate(v.createdAt)}・${fmtBytes(v.size)}・SHA ${v.hash.slice(0,10)}…<br>${esc(v.memo||'')}</div></div><span class="badge ${v.golden?'gold':''}">${v.golden?'固定版':'通常版'}</span></div><div class="toolbar"><button class="secondary" onclick="downloadVersion('${v.id}')">HTML保存</button><button onclick="toggleGolden('${v.id}')">${v.golden?'固定解除':'固定版にする'}</button><button class="dark" onclick="editMemo('${v.id}')">メモ</button><button class="red" onclick="deleteVersion('${v.id}')">削除</button></div></div>`).join(''):'<div class="desc">該当する履歴はありません。</div>'}
+async function renderSnapshots(){const ss=(await getAll('snapshots')).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));$('dataInfo').innerHTML=`現在のlocalStorage：<b>${localStorage.length}</b>項目。保存済み：<b>${ss.length}</b>回。`; $('dataList').innerHTML=ss.length?ss.map(s=>`<div class="item"><div class="title">📸 ${fmtDate(s.createdAt)} — ${esc(s.note)}</div><div class="meta">${Object.keys(s.data||{}).length}項目・${fmtBytes(s.size||0)}・${esc(s.url||'')}</div><div class="toolbar"><button class="secondary" onclick="downloadSnapshot('${s.id}')">書き出し</button><button class="orange" onclick="restoreSnapshot('${s.id}')">復元</button><button class="red" onclick="deleteSnapshot('${s.id}')">削除</button></div></div>`).join(''):'<div class="desc">まだデータ履歴はありません。</div>'}
+async function quota(){if(navigator.storage?.estimate){const e=await navigator.storage.estimate();$('quotaInfo').innerHTML=`使用量：約 <b>${fmtBytes(e.usage||0)}</b> ／ 利用可能：約 <b>${fmtBytes(e.quota||0)}</b><br>端末やブラウザの空き容量により変化します。`}else $('quotaInfo').textContent='この端末では容量確認に対応していません。'}
+async function refresh(){await Promise.all([renderApps(),renderMetrics(),renderVersions(),renderSnapshots(),quota()]);$('dbStatus').textContent='保管庫 正常'}
+window.downloadVersion=async id=>{const v=(await getAll('versions')).find(x=>x.id===id);if(v)download(v.code,v.filename,'text/html')};
+window.showVersions=id=>{$('filterApp').value=id;switchTab('versions');renderVersions()};
+window.toggleGolden=async id=>{const v=(await getAll('versions')).find(x=>x.id===id);if(v){v.golden=!v.golden;await put('versions',v);await refresh()}};
+window.editMemo=async id=>{const v=(await getAll('versions')).find(x=>x.id===id);if(v){const m=prompt('更新内容・メモ',v.memo||'');if(m!==null){v.memo=m;await put('versions',v);await refresh()}}};
+window.deleteVersion=async id=>{if(confirm('この履歴を削除しますか？')){await del('versions',id);await refresh()}};
+window.downloadSnapshot=async id=>{const s=(await getAll('snapshots')).find(x=>x.id===id);if(s)download(JSON.stringify({format:'FUJIWARA_LOCALDATA_V1',...s},null,2),`FUJIWARA_入力データ_${s.createdAt.slice(0,10)}.json`,'application/json')};
+window.restoreSnapshot=async id=>{const s=(await getAll('snapshots')).find(x=>x.id===id);if(!s)return;if(!confirm('現在の入力データへ上書き復元します。よろしいですか？'))return;for(const[k,v]of Object.entries(s.data||{}))localStorage.setItem(k,v);alert('復元しました。対象アプリを再読み込みしてください。')};
+window.deleteSnapshot=async id=>{if(confirm('このデータ履歴を削除しますか？')){await del('snapshots',id);await refresh()}};
+function switchTab(id){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id))}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+$('multiFiles').onchange=e=>importFiles([...e.target.files]);
+$('snapshotAllBtn').onclick=async()=>{await saveLocalSnapshot('全体バックアップ時');await exportVault()};
+$('exportVaultBtn').onclick=exportVault;
+$('vaultImport').onchange=e=>e.target.files[0]&&importVault(e.target.files[0]);
+$('saveDataBtn').onclick=()=>saveLocalSnapshot('手動保存');
+$('downloadDataBtn').onclick=async()=>{const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);data[k]=localStorage.getItem(k)}download(JSON.stringify({format:'FUJIWARA_LOCALDATA_V1',createdAt:new Date().toISOString(),data},null,2),`FUJIWARA_入力データ_${new Date().toISOString().slice(0,10)}.json`,'application/json')};
+$('dataImport').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());if(!o.data)throw Error('データなし');if(!confirm('現在のlocalStorageへ上書きしますか？'))return;for(const[k,v]of Object.entries(o.data))localStorage.setItem(k,v);await saveLocalSnapshot('外部ファイルから復元');alert('復元完了')}catch(err){alert('復元失敗：'+err.message)}};
+$('filterApp').onchange=renderVersions;$('searchMemo').oninput=renderVersions;
+$('saveSettingsBtn').onclick=async()=>{await setSetting('keepCount',Number($('keepCount').value));await setSetting('baseUrl',$('baseUrl').value.trim());alert('設定保存しました')};
+$('cleanupBtn').onclick=async()=>{const keep=Number($('keepCount').value||20),vs=await getAll('versions');for(const app of DEFAULT_APPS){const arr=vs.filter(v=>v.appId===app.id&&!v.golden).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));for(const v of arr.slice(keep))await del('versions',v.id)}await refresh();alert('古い通常履歴を整理しました')};
+$('resetBtn').onclick=async()=>{if(!confirm('全履歴を初期化します。先に保管庫を書き出しましたか？'))return;db.close();indexedDB.deleteDatabase(DB_NAME);alert('初期化しました。画面を再読み込みします。');location.reload()};
+$('healthBtn').onclick=async()=>{const vs=await getAll('versions');let bad=0;for(const v of vs){if(await sha256(v.code)!==v.hash)bad++}alert(bad?`破損の可能性：${bad}件`:`点検完了。${vs.length}件すべて正常です。`)};
+$('launcherBtn').onclick=async()=>{const vs=await getAll('versions'),base=await getSetting('baseUrl','https://yakamikoujinen-stack.github.io/FUJIWARA-Group/');const cards=DEFAULT_APPS.filter(a=>a.id!=='other'&&a.id!=='backup').map(a=>{const v=vs.filter(x=>x.appId===a.id).sort((x,y)=>y.createdAt.localeCompare(x.createdAt))[0];return `<a class="app" href="${base}${v?encodeURIComponent(v.filename):''}" target="_blank"><b>${a.icon} ${a.name}</b><span>${v?`開く：${v.filename}`:'未登録'}</span></a>`}).join('');const html=`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>FUJIWARA Group アプリ一覧</title><style>body{font-family:sans-serif;background:#07111f;color:white;padding:20px}h1{color:#f8c84a}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.app{background:#12253d;color:white;text-decoration:none;padding:18px;border-radius:16px;border:1px solid #2a4564}.app b,.app span{display:block}.app span{color:#b8c7d9;font-size:12px;margin-top:7px}</style><h1>FUJIWARA Group</h1><div class="grid">${cards}</div>`;download(html,'FUJIWARA-Group-PC-Launcher.html','text/html')};
+$('downloadLatestBtn').onclick=async()=>{const vs=await getAll('versions');const latest=[];for(const a of DEFAULT_APPS){const v=vs.filter(x=>x.appId===a.id).sort((x,y)=>y.createdAt.localeCompare(x.createdAt))[0];if(v)latest.push(v)}if(!latest.length)return alert('最新版がありません');if(!confirm(`${latest.length}ファイルを順番に保存します。ブラウザの複数ダウンロード許可が必要な場合があります。`))return;for(const v of latest){download(v.code,v.filename,'text/html');await new Promise(r=>setTimeout(r,350))}};
+(async()=>{try{db=await openDB();$('filterApp').innerHTML='<option value="all">すべて</option>'+DEFAULT_APPS.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');$('keepCount').value=await getSetting('keepCount',20);$('baseUrl').value=await getSetting('baseUrl','https://yakamikoujinen-stack.github.io/FUJIWARA-Group/');await refresh();const last=await getSetting('lastAutoSnapshot','');const today=new Date().toISOString().slice(0,10);if(last!==today&&localStorage.length){await saveLocalSnapshot('1日1回の自動保存');await setSetting('lastAutoSnapshot',today)}}catch(e){$('dbStatus').textContent='エラー';alert('保管庫を開けません：'+e.message)}})();
+</script>
+</body>
+</html>
