@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.0</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1975,13 +1975,14 @@ function renderEventList(dateFilter) {
 
 
 // ════ v4.4.0 PARTNER共有（リーダー専用） ════
+// partner共有仕様: シークレットも共有可。日付・イベント名・場所・ネタのみ。参加スタッフ/責任者/出勤回答は送信しない。
 function partnerSharePayload(ev){
   return {
     id:'main_'+String(ev.id), mainId:String(ev.id),
     date:ev.date||'', dateEnd:ev.dateEnd||'',
     title:ev.name||'イベント', name:ev.name||'イベント',
     place:ev.place||'', location:ev.place||'',
-    itemsText:ev.itemsText||'', secret:!!ev.secret,
+    itemsText:ev.itemsText||'', secret:false,
     updatedAt:new Date().toISOString(), sharedBy:userName||'リーダー'
   };
 }
@@ -2000,7 +2001,6 @@ function togglePartnerShare(eventId,target){
   if(role!=='leader'){ toast('⛔ 共有操作はリーダーだけです'); return; }
   var ev=state.events.find(function(x){ return String(x.id)===String(eventId); });
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
-  if(isSecretEvent(ev)){ toast('🔒 シークレットイベントは共有できません'); return; }
   var isMen=target==='men';
   var field=isMen?'partnerMenShared':'partnerShared';
   var next=!ev[field];
@@ -2031,9 +2031,9 @@ function downloadCurrentAppBackup(){
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.0-'+stamp+'.html';
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.1-'+stamp+'.html';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.0'); toast('🛟 アプリ本体を保存しました');
+  addAudit('アプリ本体保存','v4.4.1'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
