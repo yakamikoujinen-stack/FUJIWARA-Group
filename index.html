@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.5.0</title>
+<title>FUJIWARA GROUP 販売管理 v4.5.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1983,8 +1983,9 @@ function renderEventList(dateFilter) {
 
     var partnerShareHtml='';
     if(role==='leader'){
-      var pOn=!!ev.partnerShared;
-      var mOn=!!ev.partnerMenShared;
+      var savedFlags=getPartnerShareFlags(String(ev.id));
+      var pOn=!!ev.partnerShared || !!savedFlags.partner;
+      var mOn=!!ev.partnerMenShared || !!savedFlags.men;
       partnerShareHtml='<div class="partner-share-row">'
         +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner" aria-pressed="'+(pOn?'true':'false')+'">🐩 '+(pOn?'✅ partner共有中・解除':'partnerへ共有')+'</button>'
         +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men" aria-pressed="'+(mOn?'true':'false')+'">🦍🐷 '+(mOn?'✅ MEN共有中・解除':'MENへ共有')+'</button>'
@@ -2046,6 +2047,31 @@ function partnerSharePayload(ev){
     updatedAt:new Date().toISOString(), sharedBy:userName||'リーダー'
   };
 }
+function getPartnerShareFlagStore(){
+  try{ var x=JSON.parse(localStorage.getItem('fujiwara_partner_share_flags_v1')||'{}'); return x&&typeof x==='object'?x:{}; }
+  catch(e){ return {}; }
+}
+function getPartnerShareFlags(id){
+  var all=getPartnerShareFlagStore();
+  return all[String(id)]||{partner:false,men:false};
+}
+function savePartnerShareFlag(id,target,on){
+  try{
+    var all=getPartnerShareFlagStore(), key=String(id), row=all[key]||{partner:false,men:false};
+    row[target==='men'?'men':'partner']=!!on;
+    if(!row.partner&&!row.men) delete all[key]; else all[key]=row;
+    localStorage.setItem('fujiwara_partner_share_flags_v1',JSON.stringify(all));
+  }catch(e){ console.warn('共有色保存エラー',e); }
+}
+function applyPartnerShareButtonVisual(eventId,target,on){
+  var selector='.partner-share-btn[data-share-event-id="'+String(eventId).replace(/"/g,'\\"')+'"][data-share-target="'+target+'"]';
+  var btn=document.querySelector(selector);
+  if(!btn) return;
+  var isMen=target==='men';
+  btn.classList.toggle(isMen?'on-men':'on-partner',!!on);
+  btn.setAttribute('aria-pressed',on?'true':'false');
+  btn.textContent=isMen ? ('🦍🐷 '+(on?'✅ MEN共有中・解除':'MENへ共有')) : ('🐩 '+(on?'✅ partner共有中・解除':'partnerへ共有'));
+}
 function safeShareKey(id){ return String(id).replace(/[.#$\[\]\/]/g,'_'); }
 function updatePartnerLocal(storeKey, ev, enabled){
   try{
@@ -2066,6 +2092,8 @@ function togglePartnerShare(evt,eventId,target){
   var field=isMen?'partnerMenShared':'partnerShared';
   var next=!ev[field];
   ev[field]=next;
+  savePartnerShareFlag(ev.id,isMen?'men':'partner',next);
+  applyPartnerShareButtonVisual(ev.id,isMen?'men':'partner',next);
   var path=isMen?'fujiwara/partner_men_shared_events':'fujiwara/partner_shared_events';
   var store=isMen?'partner_men_events_v1':'partner_events_v4';
   updatePartnerLocal(store,ev,next);
@@ -2077,7 +2105,13 @@ function togglePartnerShare(evt,eventId,target){
         addAudit(next?'共有開始':'共有解除',(isMen?'partner MEN':'partner')+'｜'+ev.name);
         fbSave(); renderEventList(selectedDate||null);
         toast(next?'✅ 共有しました':'✅ 共有を解除しました');
-      }).catch(function(err){ ev[field]=!next; renderEventList(selectedDate||null); toast('⚠️ 共有エラー: '+err.message); });
+      }).catch(function(err){
+        ev[field]=!next;
+        savePartnerShareFlag(ev.id,isMen?'men':'partner',!next);
+        applyPartnerShareButtonVisual(ev.id,isMen?'men':'partner',!next);
+        renderEventList(selectedDate||null);
+        toast('⚠️ 共有エラー: '+err.message);
+      });
       renderEventList(selectedDate||null);
       return false;
     }
@@ -3657,6 +3691,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
           var pn=!!pIds[id], mn=!!mIds[id];
           if(!!ev.partnerShared!==pn){ ev.partnerShared=pn; changed=true; }
           if(!!ev.partnerMenShared!==mn){ ev.partnerMenShared=mn; changed=true; }
+          savePartnerShareFlag(ev.id,'partner',pn);
+          savePartnerShareFlag(ev.id,'men',mn);
         });
         if(changed){
           renderEventList(selectedDate||null);
