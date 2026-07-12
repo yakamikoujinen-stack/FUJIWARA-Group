@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.9</title>
+<title>FUJIWARA GROUP 販売管理 v4.5.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -2125,9 +2125,9 @@ function downloadCurrentAppBackup(){
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.9-'+stamp+'.html';
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.5.0-'+stamp+'.html';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.9'); toast('🛟 アプリ本体を保存しました');
+  addAudit('アプリ本体保存','v4.5.0'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
@@ -3628,7 +3628,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       return;
     }
     showSync('🔄 保存中...');
-    db.ref('fujiwara').set({
+    // partner共有領域を消さないよう、fujiwara全体のsetではなく必要項目だけupdateする
+    db.ref('fujiwara').update({
       events:state.events,
       invItems:state.invItems,
       notices:state.notices,
@@ -3638,9 +3639,38 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
   };
 
+
+  // v4.5.0 共有先の実データから共有済み状態を復元する
+  function restorePartnerShareFlags(){
+    try{
+      Promise.all([
+        db.ref('fujiwara/partner_shared_events').once('value'),
+        db.ref('fujiwara/partner_men_shared_events').once('value')
+      ]).then(function(snaps){
+        var p=snaps[0].val()||{}, m=snaps[1].val()||{};
+        var pIds={}, mIds={};
+        Object.keys(p).forEach(function(k){ var x=p[k]||{}; pIds[String(x.mainId||String(x.id||'').replace(/^main_/,''))]=true; });
+        Object.keys(m).forEach(function(k){ var x=m[k]||{}; mIds[String(x.mainId||String(x.id||'').replace(/^main_/,''))]=true; });
+        var changed=false;
+        (state.events||[]).forEach(function(ev){
+          var id=String(ev.id);
+          var pn=!!pIds[id], mn=!!mIds[id];
+          if(!!ev.partnerShared!==pn){ ev.partnerShared=pn; changed=true; }
+          if(!!ev.partnerMenShared!==mn){ ev.partnerMenShared=mn; changed=true; }
+        });
+        if(changed){
+          renderEventList(selectedDate||null);
+          if(typeof renderCalendar==='function') renderCalendar();
+          if(window._fgFirebaseReady) window._fbSave();
+        }
+      }).catch(function(e){ console.warn('共有状態復元エラー',e); });
+    }catch(e){ console.warn('共有状態復元エラー',e); }
+  }
+
   db.ref('fujiwara').on('value', function(snapshot){
     var data=snapshot.val();
     window._fgFirebaseReady = true;
+    setTimeout(restorePartnerShareFlags,0);
     if(!data) return;
     if(data.events){
       var arr=Array.isArray(data.events)?data.events:Object.values(data.events);
