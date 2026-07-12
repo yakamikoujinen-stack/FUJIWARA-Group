@@ -150,6 +150,24 @@
   <div class="toast" id="toast"></div>
 
 <script>
+
+try{
+  const raw = localStorage.getItem("fujiwara_manager_apps_v1");
+  if(raw){
+    const saved = JSON.parse(raw);
+    let changed = false;
+    if(Array.isArray(saved)){
+      saved.forEach(item=>{
+        if(item && item.key==="neta" && item.url==="neta-list.html"){
+          item.url="neta-shopping-list.html";
+          changed=true;
+        }
+      });
+      if(changed) localStorage.setItem("fujiwara_manager_apps_v1", JSON.stringify(saved));
+    }
+  }
+}catch(e){}
+
 const DEFAULTS = [
   {
     key:"neta", icon:"📋", title:"ネタ一覧表アプリ", owner:"文太",
