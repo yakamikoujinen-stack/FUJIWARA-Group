@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.5</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -487,6 +487,10 @@ body::before,#app::before,.page::before{
 .partner-share-btn{min-height:38px;padding:8px 11px;border-radius:10px;font-size:11px;font-weight:900;border:1.5px solid #d8bf75;background:#fffaf0;color:#4d3a00;}
 .partner-share-btn.on-partner{background:#ffe7f0;border-color:#e58aaa;color:#8b2853;}
 .partner-share-btn.on-men{background:#e7f2ff;border-color:#78aee8;color:#174f82;}
+.partner-share-btn{position:relative;z-index:5;touch-action:manipulation;-webkit-tap-highlight-color:rgba(184,134,11,.18);pointer-events:auto!important;}
+.ev-card.event-done{background:#eeeeea!important;border-color:#b8b8b0!important;border-left-color:#888!important;opacity:.78;}
+.ev-card.event-done .ev-name,.ev-card.event-done .ev-meta{color:#666!important;}
+
 .leader-app-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px;}
 .leader-app-card{display:flex;align-items:center;gap:10px;text-decoration:none;color:#241900;background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:11px;min-height:66px;box-shadow:0 2px 8px rgba(80,55,0,.07);}
 .leader-app-card .app-emoji{font-size:27px;flex:0 0 auto;}.leader-app-card b{display:block;font-size:13px;}.leader-app-card small{display:block;color:#6d5a2b;font-size:10px;margin-top:2px;line-height:1.35;}
@@ -705,6 +709,17 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
+    <!-- LEADER ATTENDANCE LIST -->
+    <div class="page" id="page-attendance">
+      <div class="pg">
+        <p class="page-title">👥 出勤一覧</p>
+        <p class="page-sub">イベント別の参加スタッフ・回答状況</p>
+        <div class="admin-badge">🔒 リーダーのみ</div>
+        <div class="settings-group" id="attendance-list-area"></div>
+        <button class="btn btn-outline btn-sm btn-full" onclick="renderAttendancePage()">一覧を更新</button>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="pg">
@@ -719,7 +734,7 @@ body::before,#app::before,.page::before{
             <div class="sec-title" style="margin:4px 0 8px">👑 リーダー専用・全アプリ一覧</div>
             <div class="version-guard">
               一般ユーザー・担当者には表示されません。修正前の完成版を残し、確認済みの版だけを正式版にします。<br>
-              現在の基準版：<b>v4.4.0</b>
+              現在の基準版：<b>v4.4.6</b>
             </div>
             <div class="leader-app-grid">
               <a class="leader-app-card" href="index.html"><span class="app-emoji">🛡️</span><span><b>メインアプリ</b><small>イベント・在庫・売上・共有</small></span></a>
@@ -1148,6 +1163,7 @@ var NAV = {
     {id:'inventory',icon:'📦', label:'在庫'},
     {id:'shopping', icon:'🛒', label:'買い物'},
     {id:'sales',    icon:'📊', label:'売上・経費'},
+    {id:'attendance', icon:'👥', label:'出勤一覧'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1463,7 +1479,22 @@ function doLogout() {
 })();
 
 // ════ INIT ════
+
+function removeKnownTestEventsOnce(){
+  var key='fg_removed_test_events_v446';
+  if(localStorage.getItem(key)==='1') return;
+  var testNames=['春の文化祭','クラフトフェア','地域夏祭り'];
+  var before=(state.events||[]).length;
+  state.events=(state.events||[]).filter(function(ev){
+    var n=String(ev.name||'').trim();
+    return testNames.indexOf(n)<0 && n.indexOf('テストイベント')<0;
+  });
+  if(state.events.length!==before){ fbSave(); }
+  localStorage.setItem(key,'1');
+}
+
 function initApp() {
+  removeKnownTestEventsOnce();
   var badge = document.getElementById('role-badge');
   var labels = {leader:'👑 リーダー', staff:'🏷️ 担当者', user:'👤 一般'};
   var cls    = {leader:'rb-leader', staff:'rb-staff', user:'rb-user'};
@@ -1592,6 +1623,7 @@ function showPage(id) {
   if(id==='sales') renderSalesPage();
   if(id==='shopping') renderShoppingPage();
   if(id==='belongings') renderBelongingsPage();
+  if(id==='attendance') renderAttendancePage();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var p = document.getElementById('page-'+id);
@@ -1886,6 +1918,12 @@ function renderEventList(dateFilter) {
     label.textContent='今月のイベント（'+evs.length+'件）';
   }
 
+  evs.sort(function(a,b){
+    var ad=a.status==='done'?1:0, bd=b.status==='done'?1:0;
+    if(ad!==bd) return ad-bd;
+    return String(a.date||'').localeCompare(String(b.date||''));
+  });
+
   var canEdit=role==='leader'||role==='staff';
   var container=document.getElementById('event-list');
   if(!evs.length){ container.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>イベントなし</p></div>'; return; }
@@ -1927,8 +1965,8 @@ function renderEventList(dateFilter) {
       var pOn=!!ev.partnerShared;
       var mOn=!!ev.partnerMenShared;
       partnerShareHtml='<div class="partner-share-row">'
-        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
-        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner" onclick="return directPartnerShare(this,event)">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men" onclick="return directPartnerShare(this,event)">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
         +'</div>';
     }
 
@@ -1952,7 +1990,7 @@ function renderEventList(dateFilter) {
       }
     }
 
-    return '<div class="ev-card" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
+    return '<div class="ev-card '+(ev.status==='done'?'event-done':'')+'" style="border-left-color:'+borderColor+'" onclick="if(!event.target.closest(\'button,a,input,select,textarea\')) openBSheet(\''+ev.id+'\')">'
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
@@ -2029,12 +2067,20 @@ function togglePartnerShare(evt,eventId,target){
   return false;
 }
 
+// v4.4.6 共有ボタン直結。カード詳細より共有を必ず優先する
+function directPartnerShare(btn,e){
+  if(e){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation(); }
+  togglePartnerShare(e,btn.getAttribute('data-share-event-id'),btn.getAttribute('data-share-target'));
+  return false;
+}
+
 // v4.4.5 iPad/Safari対応: 各共有ボタンへ直接click処理を登録
 function bindPartnerShareButtons(){
   var buttons=document.querySelectorAll('.partner-share-btn');
   buttons.forEach(function(btn){
     if(btn.dataset.shareBound==='1') return;
     btn.dataset.shareBound='1';
+    if(btn.getAttribute('onclick')) return;
     btn.addEventListener('click',function(e){
       e.preventDefault();
       e.stopPropagation();
@@ -2052,9 +2098,9 @@ function downloadCurrentAppBackup(){
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.5-'+stamp+'.html';
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.6-'+stamp+'.html';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.5'); toast('🛟 アプリ本体を保存しました');
+  addAudit('アプリ本体保存','v4.4.6'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
@@ -3233,6 +3279,14 @@ function renderLeaderEventStaffList(){
       +'</div>'
       +'</div>';
   }).join('');
+}
+
+function renderAttendancePage(){
+  if(role!=='leader'){ toast('⛔ 出勤一覧はリーダー専用です'); showPage('calendar'); return; }
+  renderLeaderEventStaffList();
+  var src=document.getElementById('leader-event-staff-area');
+  var dst=document.getElementById('attendance-list-area');
+  if(dst) dst.innerHTML=src?src.innerHTML:'<div style="padding:14px">データなし</div>';
 }
 
 function renderStaffList() {
