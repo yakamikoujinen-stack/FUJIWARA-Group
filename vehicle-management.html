@@ -56,7 +56,7 @@ button{border:0;border-radius:11px;padding:11px 14px;font-weight:900;font-size:1
 .check input{width:22px;height:22px;flex:0 0 auto}
 .check.ng{background:#fff0f0;border-color:#efb4b4}
 .scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:920px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:1220px;background:#fff}
 th{background:#edf5fb;color:#27445d;border:1px solid var(--line);padding:9px 7px;font-size:12px;text-align:left;white-space:nowrap}
 td{border:1px solid #e4ecf2;padding:7px;font-size:13px;vertical-align:middle}
 td input{font-size:15px;padding:8px}
@@ -104,6 +104,10 @@ td input{font-size:15px;padding:8px}
   <div class="grid4">
     <div><label>車名</label><input id="carName" placeholder="例：ハイエース"></div>
     <div><label>車番</label><input id="carNo" placeholder="例：神戸 100 あ 12-34"></div>
+    <div><label>車検証の車両番号</label><input id="certificateNo" placeholder="例：KDH201-0123456"></div>
+    <div><label>車両名義</label><input id="registeredOwner" placeholder="例：藤原一工業合同会社"></div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
     <div><label>点検日</label><input id="checkDate" type="date"></div>
     <div><label>点検者</label><input id="checker" value="将"></div>
   </div>
@@ -138,6 +142,10 @@ td input{font-size:15px;padding:8px}
   <div class="grid4">
     <div><label>車名</label><input id="shakenCarName" placeholder="例：ハイエース"></div>
     <div><label>車番</label><input id="shakenCarNo" placeholder="例：神戸 100 あ 12-34"></div>
+    <div><label>車検証の車両番号</label><input id="shakenCertificateNo" placeholder="例：KDH201-0123456"></div>
+    <div><label>車両名義</label><input id="shakenRegisteredOwner" placeholder="例：藤原一工業合同会社"></div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
     <div><label>車検日</label><input id="shakenDate" type="date"></div>
     <div><label>前回の総費用</label><input id="lastCost" type="number" placeholder="円"></div>
   </div>
@@ -160,6 +168,8 @@ td input{font-size:15px;padding:8px}
           <th>期限状況</th>
           <th>車名</th>
           <th>車番</th>
+          <th>車検証の車両番号</th>
+          <th>車両名義</th>
           <th>車検日</th>
           <th>前回の総費用</th>
           <th>業者・店</th>
@@ -238,6 +248,8 @@ function saveInspection(){
   state.inspections.unshift({
     id:Date.now(),
     carName,carNo,
+    certificateNo:val("certificateNo").trim(),
+    registeredOwner:val("registeredOwner").trim(),
     date:val("checkDate")||today(),
     checker:val("checker").trim()||"将",
     mileage:Number(val("mileage"))||0,
@@ -260,6 +272,7 @@ function renderInspectionList(){
       </div>
       <div class="record-meta">
         点検日：${esc(r.date)}　点検者：${esc(r.checker)}　走行距離：${Number(r.mileage).toLocaleString()}km<br>
+        車検証の車両番号：${esc(r.certificateNo||"未登録")}　車両名義：${esc(r.registeredOwner||"未登録")}<br>
         ${ng.length?'異常項目：'+esc(ng.join("、"))+'<br>':''}
         ${r.note?'メモ：'+esc(r.note):''}
       </div>
@@ -282,6 +295,8 @@ function saveShaken(){
   if(!carName||!carNo||!date){alert("車名・車番・車検日を入力してください");return}
   state.shaken.push({
     id:Date.now(),carName,carNo,date,
+    certificateNo:val("shakenCertificateNo").trim(),
+    registeredOwner:val("shakenRegisteredOwner").trim(),
     lastCost:Number(val("lastCost"))||0,
     shop:val("shakenShop").trim(),
     memo:val("shakenMemo").trim()
@@ -291,7 +306,7 @@ function saveShaken(){
   alert("車検情報を登録しました");
 }
 function clearShakenForm(){
-  ["shakenCarName","shakenCarNo","shakenDate","lastCost","shakenShop","shakenMemo"].forEach(id=>setVal(id,""));
+  ["shakenCarName","shakenCarNo","shakenCertificateNo","shakenRegisteredOwner","shakenDate","lastCost","shakenShop","shakenMemo"].forEach(id=>setVal(id,""));
 }
 function statusOf(dateStr){
   const now=new Date();now.setHours(0,0,0,0);
@@ -305,7 +320,7 @@ function renderShaken(){
   const body=document.getElementById("shakenBody");
   let soon=0,over=0;
   if(!state.shaken.length){
-    body.innerHTML='<tr><td colspan="8" class="empty">車検情報はまだありません</td></tr>';
+    body.innerHTML='<tr><td colspan="10" class="empty">車検情報はまだありません</td></tr>';
   }else{
     body.innerHTML=state.shaken.map(r=>{
       const s=statusOf(r.date);if(s.cls==="soon")soon++;if(s.cls==="over")over++;
@@ -313,6 +328,8 @@ function renderShaken(){
         <td><span class="badge ${s.cls}">${esc(s.text)}</span></td>
         <td><input value="${esc(r.carName)}" onblur="updateShaken(${r.id},'carName',this.value)"></td>
         <td><input value="${esc(r.carNo)}" onblur="updateShaken(${r.id},'carNo',this.value)"></td>
+        <td><input value="${esc(r.certificateNo||"")}" onblur="updateShaken(${r.id},'certificateNo',this.value)"></td>
+        <td><input value="${esc(r.registeredOwner||"")}" onblur="updateShaken(${r.id},'registeredOwner',this.value)"></td>
         <td><input type="date" value="${esc(r.date)}" onchange="updateShaken(${r.id},'date',this.value)"></td>
         <td><input type="number" value="${esc(r.lastCost)}" onblur="updateShaken(${r.id},'lastCost',this.value)"><div style="font-weight:900;margin-top:4px">${yen(r.lastCost)}</div></td>
         <td><input value="${esc(r.shop)}" onblur="updateShaken(${r.id},'shop',this.value)"></td>
