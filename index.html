@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.2</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1927,8 +1927,8 @@ function renderEventList(dateFilter) {
       var pOn=!!ev.partnerShared;
       var mOn=!!ev.partnerMenShared;
       partnerShareHtml='<div class="partner-share-row">'
-        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" onclick="return togglePartnerShare(event,\''+ev.id+'\',\'partner\')">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
-        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" onclick="return togglePartnerShare(event,\''+ev.id+'\',\'men\')">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
         +'</div>';
     }
 
@@ -1998,7 +1998,7 @@ function updatePartnerLocal(storeKey, ev, enabled){
   }catch(e){ console.warn('共有ローカル保存エラー',e); }
 }
 function togglePartnerShare(evt,eventId,target){
-  if(evt){ evt.preventDefault(); evt.stopPropagation(); }
+  if(evt){ evt.preventDefault(); evt.stopPropagation(); if(evt.stopImmediatePropagation) evt.stopImmediatePropagation(); }
   if(role!=='leader'){ toast('⛔ 共有操作はリーダーだけです'); return; }
   var ev=state.events.find(function(x){ return String(x.id)===String(eventId); });
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
@@ -2027,15 +2027,42 @@ function togglePartnerShare(evt,eventId,target){
   toast(next?'✅ 端末に共有しました':'✅ 共有を解除しました');
   return false;
 }
+
+// iPad/Safari対応: inline onclickやグローバルeventに依存しない共有ボタン専用処理
+(function installPartnerShareTapHandler(){
+  if(window.__partnerShareTapHandlerInstalled) return;
+  window.__partnerShareTapHandlerInstalled=true;
+  function handle(e){
+    var btn=e.target&&e.target.closest?e.target.closest('.partner-share-btn'):null;
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    var eventId=btn.getAttribute('data-share-event-id');
+    var target=btn.getAttribute('data-share-target');
+    togglePartnerShare(e,eventId,target);
+  }
+  document.addEventListener('click',handle,true);
+  document.addEventListener('touchend',function(e){
+    var btn=e.target&&e.target.closest?e.target.closest('.partner-share-btn'):null;
+    if(!btn) return;
+    // touchend直後のclick二重実行を防止
+    var now=Date.now();
+    if(btn.__lastShareTap&&now-btn.__lastShareTap<700){ e.preventDefault(); e.stopPropagation(); return; }
+    btn.__lastShareTap=now;
+    handle(e);
+  },{capture:true,passive:false});
+})();
+
 function downloadCurrentAppBackup(){
   if(role!=='leader'){ toast('⛔ リーダー専用です'); return; }
   var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.1-'+stamp+'.html';
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.3-'+stamp+'.html';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.1'); toast('🛟 アプリ本体を保存しました');
+  addAudit('アプリ本体保存','v4.4.3'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
