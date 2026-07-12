@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.1</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1926,9 +1926,9 @@ function renderEventList(dateFilter) {
     if(role==='leader'){
       var pOn=!!ev.partnerShared;
       var mOn=!!ev.partnerMenShared;
-      partnerShareHtml='<div class="partner-share-row" onclick="event.stopPropagation()">'
-        +'<button class="partner-share-btn '+(pOn?'on-partner':'')+'" onclick="togglePartnerShare(\''+ev.id+'\',\'partner\')">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
-        +'<button class="partner-share-btn '+(mOn?'on-men':'')+'" onclick="togglePartnerShare(\''+ev.id+'\',\'men\')">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
+      partnerShareHtml='<div class="partner-share-row">'
+        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" onclick="return togglePartnerShare(event,\''+ev.id+'\',\'partner\')">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" onclick="return togglePartnerShare(event,\''+ev.id+'\',\'men\')">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
         +'</div>';
     }
 
@@ -1997,7 +1997,8 @@ function updatePartnerLocal(storeKey, ev, enabled){
     localStorage.setItem(storeKey,JSON.stringify(arr));
   }catch(e){ console.warn('共有ローカル保存エラー',e); }
 }
-function togglePartnerShare(eventId,target){
+function togglePartnerShare(evt,eventId,target){
+  if(evt){ evt.preventDefault(); evt.stopPropagation(); }
   if(role!=='leader'){ toast('⛔ 共有操作はリーダーだけです'); return; }
   var ev=state.events.find(function(x){ return String(x.id)===String(eventId); });
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
@@ -2018,12 +2019,13 @@ function togglePartnerShare(eventId,target){
         toast(next?'✅ 共有しました':'✅ 共有を解除しました');
       }).catch(function(err){ ev[field]=!next; renderEventList(selectedDate||null); toast('⚠️ 共有エラー: '+err.message); });
       renderEventList(selectedDate||null);
-      return;
+      return false;
     }
   }catch(e){ console.warn(e); }
   addAudit(next?'共有開始':'共有解除',(isMen?'partner MEN':'partner')+'｜'+ev.name);
   fbSave(); renderEventList(selectedDate||null);
   toast(next?'✅ 端末に共有しました':'✅ 共有を解除しました');
+  return false;
 }
 function downloadCurrentAppBackup(){
   if(role!=='leader'){ toast('⛔ リーダー専用です'); return; }
