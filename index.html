@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.8</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -468,37 +468,46 @@ body::before,#app::before,.page::before{
 @media(max-width:520px){.warehouse-map{grid-template-columns:1fr}.wh-office{writing-mode:horizontal-tb;min-height:48px}.wh-area{min-height:260px}.wh-cell{font-size:18px}}
 
 
-
-/* ===== イベント前 買い物一覧表 ===== */
-.shop-toolbar{display:flex;gap:8px;align-items:center;margin:10px 0 12px;flex-wrap:wrap;}
-.shop-note{background:#fffdf6;border:1.5px solid #d8bf75;border-radius:12px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px;}
-.shop-table{width:100%;border-collapse:collapse;background:#fffdfa;border:1px solid #d8bf75;border-radius:12px;overflow:hidden;font-size:12px;}
-.shop-table th{background:#fff3d6;color:#241900;border:1px solid #d8bf75;padding:8px 6px;font-size:11px;text-align:left;white-space:nowrap;}
-.shop-table td{border:1px solid #ead8a8;padding:6px;vertical-align:middle;}
-.shop-table input,.shop-table select{padding:8px 8px;font-size:12px;min-width:86px;}
-.shop-table .shop-item-input{min-width:145px;}
-.shop-money{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:900;color:#111;}
-.shop-total-box{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:14px;background:linear-gradient(135deg,rgba(184,134,11,.12),rgba(184,134,11,.04));border:1.5px solid #d8bf75;border-radius:12px;font-weight:900;}
-.shop-readonly{background:#f7f1df!important;color:#5f512e!important;}
+/* ===== v5.0 出勤一覧：終了イベント色分け ===== */
+.att-card{padding:12px 14px;border-bottom:1px solid var(--border);background:#fffdfa;}
+.att-card.att-ended{background:#eeeeee!important;color:#777!important;opacity:.88;}
+.att-card.att-ended *{color:#777!important;}
+.att-card.att-ended .status-badge{background:#ddd!important;border:1px solid #bbb!important;color:#666!important;}
+.att-section-title{padding:10px 14px;font-size:12px;font-weight:900;background:#fff3d6;border-bottom:1px solid var(--border);color:#4d3a00;}
+.att-section-title.ended{background:#e5e5e5;color:#666;}
 
 
-/* ===== v4.4.0 リーダー専用アプリ管理・partner共有復旧 ===== */
-.partner-share-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed #d8bf75;}
-.partner-share-btn{min-height:38px;padding:8px 11px;border-radius:10px;font-size:11px;font-weight:900;border:1.5px solid #d8bf75;background:#fffaf0;color:#4d3a00;}
-.partner-share-btn.on-partner{background:linear-gradient(135deg,#168a58,#2fbf7f)!important;border-color:#0d6d43!important;color:#fff!important;box-shadow:0 3px 10px rgba(22,138,88,.28);}
-.partner-share-btn.on-men{background:linear-gradient(135deg,#246bb3,#4b96df)!important;border-color:#174f82!important;color:#fff!important;box-shadow:0 3px 10px rgba(36,107,179,.28);}
-.partner-share-btn[aria-pressed="true"]{transform:translateY(-1px);}
-.partner-share-btn{position:relative;z-index:5;touch-action:manipulation;-webkit-tap-highlight-color:rgba(184,134,11,.18);pointer-events:auto!important;}
-.ev-card.event-done{background:#eeeeea!important;border-color:#b8b8b0!important;border-left-color:#888!important;opacity:.78;}
-.ev-card.event-done .ev-name,.ev-card.event-done .ev-meta{color:#666!important;}
 
-.leader-app-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px;}
-.leader-app-card{display:flex;align-items:center;gap:10px;text-decoration:none;color:#241900;background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:11px;min-height:66px;box-shadow:0 2px 8px rgba(80,55,0,.07);}
-.leader-app-card .app-emoji{font-size:27px;flex:0 0 auto;}.leader-app-card b{display:block;font-size:13px;}.leader-app-card small{display:block;color:#6d5a2b;font-size:10px;margin-top:2px;line-height:1.35;}
-.version-guard{background:#eef9f2;border:1.5px solid #78bf91;border-radius:12px;padding:11px;margin:12px 0;font-size:11px;line-height:1.7;color:#174d2b;}
-@media(max-width:420px){.leader-app-grid{grid-template-columns:1fr}.partner-share-btn{flex:1;}}
+.ocr-box{background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:10px;margin-top:8px;font-size:12px;line-height:1.7;color:#241900;}
+.ocr-status{font-size:12px;color:#6d5a2b;margin-top:6px;font-weight:900;}
+.ocr-text{width:100%;min-height:70px;font-size:12px;margin-top:8px;display:none;}
 
+/* ===== 仕入登録・レシート管理 ===== */
+.purchase-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.purchase-kpi{background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;text-align:center;}
+.purchase-kpi .num{font-size:22px;font-weight:900;color:#9c6b00;}
+.purchase-card{background:#fffdf6;border:1.5px solid #d8bf75;border-left:4px solid #b8860b;border-radius:12px;padding:12px;margin-bottom:9px;box-shadow:0 3px 12px rgba(80,55,0,.08);}
+.purchase-title{font-size:15px;font-weight:900;color:#111;margin-bottom:4px;}
+.purchase-meta{font-size:12px;color:#4b3a10;line-height:1.7;}
+.purchase-photo{max-width:100%;max-height:220px;border-radius:10px;border:1px solid #d8bf75;margin-top:8px;background:#fff;}
+.purchase-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+
+
+/* ===== partner共有状態ボタン ===== */
+.btn-partner-shared{
+  background:linear-gradient(135deg,#35b96f,#168a58)!important;
+  color:#fff!important;
+  border:1.5px solid #117446!important;
+  box-shadow:0 3px 10px rgba(22,138,88,.25);
+}
+.btn-men-shared{
+  background:linear-gradient(135deg,#3b9cff,#1769c2)!important;
+  color:#fff!important;
+  border:1.5px solid #1158a5!important;
+  box-shadow:0 3px 10px rgba(23,105,194,.25);
+}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -653,46 +662,6 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
-
-    <!-- SHOPPING LIST -->
-    <div class="page" id="page-shopping">
-      <div class="pg">
-        <p class="page-title">🛒 ネタ買い物一覧</p>
-        <p class="page-sub">リーダー・担当者専用：イベント実施前の追加購入リスト</p>
-        <div id="shopping-lock"></div>
-        <div id="shopping-content">
-          <div class="shop-note">
-            在庫一覧表から品目を選ぶと、現在の在庫数が自動で入ります。
-            今回追加数量・単価を入れると金額と総計が自動計算されます。
-          </div>
-          <div class="fg">
-            <label>対象イベント</label>
-            <select id="shopping-ev-select" onchange="renderShoppingList()"></select>
-          </div>
-          <datalist id="shopping-item-datalist"></datalist>
-          <div class="shop-toolbar">
-            <button class="btn btn-gold btn-sm" onclick="addShoppingRow()">＋ 行を追加</button>
-            <button class="btn btn-green btn-sm" onclick="saveShoppingList()">💾 保存</button>
-            <button class="btn btn-outline btn-sm" onclick="prefillShoppingFromEventItems()">📦 イベント品目から作成</button>
-          </div>
-          <div class="scroll-x">
-            <table class="shop-table">
-              <thead>
-                <tr>
-                  <th>品目</th><th>在庫数</th><th>今回追加数量</th><th>単価</th><th>金額</th><th>備考</th><th></th>
-                </tr>
-              </thead>
-              <tbody id="shopping-tbody"></tbody>
-            </table>
-          </div>
-          <div class="shop-total-box">
-            <span>⑤ 金額の総計</span>
-            <span id="shopping-total" class="mono">¥0</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- SALES -->
     <div class="page" id="page-sales">
       <div class="pg">
@@ -710,14 +679,41 @@ body::before,#app::before,.page::before{
       </div>
     </div>
 
-    <!-- LEADER ATTENDANCE LIST -->
+
+
+    <!-- PURCHASES -->
+    <div class="page" id="page-purchases">
+      <div class="pg">
+        <p class="page-title">📷 仕入登録</p>
+        <p class="page-sub">リーダー・担当者用：買い出しレシートを撮影して事務員アプリへ連動</p>
+        <div id="purchase-lock"></div>
+        <div id="purchase-content">
+          <div class="admin-badge">🔒 リーダーは全員分 / 担当者は自分の仕入を登録・確認</div>
+          <button class="btn btn-gold btn-full" style="margin-bottom:12px" onclick="openPurchaseForm(null)">＋ 仕入を登録する</button>
+          <div class="purchase-kpi-grid">
+            <div class="purchase-kpi"><div class="num" id="purchase-count">0</div><div class="muted" style="font-size:11px">件数</div></div>
+            <div class="purchase-kpi"><div class="num" id="purchase-total">¥0</div><div class="muted" style="font-size:11px">合計</div></div>
+          </div>
+          <div class="fg">
+            <label>イベントで絞り込み</label>
+            <select id="purchase-filter-event" onchange="renderPurchasesPage()"></select>
+          </div>
+          <div id="purchase-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE LIST -->
     <div class="page" id="page-attendance">
       <div class="pg">
-        <p class="page-title">👥 出勤一覧</p>
-        <p class="page-sub">イベント別の参加スタッフ・回答状況</p>
-        <div class="admin-badge">🔒 リーダーのみ</div>
-        <div class="settings-group" id="attendance-list-area"></div>
-        <button class="btn btn-outline btn-sm btn-full" onclick="renderAttendancePage()">一覧を更新</button>
+        <p class="page-title">👥 スタッフ出勤一覧</p>
+        <p class="page-sub">イベントごとの参加スタッフ・出勤回答・未回答を確認できます。</p>
+        <div id="attendance-lock"></div>
+        <div id="attendance-content">
+          <div class="admin-badge">🔒 リーダー専用</div>
+          <div class="settings-group" id="attendance-list-area"></div>
+          <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:16px" onclick="renderAttendancePage()">一覧を更新</button>
+        </div>
       </div>
     </div>
 
@@ -729,27 +725,6 @@ body::before,#app::before,.page::before{
         <div id="settings-lock"></div>
         <div id="settings-content">
           <div class="admin-badge">🔒 リーダーのみ</div>
-
-          <!-- v4.4.0 リーダー専用：全アプリ管理 -->
-          <div id="leader-app-center">
-            <div class="sec-title" style="margin:4px 0 8px">👑 リーダー専用・全アプリ一覧</div>
-            <div class="version-guard">
-              一般ユーザー・担当者には表示されません。修正前の完成版を残し、確認済みの版だけを正式版にします。<br>
-              現在の基準版：<b>v4.4.6</b>
-            </div>
-            <div class="leader-app-grid">
-              <a class="leader-app-card" href="index.html"><span class="app-emoji">🛡️</span><span><b>メインアプリ</b><small>イベント・在庫・売上・共有</small></span></a>
-              <a class="leader-app-card" href="king.html"><span class="app-emoji">👑</span><span><b>キングアプリ</b><small>全体統括・社長専用</small></span></a>
-              <a class="leader-app-card" href="construction.html"><span class="app-emoji">🏗️</span><span><b>建設アプリ</b><small>日報・現場管理</small></span></a>
-              <a class="leader-app-card" href="office-timecard.html"><span class="app-emoji">👩‍💼</span><span><b>事務員アプリ</b><small>タイムカード・集計</small></span></a>
-              <a class="leader-app-card" href="partner.html?from=main"><span class="app-emoji">🐩</span><span><b>partner</b><small>共有イベント確認</small></span></a>
-              <a class="leader-app-card" href="partner-men.html?from=main"><span class="app-emoji">🦍🐷</span><span><b>partner MEN</b><small>男版共有・ネタ確認</small></span></a>
-              <a class="leader-app-card" href="event-talk.html"><span class="app-emoji">💬</span><span><b>LINE風アプリ</b><small>会社連絡・チャット</small></span></a>
-              <a class="leader-app-card" href="neta-shopping-list.html"><span class="app-emoji">🛒</span><span><b>ネタアプリ</b><small>買い物・在庫確認</small></span></a>
-            </div>
-            <button class="btn btn-outline btn-sm btn-full" style="margin:10px 0 16px" onclick="downloadCurrentAppBackup()">🛟 現在のアプリ本体を保存</button>
-          </div>
-
           <div class="settings-group">
             <div class="settings-row" onclick="openChangePw('leader')">
               <div class="sr-left"><span style="font-size:17px">🔑</span>リーダーPW変更</div>
@@ -842,6 +817,42 @@ body::before,#app::before,.page::before{
 </div>
 
 <!-- MODALS -->
+
+
+
+<!-- PURCHASE FORM -->
+<div class="modal-overlay" id="modal-purchase-form">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <h2 class="modal-title" id="pf-title">仕入登録</h2>
+      <button class="modal-close-btn" onclick="closeModal('modal-purchase-form')">✕</button>
+    </div>
+    <input type="hidden" id="pf-id">
+    <div class="fg"><label>イベント名</label><select id="pf-event"></select></div>
+    <div class="fg2">
+      <div class="fg"><label>日付</label><input type="date" id="pf-date"></div>
+      <div class="fg"><label>担当者</label><input type="text" id="pf-staff" placeholder="例：将"></div>
+    </div>
+    <div class="fg"><label>店舗名</label><input type="text" id="pf-store" placeholder="例：業務スーパー"></div>
+    <div class="fg2">
+      <div class="fg"><label>品目・分類</label><input type="text" id="pf-item" placeholder="例：牛串・備品"></div>
+      <div class="fg"><label>金額（税込）</label><input type="number" id="pf-amount" placeholder="例：12850"></div>
+    </div>
+    <div class="fg"><label>支払方法</label><select id="pf-pay"><option>現金</option><option>カード</option><option>PayPay</option><option>振込</option><option>その他</option></select></div>
+    <div class="fg"><label>レシート写真</label><input type="file" id="pf-photo" accept="image/*" capture="environment" onchange="previewPurchasePhoto(event)"><img id="pf-photo-preview" class="purchase-photo" style="display:none"></div>
+    <div class="ocr-box">
+      <button type="button" class="btn btn-outline btn-full" onclick="readPurchaseReceipt()">🤖 レシートを読み取る</button>
+      <div id="pf-ocr-status" class="ocr-status">写真を撮ってから押すと、店舗名・日付・金額を候補入力します。</div>
+      <textarea id="pf-ocr-text" class="ocr-text" placeholder="OCR読み取り文字"></textarea>
+    </div>
+    <div class="fg"><label>メモ</label><textarea id="pf-memo" placeholder="例：氷・炭も一緒に購入"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gold" style="flex:1" onclick="savePurchase()">💾 保存</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-purchase-form')">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- EVENT FORM -->
 <div class="modal-overlay" id="modal-event-form">
@@ -1154,7 +1165,6 @@ var state = {
   ],
   staffList: ['藤原','縁笑だるまや','まゆみ','龍来','想良','将','文太'],
   auditLogs: [],
-  shoppingLists: {},
 };
 
 // ════ NAV ════
@@ -1162,7 +1172,6 @@ var NAV = {
   leader:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
-    {id:'shopping', icon:'🛒', label:'買い物'},
     {id:'sales',    icon:'📊', label:'売上・経費'},
     {id:'attendance', icon:'👥', label:'出勤一覧'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
@@ -1171,7 +1180,6 @@ var NAV = {
   staff:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
     {id:'inventory',icon:'📦', label:'在庫'},
-    {id:'shopping', icon:'🛒', label:'買い物'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1214,6 +1222,32 @@ function salesExpenseAccessLabel(){
   return '閲覧できません';
 }
 
+// 売上表の個別権限
+// ① 記入者（藤原・まゆみ・将・文太）は自分が記入した売上だけ閲覧・編集
+// ② リーダーは全売上を閲覧・編集
+// ③ 一般ユーザーはシークレットイベントを表示しない（canCurrentUserSeeEvent側でも保護）
+function salesRecordOwner(ev){
+  return normalizeAccessName(ev && ev.sales && ev.sales.simple && ev.sales.simple.updatedBy);
+}
+function isSalesRecordMine(ev){
+  var owner=salesRecordOwner(ev);
+  if(!owner) return true; // まだ未入力なら許可された記入者が入力できる
+  return owner===normalizeAccessName(userName);
+}
+function canViewSalesRecord(ev){
+  if(!ev) return false;
+  if(!canAccessSalesExpense()) return false;
+  if(!canCurrentUserSeeEvent(ev)) return false;
+  if(role==='leader') return true;
+  return isSalesRecordMine(ev);
+}
+function canEditSalesRecord(ev){
+  if(!ev) return false;
+  if(!canEditSalesExpense()) return false;
+  if(!canCurrentUserSeeEvent(ev)) return false;
+  if(role==='leader') return true;
+  return isSalesRecordMine(ev);
+}
 
 function isSecretEvent(ev){
   var v = ev && ev.secret;
@@ -1480,22 +1514,7 @@ function doLogout() {
 })();
 
 // ════ INIT ════
-
-function removeKnownTestEventsOnce(){
-  var key='fg_removed_test_events_v446';
-  if(localStorage.getItem(key)==='1') return;
-  var testNames=['春の文化祭','クラフトフェア','地域夏祭り'];
-  var before=(state.events||[]).length;
-  state.events=(state.events||[]).filter(function(ev){
-    var n=String(ev.name||'').trim();
-    return testNames.indexOf(n)<0 && n.indexOf('テストイベント')<0;
-  });
-  if(state.events.length!==before){ fbSave(); }
-  localStorage.setItem(key,'1');
-}
-
 function initApp() {
-  removeKnownTestEventsOnce();
   var badge = document.getElementById('role-badge');
   var labels = {leader:'👑 リーダー', staff:'🏷️ 担当者', user:'👤 一般'};
   var cls    = {leader:'rb-leader', staff:'rb-staff', user:'rb-user'};
@@ -1514,7 +1533,6 @@ function initApp() {
   renderInventory();
   setInventoryMode(inventoryMode);
   renderSalesPage();
-  renderShoppingPage();
   renderHome();
   renderSettings();
   renderBelongingsPage();
@@ -1537,13 +1555,6 @@ function applyPermissions() {
   } else {
     show('sales-content');
     document.getElementById('sales-lock').innerHTML='';
-  }
-  if(role==='user'){
-    lockSection('shopping-lock','ネタ買い物一覧はリーダー・担当者のみ閲覧できます');
-    hide('shopping-content');
-  } else {
-    show('shopping-content');
-    var sl=document.getElementById('shopping-lock'); if(sl) sl.innerHTML='';
   }
   if(role!=='leader'){
     lockSection('settings-lock','設定はリーダーのみ操作できます');
@@ -1613,18 +1624,17 @@ function showPage(id) {
     toast('⛔ 忘れ物リストはリーダー・担当者のみ閲覧できます');
     id='calendar';
   }
-  if(role==='user' && id==='shopping'){
-    toast('⛔ ネタ買い物一覧はリーダー・担当者のみ閲覧できます');
-    id='calendar';
-  }
   if(id==='sales' && !canAccessSalesExpense()){
     toast('⛔ 売上・経費は許可された人だけ閲覧できます');
     id='calendar';
   }
+  if(id==='attendance' && role!=='leader'){
+    toast('⛔ スタッフ出勤一覧はリーダー専用です');
+    id='calendar';
+  }
   if(id==='sales') renderSalesPage();
-  if(id==='shopping') renderShoppingPage();
-  if(id==='belongings') renderBelongingsPage();
   if(id==='attendance') renderAttendancePage();
+  if(id==='belongings') renderBelongingsPage();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   var p = document.getElementById('page-'+id);
@@ -1897,6 +1907,193 @@ function selectDate(d){
   if(selDate){ scrollToEventCards(); }
 }
 
+
+var PARTNER_SHARE_KEY='partner_events_v4';
+var PARTNER_FB_PATH='fujiwara/partner_shared_events';
+function partnerShareRef(id){
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length){
+      var ref=firebase.database().ref(PARTNER_FB_PATH);
+      return id ? ref.child(String(id).replace(/[.#$\[\]/]/g,'_')) : ref;
+    }
+  }catch(e){}
+  return null;
+}
+function getPartnerShareList(){
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(PARTNER_SHARE_KEY)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
+  return list;
+}
+function savePartnerShareList(list){
+  localStorage.setItem(PARTNER_SHARE_KEY, JSON.stringify(Array.isArray(list)?list:[]));
+}
+function mergePartnerShareLocal(data){
+  if(!data) return;
+  var list=getPartnerShareList();
+  var id=String(data.mainId||data.id||'');
+  var i=list.findIndex(function(x){ return String(x.mainId||x.id||'')===id || String(x.id||'')===String(data.id||''); });
+  if(i>=0){ list[i]=Object.assign({},list[i],data); } else { list.push(data); }
+  savePartnerShareList(list);
+}
+function removePartnerShareLocal(id){
+  var sid=String(id);
+  savePartnerShareList(getPartnerShareList().filter(function(x){ return !(String(x.mainId||'')===sid || String(x.id||'')===('main_'+sid) || String(x.id||'')===sid); }));
+}
+
+function syncLocalPartnerSharesToFirebase(){
+  try{
+    var ref=partnerShareRef();
+    if(!ref) return;
+    var list=getPartnerShareList().filter(Boolean);
+    if(!list.length) return;
+    list.forEach(function(x){
+      var key=String(x.mainId||x.id||'').replace(/^main_/,'').replace(/[.#$\[\]/]/g,'_');
+      if(key){ ref.child(key).update(x); }
+    });
+  }catch(e){ console.log('partner共有の再同期に失敗', e); }
+}
+
+function listenPartnerShareStatus(){
+  var ref=partnerShareRef();
+  if(!ref || listenPartnerShareStatus.started) return;
+  listenPartnerShareStatus.started=true;
+  ref.on('value',function(snap){
+    var v=snap.val()||{};
+    var list=Object.keys(v).map(function(k){ return v[k]; }).filter(Boolean);
+    savePartnerShareList(list);
+    try{ renderEventList(selDate||null); }catch(e){}
+  });
+}
+function isEventSharedToPartner(id){
+  return getPartnerShareList().some(function(x){ return String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id)); });
+}
+function shareEventToPartner(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ共有できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  if(isSecretEvent(ev) && !confirm('シークレットイベントです。partnerへ共有しますか？')) return;
+  var list=getPartnerShareList();
+  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id) || String(x.id||'')===('main_'+String(ev.id)); }) || {};
+  var data={
+    id:'main_'+String(ev.id),
+    mainId:String(ev.id),
+    date:ev.date||'',
+    dateEnd:ev.dateEnd||ev.endDate||ev.toDate||'',
+    title:ev.name||'イベント',
+    place:ev.place||'',
+    sales:Number(existing.sales||0),
+    fee:Number(existing.fee||0),
+    cost:Number(existing.cost||0),
+    labor:Number(existing.labor||0),
+    other:Number(existing.other||0),
+    secret:false,
+    updatedAt:Date.now()
+  };
+  mergePartnerShareLocal(data);
+  var ref=partnerShareRef(ev.id);
+  if(ref){
+    ref.update(data).then(function(){ toast('🐩 partnerへ共有しました（単独URLにも反映）'); renderEventList(selDate||null); if(confirm('partnerアプリを開きますか？')) location.href='partner.html?from=main'; })
+    .catch(function(){ toast('⚠️ Firebase保存できません。ローカル保存しました'); renderEventList(selDate||null); });
+  }else{
+    toast('🐩 partnerへ共有しました（この端末のみ）');
+    renderEventList(selDate||null);
+    if(confirm('partnerアプリを開きますか？')) location.href='partner.html?from=main';
+  }
+}
+function unshareEventFromPartner(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ解除できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  var name=ev && ev.name ? ev.name : 'このイベント';
+  if(!confirm('「'+name+'」のpartner共有を解除しますか？\n※partner側の表示から消えます。')) return;
+  removePartnerShareLocal(id);
+  var ref=partnerShareRef(id);
+  if(ref){
+    ref.remove().then(function(){ toast('🐩 partner共有を解除しました'); renderEventList(selDate||null); })
+    .catch(function(){ toast('⚠️ Firebase解除に失敗しました'); renderEventList(selDate||null); });
+  }else{
+    toast('🐩 partner共有を解除しました（この端末のみ）');
+    renderEventList(selDate||null);
+  }
+}
+listenPartnerShareStatus();
+
+var PARTNER_MEN_SHARE_KEY='partner_men_events_v1';
+var PARTNER_MEN_FB_PATH='fujiwara/partner_men_shared_events';
+function partnerMenShareRef(id){
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length){
+      var ref=firebase.database().ref(PARTNER_MEN_FB_PATH);
+      return id ? ref.child(String(id).replace(/[.#$\[\]/]/g,'_')) : ref;
+    }
+  }catch(e){}
+  return null;
+}
+function getPartnerMenShareList(){
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(PARTNER_MEN_SHARE_KEY)||'[]'); if(!Array.isArray(list)) list=[]; }catch(e){ list=[]; }
+  return list;
+}
+function savePartnerMenShareList(list){ localStorage.setItem(PARTNER_MEN_SHARE_KEY, JSON.stringify(Array.isArray(list)?list:[])); }
+function mergePartnerMenShareLocal(data){
+  if(!data) return;
+  var list=getPartnerMenShareList();
+  var id=String(data.mainId||data.id||'');
+  var i=list.findIndex(function(x){ return String(x.mainId||x.id||'')===id || String(x.id||'')===String(data.id||''); });
+  if(i>=0){ list[i]=Object.assign({},list[i],data); } else { list.push(data); }
+  savePartnerMenShareList(list);
+}
+function removePartnerMenShareLocal(id){
+  var sid=String(id);
+  savePartnerMenShareList(getPartnerMenShareList().filter(function(x){ return !(String(x.mainId||'')===sid || String(x.id||'')===('main_'+sid) || String(x.id||'')===sid); }));
+}
+function listenPartnerMenShareStatus(){
+  var ref=partnerMenShareRef();
+  if(!ref || listenPartnerMenShareStatus.started) return;
+  listenPartnerMenShareStatus.started=true;
+  ref.on('value',function(snap){
+    var v=snap.val()||{};
+    var list=Object.keys(v).map(function(k){ return v[k]; }).filter(Boolean);
+    savePartnerMenShareList(list);
+    try{ renderEventList(selDate||null); }catch(e){}
+  });
+}
+function isEventSharedToPartnerMen(id){
+  return getPartnerMenShareList().some(function(x){ return String(x.mainId||'')===String(id) || String(x.id||'')===('main_'+String(id)); });
+}
+function shareEventToPartnerMen(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ共有できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  if(isSecretEvent(ev) && !confirm('シークレットイベントです。partner menへ共有しますか？')) return;
+  var list=getPartnerMenShareList();
+  var existing=list.find(function(x){ return String(x.mainId||'')===String(ev.id) || String(x.id||'')===('main_'+String(ev.id)); }) || {};
+  var data={
+    id:'main_'+String(ev.id), mainId:String(ev.id), date:ev.date||'', dateEnd:ev.dateEnd||ev.endDate||ev.toDate||'',
+    title:ev.name||'イベント', place:ev.place||'', itemsText:ev.itemsText||ev.itemsName||ev.menu||'',
+    sales:Number(existing.sales||0), fee:Number(existing.fee||0), cost:Number(existing.cost||0), labor:Number(existing.labor||0), other:Number(existing.other||0),
+    secret:false, updatedAt:Date.now()
+  };
+  mergePartnerMenShareLocal(data);
+  var ref=partnerMenShareRef(ev.id);
+  if(ref){
+    ref.update(data).then(function(){ toast('🦍🐷 partner menへ共有しました（ネタも共有）'); renderEventList(selDate||null); if(confirm('partner menアプリを開きますか？')) location.href='partner-men.html?from=main'; })
+    .catch(function(){ toast('⚠️ Firebase保存できません。ローカル保存しました'); renderEventList(selDate||null); });
+  }else{
+    toast('🦍🐷 partner menへ共有しました（この端末のみ）'); renderEventList(selDate||null); if(confirm('partner menアプリを開きますか？')) location.href='partner-men.html?from=main';
+  }
+}
+function unshareEventFromPartnerMen(id){
+  if(role!=='leader'){ toast('⛔ リーダーのみ解除できます'); return; }
+  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(id); });
+  var name=ev && ev.name ? ev.name : 'このイベント';
+  if(!confirm('「'+name+'」のpartner men共有を解除しますか？\n※partner men側の表示から消えます。')) return;
+  removePartnerMenShareLocal(id);
+  var ref=partnerMenShareRef(id);
+  if(ref){ ref.remove().then(function(){ toast('🦍🐷 partner men共有を解除しました'); renderEventList(selDate||null); }).catch(function(){ toast('⚠️ Firebase解除に失敗しました'); renderEventList(selDate||null); }); }
+  else{ toast('🦍🐷 partner men共有を解除しました（この端末のみ）'); renderEventList(selDate||null); }
+}
+listenPartnerMenShareStatus();
+
 function renderEventList(dateFilter) {
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
   var label=document.getElementById('ev-list-label');
@@ -1919,12 +2116,6 @@ function renderEventList(dateFilter) {
     label.textContent='今月のイベント（'+evs.length+'件）';
   }
 
-  evs.sort(function(a,b){
-    var ad=a.status==='done'?1:0, bd=b.status==='done'?1:0;
-    if(ad!==bd) return ad-bd;
-    return String(a.date||'').localeCompare(String(b.date||''));
-  });
-
   var canEdit=role==='leader'||role==='staff';
   var container=document.getElementById('event-list');
   if(!evs.length){ container.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>イベントなし</p></div>'; return; }
@@ -1942,32 +2133,17 @@ function renderEventList(dateFilter) {
       actionsHtml='<div class="ev-actions" onclick="event.stopPropagation()">'
         +'<button class="btn btn-sm btn-ghost" onclick="openEventForm(\''+ev.id+'\')">✏️ 編集</button>'
         +'<button class="btn btn-sm btn-ghost" onclick="quickStatus(\''+ev.id+'\')">🔄 状態変更</button>'
-        +'</div>';
-    }
-
-    var shoppingActionHtml='';
-    if(role==='leader' || role==='staff'){
-      shoppingActionHtml='<div class="ev-actions" onclick="event.stopPropagation()" style="margin-top:8px">'
-        +'<button class="btn btn-sm btn-outline" onclick="openShoppingForEvent(\''+ev.id+'\')">🛒 買い物表</button>'
+        +(role==='leader'?(isEventSharedToPartner(ev.id)?'<button class="btn btn-sm btn-partner-shared" onclick="unshareEventFromPartner(\''+ev.id+'\')">🐩 partner共有中</button>':'<button class="btn btn-sm btn-outline" onclick="shareEventToPartner(\''+ev.id+'\')">🐩 partner共有</button>'):'')
+        +(role==='leader'?(isEventSharedToPartnerMen(ev.id)?'<button class="btn btn-sm btn-men-shared" onclick="unshareEventFromPartnerMen(\''+ev.id+'\')">🦍🐷 men共有中</button>':'<button class="btn btn-sm btn-outline" onclick="shareEventToPartnerMen(\''+ev.id+'\')">🦍🐷 men共有</button>'):'')
         +'</div>';
     }
 
     var salesActionHtml='';
-    if(canAccessSalesExpense()){
-      var salesLabel=canEditSalesExpense()?'📊 売上入力':'📊 売上確認';
-      var salesClick=canEditSalesExpense()?('openSalesEdit(\''+ev.id+'\')'):('openSalesView(\''+ev.id+'\')');
+    if(canViewSalesRecord(ev)){
+      var salesLabel=canEditSalesRecord(ev)?'📊 売上入力':'📊 売上確認';
+      var salesClick=canEditSalesRecord(ev)?('openSalesEdit(\''+ev.id+'\')'):('openSalesView(\''+ev.id+'\')');
       salesActionHtml='<div class="ev-actions" onclick="event.stopPropagation()" style="margin-top:8px">'
         +'<button class="btn btn-sm btn-outline" onclick="'+salesClick+'">'+salesLabel+'</button>'
-        +'</div>';
-    }
-
-    var partnerShareHtml='';
-    if(role==='leader'){
-      var pOn=!!ev.partnerShared;
-      var mOn=!!ev.partnerMenShared;
-      partnerShareHtml='<div class="partner-share-row">'
-        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner" aria-pressed="'+(pOn?'true':'false')+'">🐩 '+(pOn?'✅ partner共有中・解除':'partnerへ共有')+'</button>'
-        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men" aria-pressed="'+(mOn?'true':'false')+'">🦍🐷 '+(mOn?'✅ MEN共有中・解除':'MENへ共有')+'</button>'
         +'</div>';
     }
 
@@ -1991,7 +2167,7 @@ function renderEventList(dateFilter) {
       }
     }
 
-    return '<div class="ev-card '+(ev.status==='done'?'event-done':'')+'" style="border-left-color:'+borderColor+'" onclick="if(!event.target.closest(\'button,a,input,select,textarea\')) openBSheet(\''+ev.id+'\')">'
+    return '<div class="ev-card" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
@@ -2004,110 +2180,10 @@ function renderEventList(dateFilter) {
       +'<span style="font-size:10px;color:var(--gold)">📋 詳細</span>'
       +'</div></div>'
       +availabilityHtml
-      +shoppingActionHtml
       +salesActionHtml
-      +partnerShareHtml
       +actionsHtml
       +'</div>';
   }).join('');
-  bindPartnerShareButtons();
-}
-
-
-// ════ v4.4.0 PARTNER共有（リーダー専用） ════
-// partner共有仕様: シークレットも共有可。日付・イベント名・場所・ネタのみ。参加スタッフ/責任者/出勤回答は送信しない。
-function partnerSharePayload(ev){
-  return {
-    id:'main_'+String(ev.id), mainId:String(ev.id),
-    date:ev.date||'', dateEnd:ev.dateEnd||'',
-    title:ev.name||'イベント', name:ev.name||'イベント',
-    place:ev.place||'', location:ev.place||'',
-    itemsText:ev.itemsText||'', secret:false,
-    updatedAt:new Date().toISOString(), sharedBy:userName||'リーダー'
-  };
-}
-function safeShareKey(id){ return String(id).replace(/[.#$\[\]\/]/g,'_'); }
-function updatePartnerLocal(storeKey, ev, enabled){
-  try{
-    var arr=JSON.parse(localStorage.getItem(storeKey)||'[]');
-    if(!Array.isArray(arr)) arr=[];
-    var mainId=String(ev.id);
-    arr=arr.filter(function(x){ return String(x.mainId||String(x.id||'').replace(/^main_/,''))!==mainId; });
-    if(enabled) arr.push(partnerSharePayload(ev));
-    localStorage.setItem(storeKey,JSON.stringify(arr));
-  }catch(e){ console.warn('共有ローカル保存エラー',e); }
-}
-function togglePartnerShare(evt,eventId,target){
-  if(evt){ evt.preventDefault(); evt.stopPropagation(); if(evt.stopImmediatePropagation) evt.stopImmediatePropagation(); }
-  if(role!=='leader'){ toast('⛔ 共有操作はリーダーだけです'); return; }
-  var ev=state.events.find(function(x){ return String(x.id)===String(eventId); });
-  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
-  var isMen=target==='men';
-  var field=isMen?'partnerMenShared':'partnerShared';
-  var next=!ev[field];
-  ev[field]=next;
-  var path=isMen?'fujiwara/partner_men_shared_events':'fujiwara/partner_shared_events';
-  var store=isMen?'partner_men_events_v1':'partner_events_v4';
-  updatePartnerLocal(store,ev,next);
-  try{
-    if(window.firebase && firebase.apps && firebase.apps.length){
-      var ref=firebase.database().ref(path).child(safeShareKey(ev.id));
-      var task=next ? ref.update(partnerSharePayload(ev)) : ref.remove();
-      task.then(function(){
-        addAudit(next?'共有開始':'共有解除',(isMen?'partner MEN':'partner')+'｜'+ev.name);
-        fbSave(); renderEventList(selectedDate||null);
-        toast(next?'✅ 共有しました':'✅ 共有を解除しました');
-      }).catch(function(err){ ev[field]=!next; renderEventList(selectedDate||null); toast('⚠️ 共有エラー: '+err.message); });
-      renderEventList(selectedDate||null);
-      return false;
-    }
-  }catch(e){ console.warn(e); }
-  addAudit(next?'共有開始':'共有解除',(isMen?'partner MEN':'partner')+'｜'+ev.name);
-  fbSave(); renderEventList(selectedDate||null);
-  toast(next?'✅ 端末に共有しました':'✅ 共有を解除しました');
-  return false;
-}
-
-// v4.4.7 iPad/Safari対応：古いinline onclickを使わず、共有ボタンへ直接登録
-function bindPartnerShareButtons(){
-  var buttons=document.querySelectorAll('.partner-share-btn');
-  Array.prototype.forEach.call(buttons,function(btn){
-    if(btn.__partnerShareBound) return;
-    btn.__partnerShareBound=true;
-    var lastTouch=0;
-    function run(e){
-      if(e){
-        e.preventDefault();
-        e.stopPropagation();
-        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-      }
-      togglePartnerShare(null,btn.getAttribute('data-share-event-id'),btn.getAttribute('data-share-target'));
-      return false;
-    }
-    btn.addEventListener('touchend',function(e){
-      lastTouch=Date.now();
-      run(e);
-    },{passive:false});
-    btn.addEventListener('click',function(e){
-      if(Date.now()-lastTouch<900){
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-      return run(e);
-    },false);
-  });
-}
-
-function downloadCurrentAppBackup(){
-  if(role!=='leader'){ toast('⛔ リーダー専用です'); return; }
-  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var a=document.createElement('a');
-  var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.8-'+stamp+'.html';
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.8'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
@@ -2840,150 +2916,21 @@ function deleteInvItem() {
   fbSave();
 }
 
-
-// ════ SHOPPING LIST / ネタ買い物一覧 ════
-function canAccessShoppingList(){ return role==='leader' || role==='staff'; }
-function ensureShoppingLists(){ if(!state.shoppingLists) state.shoppingLists={}; }
-function yenShopping(n){ n=Number(n)||0; return '¥'+n.toLocaleString('ja-JP'); }
-function getShoppingEventId(){
-  var sel=document.getElementById('shopping-ev-select');
-  if(sel && sel.value) return sel.value;
-  var ev=(state.events||[])[0];
-  return ev?String(ev.id):'';
-}
-function getShoppingRows(evId){
-  ensureShoppingLists();
-  if(!state.shoppingLists[evId]) state.shoppingLists[evId]=[];
-  return state.shoppingLists[evId];
-}
-function renderShoppingPage(){
-  if(!canAccessShoppingList()) return;
-  ensureShoppingLists();
-  var sel=document.getElementById('shopping-ev-select');
-  if(!sel) return;
-  var cur=sel.value;
-  var events=(state.events||[]).slice().sort(function(a,b){ return String(a.date||'').localeCompare(String(b.date||'')); });
-  sel.innerHTML=events.map(function(ev){
-    return '<option value="'+escHtml(ev.id)+'"'+(String(ev.id)===String(cur)?' selected':'')+'>'+escHtml((ev.date||'日付未設定')+'　'+(ev.name||'名称未設定'))+'</option>';
-  }).join('');
-  if(cur && Array.prototype.some.call(sel.options,function(o){return o.value===cur;})) sel.value=cur;
-  renderShoppingItemDatalist();
-  renderShoppingList();
-}
-function renderShoppingItemDatalist(){
-  var dl=document.getElementById('shopping-item-datalist');
-  if(!dl) return;
-  dl.innerHTML=(state.invItems||[]).map(function(i){
-    return '<option value="'+escHtml(i.name||'')+'">'+escHtml((i.loc||'未設定')+'｜在庫 '+(i.stock||0)+' '+(i.unit||''))+'</option>';
-  }).join('');
-}
-function findInvByName(name){
-  var n=String(name||'').trim();
-  return (state.invItems||[]).find(function(i){ return String(i.name||'').trim()===n; }) || null;
-}
-function makeShoppingRowFromItem(item){
-  return { id:'sp'+Date.now()+Math.floor(Math.random()*9999), item:item&&item.name||'', stock:item&&item.stock!=null?Number(item.stock):0, qty:0, unitPrice:0, note:'' };
-}
-function renderShoppingList(){
-  if(!canAccessShoppingList()) return;
-  ensureShoppingLists();
-  var evId=getShoppingEventId();
-  var tbody=document.getElementById('shopping-tbody');
-  if(!tbody) return;
-  var rows=getShoppingRows(evId);
-  if(!rows.length){ rows.push({id:'sp'+Date.now(), item:'', stock:'', qty:'', unitPrice:'', note:''}); }
-  tbody.innerHTML=rows.map(function(r,idx){
-    var amount=(Number(r.qty)||0)*(Number(r.unitPrice)||0);
-    return '<tr data-shop-idx="'+idx+'">'
-      +'<td><input class="shop-item-input" list="shopping-item-datalist" value="'+escHtml(r.item||'')+'" onchange="shoppingItemChanged('+idx+',this.value)" oninput="shoppingItemChanged('+idx+',this.value)" placeholder="肉巻き・牛串など"></td>'
-      +'<td><input class="shop-readonly" value="'+escHtml(r.stock==null?'':r.stock)+'" readonly></td>'
-      +'<td><input type="number" min="0" value="'+escHtml(r.qty||'')+'" onchange="updateShoppingCell('+idx+',\'qty\',this.value)" oninput="updateShoppingCell('+idx+',\'qty\',this.value)" placeholder="0"></td>'
-      +'<td><input type="number" min="0" value="'+escHtml(r.unitPrice||'')+'" onchange="updateShoppingCell('+idx+',\'unitPrice\',this.value)" oninput="updateShoppingCell('+idx+',\'unitPrice\',this.value)" placeholder="0"></td>'
-      +'<td class="shop-money">'+yenShopping(amount)+'</td>'
-      +'<td><input value="'+escHtml(r.note||'')+'" onchange="updateShoppingCell('+idx+',\'note\',this.value)" oninput="updateShoppingCell('+idx+',\'note\',this.value)" placeholder="備考"></td>'
-      +'<td><button class="btn btn-danger btn-sm" onclick="deleteShoppingRow('+idx+')">削除</button></td>'
-      +'</tr>';
-  }).join('');
-  updateShoppingTotal();
-}
-function updateShoppingTotal(){
-  var evId=getShoppingEventId();
-  var rows=getShoppingRows(evId);
-  var total=rows.reduce(function(sum,r){ return sum+(Number(r.qty)||0)*(Number(r.unitPrice)||0); },0);
-  var el=document.getElementById('shopping-total'); if(el) el.textContent=yenShopping(total);
-}
-function shoppingItemChanged(idx,val){
-  var rows=getShoppingRows(getShoppingEventId());
-  if(!rows[idx]) return;
-  rows[idx].item=val;
-  var item=findInvByName(val);
-  rows[idx].stock=item?Number(item.stock||0):(rows[idx].stock||'');
-  renderShoppingList();
-}
-function updateShoppingCell(idx,key,val){
-  var rows=getShoppingRows(getShoppingEventId());
-  if(!rows[idx]) return;
-  if(key==='qty' || key==='unitPrice') rows[idx][key]=Number(val)||0;
-  else rows[idx][key]=val;
-  updateShoppingTotal();
-}
-function addShoppingRow(){
-  if(!canAccessShoppingList()){ toast('⛔ リーダー・担当者のみ操作できます'); return; }
-  getShoppingRows(getShoppingEventId()).push({id:'sp'+Date.now(), item:'', stock:'', qty:'', unitPrice:'', note:''});
-  renderShoppingList();
-}
-function deleteShoppingRow(idx){
-  var rows=getShoppingRows(getShoppingEventId());
-  rows.splice(idx,1);
-  if(!rows.length) rows.push({id:'sp'+Date.now(), item:'', stock:'', qty:'', unitPrice:'', note:''});
-  renderShoppingList();
-}
-function saveShoppingList(){
-  if(!canAccessShoppingList()){ toast('⛔ リーダー・担当者のみ操作できます'); return; }
-  var evId=getShoppingEventId();
-  var rows=getShoppingRows(evId).filter(function(r){ return String(r.item||'').trim() || Number(r.qty)||Number(r.unitPrice)||String(r.note||'').trim(); });
-  state.shoppingLists[evId]=rows;
-  addAudit('買い物一覧保存', 'イベントID '+evId+'｜'+rows.length+'行');
-  toast('💾 買い物一覧を保存しました');
-  if(typeof fbSave==='function') fbSave();
-  renderShoppingList();
-}
-function prefillShoppingFromEventItems(){
-  var evId=getShoppingEventId();
-  var ev=(state.events||[]).find(function(e){ return String(e.id)===String(evId); });
-  if(!ev){ toast('イベントが見つかりません'); return; }
-  var ids=Array.isArray(ev.items)?ev.items:[];
-  var rows=[];
-  ids.forEach(function(id){
-    var item=(state.invItems||[]).find(function(i){ return String(i.id)===String(id); });
-    if(item) rows.push(makeShoppingRowFromItem(item));
-  });
-  if(!rows.length){
-    rows=(state.invItems||[]).slice(0,5).map(makeShoppingRowFromItem);
-  }
-  state.shoppingLists[evId]=rows;
-  renderShoppingList();
-  toast('📦 在庫品目から買い物表を作りました');
-}
-function openShoppingForEvent(evId){
-  if(!canAccessShoppingList()){ toast('⛔ 買い物一覧はリーダー・担当者のみ閲覧できます'); return; }
-  showPage('shopping');
-  setTimeout(function(){
-    var sel=document.getElementById('shopping-ev-select');
-    if(sel){ sel.value=String(evId); renderShoppingList(); }
-  },0);
-}
-
 // ════ SALES ════
 function renderSalesPage(preselectId) {
   if(!canAccessSalesExpense()) return;
   var sel=document.getElementById('sales-ev-select');
   if(!sel) return;
   var cur=preselectId || sel.value;
-  var visible=(state.events||[]).filter(function(ev){ return canCurrentUserSeeEvent(ev); });
+  var visible=(state.events||[]).filter(function(ev){ return canViewSalesRecord(ev); });
   sel.innerHTML=visible.map(function(ev){
     return '<option value="'+ev.id+'">'+(ev.date||'').slice(5).replace('-','/')+' '+eventNameSafe(ev)+'</option>';
   }).join('');
+  if(!visible.length){
+    var detail=document.getElementById('sales-detail');
+    if(detail) detail.innerHTML='<div class="lock-box">🔒 表示できる売上表はありません<br><span style="font-size:12px">記入者本人の売上、またはリーダーのみ全件表示されます。</span></div>';
+    return;
+  }
   if(cur && visible.some(function(ev){ return String(ev.id)===String(cur); })){ sel.value=cur; }
   renderSalesDetail();
 }
@@ -3005,34 +2952,58 @@ function calcSimpleSalesTotal(simple){
   ['A','B','C','D','E'].forEach(function(k){ total += parseInt(items[k])||0; });
   return total;
 }
-function getDailySimpleSales(ev,ds){
-  ev.sales=ev.sales||{};
-  ev.sales.days=ev.sales.days||{};
-  if(!ev.sales.days[ds]){
-    var base=(ds===ev.date && ev.sales.simple)?ev.sales.simple:null;
-    ev.sales.days[ds]={
-      labels:Object.assign({A:'',B:'',C:'',D:'',E:''},base&&base.labels||{}),
-      items:Object.assign({A:0,B:0,C:0,D:0,E:0},base&&base.items||{}),
-      memo:base&&base.memo||'', updatedBy:base&&base.updatedBy||'', updatedAt:base&&base.updatedAt||''
-    };
-  }
-  return ev.sales.days[ds];
+
+function calcSimpleExpenses(simple){
+  simple=simple||{};
+  var exp=simple.expenses||{};
+  var labor=0;
+  if(exp.labor){ Object.keys(exp.labor).forEach(function(k){ labor += parseInt(exp.labor[k])||0; }); }
+  return (parseInt(exp.basho)||0)+(parseInt(exp.shiire)||0)+(parseInt(exp.kotsu)||0)+(parseInt(exp.other)||0)+labor;
 }
-function renderOneSalesTable(ev,ds,simple){
-  var total=calcSimpleSalesTotal(simple);
-  var items=simple.items||{}, labels=simple.labels||{};
-  var rows=['A','B','C','D','E'].map(function(k){
-    var name=(labels[k]&&String(labels[k]).trim())?String(labels[k]).replace(/</g,'&lt;'):k;
-    return '<tr><td style="font-weight:900;width:120px">'+name+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
-  }).join('');
-  return '<div class="notice-card" style="font-size:13px;margin-bottom:12px">'
-    +'<div style="font-weight:900;font-size:16px;margin-bottom:8px">📅 '+ds+'　'+(ev.name||'')+'</div>'
-    +'<div class="scroll-x"><table class="bsheet-table" style="min-width:280px;background:#fffdf6"><tbody>'
-    +'<tr><th colspan="2" style="text-align:center;font-size:15px">売上</th></tr>'+rows
-    +'<tr><th style="text-align:center">計</th><th class="mono" style="text-align:right;font-size:16px">¥'+total.toLocaleString()+'</th></tr>'
-    +'<tr><td style="font-weight:900;text-align:center">メモ</td><td>'+(simple.memo?String(simple.memo).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'')+'</td></tr>'
-    +'</tbody></table></div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div></div>';
+function getSimpleMoney(simple){
+  simple=simple||{};
+  return simple.money || {};
+}
+function calcSimpleMoneySummary(simple){
+  var sales=calcSimpleSalesTotal(simple);
+  var expense=calcSimpleExpenses(simple);
+  var profit=sales-expense;
+  var money=getSimpleMoney(simple);
+  var deposit=parseInt(money.deposit)||0;
+  var unpaid=parseInt(money.unpaid)||0;
+  var cash=Math.max(profit-deposit-unpaid,0);
+  return {sales:sales, expense:expense, profit:profit, deposit:deposit, unpaid:unpaid, cash:cash};
+}
+function updateSimpleSalesEditTotals(){
+  var items={};
+  document.querySelectorAll('.simple-sales-input').forEach(function(inp){ items[inp.dataset.key]=parseInt(String(inp.value||'').replace(/[^0-9]/g,''))||0; });
+  var tmp={items:items, expenses:{
+    basho:(document.getElementById('simple-exp-basho')||{}).value||0,
+    shiire:(document.getElementById('simple-exp-shiire')||{}).value||0,
+    kotsu:(document.getElementById('simple-exp-kotsu')||{}).value||0,
+    other:(document.getElementById('simple-exp-other')||{}).value||0,
+    labor:{total:(document.getElementById('simple-exp-labor')||{}).value||0}
+  }, money:{
+    deposit:(document.getElementById('simple-money-deposit')||{}).value||0,
+    unpaid:(document.getElementById('simple-money-unpaid')||{}).value||0
+  }};
+  var m=calcSimpleMoneySummary(tmp);
+  var se=document.getElementById('se-total'); if(se) se.value=m.sales;
+  var sales=document.getElementById('simple-auto-sales'); if(sales) sales.textContent='¥'+m.sales.toLocaleString('ja-JP');
+  var exp=document.getElementById('simple-auto-expense'); if(exp) exp.textContent='¥'+m.expense.toLocaleString('ja-JP');
+  var profit=document.getElementById('simple-auto-profit'); if(profit) profit.textContent='¥'+m.profit.toLocaleString('ja-JP');
+  var cash=document.getElementById('simple-auto-cash'); if(cash) cash.textContent='¥'+m.cash.toLocaleString('ja-JP');
+}
+function syncSimpleMoneyToKing(ev){
+  try{
+    var list=JSON.parse(localStorage.getItem('fujiwara_king_money_ledger')||'[]');
+    var simple=(ev.sales&&ev.sales.simple)||{};
+    var m=calcSimpleMoneySummary(simple);
+    var rec={id:String(ev.id), date:simple.date||ev.date||'', eventName:ev.name||'', sales:m.sales, expense:m.expense, profit:m.profit, deposit:m.deposit, cash:m.cash, unpaid:m.unpaid, note:(simple.money&&simple.money.note)||'', updatedBy:userName||'未入力', updatedAt:new Date().toLocaleString('ja-JP')};
+    list=list.filter(function(x){ return String(x.id)!==String(rec.id); });
+    list.unshift(rec);
+    localStorage.setItem('fujiwara_king_money_ledger', JSON.stringify(list));
+  }catch(e){}
 }
 function renderSalesDetail() {
   if(!canAccessSalesExpense()) return;
@@ -3041,21 +3012,41 @@ function renderSalesDetail() {
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   var container=document.getElementById('sales-detail');
   if(!ev){ container.innerHTML=''; return; }
-  if(!canCurrentUserSeeEvent(ev)){ container.innerHTML='<div class="lock-box">🔒 このイベントは閲覧できません</div>'; return; }
-  var dates=dateListForEvent(ev);
-  var hasAny=!!(ev.sales&&((ev.sales.days&&Object.keys(ev.sales.days).length)||ev.sales.simple));
-  if(!hasAny){
+  if(!canViewSalesRecord(ev)){ container.innerHTML='<div class="lock-box">🔒 この売上表は記入者本人とリーダーだけ閲覧できます</div>'; return; }
+  var simple=(ev.sales&&ev.sales.simple)?ev.sales.simple:null;
+  if(!simple){
     container.innerHTML='<div class="empty-state"><div class="ei">📊</div><p>まだ売上表がありません</p>'
-      +(canEditSalesExpense()?'<button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上表を入力する</button>':'<div style="font-size:12px;color:var(--text2);margin-top:10px">'+salesExpenseAccessLabel()+'</div>')
-      +'</div>'; return;
+      +(canEditSalesRecord(ev)?'<button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上表を入力する</button>':'<div style="font-size:12px;color:var(--text2);margin-top:10px">記入者本人とリーダーだけ編集できます</div>')
+      +'</div>';
+    return;
   }
-  var grand=0, html='';
-  dates.forEach(function(ds){
-    var simple=(ev.sales&&ev.sales.days&&ev.sales.days[ds]) || (ds===ev.date&&ev.sales&&ev.sales.simple) || {labels:{},items:{},memo:''};
-    grand+=calcSimpleSalesTotal(simple); html+=renderOneSalesTable(ev,ds,simple);
-  });
-  container.innerHTML='<div class="shop-total-box" style="margin-bottom:12px"><span>期間合計</span><span class="mono">¥'+grand.toLocaleString()+'</span></div>'+html
-    +(canEditSalesExpense()?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 日別売上を編集</button>':'<div class="notice-card" style="margin-top:10px">👁️ '+salesExpenseAccessLabel()+'</div>');
+  var total=calcSimpleSalesTotal(simple);
+  var moneySummary=calcSimpleMoneySummary(simple);
+  var items=simple.items||{};
+  var labels=simple.labels||{};
+  var rows=['A','B','C','D','E'].map(function(k){
+    var name=(labels[k]&&String(labels[k]).trim())?String(labels[k]).replace(/</g,'&lt;'):k;
+    return '<tr><td style="font-weight:900;width:120px">'+name+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
+  }).join('');
+  var moneyNote=(simple.money&&simple.money.note)?String(simple.money.note).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'';
+  container.innerHTML='<div class="notice-card" style="font-size:13px">'
+    +'<div style="font-weight:900;font-size:16px;margin-bottom:8px">'+(simple.date||ev.date||'')+'　'+(ev.name||'')+'</div>'
+    +'<div class="scroll-x"><table class="bsheet-table" style="min-width:280px;background:#fffdf6">'
+    +'<tbody>'
+    +'<tr><th colspan="2" style="text-align:center;font-size:15px">売上</th></tr>'
+    +rows
+    +'<tr><th style="text-align:center">売上計</th><th class="mono" style="text-align:right;font-size:16px">¥'+total.toLocaleString()+'</th></tr>'
+    +'<tr><th colspan="2" style="text-align:center;font-size:15px">お金の行き先</th></tr>'
+    +'<tr><td style="font-weight:900">経費合計</td><td class="mono" style="text-align:right">¥'+moneySummary.expense.toLocaleString()+'</td></tr>'
+    +'<tr><td style="font-weight:900">利益</td><td class="mono" style="text-align:right;font-weight:900;color:'+(moneySummary.profit>=0?'var(--green)':'var(--red)')+'">¥'+moneySummary.profit.toLocaleString()+'</td></tr>'
+    +'<tr><td style="font-weight:900">預金</td><td class="mono" style="text-align:right">¥'+moneySummary.deposit.toLocaleString()+'</td></tr>'
+    +'<tr><td style="font-weight:900">手元残</td><td class="mono" style="text-align:right">¥'+moneySummary.cash.toLocaleString()+'</td></tr>'
+    +'<tr><td style="font-weight:900">未精算</td><td class="mono" style="text-align:right">¥'+moneySummary.unpaid.toLocaleString()+'</td></tr>'
+    +'<tr><td style="font-weight:900;text-align:center">メモ</td><td>'+(simple.memo?String(simple.memo).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'')+(moneyNote?'<br><b>お金：</b>'+moneyNote:'')+'</td></tr>'
+    +'</tbody></table></div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div>'
+    +'</div>'
+    +(canEditSalesRecord(ev)?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">🔒 記入者本人とリーダーだけ編集できます</div>');
 }
 
 // 出店アイテム文字列を売上入力用の品目リストに変換
@@ -3157,49 +3148,92 @@ function openSalesEdit(id) {
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
-  if(!canCurrentUserSeeEvent(ev)){ toast('⛔ このイベントは閲覧できません'); return; }
-  document.getElementById('se-title').textContent='📊 日別売上表';
+  if(!canEditSalesRecord(ev)){ toast('⛔ この売上表は記入者本人とリーダーだけ編集できます'); return; }
+  var simple=getSimpleSales(ev);
+  document.getElementById('se-title').textContent='📊 かんたん売上表';
   document.getElementById('se-ev-id').value=id;
-  var dates=dateListForEvent(ev);
-  var html='<div class="notice-card" style="margin-bottom:12px"><b>'+String(ev.name||'')+'</b><br>連続イベントは日付ごとに入力できます。</div>';
-  dates.forEach(function(ds,idx){
-    var simple=getDailySimpleSales(ev,ds);
-    html+='<div class="settings-group daily-sales-block" data-date="'+ds+'" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
-      +'<div style="font-size:16px;font-weight:900;color:var(--gold);margin-bottom:10px">📅 '+ds+(idx===0?'（初日）':'')+'</div>'
-      +['A','B','C','D','E'].map(function(k){
-        var label=(simple.labels&&simple.labels[k])||'';
-        var v=(simple.items&&simple.items[k])||'';
-        return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="daily-sales-label" data-date="'+ds+'" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="daily-sales-input" data-date="'+ds+'" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
-      }).join('')
-      +'<div class="fg"><label>メモ</label><textarea class="daily-sales-memo" data-date="'+ds+'" placeholder="この日のメモ">'+(simple.memo||'')+'</textarea></div></div>';
-  });
+
+  var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
+    +'<div class="fg"><label>日付</label><input type="date" id="simple-sales-date" value="'+(simple.date||ev.date||'')+'"></div>'
+    +'<div class="fg"><label>イベント名</label><input type="text" value="'+String(ev.name||'').replace(/"/g,'&quot;')+'" readonly></div>'
+    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上項目（名称は自由入力）</div>'
+    +['A','B','C','D','E'].map(function(k){
+      var label=(simple.labels&&simple.labels[k])||'';
+      var v=(simple.items&&simple.items[k])||'';
+      return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" oninput="updateSimpleSalesEditTotals()" value="'+v+'"></div></div>';
+    }).join('')
+    +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0">'
+    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">経費・お金の行き先</div>'
+    +'<div class="fg2"><div class="fg"><label>場所代（円）</label><input type="number" id="simple-exp-basho" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.basho)||'')+'"></div><div class="fg"><label>仕入れ（円）</label><input type="number" id="simple-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.shiire)||'')+'"></div></div>'
+    +'<div class="fg2"><div class="fg"><label>交通費（円）</label><input type="number" id="simple-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.kotsu)||'')+'"></div><div class="fg"><label>その他経費（円）</label><input type="number" id="simple-exp-other" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.other)||'')+'"></div></div>'
+    +'<div class="fg"><label>労務費 合計（円）</label><input type="number" id="simple-exp-labor" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||'')+'"></div>'
+    +'<div class="fg2"><div class="fg"><label>預金額（円）</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い（円）</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div>'
+    +'<div class="profit-card" style="margin:8px 0"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残（自動）</span><b id="simple-auto-cash">¥0</b></div></div>'
+    +'<div class="fg"><label>お金メモ</label><textarea id="simple-money-note" placeholder="例：15万円預金、残りは釣銭へ">'+((simple.money&&simple.money.note)||'')+'</textarea></div>'
+    +'</div>'
+    +'<div class="fg"><label>メモ</label><textarea id="simple-sales-memo" placeholder="メモ">'+(simple.memo||'')+'</textarea></div>'
+    +'<div style="font-size:12px;color:var(--text2);line-height:1.7">※この内容はキングアプリ用の管理データにも保存されます</div>'
+    +'</div>';
+
   var itemBox=document.getElementById('se-item-inputs'); if(itemBox) itemBox.innerHTML='';
   var laborBox=document.getElementById('se-labor-inputs');
-  if(laborBox){ laborBox.innerHTML=''; var old=document.getElementById('se-daily-inputs'); if(old) old.remove(); laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>'); }
-  ['se-total','se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
-  openModal('modal-sales-edit'); showPage('sales');
-  var sel=document.getElementById('sales-ev-select'); if(sel){ sel.value=id; renderSalesDetail(); }
+  if(laborBox){
+    laborBox.innerHTML='';
+    var old=document.getElementById('se-daily-inputs'); if(old) old.remove();
+    laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>');
+  }
+  // 固定の古い入力欄を使わない（売上合計だけ自動計算で使う）
+  ['se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
+  var totalInput=document.getElementById('se-total'); if(totalInput){ totalInput.readOnly=true; totalInput.style.background='#fff7df'; }
+  updateSimpleSalesEditTotals();
+  openModal('modal-sales-edit');
+  showPage('sales');
+  var sel=document.getElementById('sales-ev-select');
+  if(sel){ sel.value=id; renderSalesDetail(); }
 }
+
 function saveSalesEdit() {
   if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
   var id=document.getElementById('se-ev-id').value;
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
-  ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{};
-  var totalAll=0;
-  dateListForEvent(ev).forEach(function(ds){
-    var labels={A:'',B:'',C:'',D:'',E:''}, items={A:0,B:0,C:0,D:0,E:0};
-    document.querySelectorAll('.daily-sales-label[data-date="'+ds+'"]').forEach(function(inp){ labels[inp.dataset.key]=(inp.value||'').trim(); });
-    document.querySelectorAll('.daily-sales-input[data-date="'+ds+'"]').forEach(function(inp){ items[inp.dataset.key]=parseInt(inp.value)||0; });
-    var memoEl=document.querySelector('.daily-sales-memo[data-date="'+ds+'"]');
-    var day={labels:labels,items:items,memo:memoEl?memoEl.value:'',updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
-    day.total=calcSimpleSalesTotal(day); totalAll+=day.total; ev.sales.days[ds]=day;
-  });
-  // 旧画面との互換性：初日分をsimpleにも残す
-  ev.sales.simple=ev.sales.days[ev.date]||null; ev.sales.total=totalAll;
-  addAudit('日別売上表入力/修正',ev.name+'｜入力者 '+(userName||'未入力')+'｜期間合計 ¥'+totalAll.toLocaleString());
-  closeModal('modal-sales-edit'); renderSalesPage(); toast('✅ 日別売上表を保存しました'); fbSave();
+  if(!canEditSalesRecord(ev)){ toast('⛔ この売上表は記入者本人とリーダーだけ編集できます'); return; }
+  ev.sales=ev.sales||{};
+  var items={};
+  var labels={};
+  document.querySelectorAll('.simple-sales-label').forEach(function(inp){ labels[inp.dataset.key]=(inp.value||'').trim(); });
+  document.querySelectorAll('.simple-sales-input').forEach(function(inp){ items[inp.dataset.key]=parseInt(inp.value)||0; });
+  var simple={
+    date:(document.getElementById('simple-sales-date')||{}).value || ev.date || '',
+    labels:labels,
+    items:items,
+    expenses:{
+      basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,
+      shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,
+      kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,
+      other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,
+      labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}
+    },
+    money:{
+      deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,
+      unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,
+      note:(document.getElementById('simple-money-note')||{}).value || ''
+    },
+    memo:(document.getElementById('simple-sales-memo')||{}).value || '',
+    updatedBy:userName||'未入力',
+    updatedAt:new Date().toLocaleString('ja-JP')
+  };
+  ev.sales.simple=simple;
+  ev.sales.total=calcSimpleSalesTotal(simple);
+  ev.sales.expense=calcSimpleExpenses(simple);
+  ev.sales.profit=ev.sales.total-ev.sales.expense;
+  syncSimpleMoneyToKing(ev);
+  addAudit('かんたん売上表入力/修正', ev.name+'｜入力者 '+(userName||'未入力')+'｜売上 ¥'+((ev.sales.total||0).toLocaleString())+'｜利益 ¥'+((ev.sales.profit||0).toLocaleString()));
+  closeModal('modal-sales-edit');
+  renderSalesPage();
+  toast('✅ かんたん売上表を保存しました');
+  fbSave();
 }
 
 // ════ HOME ════
@@ -3243,18 +3277,55 @@ function escHtml(s){
   });
 }
 
-function renderLeaderEventStaffList(){
-  if(role!=='leader') return;
-  var el=document.getElementById('leader-event-staff-area');
+function renderAttendancePage(){
+  var lock=document.getElementById('attendance-lock');
+  var content=document.getElementById('attendance-content');
+  if(role!=='leader'){
+    if(lock) lockSection('attendance-lock','スタッフ出勤一覧はリーダー専用です');
+    if(content) content.style.display='none';
+    return;
+  }
+  if(lock) lock.innerHTML='';
+  if(content) content.style.display='';
+  renderEventStaffListTo('attendance-list-area');
+}
+
+function renderEventStaffListTo(targetId){
+  var el=document.getElementById(targetId);
   if(!el) return;
+  var today=new Date();
+  today.setHours(0,0,0,0);
+
+  function toDateOnly(v){
+    if(!v) return null;
+    var d=new Date(String(v)+'T00:00:00');
+    if(isNaN(d.getTime())) return null;
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function isEndedEvent(ev){
+    if(ev.status==='done' || ev.status==='ended' || ev.finished===true) return true;
+    var d=toDateOnly(ev.dateEnd || ev.date);
+    return d ? d < today : false;
+  }
+
   var events=(state.events||[]).slice().sort(function(a,b){
+    var ae=isEndedEvent(a), be=isEndedEvent(b);
+    if(ae!==be) return ae?1:-1; // 今後→終了の順
     return String(a.date||'').localeCompare(String(b.date||''));
   });
   if(!events.length){
     el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">イベント未登録</div>';
     return;
   }
-  el.innerHTML=events.map(function(ev){
+
+  var html='';
+  var wroteActive=false, wroteEnded=false;
+  events.forEach(function(ev){
+    var ended=isEndedEvent(ev);
+    if(!ended && !wroteActive){ html+='<div class="att-section-title">これからのイベント</div>'; wroteActive=true; }
+    if(ended && !wroteEnded){ html+='<div class="att-section-title ended">終了したイベント</div>'; wroteEnded=true; }
+
     var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
     if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
     if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
@@ -3271,30 +3342,38 @@ function renderLeaderEventStaffList(){
     var dateText=String(ev.date||'').slice(5).replace('-','/');
     var endText=ev.dateEnd ? '〜'+String(ev.dateEnd).slice(5).replace('-','/') : '';
     var staffText=staff.length ? staff.map(escHtml).join('・') : '<span style="color:var(--red);font-weight:900">未設定</span>';
+    var okText=ok.length ? ok.map(escHtml).join('・') : 'なし';
+    var maybeText=maybe.length ? maybe.map(escHtml).join('・') : 'なし';
+    var noText=no.length ? no.map(escHtml).join('・') : 'なし';
     var unansweredText=unanswered.length ? unanswered.map(escHtml).join('・') : 'なし';
-    return '<div style="padding:12px 14px;border-bottom:1px solid var(--border)">'
+
+    var badge = ended
+      ? '<span class="status-badge">終了</span>'
+      : (shortage>0?'<span class="status-badge" style="background:rgba(214,66,66,.12);color:var(--red);border:1px solid rgba(214,66,66,.25)">人員不足 '+shortage+'人</span>':'<span class="status-badge" style="background:rgba(22,138,88,.12);color:var(--green);border:1px solid rgba(22,138,88,.25)">人員OK</span>');
+
+    html += '<div class="att-card '+(ended?'att-ended':'')+'">'
       +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
         +'<div>'
           +'<div style="font-size:14px;font-weight:900;color:#111">'+escHtml(dateText+endText)+'　'+escHtml(ev.name||'名称未設定')+'</div>'
           +'<div style="font-size:11px;color:var(--text2);margin-top:3px">📍 '+escHtml(ev.place||'場所未設定')+'　発注先：'+escHtml(ev.zone||'未設定')+'</div>'
         +'</div>'
-        +(shortage>0?'<span class="status-badge" style="background:rgba(214,66,66,.12);color:var(--red);border:1px solid rgba(214,66,66,.25)">人員不足 '+shortage+'人</span>':'<span class="status-badge" style="background:rgba(22,138,88,.12);color:var(--green);border:1px solid rgba(22,138,88,.25)">人員OK</span>')
+        +badge
       +'</div>'
       +'<div style="margin-top:8px;font-size:12px;line-height:1.8">'
         +'<div><b>参加スタッフ：</b>'+staffText+'</div>'
-        +'<div><b>出勤回答：</b><span style="color:var(--green);font-weight:900">⭕ '+ok.length+'</span>　<span style="color:var(--gold);font-weight:900">△ '+maybe.length+'</span>　<span style="color:var(--red);font-weight:900">❌ '+no.length+'</span>　未回答 '+unanswered.length+'</div>'
+        +'<div><b>⭕ 出勤可：</b><span style="color:var(--green);font-weight:900">'+okText+'</span></div>'
+        +'<div><b>△ 未定：</b><span style="color:var(--gold);font-weight:900">'+maybeText+'</span></div>'
+        +'<div><b>❌ 出勤不可：</b><span style="color:var(--red);font-weight:900">'+noText+'</span></div>'
         +'<div style="font-size:11px;color:'+(unanswered.length?'var(--red)':'var(--text2)')+'"><b>未回答：</b>'+unansweredText+'</div>'
       +'</div>'
       +'</div>';
-  }).join('');
+  });
+  el.innerHTML=html;
 }
 
-function renderAttendancePage(){
-  if(role!=='leader'){ toast('⛔ 出勤一覧はリーダー専用です'); showPage('calendar'); return; }
-  renderLeaderEventStaffList();
-  var src=document.getElementById('leader-event-staff-area');
-  var dst=document.getElementById('attendance-list-area');
-  if(dst) dst.innerHTML=src?src.innerHTML:'<div style="padding:14px">データなし</div>';
+function renderLeaderEventStaffList(){
+  if(role!=='leader') return;
+  renderEventStaffListTo('leader-event-staff-area');
 }
 
 function renderStaffList() {
@@ -3594,9 +3673,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       checklist:Array.isArray(ev.checklist)?ev.checklist:(ev.checklist?Object.values(ev.checklist):null),
       availability:ev.availability||{},
       sales:ev.sales||null,
-      secret:!!ev.secret,
-      partnerShared:!!ev.partnerShared,
-      partnerMenShared:!!ev.partnerMenShared
+      secret:!!ev.secret
     };
   }
 
@@ -3607,7 +3684,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       return;
     }
     showSync('🔄 保存中...');
-    db.ref('fujiwara').set({
+    db.ref('fujiwara').update({
       events:state.events,
       invItems:state.invItems,
       notices:state.notices,
@@ -3637,6 +3714,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(typeof ensureRouteStaffNames==='function') ensureRouteStaffNames();
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
+    try{ listenPartnerShareStatus(); syncLocalPartnerSharesToFirebase(); }catch(e){}
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
       renderInventory();
@@ -3648,5 +3726,202 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   });
 })();
 </script>
+
+
+<script>
+(function(){
+  function yen(n){ return '¥'+Number(n||0).toLocaleString(); }
+  function esc(s){ return String(s||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];}); }
+  function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function purchaseCanUse(){ return role==='leader' || role==='staff'; }
+  function getPurchases(){ try{return JSON.parse(localStorage.getItem('fujiwara_purchases')||'[]')}catch(e){return []} }
+  function setPurchases(arr){ localStorage.setItem('fujiwara_purchases',JSON.stringify(arr||[])); }
+  function purchaseRef(){ try{ if(window.firebase && firebase.apps && firebase.apps.length){ return firebase.database().ref('fujiwara/purchases'); } }catch(e){} return null; }
+  window._purchasePhotoData='';
+
+  function patchNav(){
+    if(window.NAV){
+      ['leader','staff'].forEach(function(r){
+        NAV[r]=NAV[r]||[];
+        if(!NAV[r].some(function(n){return n.id==='purchases'})){
+          var at = Math.min(3,NAV[r].length);
+          NAV[r].splice(at,0,{id:'purchases',icon:'📷',label:'仕入'});
+        }
+      });
+    }
+  }
+  patchNav();
+
+  var oldBuild=window.buildNav;
+  window.buildNav=function(){ patchNav(); if(oldBuild) oldBuild(); };
+  var oldShow=window.showPage;
+  window.showPage=function(id){
+    if(id==='purchases' && !purchaseCanUse()){ if(typeof toast==='function')toast('⛔ 仕入登録はリーダー・担当者のみです'); id='calendar'; }
+    if(oldShow) oldShow(id);
+    if(id==='purchases') renderPurchasesPage();
+  };
+
+  window.previewPurchasePhoto=function(ev){
+    var file=ev.target.files && ev.target.files[0];
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var max=900, w=img.width, h=img.height;
+        if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
+        else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+        var c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        window._purchasePhotoData=c.toDataURL('image/jpeg',0.72);
+        var p=document.getElementById('pf-photo-preview'); if(p){p.src=window._purchasePhotoData;p.style.display='block';}
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+
+  function normalizeReceiptText(t){ return String(t||'').replace(/[|｜]/g,'1').replace(/[，]/g,',').replace(/[￥]/g,'¥').replace(/\s+/g,' ').trim(); }
+  function parseReceiptDate(text){
+    var m=text.match(/(20\d{2})[\/\.\-年]\s*(\d{1,2})[\/\.\-月]\s*(\d{1,2})日?/);
+    if(m) return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+    m=text.match(/(?:^|\D)(\d{2})[\/\.\-]\s*(\d{1,2})[\/\.\-]\s*(\d{1,2})(?:\D|$)/);
+    if(m){ var yy=Number(m[1]); var yyyy=(yy<70?2000+yy:1900+yy); return yyyy+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'); }
+    return '';
+  }
+  function parseReceiptAmount(raw){
+    var text=String(raw||'').replace(/[ＯOo]/g,'0').replace(/[ｌＩI]/g,'1');
+    var lines=text.split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);
+    var best=0;
+    lines.forEach(function(line){
+      var key=/(合計|総合計|総計|現計|お買上げ|お買い上げ|税込|お支払|支払|計)/.test(line);
+      var nums=line.match(/[¥￥]?\s*\d{1,3}(?:[,，]\d{3})+|[¥￥]?\s*\d{3,7}/g)||[];
+      nums.forEach(function(n){
+        var v=Number(String(n).replace(/[^0-9]/g,''));
+        if(v>=1 && v<10000000){ best= key ? Math.max(best,v) : Math.max(best, v>=100? v:0); }
+      });
+    });
+    return best||'';
+  }
+  function parseReceiptStore(raw){
+    var lines=String(raw||'').split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);
+    var bad=/(領収|レシート|receipt|TEL|電話|〒|住所|登録番号|日時|日付|担当|レジ|合計|小計|税|現計|お釣|釣銭|クレジット|カード|ポイント|No\.|NO\.|[0-9]{4}[\/年\-.][0-9]{1,2})/i;
+    for(var i=0;i<Math.min(lines.length,8);i++){
+      var line=lines[i].replace(/[■□◆◇★☆]/g,'').trim();
+      if(line.length>=2 && line.length<=28 && !bad.test(line) && !/^[-=ー―]+$/.test(line)) return line;
+    }
+    return '';
+  }
+  window.readPurchaseReceipt=async function(){
+    var status=document.getElementById('pf-ocr-status');
+    var out=document.getElementById('pf-ocr-text');
+    if(!window._purchasePhotoData){ alert('先にレシート写真を撮ってください'); return; }
+    if(!window.Tesseract){ alert('OCR部品の読み込みに失敗しました。ネット接続を確認して、もう一度開いてください。'); return; }
+    try{
+      if(status) status.textContent='🤖 読み取り中… 初回は少し時間がかかります';
+      var result=await Tesseract.recognize(window._purchasePhotoData,'jpn+eng',{ logger:function(m){ if(status && m.status){ status.textContent='🤖 '+m.status+(m.progress?(' '+Math.round(m.progress*100)+'%'):''); } } });
+      var text=(result && result.data && result.data.text) ? result.data.text : '';
+      if(out){ out.style.display='block'; out.value=text; }
+      var clean=normalizeReceiptText(text);
+      var store=parseReceiptStore(text);
+      var date=parseReceiptDate(clean);
+      var amount=parseReceiptAmount(text);
+      if(store && !document.getElementById('pf-store').value) document.getElementById('pf-store').value=store;
+      if(date) document.getElementById('pf-date').value=date;
+      if(amount) document.getElementById('pf-amount').value=amount;
+      if(status) status.textContent='✅ 読み取り完了。間違いがないか確認して保存してください。';
+      if(typeof toast==='function') toast('🤖 レシート読取完了');
+    }catch(e){
+      console.log(e);
+      if(status) status.textContent='⚠️ 読み取りできませんでした。写真を明るく正面から撮り直してください。';
+      alert('読み取りできませんでした。写真を明るく正面から撮り直してください。');
+    }
+  };
+
+  function fillPurchaseEvents(selectId, includeAll){
+    var s=document.getElementById(selectId); if(!s) return;
+    var current=s.value;
+    var opts=includeAll?'<option value="">すべて</option>':'';
+    var events=(window.state && state.events)?state.events:[];
+    opts += events.map(function(ev){ return '<option value="'+esc(ev.name)+'">'+esc((ev.date||'')+' '+(ev.name||''))+'</option>'; }).join('');
+    if(!events.length) opts += '<option value="その他">その他</option>';
+    s.innerHTML=opts; if(current) s.value=current;
+  }
+
+  window.openPurchaseForm=function(id){
+    if(!purchaseCanUse()){ toast('⛔ 仕入登録はリーダー・担当者のみです'); return; }
+    fillPurchaseEvents('pf-event',false);
+    var arr=getPurchases(); var r=id?arr.find(function(x){return String(x.id)===String(id)}):null;
+    document.getElementById('pf-title').textContent=r?'仕入を編集':'仕入登録';
+    document.getElementById('pf-id').value=r?r.id:'';
+    document.getElementById('pf-event').value=r?(r.eventName||''):'';
+    document.getElementById('pf-date').value=r?(r.date||todayISO()):todayISO();
+    document.getElementById('pf-staff').value=r?(r.staff||userName||''):(userName||'');
+    if(role==='staff') document.getElementById('pf-staff').readOnly=true; else document.getElementById('pf-staff').readOnly=false;
+    document.getElementById('pf-store').value=r?(r.store||''):'';
+    document.getElementById('pf-item').value=r?(r.item||''):'';
+    document.getElementById('pf-amount').value=r?(r.amount||''):'';
+    document.getElementById('pf-pay').value=r?(r.pay||'現金'):'現金';
+    document.getElementById('pf-memo').value=r?(r.memo||''):'';
+    window._purchasePhotoData=r?(r.photo||''):'';
+    var p=document.getElementById('pf-photo-preview'); if(p){ if(window._purchasePhotoData){p.src=window._purchasePhotoData;p.style.display='block'}else{p.style.display='none';p.removeAttribute('src')} }
+    var ocrs=document.getElementById('pf-ocr-status'); if(ocrs) ocrs.textContent='写真を撮ってから押すと、店舗名・日付・金額を候補入力します。';
+    var ocrt=document.getElementById('pf-ocr-text'); if(ocrt){ocrt.value=''; ocrt.style.display='none';}
+    openModal('modal-purchase-form');
+  };
+
+  window.savePurchase=function(){
+    var id=document.getElementById('pf-id').value || String(Date.now());
+    var rec={
+      id:id, eventName:document.getElementById('pf-event').value||'その他', date:document.getElementById('pf-date').value||todayISO(),
+      staff:document.getElementById('pf-staff').value.trim()||userName||'', store:document.getElementById('pf-store').value.trim(),
+      item:document.getElementById('pf-item').value.trim(), amount:Number(document.getElementById('pf-amount').value||0),
+      pay:document.getElementById('pf-pay').value, memo:document.getElementById('pf-memo').value.trim(), photo:window._purchasePhotoData||'',
+      createdBy:userName||'', updatedAt:new Date().toISOString()
+    };
+    if(!rec.store || !rec.amount){ alert('店舗名と金額を入れてください'); return; }
+    var arr=getPurchases().filter(function(x){return String(x.id)!==String(id)}); arr.push(rec); setPurchases(arr);
+    var ref=purchaseRef(); if(ref) ref.child(id).set(rec).catch(function(e){ alert('Firebase保存エラー: '+e.message); });
+    if(typeof addAudit==='function') addAudit('仕入登録',(rec.eventName||'')+' / '+(rec.store||'')+' / '+yen(rec.amount));
+    if(typeof toast==='function') toast('📷 仕入を保存しました');
+    closeModal('modal-purchase-form'); renderPurchasesPage();
+  };
+
+  window.deletePurchase=function(id){
+    var arr=getPurchases(); var r=arr.find(function(x){return String(x.id)===String(id)});
+    if(!r) return;
+    if(role==='staff' && r.staff!==userName && r.createdBy!==userName){ toast('⛔ 担当者は自分の仕入だけ削除できます'); return; }
+    if(!confirm('この仕入を削除しますか？')) return;
+    setPurchases(arr.filter(function(x){return String(x.id)!==String(id)}));
+    var ref=purchaseRef(); if(ref) ref.child(id).remove();
+    renderPurchasesPage(); toast('削除しました');
+  };
+
+  window.renderPurchasesPage=function(){
+    var lock=document.getElementById('purchase-lock'), content=document.getElementById('purchase-content'); if(!lock||!content) return;
+    if(!purchaseCanUse()){ lock.innerHTML='<div class="lock-box"><div style="font-size:36px;margin-bottom:8px">🔒</div><div style="font-size:14px;font-weight:700">アクセス制限</div><div style="font-size:12px;color:var(--text2)">仕入登録はリーダー・担当者のみです。</div></div>'; content.style.display='none'; return; }
+    lock.innerHTML=''; content.style.display=''; fillPurchaseEvents('purchase-filter-event',true);
+    var filter=document.getElementById('purchase-filter-event').value||'';
+    var arr=getPurchases().filter(function(r){ if(role==='staff' && r.staff!==userName && r.createdBy!==userName) return false; if(filter && r.eventName!==filter) return false; return true; })
+      .sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+    var total=arr.reduce(function(s,r){return s+Number(r.amount||0)},0);
+    document.getElementById('purchase-count').textContent=arr.length; document.getElementById('purchase-total').textContent=yen(total);
+    document.getElementById('purchase-list').innerHTML=arr.length?arr.map(function(r){
+      return '<div class="purchase-card"><div class="purchase-title">'+esc(r.store)+'　'+yen(r.amount)+'</div>'
+      +'<div class="purchase-meta">📅 '+esc(r.date)+' / 🎪 '+esc(r.eventName)+'<br>👤 '+esc(r.staff)+' / 🧾 '+esc(r.item||'未分類')+' / '+esc(r.pay||'')+(r.memo?'<br>📝 '+esc(r.memo):'')+'</div>'
+      +(r.photo?'<img class="purchase-photo" src="'+r.photo+'">':'')
+      +'<div class="purchase-actions"><button class="btn btn-outline btn-sm" onclick="openPurchaseForm(\''+esc(r.id)+'\')">編集</button><button class="btn btn-danger btn-sm" onclick="deletePurchase(\''+esc(r.id)+'\')">削除</button></div></div>';
+    }).join(''):'<div class="empty-state"><div class="ei">📷</div>まだ仕入登録がありません</div>';
+  };
+
+  function startPurchaseSync(){
+    var ref=purchaseRef(); if(!ref) return;
+    ref.on('value',function(s){ var v=s.val()||{}; var arr=Object.keys(v).map(function(k){return Object.assign({id:k},v[k])}); setPurchases(arr); if(document.getElementById('page-purchases')&&document.getElementById('page-purchases').classList.contains('active')) renderPurchasesPage(); });
+  }
+  setTimeout(function(){ patchNav(); if(document.getElementById('app') && document.getElementById('app').style.display!=='none' && window.buildNav) buildNav(); startPurchaseSync(); },500);
+})();
+</script>
+
 </body>
 </html>
