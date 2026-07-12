@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.4.7</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -485,8 +485,9 @@ body::before,#app::before,.page::before{
 /* ===== v4.4.0 リーダー専用アプリ管理・partner共有復旧 ===== */
 .partner-share-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed #d8bf75;}
 .partner-share-btn{min-height:38px;padding:8px 11px;border-radius:10px;font-size:11px;font-weight:900;border:1.5px solid #d8bf75;background:#fffaf0;color:#4d3a00;}
-.partner-share-btn.on-partner{background:#ffe7f0;border-color:#e58aaa;color:#8b2853;}
-.partner-share-btn.on-men{background:#e7f2ff;border-color:#78aee8;color:#174f82;}
+.partner-share-btn.on-partner{background:linear-gradient(135deg,#168a58,#2fbf7f)!important;border-color:#0d6d43!important;color:#fff!important;box-shadow:0 3px 10px rgba(22,138,88,.28);}
+.partner-share-btn.on-men{background:linear-gradient(135deg,#246bb3,#4b96df)!important;border-color:#174f82!important;color:#fff!important;box-shadow:0 3px 10px rgba(36,107,179,.28);}
+.partner-share-btn[aria-pressed="true"]{transform:translateY(-1px);}
 .partner-share-btn{position:relative;z-index:5;touch-action:manipulation;-webkit-tap-highlight-color:rgba(184,134,11,.18);pointer-events:auto!important;}
 .ev-card.event-done{background:#eeeeea!important;border-color:#b8b8b0!important;border-left-color:#888!important;opacity:.78;}
 .ev-card.event-done .ev-name,.ev-card.event-done .ev-meta{color:#666!important;}
@@ -1965,8 +1966,8 @@ function renderEventList(dateFilter) {
       var pOn=!!ev.partnerShared;
       var mOn=!!ev.partnerMenShared;
       partnerShareHtml='<div class="partner-share-row">'
-        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
-        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(pOn?'on-partner':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="partner" aria-pressed="'+(pOn?'true':'false')+'">🐩 '+(pOn?'✅ partner共有中・解除':'partnerへ共有')+'</button>'
+        +'<button type="button" class="partner-share-btn '+(mOn?'on-men':'')+'" data-share-event-id="'+String(ev.id).replace(/"/g,'&quot;')+'" data-share-target="men" aria-pressed="'+(mOn?'true':'false')+'">🦍🐷 '+(mOn?'✅ MEN共有中・解除':'MENへ共有')+'</button>'
         +'</div>';
     }
 
@@ -2104,9 +2105,9 @@ function downloadCurrentAppBackup(){
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.7-'+stamp+'.html';
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.8-'+stamp+'.html';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
-  addAudit('アプリ本体保存','v4.4.7'); toast('🛟 アプリ本体を保存しました');
+  addAudit('アプリ本体保存','v4.4.8'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
@@ -3004,6 +3005,35 @@ function calcSimpleSalesTotal(simple){
   ['A','B','C','D','E'].forEach(function(k){ total += parseInt(items[k])||0; });
   return total;
 }
+function getDailySimpleSales(ev,ds){
+  ev.sales=ev.sales||{};
+  ev.sales.days=ev.sales.days||{};
+  if(!ev.sales.days[ds]){
+    var base=(ds===ev.date && ev.sales.simple)?ev.sales.simple:null;
+    ev.sales.days[ds]={
+      labels:Object.assign({A:'',B:'',C:'',D:'',E:''},base&&base.labels||{}),
+      items:Object.assign({A:0,B:0,C:0,D:0,E:0},base&&base.items||{}),
+      memo:base&&base.memo||'', updatedBy:base&&base.updatedBy||'', updatedAt:base&&base.updatedAt||''
+    };
+  }
+  return ev.sales.days[ds];
+}
+function renderOneSalesTable(ev,ds,simple){
+  var total=calcSimpleSalesTotal(simple);
+  var items=simple.items||{}, labels=simple.labels||{};
+  var rows=['A','B','C','D','E'].map(function(k){
+    var name=(labels[k]&&String(labels[k]).trim())?String(labels[k]).replace(/</g,'&lt;'):k;
+    return '<tr><td style="font-weight:900;width:120px">'+name+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
+  }).join('');
+  return '<div class="notice-card" style="font-size:13px;margin-bottom:12px">'
+    +'<div style="font-weight:900;font-size:16px;margin-bottom:8px">📅 '+ds+'　'+(ev.name||'')+'</div>'
+    +'<div class="scroll-x"><table class="bsheet-table" style="min-width:280px;background:#fffdf6"><tbody>'
+    +'<tr><th colspan="2" style="text-align:center;font-size:15px">売上</th></tr>'+rows
+    +'<tr><th style="text-align:center">計</th><th class="mono" style="text-align:right;font-size:16px">¥'+total.toLocaleString()+'</th></tr>'
+    +'<tr><td style="font-weight:900;text-align:center">メモ</td><td>'+(simple.memo?String(simple.memo).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'')+'</td></tr>'
+    +'</tbody></table></div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div></div>';
+}
 function renderSalesDetail() {
   if(!canAccessSalesExpense()) return;
   var id=document.getElementById('sales-ev-select').value;
@@ -3012,32 +3042,20 @@ function renderSalesDetail() {
   var container=document.getElementById('sales-detail');
   if(!ev){ container.innerHTML=''; return; }
   if(!canCurrentUserSeeEvent(ev)){ container.innerHTML='<div class="lock-box">🔒 このイベントは閲覧できません</div>'; return; }
-  var simple=(ev.sales&&ev.sales.simple)?ev.sales.simple:null;
-  if(!simple){
+  var dates=dateListForEvent(ev);
+  var hasAny=!!(ev.sales&&((ev.sales.days&&Object.keys(ev.sales.days).length)||ev.sales.simple));
+  if(!hasAny){
     container.innerHTML='<div class="empty-state"><div class="ei">📊</div><p>まだ売上表がありません</p>'
       +(canEditSalesExpense()?'<button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="openSalesEdit(\''+ev.id+'\')">＋ 売上表を入力する</button>':'<div style="font-size:12px;color:var(--text2);margin-top:10px">'+salesExpenseAccessLabel()+'</div>')
-      +'</div>';
-    return;
+      +'</div>'; return;
   }
-  var total=calcSimpleSalesTotal(simple);
-  var items=simple.items||{};
-  var labels=simple.labels||{};
-  var rows=['A','B','C','D','E'].map(function(k){
-    var name=(labels[k]&&String(labels[k]).trim())?String(labels[k]).replace(/</g,'&lt;'):k;
-    return '<tr><td style="font-weight:900;width:120px">'+name+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
-  }).join('');
-  container.innerHTML='<div class="notice-card" style="font-size:13px">'
-    +'<div style="font-weight:900;font-size:16px;margin-bottom:8px">'+(simple.date||ev.date||'')+'　'+(ev.name||'')+'</div>'
-    +'<div class="scroll-x"><table class="bsheet-table" style="min-width:280px;background:#fffdf6">'
-    +'<tbody>'
-    +'<tr><th colspan="2" style="text-align:center;font-size:15px">売上</th></tr>'
-    +rows
-    +'<tr><th style="text-align:center">計</th><th class="mono" style="text-align:right;font-size:16px">¥'+total.toLocaleString()+'</th></tr>'
-    +'<tr><td style="font-weight:900;text-align:center">メモ</td><td>'+(simple.memo?String(simple.memo).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'')+'</td></tr>'
-    +'</tbody></table></div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div>'
-    +'</div>'
-    +(canEditSalesExpense()?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">👁️ '+salesExpenseAccessLabel()+'</div>');
+  var grand=0, html='';
+  dates.forEach(function(ds){
+    var simple=(ev.sales&&ev.sales.days&&ev.sales.days[ds]) || (ds===ev.date&&ev.sales&&ev.sales.simple) || {labels:{},items:{},memo:''};
+    grand+=calcSimpleSalesTotal(simple); html+=renderOneSalesTable(ev,ds,simple);
+  });
+  container.innerHTML='<div class="shop-total-box" style="margin-bottom:12px"><span>期間合計</span><span class="mono">¥'+grand.toLocaleString()+'</span></div>'+html
+    +(canEditSalesExpense()?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 日別売上を編集</button>':'<div class="notice-card" style="margin-top:10px">👁️ '+salesExpenseAccessLabel()+'</div>');
 }
 
 // 出店アイテム文字列を売上入力用の品目リストに変換
@@ -3140,64 +3158,48 @@ function openSalesEdit(id) {
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
   if(!canCurrentUserSeeEvent(ev)){ toast('⛔ このイベントは閲覧できません'); return; }
-  var simple=getSimpleSales(ev);
-  document.getElementById('se-title').textContent='📊 かんたん売上表';
+  document.getElementById('se-title').textContent='📊 日別売上表';
   document.getElementById('se-ev-id').value=id;
-
-  var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
-    +'<div class="fg"><label>日付</label><input type="date" id="simple-sales-date" value="'+(simple.date||ev.date||'')+'"></div>'
-    +'<div class="fg"><label>イベント名</label><input type="text" value="'+String(ev.name||'').replace(/"/g,'&quot;')+'" readonly></div>'
-    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上項目（名称は自由入力）</div>'
-    +['A','B','C','D','E'].map(function(k){
-      var label=(simple.labels&&simple.labels[k])||'';
-      var v=(simple.items&&simple.items[k])||'';
-      return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
-    }).join('')
-    +'<div class="fg"><label>メモ</label><textarea id="simple-sales-memo" placeholder="メモ">'+(simple.memo||'')+'</textarea></div>'
-    +'<div style="font-size:12px;color:var(--text2);line-height:1.7">※仕入・細かい経費はキングアプリ・事務員アプリで管理</div>'
-    +'</div>';
-
+  var dates=dateListForEvent(ev);
+  var html='<div class="notice-card" style="margin-bottom:12px"><b>'+String(ev.name||'')+'</b><br>連続イベントは日付ごとに入力できます。</div>';
+  dates.forEach(function(ds,idx){
+    var simple=getDailySimpleSales(ev,ds);
+    html+='<div class="settings-group daily-sales-block" data-date="'+ds+'" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
+      +'<div style="font-size:16px;font-weight:900;color:var(--gold);margin-bottom:10px">📅 '+ds+(idx===0?'（初日）':'')+'</div>'
+      +['A','B','C','D','E'].map(function(k){
+        var label=(simple.labels&&simple.labels[k])||'';
+        var v=(simple.items&&simple.items[k])||'';
+        return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="daily-sales-label" data-date="'+ds+'" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="daily-sales-input" data-date="'+ds+'" data-key="'+k+'" placeholder="0" min="0" value="'+v+'"></div></div>';
+      }).join('')
+      +'<div class="fg"><label>メモ</label><textarea class="daily-sales-memo" data-date="'+ds+'" placeholder="この日のメモ">'+(simple.memo||'')+'</textarea></div></div>';
+  });
   var itemBox=document.getElementById('se-item-inputs'); if(itemBox) itemBox.innerHTML='';
   var laborBox=document.getElementById('se-labor-inputs');
-  if(laborBox){
-    laborBox.innerHTML='';
-    var old=document.getElementById('se-daily-inputs'); if(old) old.remove();
-    laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>');
-  }
-  // 固定の古い入力欄を使わない
+  if(laborBox){ laborBox.innerHTML=''; var old=document.getElementById('se-daily-inputs'); if(old) old.remove(); laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>'); }
   ['se-total','se-yakisoba','se-kushi','se-mizu','se-basho','se-shiire','se-kotsu','se-other'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
-  openModal('modal-sales-edit');
-  showPage('sales');
-  var sel=document.getElementById('sales-ev-select');
-  if(sel){ sel.value=id; renderSalesDetail(); }
+  openModal('modal-sales-edit'); showPage('sales');
+  var sel=document.getElementById('sales-ev-select'); if(sel){ sel.value=id; renderSalesDetail(); }
 }
-
 function saveSalesEdit() {
   if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
   var id=document.getElementById('se-ev-id').value;
   var ev=null;
   for(var i=0;i<state.events.length;i++){ if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; } }
   if(!ev) return;
-  ev.sales=ev.sales||{};
-  var items={};
-  var labels={};
-  document.querySelectorAll('.simple-sales-label').forEach(function(inp){ labels[inp.dataset.key]=(inp.value||'').trim(); });
-  document.querySelectorAll('.simple-sales-input').forEach(function(inp){ items[inp.dataset.key]=parseInt(inp.value)||0; });
-  var simple={
-    date:(document.getElementById('simple-sales-date')||{}).value || ev.date || '',
-    labels:labels,
-    items:items,
-    memo:(document.getElementById('simple-sales-memo')||{}).value || '',
-    updatedBy:userName||'未入力',
-    updatedAt:new Date().toLocaleString('ja-JP')
-  };
-  ev.sales.simple=simple;
-  ev.sales.total=calcSimpleSalesTotal(simple);
-  addAudit('かんたん売上表入力/修正', ev.name+'｜入力者 '+(userName||'未入力')+'｜売上合計 ¥'+((ev.sales.total||0).toLocaleString()));
-  closeModal('modal-sales-edit');
-  renderSalesPage();
-  toast('✅ かんたん売上表を保存しました');
-  fbSave();
+  ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{};
+  var totalAll=0;
+  dateListForEvent(ev).forEach(function(ds){
+    var labels={A:'',B:'',C:'',D:'',E:''}, items={A:0,B:0,C:0,D:0,E:0};
+    document.querySelectorAll('.daily-sales-label[data-date="'+ds+'"]').forEach(function(inp){ labels[inp.dataset.key]=(inp.value||'').trim(); });
+    document.querySelectorAll('.daily-sales-input[data-date="'+ds+'"]').forEach(function(inp){ items[inp.dataset.key]=parseInt(inp.value)||0; });
+    var memoEl=document.querySelector('.daily-sales-memo[data-date="'+ds+'"]');
+    var day={labels:labels,items:items,memo:memoEl?memoEl.value:'',updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
+    day.total=calcSimpleSalesTotal(day); totalAll+=day.total; ev.sales.days[ds]=day;
+  });
+  // 旧画面との互換性：初日分をsimpleにも残す
+  ev.sales.simple=ev.sales.days[ev.date]||null; ev.sales.total=totalAll;
+  addAudit('日別売上表入力/修正',ev.name+'｜入力者 '+(userName||'未入力')+'｜期間合計 ¥'+totalAll.toLocaleString());
+  closeModal('modal-sales-edit'); renderSalesPage(); toast('✅ 日別売上表を保存しました'); fbSave();
 }
 
 // ════ HOME ════
