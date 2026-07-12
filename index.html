@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.6</title>
+<title>FUJIWARA GROUP 販売管理 v4.4.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -481,6 +481,18 @@ body::before,#app::before,.page::before{
 .shop-total-box{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:14px;background:linear-gradient(135deg,rgba(184,134,11,.12),rgba(184,134,11,.04));border:1.5px solid #d8bf75;border-radius:12px;font-weight:900;}
 .shop-readonly{background:#f7f1df!important;color:#5f512e!important;}
 
+
+/* ===== v4.4.0 リーダー専用アプリ管理・partner共有復旧 ===== */
+.partner-share-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed #d8bf75;}
+.partner-share-btn{min-height:38px;padding:8px 11px;border-radius:10px;font-size:11px;font-weight:900;border:1.5px solid #d8bf75;background:#fffaf0;color:#4d3a00;}
+.partner-share-btn.on-partner{background:#ffe7f0;border-color:#e58aaa;color:#8b2853;}
+.partner-share-btn.on-men{background:#e7f2ff;border-color:#78aee8;color:#174f82;}
+.leader-app-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px;}
+.leader-app-card{display:flex;align-items:center;gap:10px;text-decoration:none;color:#241900;background:#fffdfa;border:1.5px solid #d8bf75;border-radius:12px;padding:11px;min-height:66px;box-shadow:0 2px 8px rgba(80,55,0,.07);}
+.leader-app-card .app-emoji{font-size:27px;flex:0 0 auto;}.leader-app-card b{display:block;font-size:13px;}.leader-app-card small{display:block;color:#6d5a2b;font-size:10px;margin-top:2px;line-height:1.35;}
+.version-guard{background:#eef9f2;border:1.5px solid #78bf91;border-radius:12px;padding:11px;margin:12px 0;font-size:11px;line-height:1.7;color:#174d2b;}
+@media(max-width:420px){.leader-app-grid{grid-template-columns:1fr}.partner-share-btn{flex:1;}}
+
 </style>
 </head>
 <body>
@@ -701,6 +713,27 @@ body::before,#app::before,.page::before{
         <div id="settings-lock"></div>
         <div id="settings-content">
           <div class="admin-badge">🔒 リーダーのみ</div>
+
+          <!-- v4.4.0 リーダー専用：全アプリ管理 -->
+          <div id="leader-app-center">
+            <div class="sec-title" style="margin:4px 0 8px">👑 リーダー専用・全アプリ一覧</div>
+            <div class="version-guard">
+              一般ユーザー・担当者には表示されません。修正前の完成版を残し、確認済みの版だけを正式版にします。<br>
+              現在の基準版：<b>v4.4.0</b>
+            </div>
+            <div class="leader-app-grid">
+              <a class="leader-app-card" href="index.html"><span class="app-emoji">🛡️</span><span><b>メインアプリ</b><small>イベント・在庫・売上・共有</small></span></a>
+              <a class="leader-app-card" href="king.html"><span class="app-emoji">👑</span><span><b>キングアプリ</b><small>全体統括・社長専用</small></span></a>
+              <a class="leader-app-card" href="construction.html"><span class="app-emoji">🏗️</span><span><b>建設アプリ</b><small>日報・現場管理</small></span></a>
+              <a class="leader-app-card" href="office-timecard.html"><span class="app-emoji">👩‍💼</span><span><b>事務員アプリ</b><small>タイムカード・集計</small></span></a>
+              <a class="leader-app-card" href="partner.html?from=main"><span class="app-emoji">🐩</span><span><b>partner</b><small>共有イベント確認</small></span></a>
+              <a class="leader-app-card" href="partner-men.html?from=main"><span class="app-emoji">🦍🐷</span><span><b>partner MEN</b><small>男版共有・ネタ確認</small></span></a>
+              <a class="leader-app-card" href="event-talk.html"><span class="app-emoji">💬</span><span><b>LINE風アプリ</b><small>会社連絡・チャット</small></span></a>
+              <a class="leader-app-card" href="neta-shopping-list.html"><span class="app-emoji">🛒</span><span><b>ネタアプリ</b><small>買い物・在庫確認</small></span></a>
+            </div>
+            <button class="btn btn-outline btn-sm btn-full" style="margin:10px 0 16px" onclick="downloadCurrentAppBackup()">🛟 現在のアプリ本体を保存</button>
+          </div>
+
           <div class="settings-group">
             <div class="settings-row" onclick="openChangePw('leader')">
               <div class="sr-left"><span style="font-size:17px">🔑</span>リーダーPW変更</div>
@@ -1889,6 +1922,16 @@ function renderEventList(dateFilter) {
         +'</div>';
     }
 
+    var partnerShareHtml='';
+    if(role==='leader'){
+      var pOn=!!ev.partnerShared;
+      var mOn=!!ev.partnerMenShared;
+      partnerShareHtml='<div class="partner-share-row" onclick="event.stopPropagation()">'
+        +'<button class="partner-share-btn '+(pOn?'on-partner':'')+'" onclick="togglePartnerShare(\''+ev.id+'\',\'partner\')">🐩 '+(pOn?'partner共有中・解除':'partnerへ共有')+'</button>'
+        +'<button class="partner-share-btn '+(mOn?'on-men':'')+'" onclick="togglePartnerShare(\''+ev.id+'\',\'men\')">🦍🐷 '+(mOn?'MEN共有中・解除':'MENへ共有')+'</button>'
+        +'</div>';
+    }
+
     var availabilityHtml='';
     if(typeof renderAvailabilitySummary==='function'){
       if(role!=='leader'){
@@ -1924,9 +1967,73 @@ function renderEventList(dateFilter) {
       +availabilityHtml
       +shoppingActionHtml
       +salesActionHtml
+      +partnerShareHtml
       +actionsHtml
       +'</div>';
   }).join('');
+}
+
+
+// ════ v4.4.0 PARTNER共有（リーダー専用） ════
+function partnerSharePayload(ev){
+  return {
+    id:'main_'+String(ev.id), mainId:String(ev.id),
+    date:ev.date||'', dateEnd:ev.dateEnd||'',
+    title:ev.name||'イベント', name:ev.name||'イベント',
+    place:ev.place||'', location:ev.place||'',
+    itemsText:ev.itemsText||'', secret:!!ev.secret,
+    updatedAt:new Date().toISOString(), sharedBy:userName||'リーダー'
+  };
+}
+function safeShareKey(id){ return String(id).replace(/[.#$\[\]\/]/g,'_'); }
+function updatePartnerLocal(storeKey, ev, enabled){
+  try{
+    var arr=JSON.parse(localStorage.getItem(storeKey)||'[]');
+    if(!Array.isArray(arr)) arr=[];
+    var mainId=String(ev.id);
+    arr=arr.filter(function(x){ return String(x.mainId||String(x.id||'').replace(/^main_/,''))!==mainId; });
+    if(enabled) arr.push(partnerSharePayload(ev));
+    localStorage.setItem(storeKey,JSON.stringify(arr));
+  }catch(e){ console.warn('共有ローカル保存エラー',e); }
+}
+function togglePartnerShare(eventId,target){
+  if(role!=='leader'){ toast('⛔ 共有操作はリーダーだけです'); return; }
+  var ev=state.events.find(function(x){ return String(x.id)===String(eventId); });
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  if(isSecretEvent(ev)){ toast('🔒 シークレットイベントは共有できません'); return; }
+  var isMen=target==='men';
+  var field=isMen?'partnerMenShared':'partnerShared';
+  var next=!ev[field];
+  ev[field]=next;
+  var path=isMen?'fujiwara/partner_men_shared_events':'fujiwara/partner_shared_events';
+  var store=isMen?'partner_men_events_v1':'partner_events_v4';
+  updatePartnerLocal(store,ev,next);
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length){
+      var ref=firebase.database().ref(path).child(safeShareKey(ev.id));
+      var task=next ? ref.update(partnerSharePayload(ev)) : ref.remove();
+      task.then(function(){
+        addAudit(next?'共有開始':'共有解除',(isMen?'partner MEN':'partner')+'｜'+ev.name);
+        fbSave(); renderEventList(selectedDate||null);
+        toast(next?'✅ 共有しました':'✅ 共有を解除しました');
+      }).catch(function(err){ ev[field]=!next; renderEventList(selectedDate||null); toast('⚠️ 共有エラー: '+err.message); });
+      renderEventList(selectedDate||null);
+      return;
+    }
+  }catch(e){ console.warn(e); }
+  addAudit(next?'共有開始':'共有解除',(isMen?'partner MEN':'partner')+'｜'+ev.name);
+  fbSave(); renderEventList(selectedDate||null);
+  toast(next?'✅ 端末に共有しました':'✅ 共有を解除しました');
+}
+function downloadCurrentAppBackup(){
+  if(role!=='leader'){ toast('⛔ リーダー専用です'); return; }
+  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var a=document.createElement('a');
+  var d=new Date(), stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+  a.href=URL.createObjectURL(blob); a.download='index-backup-v4.4.0-'+stamp+'.html';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+  addAudit('アプリ本体保存','v4.4.0'); toast('🛟 アプリ本体を保存しました');
 }
 
 // ════ BSHEET ════
@@ -3404,7 +3511,9 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       checklist:Array.isArray(ev.checklist)?ev.checklist:(ev.checklist?Object.values(ev.checklist):null),
       availability:ev.availability||{},
       sales:ev.sales||null,
-      secret:!!ev.secret
+      secret:!!ev.secret,
+      partnerShared:!!ev.partnerShared,
+      partnerMenShared:!!ev.partnerMenShared
     };
   }
 
