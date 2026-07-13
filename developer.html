@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FG Developer">
+<meta name="theme-color" content="#16110a">
+<title>FUJIWARA Group Developer</title>
+<style>
+:root{--bg:#16110a;--panel:#241a0e;--panel2:#302212;--line:#725522;--gold:#e5bd53;--gold2:#ffd978;--text:#fff8e8;--muted:#c9b98f;--green:#40c985;--red:#ff6b6b;--blue:#64b5f6;--orange:#ffb45c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#4b3516 0,transparent 28%),linear-gradient(180deg,#181109,#100c08);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;padding-bottom:90px}button,input,select,textarea{font:inherit}.top{position:sticky;top:0;z-index:50;background:rgba(22,17,10,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 14px}.head{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand h1{margin:0;color:var(--gold2);font-size:22px}.brand p{margin:4px 0 0;color:var(--muted);font-size:11px}.safe{padding:7px 10px;border-radius:999px;background:#153526;color:#a9f4c8;border:1px solid #2a6a49;font-size:11px;font-weight:900;white-space:nowrap}.wrap{max-width:1180px;margin:auto;padding:14px}.hero{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric,.card{background:linear-gradient(145deg,rgba(48,34,18,.96),rgba(31,23,14,.96));border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.metric{padding:14px}.metric b{font-size:25px;color:var(--gold2)}.metric span{display:block;color:var(--muted);font-size:11px;margin-top:5px}.card{padding:15px;margin-top:13px}.card h2{margin:0 0 7px;font-size:18px}.desc{font-size:12px;line-height:1.7;color:var(--muted)}.notice{border-left:4px solid var(--gold);background:#302718;padding:11px 12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:10px}.tabs{display:flex;gap:7px;overflow:auto}.tab{border:0;border-radius:11px;background:#49371f;color:#fff;padding:10px 12px;font-weight:900;white-space:nowrap}.tab.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#221500}.panel{display:none}.panel.active{display:block}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn,.fileBtn{border:0;border-radius:12px;padding:11px 13px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#211500}.secondary{background:var(--blue);color:#09243b}.green{background:var(--green);color:#08281b}.red{background:var(--red);color:#fff}.dark{background:#43526a;color:#fff}.orange{background:var(--orange);color:#301800}.fileBtn{display:inline-flex;align-items:center}.fileBtn input{display:none}.apps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}.app{background:#17110b;border:1px solid var(--line);border-radius:16px;padding:13px}.appHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.appName{font-weight:950;font-size:15px}.badge{font-size:10px;border:1px solid var(--line);padding:4px 7px;border-radius:999px;color:var(--muted)}.appMeta{font-size:11px;color:var(--muted);line-height:1.55;margin-top:7px}.ok{color:#aaf1c7}.warn{color:#ffd593}.danger{color:#ffb0b0}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}label{display:block;color:var(--muted);font-size:11px;margin:9px 0 5px}input,select,textarea{width:100%;border:1px solid var(--line);background:#100b07;color:#fff;border-radius:11px;padding:10px;font-size:14px}textarea{min-height:140px}.list{margin-top:10px}.item{padding:11px 0;border-top:1px solid #4b381e}.item:first-child{border-top:0}.itemTop{display:flex;justify-content:space-between;gap:10px}.title{font-weight:900}.meta{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}.inventoryTable{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}.inventoryTable th,.inventoryTable td{border:1px solid #594423;padding:8px;text-align:left}.inventoryTable th{background:#3a2a16;color:var(--gold2)}.scroll{overflow:auto}.log{white-space:pre-wrap;background:#0d0906;border:1px solid var(--line);border-radius:12px;padding:11px;min-height:140px;max-height:320px;overflow:auto;color:#d8e5f2;font-size:11px}.footer{position:fixed;left:0;right:0;bottom:0;background:rgba(22,17,10,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:9px 10px calc(9px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.footer button{border:0;border-radius:10px;padding:9px 4px;background:#332514;color:#d8cba7;font-size:10px;font-weight:900}.footer button.active{background:var(--gold);color:#211500}@media(max-width:760px){.hero{grid-template-columns:1fr 1fr}.apps{grid-template-columns:1fr}.row,.grid3{grid-template-columns:1fr}.brand p{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="head"><div class="brand"><h1>🛠 FUJIWARA Group Developer</h1><p>本番アプリとは完全分離・読込と書き出し専用</p></div><div class="safe">🟢 本番保護モード</div></div></header>
+<main class="wrap">
+<section class="hero">
+<div class="metric"><b id="mApps">9</b><span>登録アプリ</span></div>
+<div class="metric"><b id="mLoaded">0</b><span>読込済みHTML</span></div>
+<div class="metric"><b id="mItems">0</b><span>抽出した在庫品目</span></div>
+<div class="metric"><b id="mLast">なし</b><span>最終保存</span></div>
+</section>
+<section class="card"><div class="tabs">
+<button class="tab active" data-tab="dashboard">全体管理</button>
+<button class="tab" data-tab="inventory">在庫・単価</button>
+<button class="tab" data-tab="export">相棒へ送る</button>
+<button class="tab" data-tab="backup">バックアップ</button>
+<button class="tab" data-tab="log">開発ログ</button>
+</div></section>
+<section id="dashboard" class="panel active">
+<div class="card"><h2>① アプリHTMLを開発版へ登録</h2><div class="desc">元ファイルは変更しません。ここへ読み込んだコピーだけを解析・保存します。</div><div class="toolbar"><label class="fileBtn">📥 HTMLを複数選択<input id="files" type="file" accept=".html,.htm,.txt" multiple></label><button class="green" id="saveSnapshot">💾 開発スナップショット</button><button class="secondary" id="exportProject">📦 開発データを書き出し</button></div><div class="notice"><b>安全ルール：</b>本番ファイルへの上書き機能は入れていません。完成版を作る時は、ここから書き出した開発データを相棒へ送ってください。</div></div>
+<div class="card"><h2>② 登録アプリ一覧</h2><div id="apps" class="apps"></div></div>
+</section>
+<section id="inventory" class="panel">
+<div class="card"><h2>在庫品目・単価マスター</h2><div class="desc">メインアプリやネタ買い物一覧から、カテゴリー・品目・単位を自動抽出します。単価は開発版だけに保存されます。</div><div class="toolbar"><button class="secondary" id="extractInventory">🔍 品目を再抽出</button><button class="green" id="savePrices">💾 単価保存</button><button id="printPrices">🖨 印刷</button><button class="orange" id="csvPrices">CSV出力</button></div><div class="scroll"><table class="inventoryTable"><thead><tr><th>カテゴリー</th><th>品目</th><th>単位</th><th>単価</th><th>元アプリ</th></tr></thead><tbody id="invBody"></tbody></table></div></div>
+</section>
+<section id="export" class="panel">
+<div class="card"><h2>🤖 相棒へ送るファイル</h2><div class="desc">登録アプリの一覧、抽出品目、単価、localStorageの開発データを1つのJSONにまとめます。</div><div class="toolbar"><button class="green" id="exportAi">🤖 相棒用データを書き出す</button><button class="secondary" id="copySummary">📋 内容をコピー</button></div><label>書き出し内容の確認</label><textarea id="summary" readonly></textarea></div>
+</section>
+<section id="backup" class="panel">
+<div class="card"><h2>バックアップ</h2><div class="toolbar"><button id="backupNow">📸 今の状態を保存</button><button class="secondary" id="downloadBackup">⬇️ バックアップ書き出し</button><label class="fileBtn orange">⬆️ バックアップ読込<input id="importBackup" type="file" accept=".json,.fgdev"></label><button class="red" id="clearDev">開発データだけ初期化</button></div><div id="backupList" class="list"></div></div>
+</section>
+<section id="log" class="panel"><div class="card"><h2>開発ログ</h2><div id="logBox" class="log"></div></div></section>
+</main>
+<nav class="footer"><button class="active" data-go="dashboard">全体</button><button data-go="inventory">在庫</button><button data-go="export">相棒</button><button data-go="backup">保存</button></nav>
+<script>
+const KEY='fujiwara_developer_v1';
+const APP_DEFS=[
+ {id:'main',name:'メインアプリ',file:'index.html',icon:'🛡️'},
+ {id:'king',name:'キングアプリ',file:'king.html',icon:'👑'},
+ {id:'construction',name:'建設アプリ',file:'construction-main.html',icon:'🏗️'},
+ {id:'office',name:'事務員アプリ',file:'office-timecard.html',icon:'🌸'},
+ {id:'partner',name:'Partner',file:'partner.html',icon:'🐶'},
+ {id:'partnerMen',name:'Partner Men',file:'partner-men.html',icon:'🦍'},
+ {id:'talk',name:'イベント連絡',file:'event-talk.html',icon:'💬'},
+ {id:'manager',name:'担当者専用',file:'manager-app.html',icon:'🧑‍💼'},
+ {id:'neta',name:'ネタ買い物一覧',file:'neta-shopping-list.html',icon:'🛒'}
+];
+let state={files:{},inventory:[],prices:{},backups:[],logs:[],lastSaved:null};
+function load(){try{state={...state,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){};renderAll()}
+function persist(){localStorage.setItem(KEY,JSON.stringify(state));state.lastSaved=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state));renderMetrics()}
+function log(msg){const s='['+new Date().toLocaleString('ja-JP')+'] '+msg;state.logs.unshift(s);state.logs=state.logs.slice(0,300);document.getElementById('logBox').textContent=state.logs.join('\n');persist()}
+function renderMetrics(){document.getElementById('mLoaded').textContent=Object.keys(state.files).length;document.getElementById('mItems').textContent=state.inventory.length;document.getElementById('mLast').textContent=state.lastSaved?new Date(state.lastSaved).toLocaleString('ja-JP'):'なし'}
+function renderApps(){const box=document.getElementById('apps');box.innerHTML=APP_DEFS.map(a=>{const f=state.files[a.id];return `<div class="app"><div class="appHead"><div><div class="appName">${a.icon} ${a.name}</div><div class="appMeta">予定ファイル：${a.file}</div></div><span class="badge ${f?'ok':'warn'}">${f?'登録済み':'未登録'}</span></div><div class="appMeta">${f?`読込名：${esc(f.name)}<br>サイズ：${fmt(f.size)}<br>更新：${new Date(f.loadedAt).toLocaleString('ja-JP')}`:'上のボタンからHTMLを選択してください'}</div></div>`}).join('')}
+function renderInventory(){const b=document.getElementById('invBody');if(!state.inventory.length){b.innerHTML='<tr><td colspan="5">まだ抽出されていません</td></tr>';return}b.innerHTML=state.inventory.map((x,i)=>`<tr><td>${esc(x.category||'未分類')}</td><td>${esc(x.item)}</td><td>${esc(x.unit||'')}</td><td><input type="number" min="0" value="${Number(state.prices[x.item])||''}" oninput="state.prices[${JSON.stringify(x.item)}]=Number(this.value)||0"></td><td>${esc(x.source||'')}</td></tr>`).join('')}
+function renderBackups(){const b=document.getElementById('backupList');b.innerHTML=state.backups.length?state.backups.map((x,i)=>`<div class="item"><div class="itemTop"><div class="title">${new Date(x.date).toLocaleString('ja-JP')}</div><button class="btn dark" onclick="restoreBackup(${i})">復元</button></div><div class="meta">アプリ ${x.apps}件／品目 ${x.items}件</div></div>`).join(''):'<div class="desc">保存履歴なし</div>'}
+function renderSummary(){const data=buildExport();document.getElementById('summary').value=JSON.stringify(data,null,2)}
+function renderAll(){renderMetrics();renderApps();renderInventory();renderBackups();document.getElementById('logBox').textContent=state.logs.join('\n');renderSummary()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmt(n){if(n>1024*1024)return (n/1024/1024).toFixed(1)+' MB';if(n>1024)return (n/1024).toFixed(1)+' KB';return n+' B'}
+function appIdFor(name,text){const n=name.toLowerCase();if(n.includes('neta'))return'neta';if(n.includes('manager'))return'manager';if(n.includes('partner-men')||n.includes('partnermen'))return'partnerMen';if(n.includes('partner'))return'partner';if(n.includes('office'))return'office';if(n.includes('construction'))return'construction';if(n.includes('event-talk'))return'talk';if(n.includes('king'))return'king';if(n.includes('index')||/販売管理|在庫管理/.test(text))return'main';return 'other_'+Date.now()}
+document.getElementById('files').addEventListener('change',async e=>{for(const file of e.target.files){const text=await file.text();const id=appIdFor(file.name,text);state.files[id]={name:file.name,size:file.size,loadedAt:new Date().toISOString(),text};log('HTML登録：'+file.name)}persist();extractInventory();renderAll();e.target.value=''})
+function uniquePush(map,cat,item,unit,source){item=String(item||'').trim();if(!item)return;const key=cat+'||'+item;if(!map.has(key))map.set(key,{category:cat||'未分類',item,unit:unit||'',source})}
+function extractInventory(){const map=new Map();Object.entries(state.files).forEach(([id,f])=>{const src=APP_DEFS.find(a=>a.id===id)?.name||f.name;const t=f.text||'';
+ const tpl=/['"]([^'"\n]{1,30})['"]\s*:\s*\[([^\]]{1,3000})\]/g;let m;while((m=tpl.exec(t))){const cat=m[1];const arr=m[2].match(/['"]([^'"\n]{1,40})['"]/g)||[];arr.forEach(v=>uniquePush(map,cat,v.slice(1,-1),'',src))}
+ const obj=/\{[^{}]{0,500}?(?:cat|category)\s*:\s*['"]([^'"]+)['"][^{}]{0,500}?name\s*:\s*['"]([^'"]+)['"][^{}]{0,500}?\}/g;while((m=obj.exec(t))){const unit=(m[0].match(/unit\s*:\s*['"]([^'"]+)['"]/)||[])[1]||'';uniquePush(map,m[1],m[2],unit,src)}
+ const neta=/DEFAULT_NETAS\s*=\s*\[([^\]]+)\]/g;while((m=neta.exec(t))){(m[1].match(/['"]([^'"]+)['"]/g)||[]).forEach(v=>uniquePush(map,'ネタ',v.slice(1,-1),'',src))}
+ });state.inventory=[...map.values()].sort((a,b)=>(a.category+a.item).localeCompare(b.category+b.item,'ja'));persist();log('在庫品目を抽出：'+state.inventory.length+'件');renderAll()}
+document.getElementById('extractInventory').onclick=extractInventory;
+document.getElementById('savePrices').onclick=()=>{persist();log('単価マスター保存')};
+document.getElementById('printPrices').onclick=()=>window.print();
+document.getElementById('csvPrices').onclick=()=>{const rows=[['カテゴリー','品目','単位','単価','元アプリ'],...state.inventory.map(x=>[x.category,x.item,x.unit,state.prices[x.item]||'',x.source])];download('inventory-prices.csv','\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')};
+function buildExport(){return {version:'1.0',exportedAt:new Date().toISOString(),apps:APP_DEFS.map(a=>({id:a.id,name:a.name,expectedFile:a.file,loaded:!!state.files[a.id],loadedFile:state.files[a.id]?.name||''})),inventory:state.inventory.map(x=>({...x,unitPrice:Number(state.prices[x.item])||0})),developerLogs:state.logs.slice(0,100)}}
+document.getElementById('exportAi').onclick=()=>{const d=buildExport();download('fujiwara-ai-data-'+stamp()+'.json',JSON.stringify(d,null,2),'application/json');log('相棒用データを書き出し')};
+document.getElementById('copySummary').onclick=async()=>{renderSummary();try{await navigator.clipboard.writeText(document.getElementById('summary').value);alert('コピーしました')}catch(e){alert('コピーできませんでした')}};
+function snapshot(){const x={date:new Date().toISOString(),apps:Object.keys(state.files).length,items:state.inventory.length,data:{files:state.files,inventory:state.inventory,prices:state.prices,logs:state.logs,lastSaved:state.lastSaved}};state.backups.unshift(x);state.backups=state.backups.slice(0,20);persist();log('開発スナップショット保存')}
+document.getElementById('saveSnapshot').onclick=snapshot;document.getElementById('backupNow').onclick=snapshot;
+document.getElementById('downloadBackup').onclick=()=>download('fujiwara-developer-backup-'+stamp()+'.fgdev',JSON.stringify({version:1,state},null,2),'application/json');
+document.getElementById('exportProject').onclick=()=>download('fujiwara-developer-project-'+stamp()+'.json',JSON.stringify({version:1,state},null,2),'application/json');
+document.getElementById('importBackup').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());state=d.state||d;persist();renderAll();log('バックアップ読込：'+f.name)}catch(err){alert('読込できませんでした')}e.target.value=''})
+window.restoreBackup=i=>{if(!confirm('この開発バックアップへ戻しますか？'))return;const d=state.backups[i]?.data;if(!d)return;state={...state,...d};persist();renderAll();log('開発バックアップを復元')};
+document.getElementById('clearDev').onclick=()=>{if(confirm('開発版の保存データだけ初期化しますか？本番アプリは変更されません。')){localStorage.removeItem(KEY);location.reload()}};
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type||'application/octet-stream'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}function stamp(){return new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>show(b.dataset.tab));document.querySelectorAll('.footer button').forEach(b=>b.onclick=()=>show(b.dataset.go));function show(id){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.footer button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));if(id==='export')renderSummary();scrollTo({top:0,behavior:'smooth'})}
+load();
+</script>
+</body>
+</html>
