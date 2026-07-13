@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>在庫品目 単価表</title>
+<style>
+:root{--gold:#b8860b;--line:#cdbb7a;--paper:#fffdf5;--bg:#f6eed8;--ink:#211800}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:#fff4cf;border-bottom:2px solid var(--gold);padding:14px}
+h1{font-size:22px;margin:0 0 8px}.sub{font-size:12px;color:#6b5a2a}.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button,.filebtn{border:1.5px solid var(--gold);background:#fffaf0;color:#4a3500;border-radius:10px;padding:10px 14px;font-weight:800;font-size:13px;cursor:pointer}
+button.primary{background:linear-gradient(135deg,#c99a11,#e1ba43);color:#1b1300}.filebtn input{display:none}
+main{max-width:980px;margin:16px auto;padding:0 12px 40px}.notice{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12px;line-height:1.7;margin-bottom:14px}
+.category{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;margin:0 0 16px;box-shadow:0 2px 10px #5e4c1417}
+.cathead{display:flex;justify-content:space-between;align-items:center;background:#fff1c2;padding:11px 13px;border-bottom:1px solid var(--line)}
+.cathead h2{font-size:17px;margin:0}.count{font-size:11px;color:#6b5a2a}
+table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #e9ddb5;padding:8px 7px;text-align:left;font-size:13px}th{font-size:11px;background:#fffaf0;color:#5c480f}tr:last-child td{border-bottom:0}
+input,select{width:100%;min-height:38px;border:1px solid #d6c486;border-radius:8px;padding:7px;background:#fff;font-size:14px}.name{font-weight:700}.money{text-align:right}.small{width:76px}.del{padding:7px 9px;color:#a12b2b;border-color:#d4a0a0;background:#fff}
+.addrow{padding:10px;border-top:1px dashed var(--line);display:flex;gap:8px}.addrow input{flex:1}.empty{padding:18px;text-align:center;color:#7b6b3e}
+@media(max-width:700px){th:nth-child(4),td:nth-child(4){display:none}th,td{padding:6px 4px;font-size:12px}.small{width:58px}.cathead h2{font-size:15px}}
+@media print{body{background:#fff}header,.notice,.addrow,.delcol{display:none!important}main{max-width:none;margin:0;padding:0}.category{box-shadow:none;border:0;border-radius:0;break-inside:avoid;margin:0 0 14mm}.cathead{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;border:1px solid #555}.cathead h2{font-size:15pt}table{border:1px solid #555}th,td{border:1px solid #777;padding:5px;font-size:10pt}input,select{border:0;padding:0;min-height:0;background:transparent;font-size:10pt;appearance:none}.money{text-align:right}.category{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 在庫品目・単価表</h1>
+  <div class="sub">カテゴリー別／詳細品目／単位／単価／仕入先・備考</div>
+  <div class="tools">
+    <button class="primary" onclick="window.print()">🖨️ プリントする</button>
+    <button onclick="loadShared()">🔄 メインアプリ共有データを読込</button>
+    <label class="filebtn">📂 バックアップJSONを読込<input id="file" type="file" accept=".json,application/json"></label>
+    <button onclick="addCategory()">＋カテゴリー追加</button>
+    <button onclick="saveNow()">💾 保存</button>
+  </div>
+</header>
+<main>
+<div class="notice">単価を入力すると、この端末に自動保存されます。メインアプリで「キングアプリへ共有」を押している場合は、共有データから全品目を読み込めます。バックアップJSONの <b>invItems</b> も読み込み可能です。</div>
+<div id="app"></div>
+</main>
+<script>
+const STORAGE='fg_inventory_unit_price_complete_v2';
+const categories=['やきそば・ホルそば','串','かき氷','チーズハットグ','かまぼこ','いか焼き','ポテト','かすてら','コットンキャンディー','だんご','肉巻きおにぎり','らーめん','チョコバナナ','とんかつスティック','電球ジュース'];
+const defaults=[
+ ['やきそば・ホルそば','そば玉','袋'],['やきそば・ホルそば','ソース','本'],['やきそば・ホルそば','パック','枚'],['やきそば・ホルそば','はし','膳'],['やきそば・ホルそば','キャベツ','個'],['やきそば・ホルそば','肉','kg'],
+ ['串','牛串','本'],['串','豚串','本'],['串','鳥串','本'],['串','容器','個'],
+ ['かき氷','ブロック氷','個'],['かき氷','カップ','個'],['かき氷','いちご','本'],['かき氷','メロン','本'],
+ ['チーズハットグ','チーズハットグ','本'],['チーズハットグ','チーズブロック','個'],
+ ['かまぼこ','ネギ生姜','本'],['かまぼこ','とり軟骨','袋']
+].map((x,i)=>({id:'d'+i,cat:x[0],name:x[1],unit:x[2],price:'',supplier:'',memo:''}));
+let data=[];
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function normalize(arr){return (arr||[]).filter(Boolean).map((x,i)=>({id:String(x.id||Date.now()+'_'+i),cat:String(x.cat||x.category||'未分類'),name:String(x.name||x.item||'品目'),unit:String(x.unit||'個'),price:x.price??x.unitPrice??'',supplier:x.supplier||'',memo:x.memo||'',stock:x.stock??''}))}
+function load(){try{const s=JSON.parse(localStorage.getItem(STORAGE)||'null');data=Array.isArray(s)?s:defaults}catch(e){data=defaults} render()}
+function saveNow(msg=true){localStorage.setItem(STORAGE,JSON.stringify(data));if(msg)alert('保存しました')}
+function autoSave(){localStorage.setItem(STORAGE,JSON.stringify(data))}
+function cats(){const all=[...categories,...data.map(x=>x.cat)];return [...new Set(all.filter(Boolean))]}
+function render(){const root=document.getElementById('app');root.innerHTML=cats().map(cat=>{const rows=data.filter(x=>x.cat===cat);return `<section class="category"><div class="cathead"><h2>${esc(cat)}</h2><span class="count">${rows.length}品目</span></div>${rows.length?`<table><thead><tr><th style="width:29%">品目</th><th style="width:11%">単位</th><th style="width:17%">単価（円）</th><th style="width:21%">仕入先</th><th>備考</th><th class="delcol"></th></tr></thead><tbody>${rows.map(r=>`<tr><td><input class="name" value="${esc(r.name)}" onchange="setv('${r.id}','name',this.value)"></td><td><input value="${esc(r.unit)}" onchange="setv('${r.id}','unit',this.value)"></td><td><input class="money" inputmode="decimal" value="${esc(r.price)}" placeholder="0" onchange="setv('${r.id}','price',this.value)"></td><td><input value="${esc(r.supplier)}" onchange="setv('${r.id}','supplier',this.value)"></td><td><input value="${esc(r.memo)}" onchange="setv('${r.id}','memo',this.value)"></td><td class="delcol"><button class="del" onclick="del('${r.id}')">削除</button></td></tr>`).join('')}</tbody></table>`:`<div class="empty">品目はまだありません</div>`}<div class="addrow"><input id="n_${cssId(cat)}" placeholder="このカテゴリーに品目を追加"><button onclick="addItem('${escJs(cat)}')">＋追加</button></div></section>`}).join('')}
+function cssId(s){return encodeURIComponent(s).replace(/%/g,'_')}
+function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
+function setv(id,k,v){const x=data.find(x=>x.id===id);if(x){x[k]=v;autoSave()}}
+function del(id){data=data.filter(x=>x.id!==id);autoSave();render()}
+function addItem(cat){const el=document.getElementById('n_'+cssId(cat));const n=el.value.trim();if(!n)return;data.push({id:String(Date.now()),cat,name:n,unit:'個',price:'',supplier:'',memo:''});autoSave();render()}
+function addCategory(){const c=prompt('カテゴリー名を入力');if(!c)return;data.push({id:String(Date.now()),cat:c.trim(),name:'',unit:'個',price:'',supplier:'',memo:''});autoSave();render()}
+function mergeItems(items){const incoming=normalize(items);const oldMap=new Map(data.map(x=>[x.cat+'\u0000'+x.name,x]));incoming.forEach(n=>{const old=oldMap.get(n.cat+'\u0000'+n.name);if(old){n.price=old.price||n.price;n.supplier=old.supplier||n.supplier;n.memo=old.memo||n.memo}});data=incoming;autoSave();render();alert(data.length+'品目を読み込みました')}
+function loadShared(){try{const p=JSON.parse(localStorage.getItem('fujiwara_warehouse_share_v1')||'null');if(p&&Array.isArray(p.invItems)&&p.invItems.length){mergeItems(p.invItems);return}alert('共有データが見つかりません。メインアプリの在庫画面で「キングアプリへ共有」を一度押すか、バックアップJSONを読み込んでください。')}catch(e){alert('共有データを読み込めませんでした')}}
+document.getElementById('file').addEventListener('change',async e=>{try{const txt=await e.target.files[0].text();const j=JSON.parse(txt);const items=Array.isArray(j)?j:(j.invItems||(j.state&&j.state.invItems)||(j.data&&j.data.invItems));if(!Array.isArray(items))throw new Error();mergeItems(items)}catch(err){alert('このJSONから在庫品目を見つけられませんでした')}})
+load();
+</script>
+</body></html>
