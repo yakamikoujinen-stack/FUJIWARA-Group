@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v3.1</title>
+<title>ネタ買い物一覧 v3.2</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -28,7 +28,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v3.1</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v3.2</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -271,11 +271,43 @@ function rebuildRowsFromSelected(doJump){
 function buildList(){rebuildRowsFromSelected(true)}
 function refreshRowsFromInventory(){state.rows.forEach(r=>{r.stock=stockFor(r.item);r.unit=unitFor(r.item);r.add=Math.max((Number(r.need)||0)-(Number(r.stock)||0),0)});renderRows()}
 function addRow(){state.rows.push({bought:false,neta:'追加',item:'',stock:0,need:'',add:0,unitPrice:'',note:'',shop:state.shop||'',unit:''});renderRows();saveLocal()}
-function updateRow(i,k,v){const r=state.rows[i];if(!r)return;if(k==='bought')r[k]=!!v;else if(['stock','need','add','unitPrice'].includes(k))r[k]=Number(v)||0;else r[k]=v;if(k==='item'){r.stock=stockFor(v);r.unit=unitFor(v);if(state.unitPrices[v]!=null)r.unitPrice=state.unitPrices[v]}if(k==='need'||k==='stock'||k==='item')r.add=Math.max((Number(r.need)||0)-(Number(r.stock)||0),0);if(k==='unitPrice'&&r.item)state.unitPrices[r.item]=Number(v)||0;renderRows();saveLocal()}
+function updateRow(i,k,v){
+  const r=state.rows[i];
+  if(!r)return;
+  if(k==='bought')r[k]=!!v;
+  else if(['stock','need','add','unitPrice'].includes(k))r[k]=Number(v)||0;
+  else r[k]=v;
+
+  if(k==='item'){
+    r.stock=stockFor(v);
+    r.unit=unitFor(v);
+    if(state.unitPrices[v]!=null)r.unitPrice=state.unitPrices[v];
+    r.add=Math.max((Number(r.need)||0)-(Number(r.stock)||0),0);
+    renderRows();
+    saveLocal();
+    return;
+  }
+
+  if(k==='need'||k==='stock'){
+    r.add=Math.max((Number(r.need)||0)-(Number(r.stock)||0),0);
+    const addEl=document.getElementById('add-'+i);
+    if(addEl)addEl.value=r.add;
+  }
+
+  if(k==='unitPrice'&&r.item)state.unitPrices[r.item]=Number(v)||0;
+
+  if(k==='need'||k==='stock'||k==='unitPrice'){
+    const moneyEl=document.getElementById('money-'+i);
+    if(moneyEl)moneyEl.textContent=yen((Number(r.add)||0)*(Number(r.unitPrice)||0));
+    updateSummary();
+  }
+
+  saveLocal();
+}
 function deleteRow(i){state.rows.splice(i,1);renderRows();saveLocal()}
 function clearRows(){if(confirm('買い物表だけ消しますか？')){state.rows=[];renderRows();saveLocal()}}
 function applyShopToRows(){state.shop=document.getElementById('shop').value;state.rows.forEach(r=>{if(!r.shop)r.shop=state.shop});renderRows()}
-function renderRows(){const b=document.getElementById('tbody');if(!state.rows.length){b.innerHTML='<tr><td colspan="10" class="empty">「選択したネタで買い物表を作る」を押してください</td></tr>';updateSummary();return}b.innerHTML=state.rows.map((r,i)=>{const amount=(Number(r.add)||0)*(Number(r.unitPrice)||0);return `<tr><td><input type="checkbox" style="width:auto" ${r.bought?'checked':''} onchange="updateRow(${i},'bought',this.checked)"></td><td><input value="${esc(r.neta)}" oninput="updateRow(${i},'neta',this.value)"></td><td><input list="inventoryList" value="${esc(r.item)}" oninput="updateRow(${i},'item',this.value)"></td><td><input value="${esc(r.stock)}" readonly style="background:#f4f0e5"> <small>${esc(r.unit||'')}</small></td><td><input type="number" min="0" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)"></td><td><input value="${esc(r.add)}" readonly style="background:#eef8f2;font-weight:900"></td><td><input type="number" min="0" value="${esc(r.unitPrice)}" oninput="updateRow(${i},'unitPrice',this.value)"></td><td class="money">${yen(amount)}</td><td><input value="${esc([r.shop,r.note].filter(Boolean).join('／'))}" oninput="updateNoteShop(${i},this.value)"></td><td><button class="danger" onclick="deleteRow(${i})">削除</button></td></tr>`}).join('');updateSummary()}
+function renderRows(){const b=document.getElementById('tbody');if(!state.rows.length){b.innerHTML='<tr><td colspan="10" class="empty">「選択したネタで買い物表を作る」を押してください</td></tr>';updateSummary();return}b.innerHTML=state.rows.map((r,i)=>{const amount=(Number(r.add)||0)*(Number(r.unitPrice)||0);return `<tr><td><input type="checkbox" style="width:auto" ${r.bought?'checked':''} onchange="updateRow(${i},'bought',this.checked)"></td><td><input value="${esc(r.neta)}" oninput="updateRow(${i},'neta',this.value)"></td><td><input list="inventoryList" value="${esc(r.item)}" onchange="updateRow(${i},'item',this.value)"></td><td><input value="${esc(r.stock)}" readonly style="background:#f4f0e5"> <small>${esc(r.unit||'')}</small></td><td><input type="number" min="0" inputmode="numeric" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)"></td><td><input id="add-${i}" value="${esc(r.add)}" readonly style="background:#eef8f2;font-weight:900"></td><td><input type="number" min="0" inputmode="decimal" value="${esc(r.unitPrice)}" oninput="updateRow(${i},'unitPrice',this.value)"></td><td id="money-${i}" class="money">${yen(amount)}</td><td><input value="${esc([r.shop,r.note].filter(Boolean).join('／'))}" oninput="updateNoteShop(${i},this.value)"></td><td><button class="danger" onclick="deleteRow(${i})">削除</button></td></tr>`}).join('');updateSummary()}
 function updateNoteShop(i,v){state.rows[i].note=v;saveLocal();updateSummary()}
 function updateSummary(){const rows=state.rows||[];document.getElementById('rowCount').textContent=rows.length;document.getElementById('qtyTotal').textContent=rows.reduce((s,r)=>s+(Number(r.add)||0),0);document.getElementById('moneyTotal').textContent=yen(rows.reduce((s,r)=>s+(Number(r.add)||0)*(Number(r.unitPrice)||0),0))}
 function copyText(){const ev=main.events.find(e=>String(e.id)===state.eventId);let t=`【買い物一覧】\n${ev?.date||''} ${ev?.name||''} ${ev?.place||''}\n担当：${state.buyer||''}\n今回売上設定金額：${yen(state.selected.reduce((sum,n)=>sum+(Number(state.prices[n])||0),0))}\n`;state.selected.forEach(n=>{if(Number(state.prices[n])>0)t+=`・${n} 売上設定 ${yen(state.prices[n])}\n`});state.rows.filter(r=>!r.bought&&(Number(r.add)||0)>0).forEach(r=>{t+=`・${r.item} ${r.add}${r.unit||''} × ${yen(r.unitPrice)} = ${yen((Number(r.add)||0)*(Number(r.unitPrice)||0))}\n`});navigator.clipboard?.writeText(t).then(()=>alert('買い物一覧をコピーしました')).catch(()=>prompt('この文字をコピーしてください',t))}
