@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v2.8</title>
+<title>ネタ買い物一覧 v2.9</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -28,7 +28,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v2.8</div><div class="sub">メインアプリ連動｜保存・更新でスタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v2.9</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -41,7 +41,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </section>
 <section class="card" id="netaSec"><h2>② 出店ネタ（イベントから自動反映）</h2><div class="notice">選択したイベントの出店品目を自動で表示します。追加で必要なネタも選択できます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="setAllNeta(false)">全部外す</button></div></section>
 <section class="card" id="priceSec"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
-<section class="card" id="listSec"><h2>④ 買い物一覧表</h2><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" onclick="saveLocal(true)">💾 この端末に保存</button><button class="blue" id="publishBtn" onclick="publishShoppingList()">🔄 更新してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
+<section class="card" id="listSec"><h2>④ 買い物一覧表</h2><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
 <div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div><div class="sum"><div class="k">買い物金額合計</div><div class="v" id="moneyTotal">¥0</div></div></div></section>
 </div>
@@ -59,10 +59,10 @@ const TEMPLATES={
 'やきそば':['麺','焼きそば麺','キャベツ','肉','ソース','青のり','紅しょうが','容器','はし'],'ホルそば':['そば玉','ホルモン','キャベツ','ソース','青のり','紅しょうが','容器','はし'],'らーめん':['ラーメン麺','スープ','容器','はし'],'麺類':['そば玉','焼きそば麺','ホルモン','ラーメン麺','スープ','キャベツ','ソース','青のり','紅しょうが'],
 'りんご飴':['りんご','飴粉','棒','袋'],'チョコバナナ':['バナナ','チョコレート','棒','袋'],'コットンキャンディー':['コットンキャンディー用ザラメ','袋','棒'],'かすてら':['カステラ粉','卵','砂糖','袋'],'だんご':['だんご','あんこ','串','容器'],'甘味':['りんご','飴粉','だんご','あんこ','チョコレート','バナナ','コットンキャンディー用ザラメ','カステラ粉','卵','砂糖','袋','棒'],
 'たこ焼き':['たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'粉もの・焼き物':['いか','たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'肉巻きおにぎり':['ごはん','豚バラ','タレ','海苔','容器'],'ご飯もの':['ごはん','豚バラ','タレ','海苔','容器'],'その他':['割り箸','手袋','輪ゴム','ラップ','キッチンペーパー','ゴミ袋']};
-let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;
+let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;let sharedLoadTimer=null;
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
 function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');state={...state,...x};}catch(e){}}
-function saveLocal(show){if(applyingRemote)return;state.buyer=document.getElementById('buyer')?.value||state.buyer;state.shop=document.getElementById('shop')?.value||state.shop;state.memo=document.getElementById('memo')?.value||state.memo;localStorage.setItem(LOCAL_KEY,JSON.stringify(state));if(show)alert('保存しました');}
+function saveLocal(show){if(applyingRemote)return;state.buyer=document.getElementById('buyer')?.value||state.buyer;state.shop=document.getElementById('shop')?.value||state.shop;state.memo=document.getElementById('memo')?.value||state.memo;localStorage.setItem(LOCAL_KEY,JSON.stringify(state));if(show)alert('この端末に保存しました');}
 function initFirebase(){try{if(db)return db;if(!firebase.apps.length)firebase.initializeApp({apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'});db=firebase.database();return db;}catch(e){return null}}
 async function loadMainData(manual){const note=document.getElementById('syncNotice');note.className='notice warn';note.textContent='メインアプリの最新データを読み込んでいます…';try{const db=initFirebase();if(!db)throw new Error('Firebase初期化失敗');const snap=await db.ref('fujiwara').once('value');const d=snap.val()||{};main.events=toArray(d.events);main.invItems=toArray(d.invItems);main.events.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));note.className='notice';note.innerHTML='✅ メインアプリと連動しました　<span class="sync">イベント '+main.events.length+'件／在庫 '+main.invItems.length+'件</span>';renderEventSelect();renderInventoryDatalist();if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId)))selectEvent(state.eventId,false);else if(main.events.length)selectEvent(main.events[0].id,false);if(manual)alert('メインアプリの最新データを読み込みました');}catch(e){note.className='notice warn';note.textContent='⚠️ メインアプリの読込に失敗しました。通信を確認して再読込してください。';console.error(e);renderEventSelect();}}
 function toArray(v){if(Array.isArray(v))return v.filter(Boolean);if(v&&typeof v==='object')return Object.values(v).filter(Boolean);return []}
@@ -83,6 +83,7 @@ function detachSharedListener(){
 }
 function attachSharedListener(){
   detachSharedListener();
+  if(sharedLoadTimer){clearTimeout(sharedLoadTimer);sharedLoadTimer=null;}
   const key=sharedEventKey();
   const database=initFirebase();
   if(!database||!key){
@@ -90,11 +91,21 @@ function attachSharedListener(){
     return;
   }
   sharedRef=database.ref('fujiwara/shoppingLists/'+key);
-  setPublishStatus('','スタッフ共有データを確認しています…');
+  setPublishStatus('','最新データを確認中…');
+  let finished=false;
+  sharedLoadTimer=setTimeout(()=>{
+    if(!finished){
+      setPublishStatus('error','共有データを確認できませんでした。端末内の保存データを表示しています');
+      try{sharedRef.off();}catch(e){}
+      sharedRef=null;
+    }
+  },5000);
   sharedRef.on('value',snap=>{
+    if(sharedLoadTimer){clearTimeout(sharedLoadTimer);sharedLoadTimer=null;}
+    finished=true;
     const remote=snap.val();
     if(!remote){
-      setPublishStatus('','まだスタッフ共有されていません');
+      setPublishStatus('','まだスタッフ共有されていません。保存すると共有が始まります');
       return;
     }
     const updated=remote.updatedAt?new Date(remote.updatedAt).toLocaleString('ja-JP'):'日時不明';
@@ -115,9 +126,15 @@ function attachSharedListener(){
     localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
     applyingRemote=false;
   },err=>{
+    if(sharedLoadTimer){clearTimeout(sharedLoadTimer);sharedLoadTimer=null;}
+    finished=true;
     console.error(err);
-    setPublishStatus('error','スタッフ共有の読込に失敗しました');
+    setPublishStatus('error','共有データを読込できません。端末内の保存データを表示しています');
   });
+}
+async function saveAndPublish(){
+  saveLocal(false);
+  await publishShoppingList();
 }
 async function publishShoppingList(){
   if(!state.eventId){alert('先にイベントを選択してください');return;}
@@ -126,8 +143,8 @@ async function publishShoppingList(){
   saveLocal(false);
   const ev=main.events.find(e=>String(e.id)===String(state.eventId))||{};
   const btn=document.getElementById('publishBtn');
-  if(btn){btn.disabled=true;btn.textContent='更新中…';}
-  setPublishStatus('','スタッフへ更新しています…');
+  if(btn){btn.disabled=true;btn.textContent='保存中…';}
+  setPublishStatus('','保存してスタッフへ反映しています…');
   try{
     const payload={
       version:2,
@@ -147,14 +164,17 @@ async function publishShoppingList(){
       updatedAt:firebase.database.ServerValue.TIMESTAMP,
       updatedBy:state.buyer||'リーダー'
     };
-    await database.ref('fujiwara/shoppingLists/'+sharedEventKey()).set(payload);
-    alert('更新しました。スタッフの画面へすぐ反映されます');
+    await Promise.race([
+      database.ref('fujiwara/shoppingLists/'+sharedEventKey()).set(payload),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('保存タイムアウト')),7000))
+    ]);
+    alert('保存しました。スタッフの画面へすぐ反映されます');
   }catch(e){
     console.error(e);
-    setPublishStatus('error','更新に失敗しました。通信を確認してください');
-    alert('更新に失敗しました。通信を確認してください');
+    setPublishStatus('error','共有保存に失敗しました。端末内には保存されています');
+    alert('端末内には保存しましたが、スタッフ共有に失敗しました。通信を確認してください');
   }finally{
-    if(btn){btn.disabled=false;btn.textContent='🔄 更新してスタッフへ反映';}
+    if(btn){btn.disabled=false;btn.textContent='💾 保存してスタッフへ反映';}
   }
 }
 
