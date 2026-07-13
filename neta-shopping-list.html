@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v2.9</title>
+<title>ネタ買い物一覧 v3.0</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -28,7 +28,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v2.9</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v3.0</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -64,7 +64,47 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');state={...state,...x};}catch(e){}}
 function saveLocal(show){if(applyingRemote)return;state.buyer=document.getElementById('buyer')?.value||state.buyer;state.shop=document.getElementById('shop')?.value||state.shop;state.memo=document.getElementById('memo')?.value||state.memo;localStorage.setItem(LOCAL_KEY,JSON.stringify(state));if(show)alert('この端末に保存しました');}
 function initFirebase(){try{if(db)return db;if(!firebase.apps.length)firebase.initializeApp({apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'});db=firebase.database();return db;}catch(e){return null}}
-async function loadMainData(manual){const note=document.getElementById('syncNotice');note.className='notice warn';note.textContent='メインアプリの最新データを読み込んでいます…';try{const db=initFirebase();if(!db)throw new Error('Firebase初期化失敗');const snap=await db.ref('fujiwara').once('value');const d=snap.val()||{};main.events=toArray(d.events);main.invItems=toArray(d.invItems);main.events.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));note.className='notice';note.innerHTML='✅ メインアプリと連動しました　<span class="sync">イベント '+main.events.length+'件／在庫 '+main.invItems.length+'件</span>';renderEventSelect();renderInventoryDatalist();if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId)))selectEvent(state.eventId,false);else if(main.events.length)selectEvent(main.events[0].id,false);if(manual)alert('メインアプリの最新データを読み込みました');}catch(e){note.className='notice warn';note.textContent='⚠️ メインアプリの読込に失敗しました。通信を確認して再読込してください。';console.error(e);renderEventSelect();}}
+async function loadMainData(manual){
+  const note=document.getElementById('syncNotice');
+  const sel=document.getElementById('eventSelect');
+  note.className='notice warn';
+  note.textContent='メインアプリの最新データを読み込んでいます…';
+  if(sel)sel.innerHTML='<option value="">読み込み中…</option>';
+  try{
+    const database=initFirebase();
+    if(!database)throw new Error('Firebase初期化失敗');
+    const snap=await Promise.race([
+      database.ref('fujiwara').once('value'),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('読込タイムアウト')),5000))
+    ]);
+    const d=snap.val()||{};
+    main.events=toArray(d.events);
+    main.invItems=toArray(d.invItems);
+    main.events.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+    note.className='notice';
+    note.innerHTML='✅ メインアプリと連動しました　<span class="sync">イベント '+main.events.length+'件／在庫 '+main.invItems.length+'件</span>';
+    renderEventSelect();
+    renderInventoryDatalist();
+    if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId))){
+      selectEvent(state.eventId,false);
+    }else if(main.events.length){
+      selectEvent(main.events[0].id,false);
+    }else{
+      if(sel)sel.innerHTML='<option value="">イベントがありません</option>';
+    }
+    if(manual)alert('メインアプリの最新データを読み込みました');
+  }catch(e){
+    console.error(e);
+    note.className='notice warn';
+    note.textContent='⚠️ メインアプリに接続できませんでした。再読込を押してください。';
+    main.events=[];
+    main.invItems=[];
+    renderEventSelect();
+    renderInventoryDatalist();
+    if(sel)sel.innerHTML='<option value="">接続できませんでした</option>';
+    if(manual)alert('メインアプリに接続できませんでした。通信を確認してください');
+  }
+}
 function toArray(v){if(Array.isArray(v))return v.filter(Boolean);if(v&&typeof v==='object')return Object.values(v).filter(Boolean);return []}
 function renderEventSelect(){const s=document.getElementById('eventSelect');if(!main.events.length){s.innerHTML='<option value="">イベントなし</option>';return}s.innerHTML='<option value="">イベントを選択</option>'+main.events.map(e=>`<option value="${esc(e.id)}">${esc(e.date||'日付未設定')}　${esc(e.name||'名称未設定')}　${esc(e.place||'')}</option>`).join('');if(state.eventId)s.value=String(state.eventId)}
 function eventNetaNames(ev){let names=[];const ids=Array.isArray(ev.items)?ev.items:toArray(ev.items);ids.forEach(id=>{const it=main.invItems.find(x=>String(x.id)===String(id));if(it){if(it.cat&&!names.includes(it.cat))names.push(it.cat);if(it.name&&!names.includes(it.name)&&DEFAULT_NETAS.includes(it.name))names.push(it.name)}});const text=String(ev.itemsText||'');text.split(/[、,／/\n\s]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!names.includes(x))names.push(x)});return names}
