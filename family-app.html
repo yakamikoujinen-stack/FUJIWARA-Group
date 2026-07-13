@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#fff7d6" />
+  <title>Family APP 仕事管理</title>
+  <style>
+    :root{
+      --bg:#fff8d9;
+      --card:#ffffff;
+      --ink:#2f2a24;
+      --muted:#7d746a;
+      --accent:#e85d75;
+      --accent2:#8f72d8;
+      --gold:#d8a73a;
+      --line:#eadfb9;
+      --shadow:0 10px 28px rgba(83,64,26,.12);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, #fff 0 10%, transparent 30%),
+        linear-gradient(180deg,#fffbe8 0%,var(--bg) 100%);
+      min-height:100vh;
+    }
+    button,input,select,textarea{font:inherit}
+    .app{max-width:980px;margin:auto;padding:18px 16px 110px}
+    .hero{
+      background:linear-gradient(135deg,#fff,#fff5c6);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      border-radius:30px;
+      padding:22px;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero:after{
+      content:"♡";
+      position:absolute;right:18px;top:4px;
+      font-size:74px;color:rgba(232,93,117,.12)
+    }
+    .hero h1{margin:0;font-size:clamp(34px,7vw,58px);letter-spacing:.03em}
+    .hero p{margin:8px 0 0;color:var(--muted);font-weight:700}
+    .section-title{margin:28px 4px 12px;font-size:21px}
+    .family-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .person-card,.menu-card,.panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+    }
+    .person-card{
+      min-height:150px;padding:18px 12px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:8px;cursor:pointer
+    }
+    .avatar{
+      width:66px;height:66px;border-radius:50%;
+      display:grid;place-items:center;font-size:34px;
+      background:#fff3f6;border:2px solid #ffd9e1
+    }
+    .person-card b{font-size:21px}
+    .person-card small{color:var(--muted)}
+    .menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
+    .menu-card{
+      border:none;text-align:left;padding:20px;min-height:142px;
+      display:flex;flex-direction:column;justify-content:space-between;cursor:pointer
+    }
+    .menu-card strong{font-size:23px}
+    .menu-card span{font-size:34px}
+    .money{
+      grid-column:1/-1;
+      background:linear-gradient(135deg,#fff7d4,#fff);
+      border:2px solid #efc65c;
+    }
+    .money strong{font-size:28px}
+    .bottom-nav{
+      position:fixed;left:50%;bottom:12px;transform:translateX(-50%);
+      width:min(720px,calc(100% - 24px));
+      display:grid;grid-template-columns:repeat(3,1fr);
+      background:rgba(255,255,255,.94);backdrop-filter:blur(15px);
+      border:1px solid var(--line);border-radius:22px;
+      box-shadow:0 12px 36px rgba(0,0,0,.16);padding:8px;z-index:20
+    }
+    .bottom-nav button{border:none;background:none;padding:8px 4px;border-radius:15px;color:var(--muted);font-weight:800}
+    .bottom-nav button.active{background:#fff2c7;color:var(--ink)}
+    .view{display:none}.view.active{display:block}
+    .panel{padding:18px;margin-top:14px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{font-weight:800;font-size:14px}
+    input,select,textarea{
+      width:100%;margin-top:6px;border:1px solid #ded4b7;border-radius:14px;
+      padding:13px;background:#fff
+    }
+    textarea{min-height:90px;resize:vertical}
+    .primary,.secondary,.danger{
+      border:none;border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer
+    }
+    .primary{background:var(--accent);color:white}
+    .secondary{background:#efe9ff;color:#5f46a4}
+    .danger{background:#fff0f0;color:#b73333}
+    .list{display:grid;gap:10px;margin-top:12px}
+    .item{
+      border:1px solid var(--line);background:#fffdf6;border-radius:16px;padding:13px;
+      display:flex;justify-content:space-between;gap:12px;align-items:center
+    }
+    .item small{color:var(--muted)}
+    .sum{
+      font-size:32px;font-weight:900;color:#8d6416;margin:8px 0
+    }
+    .notice{
+      background:#f8f4ff;border:1px solid #ddd0ff;color:#5d4890;
+      padding:13px;border-radius:15px;font-weight:700
+    }
+    .modal{
+      position:fixed;inset:0;background:rgba(38,31,24,.48);
+      display:none;align-items:flex-end;justify-content:center;z-index:30
+    }
+    .modal.show{display:flex}
+    .sheet{
+      width:min(720px,100%);max-height:88vh;overflow:auto;background:#fffdf6;
+      border-radius:28px 28px 0 0;padding:22px 18px 32px
+    }
+    .sheet-head{display:flex;justify-content:space-between;align-items:center}
+    .close{border:none;background:#eee6d8;border-radius:50%;width:40px;height:40px;font-size:20px}
+    @media (max-width:620px){
+      .family-grid{grid-template-columns:repeat(3,1fr)}
+      .person-card{min-height:125px;padding:12px 8px}
+      .avatar{width:54px;height:54px;font-size:28px}
+      .person-card b{font-size:18px}
+      .menu-grid{grid-template-columns:1fr}
+      .money{grid-column:auto}
+      .row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <section id="homeView" class="view active">
+    <div class="hero">
+      <h1>Family APP</h1>
+      <p>家族メンバーとイベント・お金を管理する仕事用アプリ</p>
+    </div>
+
+    <h2 class="section-title">家族</h2>
+    <div class="family-grid">
+      <button class="person-card" data-person="まゆみ"><span class="avatar">🌷</span><b>まゆみ</b><small>予定・メモ</small></button>
+      <button class="person-card" data-person="龍来"><span class="avatar">🦁</span><b>龍来</b><small>予定・メモ</small></button>
+      <button class="person-card" data-person="想良"><span class="avatar">💗</span><b>想良</b><small>予定・メモ</small></button>
+    </div>
+
+    <h2 class="section-title">メニュー</h2>
+    <div class="menu-grid">
+      <button class="menu-card" data-open="eventView"><span>🎪</span><strong>イベント</strong><small>メインアプリから共有した情報</small></button>
+      <button class="menu-card money" data-open="moneyView"><span>💰</span><strong>お金</strong><small>家計・積立・資産を家族専用で管理</small></button>
+    </div>
+  </section>
+
+  <section id="eventView" class="view">
+    <h1>🎪 イベント</h1>
+    <div class="panel">
+      <div class="notice">この画面は、メインアプリ側で「Family共有」にしたイベントだけを表示する設計です。現時点ではFamily APP単独版なので、サンプル登録ができます。</div>
+      <div class="row" style="margin-top:14px">
+        <label>イベント名<input id="eventName" placeholder="例：大阪ホルモン焼"></label>
+        <label>開催日<input id="eventDate" type="date"></label>
+      </div>
+      <label>場所<input id="eventPlace" placeholder="会場名・住所"></label>
+      <div class="row">
+        <label>売上<input id="eventSales" type="number" inputmode="numeric" placeholder="0"></label>
+        <label>経費<input id="eventCost" type="number" inputmode="numeric" placeholder="0"></label>
+      </div>
+      <button class="primary" onclick="addEvent()">イベントを保存</button>
+      <div id="eventList" class="list"></div>
+    </div>
+  </section>
+
+  <section id="moneyView" class="view">
+    <h1>💰 お金</h1>
+    <div class="panel">
+      <div>現在の登録合計</div>
+      <div id="moneyTotal" class="sum">¥0</div>
+      <div class="row">
+        <label>分類
+          <select id="moneyType">
+            <option>預金</option><option>現金</option><option>積立</option>
+            <option>保険</option><option>ローン</option><option>その他</option>
+          </select>
+        </label>
+        <label>金額<input id="moneyAmount" type="number" inputmode="numeric" placeholder="0"></label>
+      </div>
+      <label>内容<input id="moneyMemo" placeholder="例：家族積立、車検用など"></label>
+      <button class="primary" onclick="addMoney()">お金の記録を保存</button>
+      <div id="moneyList" class="list"></div>
+    </div>
+  </section>
+</div>
+
+<nav class="bottom-nav">
+  <button class="active" data-open="homeView">🏠<br>ホーム</button>
+  <button data-open="eventView">🎪<br>イベント</button>
+  <button data-open="moneyView">💰<br>お金</button>
+</nav>
+
+<div id="personModal" class="modal">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="personTitle">家族</h2><button class="close" onclick="closePerson()">×</button></div>
+    <label>プロフィール・大切なメモ<textarea id="personMemo"></textarea></label>
+    <button class="primary" onclick="savePerson()">保存</button>
+  </div>
+</div>
+
+<script>
+const KEY='familyAppV1';
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{
+  people:{まゆみ:'',龍来:'',想良:''},events:[],money:[]
+};
+let currentPerson='';
+const yen=n=>'¥'+Number(n||0).toLocaleString('ja-JP');
+function persist(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function openView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('[data-open]').forEach(b=>b.classList.toggle('active',b.dataset.open===id));
+  scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openView(b.dataset.open));
+document.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{
+  currentPerson=b.dataset.person;
+  personTitle.textContent=currentPerson;
+  personMemo.value=data.people[currentPerson]||'';
+  personModal.classList.add('show');
+});
+function closePerson(){personModal.classList.remove('show')}
+function savePerson(){data.people[currentPerson]=personMemo.value;persist();closePerson()}
+function addEvent(){
+  if(!eventName.value.trim()) return alert('イベント名を入力してください');
+  const sales=Number(eventSales.value||0),cost=Number(eventCost.value||0);
+  data.events.unshift({id:Date.now(),name:eventName.value.trim(),date:eventDate.value,place:eventPlace.value.trim(),sales,cost});
+  eventName.value=eventPlace.value=eventSales.value=eventCost.value='';persist();
+}
+function addMoney(){
+  if(!moneyAmount.value) return alert('金額を入力してください');
+  data.money.unshift({id:Date.now(),type:moneyType.value,amount:Number(moneyAmount.value),memo:moneyMemo.value.trim()});
+  moneyAmount.value=moneyMemo.value='';persist();
+}
+function removeItem(type,id){if(confirm('削除しますか？')){data[type]=data[type].filter(x=>x.id!==id);persist()}}
+function renderAll(){
+  eventList.innerHTML=data.events.map(x=>`<div class="item"><div><b>${x.date||'日付未定'}　${escapeHtml(x.name)}</b><br><small>${escapeHtml(x.place||'場所未入力')}｜利益 ${yen(x.sales-x.cost)}</small></div><button class="danger" onclick="removeItem('events',${x.id})">削除</button></div>`).join('')||'<small>まだ登録はありません。</small>';
+  const total=data.money.reduce((s,x)=>s+x.amount,0);moneyTotal.textContent=yen(total);
+  moneyList.innerHTML=data.money.map(x=>`<div class="item"><div><b>${escapeHtml(x.type)}　${yen(x.amount)}</b><br><small>${escapeHtml(x.memo||'')}</small></div><button class="danger" onclick="removeItem('money',${x.id})">削除</button></div>`).join('')||'<small>まだ登録はありません。</small>';
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+renderAll();
+</script>
+</body>
+</html>
