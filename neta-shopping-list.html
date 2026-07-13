@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v2.5</title>
+<title>ネタ買い物一覧 v2.6</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -23,7 +23,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v2.5</div><div class="sub">メインアプリ連動｜イベント選択｜在庫自動反映｜出店ネタ・設定金額反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v2.6</div><div class="sub">メインアプリ連動｜イベント選択｜在庫自動反映｜出店ネタ・今回売上設定金額反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -35,12 +35,12 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <div class="toolbar"><button class="blue" onclick="loadMainData(true)">🔄 メインアプリから再読込</button><button class="ghost" onclick="location.href='index.html'">🏠 メインアプリ</button></div>
 </section>
 <section class="card" id="netaSec"><h2>② 出店ネタ（イベントから自動反映）</h2><div class="notice">選択したイベントの出店品目を自動で表示します。追加で必要なネタも選択できます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="setAllNeta(false)">全部外す</button></div></section>
-<section class="card" id="priceSec"><h2>③ 出店ネタの販売設定金額</h2><div class="notice">メインアプリの売上入力にある出店ネタ別の金額を表示します。ここで変更した金額はこの買い物表に保存します。</div><div id="salesGrid" class="sales-grid"></div></section>
+<section class="card" id="priceSec"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
 <section class="card" id="listSec"><h2>④ 買い物一覧表</h2><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" onclick="saveLocal(true)">💾 保存</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div>
 <div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div><div class="sum"><div class="k">買い物金額合計</div><div class="v" id="moneyTotal">¥0</div></div></div></section>
 </div>
-<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">設定金額</button><button onclick="jump('listSec')">買い物表</button></nav>
+<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">売上設定</button><button onclick="jump('listSec')">買い物表</button></nav>
 <datalist id="inventoryList"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -69,7 +69,8 @@ function allNetaNames(){return [...new Set([...DEFAULT_NETAS,...Object.keys(TEMP
 function renderNeta(){const g=document.getElementById('netaGrid');g.innerHTML=allNetaNames().map(n=>`<label class="neta ${state.selected.includes(n)?'on':''}"><input type="checkbox" ${state.selected.includes(n)?'checked':''} onchange="toggleNeta('${esc(n)}',this.checked)">${esc(n)}</label>`).join('')}
 function toggleNeta(n,on){if(on&&!state.selected.includes(n))state.selected.push(n);if(!on)state.selected=state.selected.filter(x=>x!==n);renderNeta();renderSales();saveLocal()}
 function setAllNeta(on){state.selected=on?allNetaNames():[];renderNeta();renderSales();saveLocal()}
-function renderSales(){const g=document.getElementById('salesGrid');if(!state.selected.length){g.innerHTML='<div class="empty">出店ネタを選択してください</div>';return}g.innerHTML=state.selected.map(n=>`<div class="sales-card"><div class="name">${esc(n)}</div><div class="price">販売設定金額（円）</div><input type="number" min="0" value="${Number(state.prices[n])||''}" placeholder="例：500" oninput="state.prices['${esc(n)}']=Number(this.value)||0;saveLocal()"></div>`).join('')}
+function renderSales(){const g=document.getElementById('salesGrid');if(!state.selected.length){g.innerHTML='<div class="empty">出店ネタを選択してください</div>';const t=document.getElementById('salesTargetTotal');if(t)t.textContent=yen(0);return}g.innerHTML=state.selected.map(n=>`<div class="sales-card"><div class="name">${esc(n)}</div><div class="price">今回売上設定金額（円）</div><input type="number" min="0" step="1000" inputmode="numeric" value="${Number(state.prices[n])||''}" placeholder="例：180000" oninput="state.prices['${esc(n)}']=Number(this.value)||0;updateSalesTargetTotal();saveLocal()"></div>`).join('');updateSalesTargetTotal()}
+function updateSalesTargetTotal(){const t=document.getElementById('salesTargetTotal');if(t)t.textContent=yen(state.selected.reduce((sum,n)=>sum+(Number(state.prices[n])||0),0))}
 function renderInventoryDatalist(){document.getElementById('inventoryList').innerHTML=main.invItems.map(i=>`<option value="${esc(i.name)}">${esc(i.cat||'')}｜在庫 ${Number(i.stock)||0} ${esc(i.unit||'')}</option>`).join('')}
 function inventoryByName(name){return main.invItems.find(i=>String(i.name||'').trim()===String(name||'').trim())}
 function stockFor(name){const i=inventoryByName(name);return i?Number(i.stock)||0:0}
@@ -85,7 +86,7 @@ function applyShopToRows(){state.shop=document.getElementById('shop').value;stat
 function renderRows(){const b=document.getElementById('tbody');if(!state.rows.length){b.innerHTML='<tr><td colspan="10" class="empty">「選択したネタで買い物表を作る」を押してください</td></tr>';updateSummary();return}b.innerHTML=state.rows.map((r,i)=>{const amount=(Number(r.add)||0)*(Number(r.unitPrice)||0);return `<tr><td><input type="checkbox" style="width:auto" ${r.bought?'checked':''} onchange="updateRow(${i},'bought',this.checked)"></td><td><input value="${esc(r.neta)}" oninput="updateRow(${i},'neta',this.value)"></td><td><input list="inventoryList" value="${esc(r.item)}" oninput="updateRow(${i},'item',this.value)"></td><td><input value="${esc(r.stock)}" readonly style="background:#f4f0e5"> <small>${esc(r.unit||'')}</small></td><td><input type="number" min="0" value="${esc(r.need)}" oninput="updateRow(${i},'need',this.value)"></td><td><input value="${esc(r.add)}" readonly style="background:#eef8f2;font-weight:900"></td><td><input type="number" min="0" value="${esc(r.unitPrice)}" oninput="updateRow(${i},'unitPrice',this.value)"></td><td class="money">${yen(amount)}</td><td><input value="${esc([r.shop,r.note].filter(Boolean).join('／'))}" oninput="updateNoteShop(${i},this.value)"></td><td><button class="danger" onclick="deleteRow(${i})">削除</button></td></tr>`}).join('');updateSummary()}
 function updateNoteShop(i,v){state.rows[i].note=v;saveLocal();updateSummary()}
 function updateSummary(){const rows=state.rows||[];document.getElementById('rowCount').textContent=rows.length;document.getElementById('qtyTotal').textContent=rows.reduce((s,r)=>s+(Number(r.add)||0),0);document.getElementById('moneyTotal').textContent=yen(rows.reduce((s,r)=>s+(Number(r.add)||0)*(Number(r.unitPrice)||0),0))}
-function copyText(){const ev=main.events.find(e=>String(e.id)===state.eventId);let t=`【買い物一覧】\n${ev?.date||''} ${ev?.name||''} ${ev?.place||''}\n担当：${state.buyer||''}\n`;state.rows.filter(r=>!r.bought&&(Number(r.add)||0)>0).forEach(r=>{t+=`・${r.item} ${r.add}${r.unit||''} × ${yen(r.unitPrice)} = ${yen((Number(r.add)||0)*(Number(r.unitPrice)||0))}\n`});navigator.clipboard?.writeText(t).then(()=>alert('買い物一覧をコピーしました')).catch(()=>prompt('この文字をコピーしてください',t))}
+function copyText(){const ev=main.events.find(e=>String(e.id)===state.eventId);let t=`【買い物一覧】\n${ev?.date||''} ${ev?.name||''} ${ev?.place||''}\n担当：${state.buyer||''}\n今回売上設定金額：${yen(state.selected.reduce((sum,n)=>sum+(Number(state.prices[n])||0),0))}\n`;state.selected.forEach(n=>{if(Number(state.prices[n])>0)t+=`・${n} 売上設定 ${yen(state.prices[n])}\n`});state.rows.filter(r=>!r.bought&&(Number(r.add)||0)>0).forEach(r=>{t+=`・${r.item} ${r.add}${r.unit||''} × ${yen(r.unitPrice)} = ${yen((Number(r.add)||0)*(Number(r.unitPrice)||0))}\n`});navigator.clipboard?.writeText(t).then(()=>alert('買い物一覧をコピーしました')).catch(()=>prompt('この文字をコピーしてください',t))}
 loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();loadMainData(false);
 </script>
 </body></html>
