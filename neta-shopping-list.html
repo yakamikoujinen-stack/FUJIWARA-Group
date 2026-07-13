@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v2.6</title>
+<title>ネタ買い物一覧 v2.7</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -23,7 +23,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v2.6</div><div class="sub">メインアプリ連動｜イベント選択｜在庫自動反映｜出店ネタ・今回売上設定金額反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v2.7</div><div class="sub">メインアプリ連動｜ネタ選択でカテゴリ一覧を自動表示｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -63,20 +63,57 @@ async function loadMainData(manual){const note=document.getElementById('syncNoti
 function toArray(v){if(Array.isArray(v))return v.filter(Boolean);if(v&&typeof v==='object')return Object.values(v).filter(Boolean);return []}
 function renderEventSelect(){const s=document.getElementById('eventSelect');if(!main.events.length){s.innerHTML='<option value="">イベントなし</option>';return}s.innerHTML='<option value="">イベントを選択</option>'+main.events.map(e=>`<option value="${esc(e.id)}">${esc(e.date||'日付未設定')}　${esc(e.name||'名称未設定')}　${esc(e.place||'')}</option>`).join('');if(state.eventId)s.value=String(state.eventId)}
 function eventNetaNames(ev){let names=[];const ids=Array.isArray(ev.items)?ev.items:toArray(ev.items);ids.forEach(id=>{const it=main.invItems.find(x=>String(x.id)===String(id));if(it){if(it.cat&&!names.includes(it.cat))names.push(it.cat);if(it.name&&!names.includes(it.name)&&DEFAULT_NETAS.includes(it.name))names.push(it.name)}});const text=String(ev.itemsText||'');text.split(/[、,／/\n\s]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!names.includes(x))names.push(x)});return names}
-function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];if(names.length)state.selected=[...new Set(names)];const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();refreshRowsFromInventory();if(save)saveLocal()}
+function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];if(names.length)state.selected=[...new Set(names)];const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal()}
 function readSalesPrices(ev){if(!ev)return;const sales=ev.sales||{};const itemSales=sales.items||sales.itemSales||{};Object.keys(itemSales||{}).forEach(k=>{state.prices[k]=Number(itemSales[k])||0});['yakisoba','kushi','mizu'].forEach(k=>{if(sales[k]!=null)state.prices[k]=Number(sales[k])||0})}
 function allNetaNames(){return [...new Set([...DEFAULT_NETAS,...Object.keys(TEMPLATES),...state.selected,...main.invItems.map(x=>x.cat).filter(Boolean)])]}
 function renderNeta(){const g=document.getElementById('netaGrid');g.innerHTML=allNetaNames().map(n=>`<label class="neta ${state.selected.includes(n)?'on':''}"><input type="checkbox" ${state.selected.includes(n)?'checked':''} onchange="toggleNeta('${esc(n)}',this.checked)">${esc(n)}</label>`).join('')}
-function toggleNeta(n,on){if(on&&!state.selected.includes(n))state.selected.push(n);if(!on)state.selected=state.selected.filter(x=>x!==n);renderNeta();renderSales();saveLocal()}
-function setAllNeta(on){state.selected=on?allNetaNames():[];renderNeta();renderSales();saveLocal()}
+function toggleNeta(n,on){
+  if(on&&!state.selected.includes(n))state.selected.push(n);
+  if(!on)state.selected=state.selected.filter(x=>x!==n);
+  renderNeta();renderSales();
+  rebuildRowsFromSelected(false);
+  saveLocal();
+}
+function setAllNeta(on){
+  state.selected=on?allNetaNames():[];
+  renderNeta();renderSales();
+  rebuildRowsFromSelected(false);
+  saveLocal();
+}
 function renderSales(){const g=document.getElementById('salesGrid');if(!state.selected.length){g.innerHTML='<div class="empty">出店ネタを選択してください</div>';const t=document.getElementById('salesTargetTotal');if(t)t.textContent=yen(0);return}g.innerHTML=state.selected.map(n=>`<div class="sales-card"><div class="name">${esc(n)}</div><div class="price">今回売上設定金額（円）</div><input type="number" min="0" step="1000" inputmode="numeric" value="${Number(state.prices[n])||''}" placeholder="例：180000" oninput="state.prices['${esc(n)}']=Number(this.value)||0;updateSalesTargetTotal();saveLocal()"></div>`).join('');updateSalesTargetTotal()}
 function updateSalesTargetTotal(){const t=document.getElementById('salesTargetTotal');if(t)t.textContent=yen(state.selected.reduce((sum,n)=>sum+(Number(state.prices[n])||0),0))}
 function renderInventoryDatalist(){document.getElementById('inventoryList').innerHTML=main.invItems.map(i=>`<option value="${esc(i.name)}">${esc(i.cat||'')}｜在庫 ${Number(i.stock)||0} ${esc(i.unit||'')}</option>`).join('')}
 function inventoryByName(name){return main.invItems.find(i=>String(i.name||'').trim()===String(name||'').trim())}
 function stockFor(name){const i=inventoryByName(name);return i?Number(i.stock)||0:0}
 function unitFor(name){const i=inventoryByName(name);return i?.unit||''}
-function templateFor(n){const direct=TEMPLATES[n];if(direct)return direct;const catItems=main.invItems.filter(i=>i.cat===n).map(i=>i.name);return catItems.length?catItems:[n]}
-function buildList(){const old={};state.rows.forEach(r=>old[r.item]=r);const rows=[];state.selected.forEach(n=>templateFor(n).forEach(item=>{if(!item||rows.some(r=>r.item===item))return;const o=old[item]||{};const stock=stockFor(item);const need=Number(o.need)||0;rows.push({bought:!!o.bought,neta:n,item,stock,need:o.need||'',add:Math.max(need-stock,0),unitPrice:o.unitPrice||state.unitPrices[item]||'',note:o.note||'',shop:o.shop||state.shop||'',unit:unitFor(item)})}));state.rows=rows;renderRows();saveLocal();jump('listSec')}
+function templateFor(n){
+  // メインアプリの在庫カテゴリを最優先。例：ポテトを選ぶと、塩・のり塩・醤油マヨ等も全て表示。
+  const catItems=main.invItems
+    .filter(i=>String(i.cat||'').trim()===String(n||'').trim())
+    .map(i=>i.name)
+    .filter(Boolean);
+  if(catItems.length)return [...new Set(catItems)];
+  const direct=TEMPLATES[n];
+  if(direct)return direct;
+  return [n];
+}
+function rebuildRowsFromSelected(doJump){
+  const old={};
+  state.rows.forEach(r=>{old[(r.neta||'')+'||'+(r.item||'')]=r;});
+  const rows=[];
+  state.selected.forEach(n=>templateFor(n).forEach(item=>{
+    if(!item||rows.some(r=>r.neta===n&&r.item===item))return;
+    const o=old[n+'||'+item]||{};
+    const stock=stockFor(item);
+    const need=Number(o.need)||0;
+    rows.push({bought:!!o.bought,neta:n,item,stock,need:o.need||'',add:Math.max(need-stock,0),unitPrice:o.unitPrice||state.unitPrices[item]||'',note:o.note||'',shop:o.shop||state.shop||'',unit:unitFor(item)});
+  }));
+  state.rows=rows;
+  renderRows();
+  saveLocal();
+  if(doJump)jump('listSec');
+}
+function buildList(){rebuildRowsFromSelected(true)}
 function refreshRowsFromInventory(){state.rows.forEach(r=>{r.stock=stockFor(r.item);r.unit=unitFor(r.item);r.add=Math.max((Number(r.need)||0)-(Number(r.stock)||0),0)});renderRows()}
 function addRow(){state.rows.push({bought:false,neta:'追加',item:'',stock:0,need:'',add:0,unitPrice:'',note:'',shop:state.shop||'',unit:''});renderRows();saveLocal()}
 function updateRow(i,k,v){const r=state.rows[i];if(!r)return;if(k==='bought')r[k]=!!v;else if(['stock','need','add','unitPrice'].includes(k))r[k]=Number(v)||0;else r[k]=v;if(k==='item'){r.stock=stockFor(v);r.unit=unitFor(v);if(state.unitPrices[v]!=null)r.unitPrice=state.unitPrices[v]}if(k==='need'||k==='stock'||k==='item')r.add=Math.max((Number(r.need)||0)-(Number(r.stock)||0),0);if(k==='unitPrice'&&r.item)state.unitPrices[r.item]=Number(v)||0;renderRows();saveLocal()}
