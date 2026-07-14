@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0f172a">
 <title>FUJIWARA Group システム管理室</title>
 <style>
-:root{--bg:#eef3f8;--card:#fff;--ink:#172033;--sub:#667085;--line:#d9e1ea;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--shadow:0 10px 28px rgba(15,23,42,.10);--r:18px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eaf2ff,#f8fafc 35%,#fff7e8);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}header{position:sticky;top:0;z-index:20;background:rgba(15,23,42,.95);color:#fff;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.15)}.hrow{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between}.brand small{display:block;color:#dbeafe;font-weight:700}.brand h1{font-size:22px;margin:2px 0 0}.ver{font-size:12px;background:#fff;color:#0f172a;border-radius:999px;padding:6px 10px;font-weight:900}main{max-width:1100px;margin:auto;padding:16px 14px 100px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.card{background:rgba(255,255,255,.96);border:1px solid #fff;border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.hero{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff}.hero h2{margin:0 0 5px}.hero p{margin:0;color:#dbeafe}.progress{height:14px;background:rgba(255,255,255,.22);border-radius:999px;overflow:hidden;margin-top:14px}.progress i{display:block;height:100%;background:linear-gradient(90deg,#f6c84b,#fff1a8);width:0}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.kpi{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px}.kpi b{font-size:24px;display:block}.sec-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.sec-title h3{margin:0;font-size:17px}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:900}.primary{background:var(--blue);color:#fff}.dark{background:#0f172a;color:#fff}.soft{background:#edf2f7;color:#263245}.danger{background:#fee2e2;color:#991b1b}.success{background:#dcfce7;color:#166534}.row{display:flex;gap:8px;flex-wrap:wrap}.field{margin-bottom:10px}.field label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:5px}input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;color:var(--ink)}textarea{min-height:88px;resize:vertical}.task{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;background:#fff}.task.done{opacity:.62;background:#f1f5f9}.task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.task-name{font-weight:900}.meta{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.55}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900}.p1{background:#fee2e2;color:#991b1b}.p2{background:#ffedd5;color:#9a3412}.p3{background:#e0f2fe;color:#075985}.app-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.app{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}.app-head{display:flex;justify-content:space-between;gap:8px}.app-title{font-weight:950;font-size:15px}.bar{height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:9px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa)}.status{font-size:11px;font-weight:900;border-radius:999px;padding:4px 8px}.normal{background:#dcfce7;color:#166534}.working{background:#fef3c7;color:#92400e}.dangerous{background:#fee2e2;color:#991b1b}.log{border-left:4px solid #93c5fd;padding:8px 10px;margin:8px 0;background:#f8fbff;border-radius:8px}.log b{display:block}.empty{text-align:center;color:var(--sub);padding:22px 8px}.tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(7,1fr);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:30}.tab{border:0;background:transparent;color:#475569;font-size:11px;font-weight:900;padding:5px 2px}.tab span{display:block;font-size:22px;margin-bottom:2px}.tab.active{color:var(--blue)}.page{display:none}.page.active{display:block}.notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:12px;color:#9a3412;font-size:13px;line-height:1.6}.miyu-hero{background:linear-gradient(135deg,#fff1f6,#eef6ff);border:1px solid #f6c8da}.backup-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.backup-card{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}.backup-card.overdue{border-color:#fca5a5;background:#fff7f7}.backup-card.warn{border-color:#fcd34d;background:#fffdf3}.backup-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.backup-days{font-size:12px;font-weight:900}.bk-ok{color:#166534}.bk-warn{color:#92400e}.bk-bad{color:#991b1b}.danger-panel{border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:14px;padding:12px;line-height:1.6}.backup-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}@media(max-width:780px){.backup-grid{grid-template-columns:1fr}}
+:root{--bg:#eef3f8;--card:#fff;--ink:#172033;--sub:#667085;--line:#d9e1ea;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--shadow:0 10px 28px rgba(15,23,42,.10);--r:18px}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eaf2ff,#f8fafc 35%,#fff7e8);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}header{position:sticky;top:0;z-index:20;background:rgba(15,23,42,.95);color:#fff;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.15)}.hrow{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between}.brand small{display:block;color:#dbeafe;font-weight:700}.brand h1{font-size:22px;margin:2px 0 0}.ver{font-size:12px;background:#fff;color:#0f172a;border-radius:999px;padding:6px 10px;font-weight:900}main{max-width:1100px;margin:auto;padding:16px 14px 100px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.card{background:rgba(255,255,255,.96);border:1px solid #fff;border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.hero{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff}.hero h2{margin:0 0 5px}.hero p{margin:0;color:#dbeafe}.progress{height:14px;background:rgba(255,255,255,.22);border-radius:999px;overflow:hidden;margin-top:14px}.progress i{display:block;height:100%;background:linear-gradient(90deg,#f6c84b,#fff1a8);width:0}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.kpi{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px}.kpi b{font-size:24px;display:block}.sec-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.sec-title h3{margin:0;font-size:17px}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:900}.primary{background:var(--blue);color:#fff}.dark{background:#0f172a;color:#fff}.soft{background:#edf2f7;color:#263245}.danger{background:#fee2e2;color:#991b1b}.success{background:#dcfce7;color:#166534}.row{display:flex;gap:8px;flex-wrap:wrap}.field{margin-bottom:10px}.field label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:5px}input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;color:var(--ink)}textarea{min-height:88px;resize:vertical}.task{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;background:#fff}.task.done{opacity:.62;background:#f1f5f9}.task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.task-name{font-weight:900}.meta{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.55}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900}.p1{background:#fee2e2;color:#991b1b}.p2{background:#ffedd5;color:#9a3412}.p3{background:#e0f2fe;color:#075985}.app-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.app{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}.app-head{display:flex;justify-content:space-between;gap:8px}.app-title{font-weight:950;font-size:15px}.bar{height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:9px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa)}.status{font-size:11px;font-weight:900;border-radius:999px;padding:4px 8px}.normal{background:#dcfce7;color:#166534}.working{background:#fef3c7;color:#92400e}.dangerous{background:#fee2e2;color:#991b1b}.log{border-left:4px solid #93c5fd;padding:8px 10px;margin:8px 0;background:#f8fbff;border-radius:8px}.log b{display:block}.empty{text-align:center;color:var(--sub);padding:22px 8px}.tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(8,1fr);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:30}.tab{border:0;background:transparent;color:#475569;font-size:11px;font-weight:900;padding:5px 2px}.tab span{display:block;font-size:22px;margin-bottom:2px}.tab.active{color:var(--blue)}.page{display:none}.page.active{display:block}.notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:12px;color:#9a3412;font-size:13px;line-height:1.6}.miyu-hero{background:linear-gradient(135deg,#fff1f6,#eef6ff);border:1px solid #f6c8da}.backup-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.github-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.github-card{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}.github-card h4{margin:0 0 8px}.url-box{font-size:12px;word-break:break-all;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:9px;margin-top:7px}.github-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.mini{background:#f8fafc;border-radius:10px;padding:8px;font-size:12px}.release-ok{color:#166534;font-weight:900}.release-warn{color:#92400e;font-weight:900}.release-bad{color:#991b1b;font-weight:900}@media(max-width:780px){.github-grid{grid-template-columns:1fr}}.backup-card{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}.backup-card.overdue{border-color:#fca5a5;background:#fff7f7}.backup-card.warn{border-color:#fcd34d;background:#fffdf3}.backup-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.backup-days{font-size:12px;font-weight:900}.bk-ok{color:#166534}.bk-warn{color:#92400e}.bk-bad{color:#991b1b}.danger-panel{border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:14px;padding:12px;line-height:1.6}.backup-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}@media(max-width:780px){.backup-grid{grid-template-columns:1fr}}
 .miyu-face{width:76px;height:76px;border-radius:22px;display:grid;place-items:center;font-size:42px;background:#fff;box-shadow:0 8px 22px rgba(37,99,235,.12);flex:0 0 auto}
 .miyu-head{display:flex;gap:14px;align-items:center}.miyu-head h2{margin:0 0 4px}.miyu-head p{margin:0;color:var(--sub);line-height:1.6}
 .mission{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:14px;padding:11px;margin:8px 0;background:#fff}
@@ -18,7 +18,7 @@
 @media(max-width:780px){.span8,.span6,.span4{grid-column:span 12}.kpis{grid-template-columns:repeat(2,1fr)}.app-list{grid-template-columns:1fr}}
 </style>
 </head><body>
-<header><div class="hrow"><div class="brand"><small>👑 FUJIWARA Group</small><h1>システム管理室</h1></div><div class="ver">Ver 1.2</div></div></header>
+<header><div class="hrow"><div class="brand"><small>👑 FUJIWARA Group</small><h1>システム管理室</h1></div><div class="ver">Ver 1.3</div></div></header>
 <main>
 <section id="home" class="page active"><div class="grid">
 <div class="card hero span12"><h2 id="greeting">おはよう、相棒！</h2><p id="handoverText">前回の続きと、今日やることを確認しよう。</p><div class="progress"><i id="overallBar"></i></div><div class="kpis"><div class="kpi"><small>全体完成率</small><b id="overallPct">0%</b></div><div class="kpi"><small>作業中</small><b id="workingCount">0</b></div><div class="kpi"><small>未完了</small><b id="todoCount">0</b></div><div class="kpi"><small>不具合</small><b id="bugCount">0</b></div></div></div>
@@ -31,6 +31,28 @@
 <section id="records" class="page"><div class="grid"><div class="card span6"><div class="sec-title"><h3>📚 更新履歴</h3><button class="btn primary" onclick="addLog('update')">＋記録</button></div><div id="updateLogs"></div></div><div class="card span6"><div class="sec-title"><h3>⚠ 不具合管理</h3><button class="btn danger" onclick="addLog('bug')">＋登録</button></div><div id="bugLogs"></div></div><div class="card span6"><div class="sec-title"><h3>💡 アイデア保管庫</h3><button class="btn soft" onclick="addLog('idea')">＋追加</button></div><div id="ideaLogs"></div></div><div class="card span6"><div class="sec-title"><h3>💾 バックアップ記録</h3><button class="btn success" onclick="addLog('backup')">＋記録</button></div><div id="backupLogs"></div></div></div></section>
 <section id="handover" class="page"><div class="grid"><div class="card span6"><div class="sec-title"><h3>⏸ 作業中断・引継ぎ</h3></div><div class="field"><label>現在触っているアプリ</label><select id="handApp"></select></div><div class="field"><label>今日ここまで進んだ内容</label><textarea id="handDone"></textarea></div><div class="field"><label>次にすること</label><textarea id="handNext"></textarea></div><div class="field"><label>注意点</label><textarea id="handWarn"></textarea></div><button class="btn dark" style="width:100%" onclick="saveHandover()">引継ぎを保存</button></div><div class="card span6"><div class="sec-title"><h3>🤖 MIYU引継ぎ表示</h3></div><div id="handoverPreview" class="notice">まだ引継ぎはありません。</div><div class="row" style="margin-top:12px"><button class="btn danger" onclick="deleteHandover()">引継ぎを消す</button><button class="btn soft" onclick="exportData()">管理データを書き出す</button><label class="btn soft">読み込む<input type="file" accept=".json" onchange="importData(event)" hidden></label></div></div></div></section>
 
+
+
+<section id="github" class="page">
+  <div class="grid">
+    <div class="card span12">
+      <div class="sec-title"><h3>🌐 GitHubセンター</h3><button class="btn primary" onclick="addGithubApp()">＋登録</button></div>
+      <div class="notice">公開URL・ファイル名・最終公開日をここで管理します。実際のGitHub内容を自動取得する機能は次段階で追加します。</div>
+      <div class="github-grid" id="githubCenterList" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card span6">
+      <div class="sec-title"><h3>📤 公開履歴</h3><button class="btn primary" onclick="recordRelease()">＋公開記録</button></div>
+      <div id="releaseLogs"></div>
+    </div>
+
+    <div class="card span6">
+      <div class="sec-title"><h3>🔄 更新確認</h3></div>
+      <div id="githubWarnings" class="notice"></div>
+      <button class="btn soft" style="width:100%;margin-top:10px" onclick="copyAllUrls()">公開URL一覧をコピー</button>
+    </div>
+  </div>
+</section>
 
 <section id="backup" class="page">
   <div class="grid">
@@ -102,11 +124,11 @@
   </div>
 </section>
 </main>
-<nav class="tabs"><button class="tab active" data-page="home" onclick="switchPage('home')"><span>🏠</span>ホーム</button><button class="tab" data-page="tasks" onclick="switchPage('tasks')"><span>📋</span>作業</button><button class="tab" data-page="apps" onclick="switchPage('apps')"><span>📱</span>アプリ</button><button class="tab" data-page="records" onclick="switchPage('records')"><span>📚</span>記録</button><button class="tab" data-page="handover" onclick="switchPage('handover')"><span>⏸</span>引継ぎ</button><button class="tab" data-page="backup" onclick="switchPage('backup')"><span>📦</span>保存</button><button class="tab" data-page="miyu" onclick="switchPage('miyu')"><span>🤖</span>MIYU</button></nav>
+<nav class="tabs"><button class="tab active" data-page="home" onclick="switchPage('home')"><span>🏠</span>ホーム</button><button class="tab" data-page="tasks" onclick="switchPage('tasks')"><span>📋</span>作業</button><button class="tab" data-page="apps" onclick="switchPage('apps')"><span>📱</span>アプリ</button><button class="tab" data-page="records" onclick="switchPage('records')"><span>📚</span>記録</button><button class="tab" data-page="handover" onclick="switchPage('handover')"><span>⏸</span>引継ぎ</button><button class="tab" data-page="github" onclick="switchPage('github')"><span>🌐</span>GitHub</button><button class="tab" data-page="backup" onclick="switchPage('backup')"><span>📦</span>保存</button><button class="tab" data-page="miyu" onclick="switchPage('miyu')"><span>🤖</span>MIYU</button></nav>
 <script>
 const KEY='fujiwara_system_management_v1';
 const defaultApps=[{id:'main',icon:'🛡️',name:'メインアプリ',version:'v5.0',status:'正常',risk:'高',progress:96,updated:'未記録'},{id:'king',icon:'👑',name:'KINGアプリ',version:'v1.0',status:'作業中',risk:'高',progress:84,updated:'未記録'},{id:'partner',icon:'🐩',name:'partner',version:'v5.0',status:'正常',risk:'中',progress:100,updated:'未記録'},{id:'partnermen',icon:'🦍🐷',name:'partner MEN',version:'v1.0',status:'作業中',risk:'中',progress:96,updated:'未記録'},{id:'construction',icon:'🏗️',name:'建設アプリ',version:'v1.0',status:'正常',risk:'高',progress:72,updated:'未記録'},{id:'office',icon:'👥',name:'事務員アプリ',version:'v1.0',status:'正常',risk:'中',progress:86,updated:'未記録'},{id:'miyu',icon:'🤖',name:'MIYU',version:'v1.0',status:'作業中',risk:'低',progress:62,updated:'未記録'},{id:'family',icon:'🏡',name:'家族アプリ',version:'構想中',status:'保留',risk:'低',progress:20,updated:'未記録'}];
-let db=load();db.backupStates=db.backupStates||{};function load(){try{const d=JSON.parse(localStorage.getItem(KEY))||seed();const base=seed();d.missions=d.missions||[];d.projects=d.projects||base.projects;d.chat=d.chat||[];return d}catch(e){return seed()}}function seed(){return {apps:defaultApps,tasks:[],logs:[],handover:null,backupStates:{},missions:[],projects:[
+let db=load();db.backupStates=db.backupStates||{};db.githubApps=db.githubApps||{};db.releases=db.releases||[];function load(){try{const d=JSON.parse(localStorage.getItem(KEY))||seed();const base=seed();d.missions=d.missions||[];d.projects=d.projects||base.projects;d.chat=d.chat||[];return d}catch(e){return seed()}}function seed(){return {apps:defaultApps,tasks:[],logs:[],handover:null,backupStates:{},missions:[],projects:[
 {id:'PJ-001',name:'開発室',progress:72,status:'作業中'},
 {id:'PJ-002',name:'MIYU秘書',progress:35,status:'作業中'},
 {id:'PJ-003',name:'バックアップセンター',progress:10,status:'未着手'},
@@ -147,10 +169,104 @@ function miyuReply(q){
 }
 function sendMiyu(){const q=miyuInput.value.trim();if(!q)return;db.chat.push({role:'user',text:q,date:now()});db.chat.push({role:'ai',text:miyuReply(q),date:now()});miyuInput.value='';save()}
 
-function render(){appOptions();const pct=Math.round(db.apps.reduce((s,a)=>s+(Number(a.progress)||0),0)/Math.max(db.apps.length,1));overallPct.textContent=pct+'%';overallBar.style.width=pct+'%';workingCount.textContent=db.apps.filter(a=>a.status==='作業中').length;todoCount.textContent=db.tasks.filter(t=>!t.done&&!t.archived).length;bugCount.textContent=db.logs.filter(x=>x.type==='bug').length;homeApps.innerHTML=db.apps.slice(0,4).map(appCard).join('');allApps.innerHTML=db.apps.map(appCard).join('');renderTasks('todayTasks',5);renderTasks('allTasks');renderLogs('update','updateLogs');renderLogs('bug','bugLogs');renderLogs('idea','ideaLogs');renderLogs('backup','backupLogs');renderBackupCenter();renderMiyu();if(db.handover){const a=db.apps.find(x=>x.id===db.handover.appId);const h=`<b>${a?a.icon+' '+esc(a.name):''}</b><br><br><b>ここまで</b><br>${esc(db.handover.done)}<br><br><b>次にすること</b><br>${esc(db.handover.next)}${db.handover.warn?'<br><br><b>注意</b><br>'+esc(db.handover.warn):''}<br><br><small>${esc(db.handover.date)}</small>`;resumeBox.innerHTML=h;resumeBox.className='notice';handoverPreview.innerHTML=h;handoverText.textContent=`前回は「${a?a.name:'作業'}」の途中です。次は「${db.handover.next}」`}else{resumeBox.innerHTML='引継ぎはまだありません';resumeBox.className='empty';handoverPreview.textContent='まだ引継ぎはありません。';handoverText.textContent='前回の続きと、今日やることを確認しよう。'}}
+function render(){appOptions();const pct=Math.round(db.apps.reduce((s,a)=>s+(Number(a.progress)||0),0)/Math.max(db.apps.length,1));overallPct.textContent=pct+'%';overallBar.style.width=pct+'%';workingCount.textContent=db.apps.filter(a=>a.status==='作業中').length;todoCount.textContent=db.tasks.filter(t=>!t.done&&!t.archived).length;bugCount.textContent=db.logs.filter(x=>x.type==='bug').length;homeApps.innerHTML=db.apps.slice(0,4).map(appCard).join('');allApps.innerHTML=db.apps.map(appCard).join('');renderTasks('todayTasks',5);renderTasks('allTasks');renderLogs('update','updateLogs');renderLogs('bug','bugLogs');renderLogs('idea','ideaLogs');renderLogs('backup','backupLogs');renderBackupCenter();renderGithubCenter();renderMiyu();if(db.handover){const a=db.apps.find(x=>x.id===db.handover.appId);const h=`<b>${a?a.icon+' '+esc(a.name):''}</b><br><br><b>ここまで</b><br>${esc(db.handover.done)}<br><br><b>次にすること</b><br>${esc(db.handover.next)}${db.handover.warn?'<br><br><b>注意</b><br>'+esc(db.handover.warn):''}<br><br><small>${esc(db.handover.date)}</small>`;resumeBox.innerHTML=h;resumeBox.className='notice';handoverPreview.innerHTML=h;handoverText.textContent=`前回は「${a?a.name:'作業'}」の途中です。次は「${db.handover.next}」`}else{resumeBox.innerHTML='引継ぎはまだありません';resumeBox.className='empty';handoverPreview.textContent='まだ引継ぎはありません。';handoverText.textContent='前回の続きと、今日やることを確認しよう。'}}
 function quickTask(){switchPage('tasks');setTimeout(()=>taskTitle.focus(),200)}function addTask(){const title=taskTitle.value.trim();if(!title)return alert('作業内容を入力して');db.tasks.push({id:crypto.randomUUID(),appId:taskApp.value,title,priority:taskPriority.value,note:taskNote.value.trim(),done:false,created:new Date().toISOString()});taskTitle.value='';taskNote.value='';save()}function toggleTask(id){const t=db.tasks.find(x=>x.id===id);if(t)t.done=!t.done;save()}function deleteTask(id){if(confirm('この作業を削除する？')){db.tasks=db.tasks.filter(x=>x.id!==id);save()}}function clearCompleted(){db.tasks.forEach(t=>{if(t.done)t.archived=true});save()}
 function editApp(id){const a=db.apps.find(x=>x.id===id);if(!a)return;const version=prompt('バージョン',a.version);if(version===null)return;const status=prompt('状態（正常／作業中／要注意／保留）',a.status);if(status===null)return;const progress=prompt('完成率 0〜100',a.progress);if(progress===null)return;const risk=prompt('危険度（高／中／低）',a.risk);if(risk===null)return;a.version=version;a.status=status;a.progress=Math.max(0,Math.min(100,Number(progress)||0));a.risk=risk;a.updated=now();save()}
 function addAppPrompt(){const name=prompt('アプリ名');if(!name)return;const icon=prompt('アイコン（絵文字）','📱')||'📱';db.apps.push({id:crypto.randomUUID(),icon,name,version:'v1.0',status:'作業中',risk:'中',progress:0,updated:now()});save()}
+
+
+function ensureGithubDefaults(){
+ const defaults={
+  main:{file:'index.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/index.html'},
+  king:{file:'king.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/king.html'},
+  partner:{file:'partner.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/partner.html'},
+  partnermen:{file:'partner-men.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/partner-men.html'},
+  construction:{file:'construction.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction.html'},
+  office:{file:'office-timecard.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/office-timecard.html'},
+  miyu:{file:'miyu.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/miyu.html'},
+  family:{file:'family.html',url:'https://yakamikoujinen-stack.github.io/FUJIWARA-Group/family.html'}
+ };
+ Object.entries(defaults).forEach(([id,v])=>{
+  db.githubApps[id]=db.githubApps[id]||{file:v.file,url:v.url,lastRelease:'',version:'',note:''};
+ });
+}
+function githubStatusFor(a){
+ const g=db.githubApps[a.id]||{};
+ const days=daysSince(g.lastRelease);
+ return {g,days,stale:days>30,warn:days>14};
+}
+function renderGithubCenter(){
+ ensureGithubDefaults();
+ const el=document.getElementById('githubCenterList');if(!el)return;
+ let warnings=[];
+ el.innerHTML=db.apps.map(a=>{
+   const s=githubStatusFor(a),g=s.g;
+   if(!g.url) warnings.push(`${a.name}：公開URL未登録`);
+   if(s.stale) warnings.push(`${a.name}：30日以上公開記録なし`);
+   const status=s.stale?'release-bad':s.warn?'release-warn':'release-ok';
+   const dateText=!g.lastRelease?'未記録':s.days===0?'今日':`${s.days}日前`;
+   return `<div class="github-card">
+     <h4>${a.icon} ${esc(a.name)}</h4>
+     <div class="github-meta">
+       <div class="mini">HTML<br><b>${esc(g.file||'未登録')}</b></div>
+       <div class="mini">公開<br><b class="${status}">${dateText}</b></div>
+     </div>
+     <div class="url-box">${esc(g.url||'公開URL未登録')}</div>
+     <div class="meta">Version ${esc(g.version||a.version||'')}<br>${esc(g.note||'')}</div>
+     <div class="row" style="margin-top:9px">
+       <button class="btn soft" onclick="editGithubApp('${a.id}')">編集</button>
+       <button class="btn primary" onclick="openGithubUrl('${a.id}')">開く</button>
+       <button class="btn success" onclick="quickRelease('${a.id}')">公開済み</button>
+     </div>
+   </div>`;
+ }).join('');
+ const warn=document.getElementById('githubWarnings');
+ warn.innerHTML=warnings.length?`⚠ ${warnings.map(esc).join('<br>')}`:'✅ 公開URLと公開記録に大きな問題はありません。';
+ const logs=[...db.releases].sort((a,b)=>b.date.localeCompare(a.date));
+ releaseLogs.innerHTML=logs.length?logs.map(r=>`<div class="log"><b>${esc(r.appName)} ${esc(r.version||'')}</b><div class="meta">${esc(r.date)}<br>${esc(r.note||'')}</div><button class="btn danger" style="margin-top:6px" onclick="deleteRelease('${r.id}')">削除</button></div>`).join(''):'<div class="empty">公開履歴はありません</div>';
+}
+function editGithubApp(id){
+ const a=db.apps.find(x=>x.id===id);if(!a)return;
+ ensureGithubDefaults();const g=db.githubApps[id];
+ const file=prompt('GitHubのHTMLファイル名',g.file||'');if(file===null)return;
+ const url=prompt('公開URL',g.url||'');if(url===null)return;
+ const version=prompt('公開バージョン',g.version||a.version||'');if(version===null)return;
+ const note=prompt('メモ',g.note||'');if(note===null)return;
+ Object.assign(g,{file,url,version,note});save();
+}
+function addGithubApp(){
+ const name=prompt('アプリ管理に登録済みのアプリ名を入力');if(!name)return;
+ const a=db.apps.find(x=>x.name===name);
+ if(!a)return alert('先に「アプリ」タブへ登録して');
+ editGithubApp(a.id);
+}
+function openGithubUrl(id){
+ const g=db.githubApps[id]||{};if(!g.url)return alert('URL未登録');
+ window.open(g.url,'_blank');
+}
+function quickRelease(id){
+ const a=db.apps.find(x=>x.id===id);if(!a)return;
+ ensureGithubDefaults();const g=db.githubApps[id];
+ const version=prompt('今回の公開バージョン',g.version||a.version||'');if(version===null)return;
+ const note=prompt('公開内容','更新公開');if(note===null)return;
+ const iso=new Date().toISOString();
+ Object.assign(g,{lastRelease:iso,version,note});
+ db.releases.push({id:crypto.randomUUID(),appId:id,appName:a.name,version,note,date:now()});
+ db.logs.push({id:crypto.randomUUID(),type:'update',title:`${a.name} ${version} 公開`,app:a.name,note,date:now()});
+ save();
+}
+function recordRelease(){
+ const names=db.apps.map(a=>a.name).join(' / ');
+ const name=prompt(`対象アプリ名\n${names}`);if(!name)return;
+ const a=db.apps.find(x=>x.name===name);if(!a)return alert('該当アプリなし');
+ quickRelease(a.id);
+}
+function deleteRelease(id){if(confirm('この公開履歴を削除する？')){db.releases=db.releases.filter(x=>x.id!==id);save()}}
+function copyAllUrls(){
+ ensureGithubDefaults();
+ const s=db.apps.map(a=>`${a.name}\n${(db.githubApps[a.id]||{}).url||'未登録'}`).join('\n\n');
+ navigator.clipboard?.writeText(s).then(()=>alert('URL一覧をコピーした')).catch(()=>prompt('コピーして使って',s));
+}
 
 function dateOnly(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
 function daysSince(value){
@@ -210,6 +326,13 @@ function renderBackupCenter(){
 function addLog(type){const labels={update:'更新内容',bug:'不具合内容',idea:'アイデア',backup:'バックアップ名'};const title=prompt(labels[type]);if(!title)return;const app=prompt('対象アプリ（空欄可）','');const note=prompt('詳細・メモ','');db.logs.push({id:crypto.randomUUID(),type,title,app:app||'全体',note:note||'',date:now()});save()}function deleteLog(id){if(confirm('この記録を削除する？')){db.logs=db.logs.filter(x=>x.id!==id);save()}}
 function saveHandover(){const done=handDone.value.trim(),next=handNext.value.trim();if(!done||!next)return alert('「ここまで」と「次にすること」を入力して');db.handover={appId:handApp.value,done,next,warn:handWarn.value.trim(),date:now()};save();switchPage('home')}function deleteHandover(){if(confirm('引継ぎを消す？')){db.handover=null;save()}}
 function exportData(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fujiwara-system-management-backup.json';a.click();URL.revokeObjectURL(a.href)}function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.apps||!d.tasks)throw new Error();db=d;save();alert('読み込み完了')}catch(err){alert('読み込めないファイルです')}};r.readAsText(f)}
+
+
+if(!db.v13Initialized){
+ ensureGithubDefaults();
+ db.logs.push({id:crypto.randomUUID(),type:'update',title:'開発室 Ver1.3',app:'開発室',note:'GitHubセンター・公開履歴・URL管理を追加',date:now()});
+ db.v13Initialized=true;localStorage.setItem(KEY,JSON.stringify(db));
+}
 
 if(!db.v12Initialized){
  db.logs.push({id:crypto.randomUUID(),type:'update',title:'開発室 Ver1.2',app:'開発室',note:'バックアップセンター・危険通知・月間統計を追加',date:now()});
