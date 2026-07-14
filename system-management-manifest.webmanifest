@@ -1,0 +1,17 @@
+{
+  "name": "FUJIWARA Group 開発室",
+  "short_name": "開発室",
+  "start_url": "./system-management.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#071b39",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "./development-room-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
