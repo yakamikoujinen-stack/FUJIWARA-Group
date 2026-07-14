@@ -741,14 +741,6 @@ body::before,#app::before,.page::before{
           <div class="settings-group" id="staff-list-area"></div>
           <button class="btn btn-outline btn-sm btn-full" style="margin-bottom:16px" onclick="openStaffForm(null)">＋ スタッフを追加</button>
 
-          <!-- リーダー専用：イベント参加スタッフ一覧 -->
-          <div class="sec-title" style="margin:16px 0 10px">👥 イベント参加スタッフ一覧</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">
-            イベントごとの参加予定スタッフ・出勤回答・未回答をリーダーだけ確認できます。
-          </div>
-          <div class="settings-group" id="leader-event-staff-area"></div>
-          <button class="btn btn-ghost btn-sm btn-full" style="margin-bottom:16px" onclick="renderLeaderEventStaffList()">一覧を更新</button>
-
           <div class="settings-group">
             <div class="settings-row">
               <div class="sr-left"><span style="font-size:17px">📅</span>イベント数</div>
@@ -1765,6 +1757,7 @@ function saveAvailability(eventId, val){
   renderHome();
   toast('✅ 出勤可否を保存しました');
   fbSave();
+  notifyLeaderEmail('出欠', (ev.name||'イベント名未設定')+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
 }
 
 
@@ -2894,6 +2887,7 @@ function saveStockAdjust() {
   renderInventory();
   toast('✅ '+item.name+' を更新しました');
   fbSave();
+  notifyLeaderEmail('在庫', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock);
 }
 
 function openInvItemForm(id) {
@@ -2930,6 +2924,7 @@ function saveInvItemForm() {
   closeModal('modal-inv-item');
   renderInventory();
   fbSave();
+  notifyLeaderEmail('在庫品目', name+'｜在庫 '+data.stock+' '+(data.unit||'')+' / 持出 '+data.hakobi+' '+(data.unit||''));
 }
 
 function deleteInvItem() {
@@ -3655,6 +3650,42 @@ function toast(msg) {
   },{passive:true});
 })();
 
+// ════ 更新メール通知（出欠・在庫） ════
+var LEADER_NOTICE_EMAIL='yakami.koujinen@gmail.com';
+function notifyLeaderEmail(kind, detail){
+  var now=new Date().toLocaleString('ja-JP');
+  var sender=(userName||roleLabel(role)||'未入力');
+  var subject='【FUJIWARA GROUP】'+kind+'の更新';
+  var message='更新種別：'+kind+'\n更新者：'+sender+'\n更新日時：'+now+'\n変更内容：'+detail;
+
+  // 通知履歴をFirebaseにも残す（メール送信失敗時の確認用）
+  try{
+    if(window._fgNoticePush){ window._fgNoticePush({kind:kind,detail:detail,user:sender,time:now,email:LEADER_NOTICE_EMAIL}); }
+  }catch(e){ console.warn('通知履歴保存エラー',e); }
+
+  // FormSubmit経由でメール送信。初回のみ受信メール側で利用確認が必要です。
+  fetch('https://formsubmit.co/ajax/'+encodeURIComponent(LEADER_NOTICE_EMAIL),{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({
+      _subject:subject,
+      _template:'table',
+      '更新種別':kind,
+      '更新者':sender,
+      '更新日時':now,
+      '変更内容':detail,
+      'アプリ':'FUJIWARA GROUP メインアプリ'
+    })
+  }).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(){
+    console.log('メール通知送信済み');
+  }).catch(function(e){
+    console.warn('メール通知を送信できませんでした',e);
+  });
+}
+
 // ════ FIREBASE PLACEHOLDER ════
 // Firebaseが読み込まれるまでの仮関数
 function fbSave(){ if(window._fbSave) window._fbSave(); }
@@ -3677,6 +3708,9 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   firebase.initializeApp(config);
   var db = firebase.database();
   window._fgFirebaseReady = false;
+  window._fgNoticePush = function(data){
+    return db.ref('fujiwara/updateNotifications').push(Object.assign({createdAt:new Date().toISOString()},data||{}));
+  };
 
   function showSync(msg){
     var el=document.getElementById('sync-status');
