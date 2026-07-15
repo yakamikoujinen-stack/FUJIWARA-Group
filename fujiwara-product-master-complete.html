@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2c34b">
+<title>FUJIWARA 商品マスター 完成版</title>
+<style>
+:root{--gold:#bd8500;--gold2:#dda916;--cream:#fff7df;--line:#dfbd65;--ink:#30291b;--red:#d93636;--green:#0a9356}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+body{padding-bottom:92px}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(#fff1b3,#ffe49a);border-bottom:2px solid var(--line);padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:20px;font-weight:900;letter-spacing:2px;color:#ae7600}
+.room{font-weight:900;background:#fff5ca;border:1px solid var(--line);border-radius:999px;padding:7px 12px}
+main{max-width:1100px;margin:auto;padding:20px 16px}
+.hero{background:white;border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 28px rgba(94,67,0,.1)}
+.hero h1{margin:0 0 6px;font-size:28px}
+.hero p{margin:0;color:#715d2e}
+.toolbar{display:grid;grid-template-columns:1fr 260px auto;gap:10px;margin:16px 0}
+input,select{width:100%;font-size:16px;border:2px solid var(--line);border-radius:13px;padding:13px;background:white;outline:none}
+button{font:inherit}
+.btn{border:0;border-radius:13px;padding:13px 17px;font-weight:900;cursor:pointer}
+.gold{background:linear-gradient(#dba817,#bb7f00);color:white}
+.light{background:white;border:2px solid var(--line);color:#745300}
+.red{background:#ffe5e5;color:#a71919;border:1px solid #edaaaa}
+.panel{background:rgba(255,255,255,.65);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.panel-head{padding:14px 16px;background:#ffedb5;display:flex;justify-content:space-between;align-items:center}
+.panel-head h2{margin:0;font-size:20px}
+.tablewrap{overflow:auto}
+table{width:100%;min-width:760px;border-collapse:collapse}
+th,td{padding:13px 12px;border-bottom:1px solid #ead497;text-align:left}
+th{background:#fff9df;font-size:13px;color:#6a582e}
+.pill{display:inline-block;background:#fff0ba;color:#916200;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800}
+.price-input,.supplier-input{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:15px}
+.price-input{width:130px}
+.supplier-input{min-width:190px}
+.actions{display:flex;gap:7px}
+.icon{width:42px;height:42px;border-radius:11px;border:1px solid var(--line);background:white;cursor:pointer;font-size:17px}
+.empty{padding:40px;text-align:center;color:#745f31}
+.footer{position:fixed;left:0;right:0;bottom:0;background:#ffebb0;border-top:2px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:10px;z-index:30}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(30,23,5,.5);z-index:50;align-items:center;justify-content:center;padding:18px}
+.modal-bg.show{display:flex}
+.modal{width:min(600px,100%);background:var(--cream);border-radius:22px;overflow:hidden;border:1px solid var(--line)}
+.modal-head{background:#ffedb5;padding:16px 18px;display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{margin:0}
+.close{background:none;border:0;font-size:26px;cursor:pointer}
+.form{padding:18px;display:grid;gap:14px}
+.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px;color:#6d592d}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
+.toast{position:fixed;right:18px;bottom:95px;background:#30291b;color:white;border-radius:11px;padding:12px 15px;opacity:0;transform:translateY(10px);transition:.2s;z-index:80}
+.toast.show{opacity:1;transform:none}
+@media(max-width:700px){.toolbar{grid-template-columns:1fr}.hero h1{font-size:23px}main{padding:14px 10px}.room{font-size:12px}}
+</style>
+</head>
+<body>
+<header><div class="brand">FUJIWARA</div><div class="room">📦 商品マスター 完成版</div></header>
+<main>
+<section class="hero">
+<h1>単価・注文先 データベース</h1>
+<p>写真から全172品目を登録済み。単価と注文先を入力すると自動保存されます。</p>
+</section>
+
+<div class="toolbar">
+<input id="search" placeholder="品目名・注文先を検索">
+<select id="category"><option value="">すべてのカテゴリ</option></select>
+<button class="btn gold" onclick="openAdd()">＋ 品目追加</button>
+</div>
+
+<section class="panel">
+<div class="panel-head"><h2>品目一覧</h2><strong id="count"></strong></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>品目</th><th>カテゴリ</th><th>単価（税込）</th><th>注文先</th><th>編集・削除</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+<div id="empty" class="empty" hidden>該当する品目がありません。</div>
+</div>
+</section>
+</main>
+
+<div class="footer">
+<button class="btn light" onclick="exportJSON()">💾 相棒へ渡すデータ</button>
+<button class="btn light" onclick="exportCSV()">📄 CSV</button>
+</div>
+
+<div id="modalBg" class="modal-bg">
+<div class="modal">
+<div class="modal-head"><h3 id="modalTitle">品目追加</h3><button class="close" onclick="closeModal()">×</button></div>
+<div class="form">
+<div class="field"><label>品目名</label><input id="mName"></div>
+<div class="field"><label>カテゴリ</label><select id="mCategory"></select></div>
+<div class="field"><label>単価（税込）</label><input id="mPrice" type="number" inputmode="numeric"></div>
+<div class="field"><label>注文先</label><input id="mSupplier"></div>
+</div>
+<div class="modal-foot">
+<button id="deleteBtn" class="btn red" onclick="deleteItem()" style="margin-right:auto;display:none">削除</button>
+<button class="btn light" onclick="closeModal()">キャンセル</button>
+<button class="btn gold" onclick="saveModal()">保存</button>
+</div>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY='fujiwara_simple_product_master_v1';
+const SEED=[{"id":"seed-001","category":"かすてら","name":"バイオレット","price":"","supplier":""},{"id":"seed-002","category":"かすてら","name":"三温糖","price":"","supplier":""},{"id":"seed-003","category":"かすてら","name":"上白糖","price":"","supplier":""},{"id":"seed-004","category":"かすてら","name":"玉子","price":"","supplier":""},{"id":"seed-005","category":"かすてら","name":"たまり醤油","price":"","supplier":""},{"id":"seed-006","category":"かすてら","name":"味噌","price":"","supplier":""},{"id":"seed-007","category":"かすてら","name":"米油","price":"","supplier":""},{"id":"seed-008","category":"かすてら","name":"ベーキングパウダー","price":"","supplier":""},{"id":"seed-009","category":"かすてら","name":"袋（赤）中","price":"","supplier":""},{"id":"seed-010","category":"かすてら","name":"袋（赤）大","price":"","supplier":""},{"id":"seed-011","category":"かすてら","name":"袋（赤）得","price":"","supplier":""},{"id":"seed-012","category":"かすてら","name":"ボトル油","price":"","supplier":""},{"id":"seed-013","category":"かすてら","name":"はちみつ","price":"","supplier":""},{"id":"seed-014","category":"ポテト","name":"ポテト","price":"","supplier":""},{"id":"seed-015","category":"ポテト","name":"塩","price":"","supplier":""},{"id":"seed-016","category":"ポテト","name":"のり塩","price":"","supplier":""},{"id":"seed-017","category":"ポテト","name":"醤油マヨ","price":"","supplier":""},{"id":"seed-018","category":"ポテト","name":"えび塩","price":"","supplier":""},{"id":"seed-019","category":"ポテト","name":"カレー","price":"","supplier":""},{"id":"seed-020","category":"ポテト","name":"コンソメ","price":"","supplier":""},{"id":"seed-021","category":"ポテト","name":"チーズ","price":"","supplier":""},{"id":"seed-022","category":"ポテト","name":"明太マヨ","price":"","supplier":""},{"id":"seed-023","category":"ポテト","name":"ガーリック","price":"","supplier":""},{"id":"seed-024","category":"ポテト","name":"バーベキュー","price":"","supplier":""},{"id":"seed-025","category":"ポテト","name":"ホットチリ","price":"","supplier":""},{"id":"seed-026","category":"ポテト","name":"袋（絵柄付）","price":"","supplier":""},{"id":"seed-027","category":"ポテト","name":"袋（白大）","price":"","supplier":""},{"id":"seed-028","category":"いか焼き","name":"姿","price":"","supplier":""},{"id":"seed-029","category":"いか焼き","name":"ゲソ","price":"","supplier":""},{"id":"seed-030","category":"いか焼き","name":"タレ","price":"","supplier":""},{"id":"seed-031","category":"いか焼き","name":"醤油","price":"","supplier":""},{"id":"seed-032","category":"いか焼き","name":"みりん","price":"","supplier":""},{"id":"seed-033","category":"いか焼き","name":"にんにく","price":"","supplier":""},{"id":"seed-034","category":"いか焼き","name":"しょうが","price":"","supplier":""},{"id":"seed-035","category":"いか焼き","name":"竹串（姿 半身）","price":"","supplier":""},{"id":"seed-036","category":"いか焼き","name":"竹串（下足）","price":"","supplier":""},{"id":"seed-037","category":"いか焼き","name":"袋12号","price":"","supplier":""},{"id":"seed-038","category":"いか焼き","name":"袋11号","price":"","supplier":""},{"id":"seed-039","category":"串","name":"牛串","price":"","supplier":""},{"id":"seed-040","category":"串","name":"豚串","price":"","supplier":""},{"id":"seed-041","category":"串","name":"鳥串","price":"","supplier":""},{"id":"seed-042","category":"串","name":"容器","price":"","supplier":""},{"id":"seed-043","category":"串","name":"焼肉のタレ","price":"","supplier":""},{"id":"seed-044","category":"串","name":"焼鳥のタレ","price":"","supplier":""},{"id":"seed-045","category":"チーズハットグ","name":"チーズハットグ","price":"","supplier":""},{"id":"seed-046","category":"チーズハットグ","name":"チーズブロック","price":"","supplier":""},{"id":"seed-047","category":"チーズハットグ","name":"ソーセージ","price":"","supplier":""},{"id":"seed-048","category":"チーズハットグ","name":"ミックス粉","price":"","supplier":""},{"id":"seed-049","category":"チーズハットグ","name":"パン粉","price":"","supplier":""},{"id":"seed-050","category":"チーズハットグ","name":"ケチャップ","price":"","supplier":""},{"id":"seed-051","category":"チーズハットグ","name":"マスタード","price":"","supplier":""},{"id":"seed-052","category":"チーズハットグ","name":"ハニーマスタード","price":"","supplier":""},{"id":"seed-053","category":"チーズハットグ","name":"からしマヨネーズ","price":"","supplier":""},{"id":"seed-054","category":"チーズハットグ","name":"グラニュー糖","price":"","supplier":""},{"id":"seed-055","category":"チーズハットグ","name":"粉チーズ","price":"","supplier":""},{"id":"seed-056","category":"チーズハットグ","name":"チリソース","price":"","supplier":""},{"id":"seed-057","category":"チーズハットグ","name":"提供用紙","price":"","supplier":""},{"id":"seed-058","category":"チーズハットグ","name":"チョコレートソース","price":"","supplier":""},{"id":"seed-059","category":"チーズハットグ","name":"ココアパウダー","price":"","supplier":""},{"id":"seed-060","category":"かき氷","name":"ブロック氷","price":"","supplier":""},{"id":"seed-061","category":"かき氷","name":"フラワーカップ","price":"","supplier":""},{"id":"seed-062","category":"かき氷","name":"ストロースプーン","price":"","supplier":""},{"id":"seed-063","category":"かき氷","name":"蜜（いちご）","price":"","supplier":""},{"id":"seed-064","category":"かき氷","name":"蜜（ブルーハワイ）","price":"","supplier":""},{"id":"seed-065","category":"かき氷","name":"蜜（メロン）","price":"","supplier":""},{"id":"seed-066","category":"かき氷","name":"蜜（レモン）","price":"","supplier":""},{"id":"seed-067","category":"かき氷","name":"蜜（オレンジ）","price":"","supplier":""},{"id":"seed-068","category":"かき氷","name":"蜜（抹茶）","price":"","supplier":""},{"id":"seed-069","category":"かき氷","name":"蜜（ぶどう）","price":"","supplier":""},{"id":"seed-070","category":"かき氷","name":"蜜（みぞれ）","price":"","supplier":""},{"id":"seed-071","category":"コットンキャンディー","name":"ざらめ（白）","price":"","supplier":""},{"id":"seed-072","category":"コットンキャンディー","name":"ざらめ（ピンク）","price":"","supplier":""},{"id":"seed-073","category":"コットンキャンディー","name":"ざらめ（青）","price":"","supplier":""},{"id":"seed-074","category":"コットンキャンディー","name":"ざらめ（緑）","price":"","supplier":""},{"id":"seed-075","category":"コットンキャンディー","name":"ざらめ（紫）","price":"","supplier":""},{"id":"seed-076","category":"コットンキャンディー","name":"ざらめ（オレンジ）","price":"","supplier":""},{"id":"seed-077","category":"コットンキャンディー","name":"ざらめ（黄）","price":"","supplier":""},{"id":"seed-078","category":"コットンキャンディー","name":"オリゴ糖","price":"","supplier":""},{"id":"seed-079","category":"コットンキャンディー","name":"竹棒","price":"","supplier":""},{"id":"seed-080","category":"コットンキャンディー","name":"カップ（16onz）","price":"","supplier":""},{"id":"seed-081","category":"コットンキャンディー","name":"ドーム蓋（D98）","price":"","supplier":""},{"id":"seed-082","category":"コットンキャンディー","name":"光る棒","price":"","supplier":""},{"id":"seed-083","category":"コットンキャンディー","name":"ペーパー棒","price":"","supplier":""},{"id":"seed-084","category":"電球ジュース","name":"カメラ","price":"","supplier":""},{"id":"seed-085","category":"電球ジュース","name":"ミニオン","price":"","supplier":""},{"id":"seed-086","category":"電球ジュース","name":"アヒル","price":"","supplier":""},{"id":"seed-087","category":"電球ジュース","name":"人魚","price":"","supplier":""},{"id":"seed-088","category":"電球ジュース","name":"プーさん","price":"","supplier":""},{"id":"seed-089","category":"電球ジュース","name":"哺乳瓶","price":"","supplier":""},{"id":"seed-090","category":"電球ジュース","name":"哺乳瓶（トムとジェリー）","price":"","supplier":""},{"id":"seed-091","category":"電球ジュース","name":"肉球","price":"","supplier":""},{"id":"seed-092","category":"電球ジュース","name":"ペンギン","price":"","supplier":""},{"id":"seed-093","category":"電球ジュース","name":"シマエナガ","price":"","supplier":""},{"id":"seed-094","category":"電球ジュース","name":"ポーション","price":"","supplier":""},{"id":"seed-095","category":"電球ジュース","name":"サイダー","price":"","supplier":""},{"id":"seed-096","category":"電球ジュース","name":"ストロベリー","price":"","supplier":""},{"id":"seed-097","category":"電球ジュース","name":"メロン","price":"","supplier":""},{"id":"seed-098","category":"電球ジュース","name":"レモン","price":"","supplier":""},{"id":"seed-099","category":"電球ジュース","name":"ブルーハワイ","price":"","supplier":""},{"id":"seed-100","category":"電球ジュース","name":"カルピス","price":"","supplier":""},{"id":"seed-101","category":"とんかつスティック","name":"豚肉（生）","price":"","supplier":""},{"id":"seed-102","category":"とんかつスティック","name":"豚肉（味付き）","price":"","supplier":""},{"id":"seed-103","category":"とんかつスティック","name":"天ぷら粉","price":"","supplier":""},{"id":"seed-104","category":"とんかつスティック","name":"パン粉","price":"","supplier":""},{"id":"seed-105","category":"とんかつスティック","name":"竹串","price":"","supplier":""},{"id":"seed-106","category":"とんかつスティック","name":"オリジナルスパイス","price":"","supplier":""},{"id":"seed-107","category":"とんかつスティック","name":"とんかつソース","price":"","supplier":""},{"id":"seed-108","category":"とんかつスティック","name":"カレーソース","price":"","supplier":""},{"id":"seed-109","category":"とんかつスティック","name":"デミグラスソース","price":"","supplier":""},{"id":"seed-110","category":"とんかつスティック","name":"おろしポン酢","price":"","supplier":""},{"id":"seed-111","category":"とんかつスティック","name":"マヨネーズ","price":"","supplier":""},{"id":"seed-112","category":"とんかつスティック","name":"ニンニク","price":"","supplier":""},{"id":"seed-113","category":"とんかつスティック","name":"しょうが","price":"","supplier":""},{"id":"seed-114","category":"とんかつスティック","name":"塩コショウ","price":"","supplier":""},{"id":"seed-115","category":"とんかつスティック","name":"醤油","price":"","supplier":""},{"id":"seed-116","category":"とんかつスティック","name":"ごま油","price":"","supplier":""},{"id":"seed-117","category":"肉巻きおにぎり","name":"肉巻き","price":"","supplier":""},{"id":"seed-118","category":"肉巻きおにぎり","name":"肉巻き（小）","price":"","supplier":""},{"id":"seed-119","category":"肉巻きおにぎり","name":"焼肉のタレ","price":"","supplier":""},{"id":"seed-120","category":"肉巻きおにぎり","name":"にんにく","price":"","supplier":""},{"id":"seed-121","category":"肉巻きおにぎり","name":"ごま","price":"","supplier":""},{"id":"seed-122","category":"肉巻きおにぎり","name":"きざみ海苔","price":"","supplier":""},{"id":"seed-123","category":"肉巻きおにぎり","name":"キムチ","price":"","supplier":""},{"id":"seed-124","category":"肉巻きおにぎり","name":"スライスチーズ","price":"","supplier":""},{"id":"seed-125","category":"肉巻きおにぎり","name":"粉チーズ","price":"","supplier":""},{"id":"seed-126","category":"肉巻きおにぎり","name":"からしマヨネーズ","price":"","supplier":""},{"id":"seed-127","category":"肉巻きおにぎり","name":"梅肉","price":"","supplier":""},{"id":"seed-128","category":"肉巻きおにぎり","name":"フードパック（中）","price":"","supplier":""},{"id":"seed-129","category":"肉巻きおにぎり","name":"フードパック（小）","price":"","supplier":""},{"id":"seed-130","category":"肉巻きおにぎり","name":"箸","price":"","supplier":""},{"id":"seed-131","category":"だんご","name":"だんご（白）","price":"","supplier":""},{"id":"seed-132","category":"だんご","name":"だんご（草）","price":"","supplier":""},{"id":"seed-133","category":"だんご","name":"だんご（桜）","price":"","supplier":""},{"id":"seed-134","category":"だんご","name":"だんご（黄）","price":"","supplier":""},{"id":"seed-135","category":"だんご","name":"みたらしあん","price":"","supplier":""},{"id":"seed-136","category":"だんご","name":"栗ペースト","price":"","supplier":""},{"id":"seed-137","category":"だんご","name":"醤油","price":"","supplier":""},{"id":"seed-138","category":"だんご","name":"砂糖","price":"","supplier":""},{"id":"seed-139","category":"だんご","name":"きなこ","price":"","supplier":""},{"id":"seed-140","category":"だんご","name":"備長炭","price":"","supplier":""},{"id":"seed-141","category":"だんご","name":"ガスボンベ","price":"","supplier":""},{"id":"seed-142","category":"だんご","name":"フードパック（中）","price":"","supplier":""},{"id":"seed-143","category":"だんご","name":"フードパック（大）","price":"","supplier":""},{"id":"seed-144","category":"チョコバナナ","name":"チョコレート（茶）","price":"","supplier":""},{"id":"seed-145","category":"チョコバナナ","name":"チョコレート（白）","price":"","supplier":""},{"id":"seed-146","category":"チョコバナナ","name":"カラースプレー","price":"","supplier":""},{"id":"seed-147","category":"チョコバナナ","name":"箸","price":"","supplier":""},{"id":"seed-148","category":"チョコバナナ","name":"袋","price":"","supplier":""},{"id":"seed-149","category":"かまぼこ","name":"ネギ生姜","price":"","supplier":""},{"id":"seed-150","category":"かまぼこ","name":"とり軟骨","price":"","supplier":""},{"id":"seed-151","category":"かまぼこ","name":"ベーコンチーズ","price":"","supplier":""},{"id":"seed-152","category":"かまぼこ","name":"たこネギ","price":"","supplier":""},{"id":"seed-153","category":"かまぼこ","name":"えだまめ","price":"","supplier":""},{"id":"seed-154","category":"かまぼこ","name":"ごぼう","price":"","supplier":""},{"id":"seed-155","category":"かまぼこ","name":"えび","price":"","supplier":""},{"id":"seed-156","category":"かまぼこ","name":"かに","price":"","supplier":""},{"id":"seed-157","category":"やきそば・ホルそば","name":"そば玉","price":"","supplier":""},{"id":"seed-158","category":"やきそば・ホルそば","name":"キャベツ","price":"","supplier":""},{"id":"seed-159","category":"やきそば・ホルそば","name":"ホルモン","price":"","supplier":""},{"id":"seed-160","category":"やきそば・ホルそば","name":"豚肉","price":"","supplier":""},{"id":"seed-161","category":"やきそば・ホルそば","name":"塩胡椒","price":"","supplier":""},{"id":"seed-162","category":"やきそば・ホルそば","name":"味の素","price":"","supplier":""},{"id":"seed-163","category":"やきそば・ホルそば","name":"カツオだし","price":"","supplier":""},{"id":"seed-164","category":"やきそば・ホルそば","name":"焼きそばソース","price":"","supplier":""},{"id":"seed-165","category":"やきそば・ホルそば","name":"にんにく味噌","price":"","supplier":""},{"id":"seed-166","category":"やきそば・ホルそば","name":"刻みにんにく","price":"","supplier":""},{"id":"seed-167","category":"やきそば・ホルそば","name":"カツオ節","price":"","supplier":""},{"id":"seed-168","category":"やきそば・ホルそば","name":"青のり","price":"","supplier":""},{"id":"seed-169","category":"やきそば・ホルそば","name":"マヨネーズ","price":"","supplier":""},{"id":"seed-170","category":"やきそば・ホルそば","name":"ボトル油","price":"","supplier":""},{"id":"seed-171","category":"やきそば・ホルそば","name":"箸","price":"","supplier":""},{"id":"seed-172","category":"やきそば・ホルそば","name":"フードパック（中）","price":"","supplier":""}];
+const CATEGORIES=["かすてら","ポテト","いか焼き","串","チーズハットグ","かき氷","コットンキャンディー","電球ジュース","とんかつスティック","肉巻きおにぎり","だんご","チョコバナナ","かまぼこ","やきそば・ホルそば"];
+let items=JSON.parse(localStorage.getItem(KEY)||'null');
+if(!Array.isArray(items)||items.length===0){
+  items=SEED.map(x=>({...x}));
+  save();
+}else{
+  const existingKeys=new Set(items.map(x=>`${x.category}||${x.name}`));
+  let added=0;
+  SEED.forEach(x=>{
+    const key=`${x.category}||${x.name}`;
+    if(!existingKeys.has(key)){
+      items.push({...x});
+      existingKeys.add(key);
+      added++;
+    }
+  });
+  if(added>0) save();
+}
+let editingId=null;
+const $=id=>document.getElementById(id);
+
+function save(){localStorage.setItem(KEY,JSON.stringify(items));}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1400);}
+function categoryOptions(){
+ const cats=[...new Set([...CATEGORIES,...items.map(x=>x.category)])];
+ $('category').innerHTML='<option value="">すべてのカテゴリ</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');
+ $('mCategory').innerHTML=cats.map(c=>`<option>${esc(c)}</option>`).join('');
+}
+function render(){
+ categoryOptions();
+ const q=$('search').value.trim().toLowerCase(),cat=$('category').value;
+ const list=items.filter(x=>(!cat||x.category===cat)&&(!q||(`${x.name} ${x.supplier||''}`).toLowerCase().includes(q)))
+   .sort((a,b)=>a.category.localeCompare(b.category,'ja')||a.name.localeCompare(b.name,'ja'));
+ $('rows').innerHTML=list.map(x=>`<tr>
+ <td><strong>${esc(x.name)}</strong></td>
+ <td><span class="pill">${esc(x.category)}</span></td>
+ <td><input class="price-input" type="number" inputmode="numeric" value="${esc(x.price)}" placeholder="0" onchange="quickSave('${x.id}','price',this.value)"> 円</td>
+ <td><input class="supplier-input" value="${esc(x.supplier)}" placeholder="注文先を入力" onchange="quickSave('${x.id}','supplier',this.value)"></td>
+ <td><div class="actions"><button class="icon" onclick="openEdit('${x.id}')">✏️</button><button class="icon" onclick="removeDirect('${x.id}')">🗑️</button></div></td>
+ </tr>`).join('');
+ $('count').textContent=list.length+'件';
+ $('empty').hidden=list.length>0;
+}
+function quickSave(id,key,val){
+ const x=items.find(i=>i.id===id);if(!x)return;
+ x[key]=key==='price'?(val===''?'':Number(val)):val.trim();save();toast('保存しました');
+}
+function openAdd(){editingId=null;$('modalTitle').textContent='品目追加';$('deleteBtn').style.display='none';$('mName').value='';$('mCategory').value=CATEGORIES[0];$('mPrice').value='';$('mSupplier').value='';$('modalBg').classList.add('show');}
+function openEdit(id){
+ const x=items.find(i=>i.id===id);if(!x)return;editingId=id;
+ $('modalTitle').textContent='品目編集';$('deleteBtn').style.display='inline-block';
+ $('mName').value=x.name;$('mCategory').value=x.category;$('mPrice').value=x.price;$('mSupplier').value=x.supplier;
+ $('modalBg').classList.add('show');
+}
+function closeModal(){$('modalBg').classList.remove('show');editingId=null;}
+function saveModal(){
+ const name=$('mName').value.trim(),category=$('mCategory').value;
+ if(!name){alert('品目名を入力してください');return;}
+ const data={id:editingId||('item-'+Date.now()),name,category,price:$('mPrice').value===''?'':Number($('mPrice').value),supplier:$('mSupplier').value.trim()};
+ if(editingId)items=items.map(x=>x.id===editingId?data:x);else items.push(data);
+ save();closeModal();render();toast('保存しました');
+}
+function deleteItem(){if(editingId)removeDirect(editingId,true);}
+function removeDirect(id,fromModal=false){
+ const x=items.find(i=>i.id===id);if(!x)return;
+ if(confirm(`「${x.name}」を削除しますか？`)){items=items.filter(i=>i.id!==id);save();if(fromModal)closeModal();render();toast('削除しました');}
+}
+function exportJSON(){
+ const obj={app:'FUJIWARA 商品マスター',version:'完成版',exportedAt:new Date().toISOString(),items};
+ download(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),'fujiwara-product-master.json');
+}
+function exportCSV(){
+ const rows=[['カテゴリ','品目','単価','注文先'],...items.map(x=>[x.category,x.name,x.price,x.supplier])];
+ const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+ download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'fujiwara-product-master.csv');
+}
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+$('search').addEventListener('input',render);$('category').addEventListener('change',render);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+render();
+</script>
+</body>
+</html>
