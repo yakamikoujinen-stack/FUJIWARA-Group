@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v3.2</title>
+<title>ネタ買い物一覧 v3.3 第1段階</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -23,12 +23,21 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 .publish-status.error{background:#ffe6e6;border-color:#e9aaaa;color:var(--red)}
 .publish-dot{width:9px;height:9px;border-radius:50%;background:#b8aa7a;display:inline-block}
 .publish-status.live .publish-dot{background:var(--green);box-shadow:0 0 0 4px rgba(22,138,88,.12)}
+
+.master-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.master-table{width:100%;min-width:760px;border-collapse:collapse;background:#fff}
+.master-table th,.master-table td{border:1px solid #ead8a8;padding:8px;font-size:13px}
+.master-table th{background:#fff3d6}
+.master-table input,.master-table select{font-size:16px;padding:8px}
+.master-empty{text-align:center;padding:24px;color:var(--sub)}
+.master-status{font-size:12px;color:var(--sub);margin-top:8px}
+
 @media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:12px}.wrap{padding:10px}}
 @media print{header,.footer,.toolbar,.no-print{display:none!important}body{padding:0;background:#fff}.card{box-shadow:none;border:0;padding:0}table{min-width:0;font-size:9px}td input{border:0;padding:0;font-size:9px}}
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v3.2</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v3.3 第1段階</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -44,13 +53,44 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <section class="card" id="listSec"><h2>④ 買い物一覧表</h2><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
 <div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div><div class="sum"><div class="k">買い物金額合計</div><div class="v" id="moneyTotal">¥0</div></div></div></section>
+
+<section class="card" id="masterSec">
+<h2>⑤ 単価・注文先マスター</h2>
+<div class="notice">
+品目ごとの単価と注文先を一度だけ登録するための画面です。
+この第1段階では、登録・編集・削除と端末保存まで対応しています。
 </div>
-<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">売上設定</button><button onclick="jump('listSec')">買い物表</button></nav>
+<div class="master-toolbar">
+  <button class="gold" onclick="addMasterRow()">＋ 品目追加</button>
+  <button class="green" onclick="savePriceMaster(true)">💾 マスター保存</button>
+  <button class="ghost" onclick="exportPriceMaster()">📤 データ書き出し</button>
+  <button class="ghost" onclick="document.getElementById('masterImportFile').click()">📥 データ読込</button>
+  <input id="masterImportFile" type="file" accept=".json,application/json" hidden>
+</div>
+<div class="grid2" style="margin-top:10px">
+  <div><label>品目検索</label><input id="masterSearch" placeholder="品目名・注文先を検索" oninput="renderPriceMaster()"></div>
+  <div><label>カテゴリ絞り込み</label><select id="masterCategoryFilter" onchange="renderPriceMaster()"><option value="">すべて</option></select></div>
+</div>
+<div class="scroll" style="margin-top:10px">
+<table class="master-table">
+<thead><tr><th>カテゴリ</th><th>品目</th><th>単価（税込）</th><th>注文先</th><th>削除</th></tr></thead>
+<tbody id="masterTbody"></tbody>
+</table>
+<div id="masterEmpty" class="master-empty" hidden>品目がありません。</div>
+</div>
+<div class="master-status" id="masterStatus">未保存</div>
+</section>
+
+</div>
+<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">売上設定</button><button onclick="jump('listSec')">買い物表</button><button onclick="jump('masterSec')">単価マスター</button></nav>
 <datalist id="inventoryList"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 const LOCAL_KEY='fujiwara_neta_powerup_v25';
+const PRICE_MASTER_KEY='fujiwara_price_supplier_master_v1';
+let priceMaster=[];
+
 const DEFAULT_NETAS=['チーズハットグ','牛串','豚串','鳥串','かき氷','いか焼き','ポテト','からあげ','肉巻きおにぎり','りんご飴','やきそば','ホルそば','串','かまぼこ','だんご','らーめん','チョコバナナ','コットンキャンディー','かすてら','たこ焼き','焼きとうもろこし','フランクフルト','クレープ','串物','揚げ物','麺類','甘味','粉もの・焼き物','ご飯もの','その他'];
 const TEMPLATES={
 'チーズハットグ':['チーズハットグ','チーズブロック','ソーセージ','ミックス粉','パン粉','ケチャップ','マスタード','ハニーマスタード','砂糖','串','袋','パン'],
@@ -61,6 +101,126 @@ const TEMPLATES={
 'たこ焼き':['たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'粉もの・焼き物':['いか','たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'肉巻きおにぎり':['ごはん','豚バラ','タレ','海苔','容器'],'ご飯もの':['ごはん','豚バラ','タレ','海苔','容器'],'その他':['割り箸','手袋','輪ゴム','ラップ','キッチンペーパー','ゴミ袋']};
 let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;let sharedLoadTimer=null;
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+
+function defaultMasterItems(){
+  const out=[];
+  const seen=new Set();
+  Object.keys(TEMPLATES).forEach(cat=>{
+    (TEMPLATES[cat]||[]).forEach(name=>{
+      const key=cat+'||'+name;
+      if(!name||seen.has(key))return;
+      seen.add(key);
+      out.push({id:'pm-'+Date.now()+'-'+Math.random().toString(36).slice(2),category:cat,item:name,unitPrice:'',supplier:''});
+    });
+  });
+  return out;
+}
+function loadPriceMaster(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(PRICE_MASTER_KEY)||'null');
+    if(Array.isArray(saved)&&saved.length){
+      priceMaster=saved;
+    }else{
+      priceMaster=defaultMasterItems();
+      localStorage.setItem(PRICE_MASTER_KEY,JSON.stringify(priceMaster));
+    }
+  }catch(e){
+    priceMaster=defaultMasterItems();
+  }
+}
+function savePriceMaster(showMessage){
+  localStorage.setItem(PRICE_MASTER_KEY,JSON.stringify(priceMaster));
+  const st=document.getElementById('masterStatus');
+  if(st)st.textContent='保存済み：'+new Date().toLocaleString('ja-JP');
+  if(showMessage)alert('単価・注文先マスターを保存しました');
+}
+function refreshMasterCategoryFilter(){
+  const sel=document.getElementById('masterCategoryFilter');
+  if(!sel)return;
+  const current=sel.value;
+  const cats=[...new Set(priceMaster.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  sel.innerHTML='<option value="">すべて</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(cats.includes(current))sel.value=current;
+}
+function renderPriceMaster(){
+  refreshMasterCategoryFilter();
+  const q=(document.getElementById('masterSearch')?.value||'').trim().toLowerCase();
+  const cat=document.getElementById('masterCategoryFilter')?.value||'';
+  const rows=priceMaster
+    .map((x,index)=>({...x,_index:index}))
+    .filter(x=>(!cat||x.category===cat)&&(!q||(`${x.category} ${x.item} ${x.supplier||''}`).toLowerCase().includes(q)))
+    .sort((a,b)=>String(a.category).localeCompare(String(b.category),'ja')||String(a.item).localeCompare(String(b.item),'ja'));
+  const body=document.getElementById('masterTbody');
+  if(!body)return;
+  body.innerHTML=rows.map(x=>`<tr>
+    <td><input value="${esc(x.category)}" oninput="updateMasterRow(${x._index},'category',this.value)"></td>
+    <td><input value="${esc(x.item)}" oninput="updateMasterRow(${x._index},'item',this.value)"></td>
+    <td><input type="number" min="0" inputmode="decimal" value="${esc(x.unitPrice)}" placeholder="0" oninput="updateMasterRow(${x._index},'unitPrice',this.value)"></td>
+    <td><input value="${esc(x.supplier)}" placeholder="注文先" oninput="updateMasterRow(${x._index},'supplier',this.value)"></td>
+    <td><button class="danger" onclick="deleteMasterRow(${x._index})">削除</button></td>
+  </tr>`).join('');
+  const empty=document.getElementById('masterEmpty');
+  if(empty)empty.hidden=rows.length>0;
+}
+function updateMasterRow(index,key,value){
+  const row=priceMaster[index];
+  if(!row)return;
+  row[key]=key==='unitPrice'?(value===''?'':Number(value)):value;
+  savePriceMaster(false);
+}
+function addMasterRow(){
+  priceMaster.push({id:'pm-'+Date.now()+'-'+Math.random().toString(36).slice(2),category:'その他',item:'',unitPrice:'',supplier:''});
+  savePriceMaster(false);
+  renderPriceMaster();
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('#masterTbody input');
+    if(inputs.length>=4)inputs[inputs.length-3].focus();
+  },50);
+}
+function deleteMasterRow(index){
+  const row=priceMaster[index];
+  if(!row)return;
+  if(confirm(`「${row.item||'未入力の品目'}」を削除しますか？`)){
+    priceMaster.splice(index,1);
+    savePriceMaster(false);
+    renderPriceMaster();
+  }
+}
+function exportPriceMaster(){
+  const payload={app:'FUJIWARA 単価・注文先マスター',version:1,exportedAt:new Date().toISOString(),items:priceMaster};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fujiwara-price-supplier-master.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+function importPriceMasterFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      const list=Array.isArray(data)?data:data.items;
+      if(!Array.isArray(list))throw new Error('invalid');
+      if(!confirm('現在の単価・注文先マスターを読み込んだデータで置き換えますか？'))return;
+      priceMaster=list.map((x,i)=>({
+        id:x.id||('pm-import-'+Date.now()+'-'+i),
+        category:String(x.category||'その他'),
+        item:String(x.item||x.name||''),
+        unitPrice:x.unitPrice===''?'':Number(x.unitPrice??x.price??0),
+        supplier:String(x.supplier||'')
+      }));
+      savePriceMaster(false);
+      renderPriceMaster();
+      alert('単価・注文先マスターを読み込みました');
+    }catch(e){
+      alert('正しい単価マスターのJSONではありません');
+    }
+  };
+  reader.readAsText(file);
+}
+
 function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');state={...state,...x};}catch(e){}}
 function saveLocal(show){if(applyingRemote)return;state.buyer=document.getElementById('buyer')?.value||state.buyer;state.shop=document.getElementById('shop')?.value||state.shop;state.memo=document.getElementById('memo')?.value||state.memo;localStorage.setItem(LOCAL_KEY,JSON.stringify(state));if(show)alert('この端末に保存しました');}
 function initFirebase(){try{if(db)return db;if(!firebase.apps.length)firebase.initializeApp({apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'});db=firebase.database();return db;}catch(e){return null}}
@@ -311,6 +471,11 @@ function renderRows(){const b=document.getElementById('tbody');if(!state.rows.le
 function updateNoteShop(i,v){state.rows[i].note=v;saveLocal();updateSummary()}
 function updateSummary(){const rows=state.rows||[];document.getElementById('rowCount').textContent=rows.length;document.getElementById('qtyTotal').textContent=rows.reduce((s,r)=>s+(Number(r.add)||0),0);document.getElementById('moneyTotal').textContent=yen(rows.reduce((s,r)=>s+(Number(r.add)||0)*(Number(r.unitPrice)||0),0))}
 function copyText(){const ev=main.events.find(e=>String(e.id)===state.eventId);let t=`【買い物一覧】\n${ev?.date||''} ${ev?.name||''} ${ev?.place||''}\n担当：${state.buyer||''}\n今回売上設定金額：${yen(state.selected.reduce((sum,n)=>sum+(Number(state.prices[n])||0),0))}\n`;state.selected.forEach(n=>{if(Number(state.prices[n])>0)t+=`・${n} 売上設定 ${yen(state.prices[n])}\n`});state.rows.filter(r=>!r.bought&&(Number(r.add)||0)>0).forEach(r=>{t+=`・${r.item} ${r.add}${r.unit||''} × ${yen(r.unitPrice)} = ${yen((Number(r.add)||0)*(Number(r.unitPrice)||0))}\n`});navigator.clipboard?.writeText(t).then(()=>alert('買い物一覧をコピーしました')).catch(()=>prompt('この文字をコピーしてください',t))}
-loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();loadMainData(false);
+loadPriceMaster();loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();renderPriceMaster();
+document.getElementById('masterImportFile').addEventListener('change',e=>{
+  importPriceMasterFile(e.target.files[0]);
+  e.target.value='';
+});
+loadMainData(false);
 </script>
 </body></html>
