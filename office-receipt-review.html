@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>事務員 レシート確認</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:#fff4f8;color:#243047}
+header{position:sticky;top:0;background:linear-gradient(135deg,#ff8fb3,#ffb7cd);padding:18px;color:white;z-index:5;box-shadow:0 5px 18px #0002}
+header h1{font-size:21px;margin:0}header p{font-size:12px;margin:4px 0 0}
+main{max-width:760px;margin:auto;padding:14px}.card{background:white;border:1px solid #ffd2e1;border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 5px 18px #0000000d}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kpi{background:#fff6fa;border:1px solid #ffd6e5;border-radius:14px;padding:10px;text-align:center}.kpi b{display:block;font-size:22px;color:#ff5f93}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{font-size:11px;color:#64748b;font-weight:800}select,input,textarea{width:100%;padding:11px;border:1px solid #dbe4ef;border-radius:12px;font-size:14px;background:white}
+.receipt{background:white;border:1px solid #ffd2e1;border-left:5px solid #ff8fb3;border-radius:16px;padding:13px;margin-bottom:10px}.title{font-size:17px;font-weight:950}.meta{font-size:12px;line-height:1.8;color:#475569;margin-top:6px}.photo{width:100%;max-height:280px;object-fit:contain;background:#f8fafc;border-radius:12px;margin-top:9px;border:1px solid #e2e8f0}
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}.btn{border:0;border-radius:12px;padding:10px;font-weight:900}.review{background:#dcecff;color:#145a9e}.posted{background:#dff5e8;color:#126b45}.save{background:#ff8fb3;color:white}
+.pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900}.pending{background:#fff0bd;color:#7a5600}.reviewed{background:#dcecff;color:#145a9e}.done{background:#dff5e8;color:#126b45}
+.empty{text-align:center;padding:32px;color:#94a3b8}@media(max-width:620px){.grid,.row,.actions{grid-template-columns:1fr}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
+<body>
+<header><h1>🧾 レシート・領収書確認</h1><p>事務員用｜仮仕分け確認・会計処理</p></header>
+<main>
+<section class="card">
+<div class="grid">
+<div class="kpi"><b id="kPending">0</b>未確認</div>
+<div class="kpi"><b id="kReviewed">0</b>確認済み</div>
+<div class="kpi"><b id="kPosted">0</b>会計処理済み</div>
+</div>
+<div class="row" style="margin-top:10px">
+<div><label>状態</label><select id="statusFilter" onchange="render()"><option value="">すべて</option><option value="pending">未確認</option><option value="reviewed">確認済み</option><option value="posted">会計処理済み</option></select></div>
+<div><label>担当者・店名検索</label><input id="wordFilter" oninput="render()" placeholder="例：文太、業務スーパー"></div>
+</div>
+</section>
+<div id="list"></div>
+</main>
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94",
+  measurementId:"G-1VHX1GQV0C"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const ref=firebase.database().ref("fujiwara/purchases");
+let rows=[];
+const cats=["材料仕入","消耗品費","車両費","旅費交通費","外注費","備品費","通信費","会議費","その他経費"];
+function esc(s){return String(s||"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
+function yen(n){return "¥"+Number(n||0).toLocaleString()}
+function label(st){return st==="posted"?"会計処理済み":st==="reviewed"?"確認済み":"未確認"}
+function pill(st){return st==="posted"?"done":st==="reviewed"?"reviewed":"pending"}
+function render(){
+  kPending.textContent=rows.filter(r=>(r.reviewStatus||"pending")==="pending").length;
+  kReviewed.textContent=rows.filter(r=>r.reviewStatus==="reviewed").length;
+  kPosted.textContent=rows.filter(r=>r.reviewStatus==="posted").length;
+  const st=statusFilter.value, w=wordFilter.value.trim().toLowerCase();
+  const arr=rows.filter(r=>(!st||(r.reviewStatus||"pending")===st)&&(!w||[r.staff,r.store,r.eventName,r.item,r.category].join(" ").toLowerCase().includes(w)))
+    .sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  list.innerHTML=arr.length?arr.map(r=>`<div class="receipt">
+    <div class="title">${esc(r.store)}　${yen(r.amount)} <span class="pill ${pill(r.reviewStatus||"pending")}">${label(r.reviewStatus||"pending")}</span></div>
+    <div class="meta">📅 ${esc(r.date)}　🎪 ${esc(r.eventName)}<br>👤 ${esc(r.staff)}　💳 ${esc(r.pay)}<br>🧾 ${esc(r.item||"内容未入力")}</div>
+    ${r.photo?`<img class="photo" src="${r.photo}">`:""}
+    <div class="row" style="margin-top:10px">
+      <div><label>確定仕分け</label><select id="cat_${esc(r.id)}">${cats.map(c=>`<option ${c===(r.category||"その他経費")?"selected":""}>${c}</option>`).join("")}</select></div>
+      <div><label>会計メモ</label><input id="memo_${esc(r.id)}" value="${esc(r.accountingMemo||"")}" placeholder="例：7月分、現金精算"></div>
+    </div>
+    <div class="actions">
+      <button class="btn review" onclick="saveRow('${esc(r.id)}','reviewed')">確認済み</button>
+      <button class="btn posted" onclick="saveRow('${esc(r.id)}','posted')">会計処理済み</button>
+      <button class="btn save" onclick="saveRow('${esc(r.id)}',rStatus('${esc(r.id)}'))">内容だけ保存</button>
+    </div>
+  </div>`).join(""):`<div class="card empty">未確認のレシートはありません</div>`;
+}
+function rStatus(id){const r=rows.find(x=>String(x.id)===String(id));return r&&r.reviewStatus?r.reviewStatus:"pending"}
+function saveRow(id,status){
+  const r=rows.find(x=>String(x.id)===String(id)); if(!r)return;
+  const patch={
+    category:document.getElementById("cat_"+id).value,
+    accountingMemo:document.getElementById("memo_"+id).value.trim(),
+    reviewStatus:status,
+    reviewBy:"事務員",
+    reviewAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  ref.child(id).update(patch).then(()=>alert("保存しました")).catch(e=>alert("保存エラー："+e.message));
+}
+ref.on("value",s=>{const v=s.val()||{};rows=Object.keys(v).map(id=>Object.assign({id},v[id]));render()});
+</script>
+</body></html>
