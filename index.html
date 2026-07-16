@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.8</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.13</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1023,13 +1023,6 @@ body::before,#app::before,.page::before{
       <div class="fg"><label>串（円）</label><input type="number" id="se-kushi" placeholder="50000" min="0"></div>
       <div class="fg"><label>水・ドリンク（円）</label><input type="number" id="se-mizu" placeholder="50000" min="0"></div>
     </div>
-    </div>
-    <div style="border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:13px">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:700">経費</div>
-      <div class="fg"><label>場所代（円）</label><input type="number" id="se-basho" placeholder="5000" min="0"></div>
-      <div class="fg"><label>仕入れ（円）</label><input type="number" id="se-shiire" placeholder="40000" min="0"></div>
-      <div class="fg"><label>交通費（円）</label><input type="number" id="se-kotsu" placeholder="10000" min="0"></div>
-      <div class="fg"><label>その他（円）</label><input type="number" id="se-other" placeholder="0" min="0"></div>
     </div>
     <div style="border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:13px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:700">労務費（スタッフ別）</div>
@@ -2978,7 +2971,7 @@ function getSimpleSales(ev){
 function calcSimpleSalesTotal(simple){
   var total=0;
   var items=(simple&&simple.items)||{};
-  ['A','B','C','D','E'].forEach(function(k){ total += parseInt(items[k])||0; });
+  Object.keys(items).forEach(function(k){ total += parseInt(items[k])||0; });
   return total;
 }
 
@@ -3117,8 +3110,10 @@ function renderSalesDetail() {
   var moneySummary=calcSimpleMoneySummary(simple);
   var items=simple.items||{};
   var labels=simple.labels||{};
-  var rows=['A','B','C','D','E'].map(function(k){
-    var name=(labels[k]&&String(labels[k]).trim())?String(labels[k]).replace(/</g,'&lt;'):k;
+  var itemKeys=Object.keys(items);
+  if(!itemKeys.length) itemKeys=['A','B','C','D','E'];
+  var rows=itemKeys.map(function(k){
+    var name=(labels[k]&&String(labels[k]).trim())?escHtml(labels[k]):k;
     return '<tr><td style="font-weight:900;width:120px">'+name+'</td><td class="mono" style="text-align:right">¥'+((parseInt(items[k])||0).toLocaleString())+'</td></tr>';
   }).join('');
   var moneyNote=(simple.money&&simple.money.note)?String(simple.money.note).replace(/</g,'&lt;').replace(/\n/g,'<br>'):'';
@@ -3262,12 +3257,31 @@ function openSalesEdit(id) {
   var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'
     +'<div class="fg"><label>日付</label><input type="date" id="simple-sales-date" value="'+(simple.date||ev.date||'')+'"></div>'
     +'<div class="fg"><label>イベント名</label><input type="text" value="'+String(ev.name||'').replace(/"/g,'&quot;')+'" readonly></div>'
-    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">売上項目（名称は自由入力）</div>'
-    +['A','B','C','D','E'].map(function(k){
-      var label=(simple.labels&&simple.labels[k])||'';
-      var v=(simple.items&&simple.items[k])||'';
-      return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" oninput="updateSimpleSalesEditTotals()" value="'+v+'"></div></div>';
-    }).join('')
+    +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:4px">ネタ別売上（イベントから自動反映）</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">イベント設定の「出店アイテム・ネタ」を表示しています。金額だけ入力してください。</div>'
+    +(function(){
+      var names=getEventSalesItems(ev);
+      var hasConfigured=!!String(ev.itemsText||'').trim();
+      if(!hasConfigured){
+        return ['A','B','C','D','E'].map(function(k){
+          var label=(simple.labels&&simple.labels[k])||'';
+          var v=(simple.items&&simple.items[k])||'';
+          return '<div class="fg2"><div class="fg"><label>名称 '+k+'</label><input type="text" class="simple-sales-label" data-key="'+k+'" placeholder="例：牛串" value="'+String(label).replace(/"/g,'&quot;')+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+k+'" placeholder="0" min="0" oninput="updateSimpleSalesEditTotals()" value="'+v+'"></div></div>';
+        }).join('');
+      }
+      return names.map(function(name,idx){
+        var key='N'+idx;
+        var oldKey=null;
+        var labels=simple.labels||{};
+        Object.keys(labels).some(function(k){ if(String(labels[k])===String(name)){ oldKey=k; return true; } return false; });
+        var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:'');
+        return '<div class="fg2" style="align-items:end">'
+          +'<div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-size:15px;font-weight:900;color:#241900">'+escHtml(name)+'</div>'
+          +'<input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+String(name).replace(/"/g,'&quot;')+'"></div>'
+          +'<div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" placeholder="0" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div>'
+          +'</div>';
+      }).join('');
+    })()
     +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:12px;margin:12px 0">'
     +'<div style="font-size:13px;font-weight:900;color:#1769c2;margin-bottom:8px">現金売上・売掛売上</div>'
     +'<div class="fg2"><div class="fg"><label>現金売上（円）</label><input type="number" id="simple-cash-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.cashSales)||'')+'"></div><div class="fg"><label>売掛売上（円）</label><input type="number" id="simple-receivable-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.receivableSales)||'')+'"></div></div>'
