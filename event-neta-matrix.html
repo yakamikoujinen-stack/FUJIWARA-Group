@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="月別ネタ表">
 <meta name="theme-color" content="#b8860b">
-<title>FUJIWARA 月別イベント・ネタ一覧表</title>
+<title>FUJIWARA 月別イベント・ネタ一覧表 v2</title>
 <style>
 :root{
   --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;
@@ -42,7 +42,49 @@ th:nth-child(3),td:nth-child(3){position:sticky;left:252px;z-index:4;background:
 th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
 .date-col{min-width:72px}.event-col{min-width:180px;text-align:left}.type-col{min-width:64px;font-weight:950}
 .event-name{font-weight:950}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
-.neta-head{min-width:78px;max-width:95px;writing-mode:vertical-rl;text-orientation:mixed;height:120px;white-space:nowrap}
+.neta-head{
+  min-width:116px;
+  max-width:116px;
+  height:78px;
+  writing-mode:horizontal-tb;
+  text-orientation:mixed;
+  white-space:normal;
+  line-height:1.35;
+  font-size:12px;
+  font-weight:950;
+  padding:8px 5px;
+  vertical-align:middle;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+  background:linear-gradient(180deg,#fff3d6,#ffeab1);
+}
+.neta-head:nth-child(even){background:linear-gradient(180deg,#fff9e8,#f8e7b7)}
+th.date-col,th.event-col,th.type-col{
+  background:#f1d580!important;
+  color:#2f2100;
+  font-size:13px;
+}
+td{
+  min-height:52px;
+}
+.mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#e8f7ef;
+  border:2px solid #168a58;
+  font-size:23px;
+  line-height:1;
+}
+.drop{
+  margin-top:5px;
+  width:38px;
+  height:32px;
+  font-size:16px;
+}
 .mark{font-size:22px;font-weight:950;color:var(--green)}.qty-input{width:64px!important;padding:6px!important;text-align:center;font-weight:900}
 .drop{width:34px;height:30px;padding:0;border-radius:8px;background:#fff2bf;color:#7b5600;border:1px solid #e0bd55}
 .lock{position:fixed;inset:0;z-index:999;background:linear-gradient(180deg,#fff8e8,#f4ead0);display:none;place-items:center;padding:20px}
@@ -51,12 +93,31 @@ th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
 footer{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
 border-top:2px solid rgba(184,134,11,.45);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;
 justify-content:center;gap:8px;z-index:25}
-@media(max-width:800px){.controls{grid-template-columns:1fr 1fr}.controls .wide{grid-column:1/-1}.brand{font-size:18px}}
+@media(max-width:800px){
+  .controls{grid-template-columns:1fr 1fr}
+  .controls .wide{grid-column:1/-1}
+  .brand{font-size:18px}
+  .neta-head{
+    min-width:108px;
+    max-width:108px;
+    height:74px;
+    font-size:12px;
+  }
+  th,td{font-size:12px;padding:6px}
+}
 @media print{
  @page{size:A4 landscape;margin:6mm}header,footer,.controls,.status,.drop{display:none!important}
  body{background:#fff;padding:0}.wrap{padding:0;max-width:none}.card{border:0;box-shadow:none;padding:0}
  .table-wrap{overflow:visible;max-height:none;border:0}table{width:100%;min-width:0}
- th,td{font-size:7px;padding:2px}.neta-head{height:78px;min-width:25px;font-size:8px}
+ th,td{font-size:7px;padding:2px}.neta-head{
+  height:46px;
+  min-width:38px;
+  max-width:38px;
+  font-size:6.5px;
+  writing-mode:horizontal-tb;
+  white-space:normal;
+  line-height:1.15;
+}
  th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){position:static}
  .qty-input{width:28px!important;padding:1px!important;font-size:7px}
 }
@@ -70,7 +131,7 @@ justify-content:center;gap:8px;z-index:25}
 </div></div>
 
 <header><div class="head">
-<div><div class="brand">📊 月別イベント・ネタ一覧表</div><div class="sub">出店○／数量入力／▼でネタ買い物一覧へ</div></div>
+<div><div class="brand">📊 月別イベント・ネタ一覧表 <small style="font-size:11px">開発版 v2</small></div><div class="sub">出店○／数量入力／▼でネタ買い物一覧へ</div></div>
 <div id="roleBadge" class="role">確認中</div>
 </div></header>
 
