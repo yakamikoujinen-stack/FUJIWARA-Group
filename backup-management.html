@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>FUJIWARA Group バックアップ管理</title>
+<style>
+:root{--bg:#eef3f8;--card:#fff;--ink:#172033;--sub:#667085;--line:#d9e1ea;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--gold:#d6a21c;--shadow:0 10px 28px rgba(15,23,42,.10)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eaf2ff,#f8fafc 35%,#fff7e8);color:var(--ink)}
+header{position:sticky;top:0;z-index:20;background:rgba(15,23,42,.96);color:#fff;padding:15px;box-shadow:0 4px 16px #0002}
+.hrow{max-width:1000px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.brand small{display:block;color:#dbeafe;font-weight:800}.brand h1{margin:2px 0 0;font-size:22px}
+.back{display:inline-flex;text-decoration:none;background:linear-gradient(90deg,#d6a21c,#f3c64f);color:#2b2100;border-radius:999px;padding:9px 13px;font-weight:950;font-size:12px}
+main{max-width:1000px;margin:auto;padding:15px 12px 80px}.hero{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:20px;padding:18px;box-shadow:var(--shadow)}.hero h2{margin:0 0 6px}.hero p{margin:0;color:#dbeafe;line-height:1.6}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.kpi{background:#ffffff18;border:1px solid #ffffff28;border-radius:14px;padding:12px}.kpi b{display:block;font-size:25px}
+.section{background:var(--card);border-radius:18px;padding:15px;margin-top:14px;box-shadow:var(--shadow);border:1px solid #fff}.title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.title h3{margin:0;font-size:17px}
+.card{border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:15px;padding:13px;margin-bottom:10px;background:#fff}.card:last-child{margin-bottom:0}.card.ok{border-left-color:var(--green)}.card.warn{border-left-color:var(--gold)}.card-head{display:flex;justify-content:space-between;gap:10px}.app{font-weight:950;font-size:16px}.status{display:inline-flex;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:950;background:#dcfce7;color:#166534}.meta{font-size:12px;color:var(--sub);line-height:1.7;margin-top:6px}.branch{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:9px;margin-top:8px;word-break:break-all;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}.mini h4{margin:0 0 6px}.mini p{margin:0;color:var(--sub);font-size:12px;line-height:1.6}
+.note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:12px;font-size:12px;line-height:1.7;margin-top:12px}
+@media(max-width:650px){.kpis,.grid{grid-template-columns:1fr}.hrow{align-items:flex-start}.back{white-space:nowrap}}
+</style>
+</head>
+<body>
+<header><div class="hrow"><div class="brand"><small>👑 FUJIWARA Group 開発室</small><h1>📦 バックアップ管理</h1></div><a class="back" href="system-management.html">← 開発室へ戻る</a></div></header>
+<main>
+<section class="hero">
+<h2>メイン・キング・建設・事務員を安全に守る</h2>
+<p>修正前の状態、修正内容、復元先を記録して、いつでも元へ戻せるように管理します。</p>
+<div class="kpis"><div class="kpi"><small>登録バックアップ</small><b>1</b></div><div class="kpi"><small>復元可能</small><b>1</b></div><div class="kpi"><small>要確認</small><b>0</b></div></div>
+</section>
+
+<section class="section">
+<div class="title"><h3>🛡️ メインアプリ</h3><span class="status">復元可能</span></div>
+<div class="card ok">
+<div class="card-head"><div class="app">2026年7月17日</div><span class="status">保存済み</span></div>
+<div class="meta">保存理由：売上帳「ネタ自動反映・重複経費削除」を本番統合する前</div>
+<div class="branch">backup-main-before-sales-20260717</div>
+<div class="meta">対象：メインアプリ一式<br>保存場所：GitHubブランチ<br>用途：売上帳統合前の状態へ戻す</div>
+</div>
+</section>
+
+<section class="section">
+<div class="title"><h3>📁 アプリ別バックアップ</h3></div>
+<div class="grid">
+<div class="mini"><h4>👑 キングアプリ</h4><p>次回キングアプリ修正前に作成</p></div>
+<div class="mini"><h4>🏗️ 建設アプリ</h4><p>次回建設アプリ修正前に作成</p></div>
+<div class="mini"><h4>👩‍💼 事務員アプリ</h4><p>次回事務員アプリ修正前に作成</p></div>
+<div class="mini"><h4>👷 担当者アプリ</h4><p>次回担当者アプリ修正前に作成</p></div>
+</div>
+</section>
+
+<section class="section">
+<div class="title"><h3>📝 管理ルール</h3></div>
+<div class="card"><div class="app">バックアップ名</div><div class="meta">backup-アプリ名-修正内容-日付 の形式で統一</div></div>
+<div class="card"><div class="app">作成タイミング</div><div class="meta">本番ファイルを変更する直前に必ず作成</div></div>
+<div class="card"><div class="app">完成確認</div><div class="meta">実機確認が終わるまではバックアップを削除しない</div></div>
+<div class="note">⚠️ 「復元」操作はGitHubのブランチを本番へ戻す作業です。誤操作防止のため、この画面では表示管理のみ行います。</div>
+</section>
+</main>
+</body>
+</html>
