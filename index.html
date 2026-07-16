@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.7</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3813,9 +3813,29 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     messagingSenderId:"709887362301",
     appId:"1:709887362301:web:5ec6b7e2a2165066956a94"
   };
-  firebase.initializeApp(config);
+  if(!firebase.apps.length){ firebase.initializeApp(config); }
   var db = firebase.database();
   window._fgFirebaseReady = false;
+
+  // partner共有は、このSDKの読込み前に一度初期化処理が走るため、
+  // Firebase準備完了後に必ず監視を開始し、端末内の共有データも再送信する。
+  function startPartnerRealtimeSync(){
+    try{ listenPartnerShareStatus(); }catch(e){ console.warn('partner監視開始失敗',e); }
+    try{ syncLocalPartnerSharesToFirebase(); }catch(e){ console.warn('partner再送信失敗',e); }
+    try{ listenPartnerMenShareStatus(); }catch(e){ console.warn('partner MEN監視開始失敗',e); }
+    try{
+      var menList=getPartnerMenShareList();
+      menList.forEach(function(x){
+        if(!x) return;
+        var key=String(x.mainId||x.id||'').replace(/^main_/,'').replace(/[.#$\[\]\/]/g,'_');
+        if(!key) return;
+        var r=partnerMenShareRef(key); if(r) r.update(x);
+        var c=partnerMenCenterRef(key); if(c) c.update(x);
+      });
+    }catch(e){ console.warn('partner MEN再送信失敗',e); }
+  }
+  setTimeout(startPartnerRealtimeSync,0);
+  setTimeout(startPartnerRealtimeSync,1200);
   window._fgNoticePush = function(data){
     return db.ref('fujiwara/updateNotifications').push(Object.assign({createdAt:new Date().toISOString()},data||{}));
   };
@@ -3869,7 +3889,11 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   db.ref('fujiwara').on('value', function(snapshot){
     var data=snapshot.val();
     window._fgFirebaseReady = true;
-    if(!data) return;
+    startPartnerRealtimeSync();
+    if(!data){
+      showSync('✅ Firebase接続済み');
+      return;
+    }
     if(data.events){
       var arr=Array.isArray(data.events)?data.events:Object.values(data.events);
       state.events=arr.filter(Boolean).map(normalize);
@@ -3886,7 +3910,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(typeof ensureRouteStaffNames==='function') ensureRouteStaffNames();
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
-    try{ listenPartnerShareStatus(); syncLocalPartnerSharesToFirebase(); }catch(e){}
+    startPartnerRealtimeSync();
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
       renderInventory();
