@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="月別ネタ表">
+<meta name="theme-color" content="#b8860b">
+<title>FUJIWARA 月別イベント・出店ネタ一覧表</title>
+<style>
+:root{
+  --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;
+  --text:#241900;--sub:#6d5a2b;--green:#168a58;--red:#d64242;--blue:#2563a7;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Yu Gothic",sans-serif;
+background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:72px}
+header{position:sticky;top:0;z-index:30;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+border-bottom:2px solid rgba(184,134,11,.45);padding:12px 14px}
+.head{max-width:1500px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-size:20px;font-weight:950}.sub{font-size:12px;color:var(--sub);margin-top:3px}
+.role{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;background:#fff;border:1px solid var(--line)}
+.wrap{max-width:1500px;margin:auto;padding:12px}.card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+padding:13px;box-shadow:0 3px 14px rgba(80,55,0,.10);margin-bottom:12px}
+.controls{display:grid;grid-template-columns:140px 140px 1fr auto auto auto;gap:8px;align-items:end}
+label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-bottom:4px}
+input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1.5px solid var(--line);border-radius:10px;
+background:#fff;color:var(--text);font-size:15px}
+button{border:0;border-radius:10px;padding:11px 13px;font-weight:900;cursor:pointer;
+background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;white-space:nowrap}
+button.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}
+button.blue{background:#e7f1ff;border:1px solid #9fc0e9;color:var(--blue)}
+.status{margin-top:9px;padding:9px 11px;border-radius:11px;background:#fff6df;border:1px solid #e3c26b;
+font-size:12px;font-weight:800;color:#705300}.status.ok{background:#e8f7ef;border-color:#9dd9b8;color:var(--green)}
+.table-wrap{overflow:auto;border:1.5px solid var(--line);border-radius:13px;background:#fff;max-height:72vh}
+table{border-collapse:separate;border-spacing:0;min-width:1100px;width:max-content;background:#fff}
+th,td{border-right:1px solid #e8d7a4;border-bottom:1px solid #e8d7a4;padding:7px;text-align:center;font-size:12px}
+th{position:sticky;top:0;z-index:5;background:#fff3d6;font-weight:950;white-space:nowrap}
+th:first-child,td:first-child{position:sticky;left:0;z-index:4;background:#fffdf6}
+th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:4;background:#fffdf6}
+th:nth-child(3),td:nth-child(3){position:sticky;left:252px;z-index:4;background:#fffdf6}
+th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
+.date-col{min-width:72px}.event-col{min-width:180px;text-align:left}.type-col{min-width:64px;font-weight:950}
+.event-name{font-weight:950}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
+.neta-head{
+  min-width:116px;
+  max-width:116px;
+  height:78px;
+  writing-mode:horizontal-tb;
+  text-orientation:mixed;
+  white-space:normal;
+  line-height:1.35;
+  font-size:12px;
+  font-weight:950;
+  padding:8px 5px;
+  vertical-align:middle;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+  background:linear-gradient(180deg,#fff3d6,#ffeab1);
+}
+.neta-head:nth-child(even){background:linear-gradient(180deg,#fff9e8,#f8e7b7)}
+th.date-col,th.event-col,th.type-col{
+  background:#f1d580!important;
+  color:#2f2100;
+  font-size:13px;
+}
+td{
+  min-height:52px;
+}
+.mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#e8f7ef;
+  border:2px solid #168a58;
+  font-size:23px;
+  line-height:1;
+}
+.drop{
+  margin-top:5px;
+  width:38px;
+  height:32px;
+  font-size:16px;
+}
+.mark{font-size:22px;font-weight:950;color:var(--green)}.qty-input{display:none!important}
+.drop{width:34px;height:30px;padding:0;border-radius:8px;background:#fff2bf;color:#7b5600;border:1px solid #e0bd55}
+.lock{position:fixed;inset:0;z-index:999;background:linear-gradient(180deg,#fff8e8,#f4ead0);display:none;place-items:center;padding:20px}
+.lock.show{display:grid}.lock-card{max-width:460px;background:#fff;border:2px solid var(--line);border-radius:22px;padding:24px;text-align:center}
+.lock-card h1{margin:0 0 10px}.lock-card p{color:var(--sub);line-height:1.7}
+footer{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+border-top:2px solid rgba(184,134,11,.45);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;
+justify-content:center;gap:8px;z-index:25}
+@media(max-width:800px){
+  .controls{grid-template-columns:1fr 1fr}
+  .controls .wide{grid-column:1/-1}
+  .brand{font-size:18px}
+  .neta-head{
+    min-width:108px;
+    max-width:108px;
+    height:74px;
+    font-size:12px;
+  }
+  th,td{font-size:12px;padding:6px}
+}
+@media print{
+ @page{size:A4 landscape;margin:6mm}header,footer,.controls,.status,.drop{display:none!important}
+ body{background:#fff;padding:0}.wrap{padding:0;max-width:none}.card{border:0;box-shadow:none;padding:0}
+ .table-wrap{overflow:visible;max-height:none;border:0}table{width:100%;min-width:0}
+ th,td{font-size:7px;padding:2px}.neta-head{
+  height:46px;
+  min-width:38px;
+  max-width:38px;
+  font-size:6.5px;
+  writing-mode:horizontal-tb;
+  white-space:normal;
+  line-height:1.15;
+}
+ th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){position:static}
+ .qty-input{width:28px!important;padding:1px!important;font-size:7px}
+}
+
+.mark{
+  cursor:pointer;
+  border:2px solid #168a58!important;
+  background:#e8f7ef!important;
+  color:#168a58!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+.mark:active{transform:scale(.95)}
+.type-col{display:none!important}
+
+</style>
+</head>
+<body>
+<div id="lock" class="lock"><div class="lock-card">
+<h1>🔒 閲覧制限</h1>
+<p>完成後はキングアプリと担当者アプリからのみ開く予定です。</p>
+<button onclick="history.back()">戻る</button>
+</div></div>
+
+<header><div class="head">
+<div><div class="brand">📊 月別イベント・出店ネタ一覧表 <small style="font-size:11px">開発版・単独確認可</small></div><div class="sub">イベントごとの出店ネタを○で確認</div></div>
+<div id="roleBadge" class="role">確認中</div>
+</div></header>
+
+<main class="wrap">
+<section class="card">
+<div class="controls">
+<div><label>年</label><select id="yearSelect" onchange="render()"></select></div>
+<div><label>月</label><select id="monthSelect" onchange="render()"></select></div>
+<div class="wide"><label>イベント名・会場検索</label><input id="searchBox" placeholder="例：夜市、サンドーム" oninput="render()"></div>
+<button class="blue" onclick="loadData(true)">🔄 最新読込</button>
+<button class="ghost" onclick="window.print()">🖨️ 印刷</button>
+<button class="ghost" onclick="goBackApp()">← 戻る</button>
+</div>
+<div id="syncStatus" class="status">メインアプリのデータを読み込んでいます…</div>
+</section>
+
+<section class="card">
+<div class="table-wrap"><table id="matrix"><tbody><tr><td>読込中…</td></tr></tbody></table></div>
+</section>
+</main>
+
+<footer>
+<button onclick="changeMonth(-1)">◀ 前月</button>
+<button onclick="goCurrent()">今月</button>
+<button onclick="changeMonth(1)">翌月 ▶</button>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const CFG={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",
+databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",
+storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",
+appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+const DEFAULT_NETAS=["やきそば","串","かき氷","チーズハットグ","かまぼこ","いか焼き","ポテト","かすてら",
+"コットンキャンディー","肉巻きおにぎり","だんご","チョコバナナ","とんかつスティック","電球ジュース",
+"牛串","豚串","鳥串","ホルそば","からあげ","りんご飴","らーめん"];
+let db=null,events=[],invItems=[],role="";
+function arr(v){return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==="object"?Object.values(v).filter(Boolean):[])}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function initRole(){
+ const p=new URLSearchParams(location.search);
+ role=p.get("role")||"developer";
+ const badge=document.getElementById("roleBadge");
+ if(role==="king") badge.textContent="👑 キング確認";
+ else if(role==="manager") badge.textContent="🧑‍💼 担当者確認";
+ else badge.textContent="🛠 開発モード";
+ document.getElementById("lock")?.classList.remove("show");
+ return true;
+}
+function setup(){
+ const now=new Date(),ys=document.getElementById("yearSelect"),ms=document.getElementById("monthSelect");
+ ys.innerHTML=Array.from({length:6},(_,i)=>{const y=now.getFullYear()-2+i;return `<option value="${y}">${y}年</option>`}).join("");
+ ys.value=String(now.getFullYear());
+ ms.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1}月</option>`).join("");
+ ms.value=String(now.getMonth()+1);
+}
+async function loadData(manual){
+ const st=document.getElementById("syncStatus");st.className="status";st.textContent="メインアプリの最新データを読み込んでいます…";
+ try{
+  const snap=await Promise.race([db.ref("fujiwara").once("value"),new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),7000))]);
+  const d=snap.val()||{};events=arr(d.events);invItems=arr(d.invItems);
+  st.className="status ok";st.textContent=`✅ 連動完了　イベント ${events.length}件／在庫品目 ${invItems.length}件`;
+  render();if(manual)alert("最新データを読み込みました");
+ }catch(e){st.textContent="⚠️ メインアプリに接続できませんでした。再読込してください";events=[];invItems=[];render()}
+}
+function invById(id){return invItems.find(x=>String(x.id)===String(id))}
+function eventNeta(ev){
+ const names=[];
+ arr(ev.items).forEach(id=>{const it=invById(id);if(!it)return;if(it.cat&&!names.includes(it.cat))names.push(it.cat);
+ if(it.name&&DEFAULT_NETAS.includes(it.name)&&!names.includes(it.name))names.push(it.name)});
+ String(ev.itemsText||"").split(/[、,／/\n]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!names.includes(x))names.push(x)});
+ const sales=ev.sales||{},obj=sales.items||sales.itemSales||{};Object.keys(obj||{}).forEach(x=>{if(!names.includes(x))names.push(x)});
+ return names;
+}
+function getQty(ev,neta){
+ const key=`${ev.id||""}__${neta}`;const saved=JSON.parse(localStorage.getItem("fujiwara_event_neta_qty_v1")||"{}");
+ return saved[key]??"";
+}
+function saveQty(evId,neta,value){
+ const saved=JSON.parse(localStorage.getItem("fujiwara_event_neta_qty_v1")||"{}");saved[`${evId}__${neta}`]=value;
+ localStorage.setItem("fujiwara_event_neta_qty_v1",JSON.stringify(saved));
+}
+function filtered(){
+ const y=Number(yearSelect.value),m=Number(monthSelect.value),q=String(searchBox.value||"").toLowerCase();
+ return events.filter(e=>String(e.date||"").startsWith(`${y}-${String(m).padStart(2,"0")}`)&&
+ (!q||`${e.name||""} ${e.place||""}`.toLowerCase().includes(q)))
+ .sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+}
+function netasFor(list){
+ const used=[];list.forEach(e=>eventNeta(e).forEach(n=>{if(!used.includes(n))used.push(n)}));
+ return [...DEFAULT_NETAS.filter(n=>used.includes(n)),...used.filter(n=>!DEFAULT_NETAS.includes(n)).sort((a,b)=>a.localeCompare(b,"ja"))];
+}
+function render(){
+ const list=filtered(),netas=netasFor(list),t=document.getElementById("matrix");
+ if(!list.length){
+   t.innerHTML="<tbody><tr><td style='padding:30px'>この月のイベントはありません</td></tr></tbody>";
+   return;
+ }
+ let x="<thead><tr><th class='date-col'>日付</th><th class='event-col'>イベント名</th>";
+ netas.forEach(n=>x+=`<th class="neta-head">${esc(n)}</th>`);
+ x+="</tr></thead><tbody>";
+ list.forEach(ev=>{
+   const names=eventNeta(ev);
+   const date=String(ev.date||"");
+   const dl=date?`${Number(date.slice(5,7))}/${Number(date.slice(8,10))}`:"";
+   x+=`<tr>
+     <td class="date-col">${esc(dl)}</td>
+     <td class="event-col">
+       <div class="event-name">${esc(ev.name||"名称未設定")}</div>
+       <div class="event-meta">${esc(ev.place||"会場未設定")}</div>
+     </td>`;
+   netas.forEach(n=>{
+     if(names.includes(n)){
+       x+=`<td>
+         <button class="mark" title="${esc(n)}" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})'>○</button>
+       </td>`;
+     }else{
+       x+="<td></td>";
+     }
+   });
+   x+="</tr>";
+ });
+ x+="</tbody>";
+ t.innerHTML=x;
+}
+function openNeta(eventId,neta){
+ location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&neta=${encodeURIComponent(neta)}&from=matrix&role=${encodeURIComponent(role)}`;
+}
+function changeMonth(d){let y=+yearSelect.value,m=+monthSelect.value+d;if(m<1){m=12;y--}if(m>12){m=1;y++}
+ yearSelect.value=String(y);monthSelect.value=String(m);render()}
+function goCurrent(){const d=new Date();yearSelect.value=String(d.getFullYear());monthSelect.value=String(d.getMonth()+1);render()}
+function goBackApp(){
+ if(role==="king") location.href="king-with-neta-matrix.html";
+ else if(role==="manager") location.href="manager-app-with-neta-matrix.html";
+ else if(history.length>1) history.back();
+ else location.href="index.html";
+}
+if(initRole()){setup();if(!firebase.apps.length)firebase.initializeApp(CFG);db=firebase.database();loadData(false)}
+</script>
+</body></html>
