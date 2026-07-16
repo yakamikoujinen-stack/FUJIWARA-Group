@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="月別ネタ一覧">
+<meta name="theme-color" content="#b8860b">
+<title>FUJIWARA 月別ネタ一覧表</title>
+<style>
+:root{
+  --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;
+  --card:#fffdfa;--text:#241900;--sub:#6d5a2b;--green:#168a58;
+  --yellow:#d69b00;--red:#d64242;--blue:#2563a7;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Yu Gothic",sans-serif;
+  background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:72px
+}
+header{
+  position:sticky;top:0;z-index:30;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+  border-bottom:2px solid rgba(184,134,11,.45);padding:12px 14px
+}
+.head{max-width:1400px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-size:20px;font-weight:950}.sub{font-size:12px;color:var(--sub);margin-top:3px}
+.badge{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;background:#fff;border:1px solid var(--line)}
+.wrap{max-width:1400px;margin:auto;padding:12px}
+.card{
+  background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:13px;
+  box-shadow:0 3px 14px rgba(80,55,0,.10);margin-bottom:12px
+}
+.controls{display:grid;grid-template-columns:150px 150px 1fr auto auto auto;gap:8px;align-items:end}
+label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-bottom:4px}
+input,select,button{font:inherit}
+input,select{
+  width:100%;padding:11px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:15px
+}
+button{
+  border:0;border-radius:10px;padding:11px 13px;font-weight:900;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;white-space:nowrap
+}
+button.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}
+button.blue{background:#e7f1ff;border:1px solid #9fc0e9;color:var(--blue)}
+.status{
+  margin-top:9px;padding:9px 11px;border-radius:11px;background:#fff6df;border:1px solid #e3c26b;
+  font-size:12px;font-weight:800;color:#705300
+}
+.status.ok{background:#e8f7ef;border-color:#9dd9b8;color:var(--green)}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px}
+.sum{background:#fff8e8;border:1.5px solid var(--line);border-radius:12px;padding:11px}
+.sum .k{font-size:11px;color:var(--sub)}.sum .v{font-size:22px;font-weight:950}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;font-size:12px;font-weight:900}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.d-green{background:var(--green)}.d-yellow{background:var(--yellow)}.d-red{background:var(--red)}.d-gray{background:#999}
+.table-wrap{overflow:auto;border:1.5px solid var(--line);border-radius:13px;background:#fff;max-height:67vh}
+table{border-collapse:separate;border-spacing:0;min-width:1050px;width:max-content;background:#fff}
+th,td{border-right:1px solid #e8d7a4;border-bottom:1px solid #e8d7a4;padding:8px;text-align:center;font-size:12px}
+th{position:sticky;top:0;z-index:5;background:#fff3d6;font-weight:950;white-space:nowrap}
+th:first-child,td:first-child{position:sticky;left:0;z-index:4;background:#fffdf6}
+th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:4;background:#fffdf6}
+th:first-child{z-index:7}th:nth-child(2){z-index:7}
+.date-col{min-width:72px}.event-col{min-width:190px;text-align:left}
+.event-name{font-weight:950}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
+.neta-head{min-width:74px;max-width:92px;writing-mode:vertical-rl;text-orientation:mixed;height:118px;white-space:nowrap}
+.cell{
+  width:48px;height:42px;border:0;border-radius:9px;background:#f5f1e6;color:#8b7d59;
+  font-size:22px;padding:0;box-shadow:none
+}
+.cell.on{background:#e8f7ef;color:var(--green);border:1.5px solid #8fc7a5}
+.cell.prep{background:#fff2bf;color:#9a6a00;border:1.5px solid #e0bd55}
+.cell.stop{background:#ffe6e6;color:var(--red);border:1.5px solid #e9aaaa}
+.empty{text-align:center;padding:28px;color:var(--sub)}
+.modal-bg{display:none;position:fixed;inset:0;background:#0008;z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{
+  width:min(620px,100%);max-height:88vh;overflow:auto;background:#fffdf6;border-radius:22px 22px 0 0;
+  padding:18px;border-top:2px solid var(--gold)
+}
+.modal h2{margin:0 0 8px}.kv{display:grid;grid-template-columns:90px 1fr;gap:7px;font-size:14px;margin:12px 0}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.close{background:#eee;color:#333}.green{background:#168a58;color:#fff}
+footer{
+  position:fixed;bottom:0;left:0;right:0;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+  border-top:2px solid rgba(184,134,11,.45);padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  display:flex;justify-content:center;gap:8px;z-index:25
+}
+@media(max-width:800px){
+  .controls{grid-template-columns:1fr 1fr}.controls .wide{grid-column:1/-1}
+  .summary{grid-template-columns:1fr 1fr}.head{align-items:flex-start}.brand{font-size:18px}
+}
+@media print{
+  @page{size:A4 landscape;margin:7mm}
+  header,footer,.controls,.legend,.status,.modal-bg{display:none!important}
+  body{background:#fff;padding:0}.wrap{max-width:none;padding:0}.card{border:0;box-shadow:none;padding:0}
+  .summary{display:none}.table-wrap{overflow:visible;max-height:none;border:0}
+  table{width:100%;min-width:0}.neta-head{height:80px;min-width:25px;font-size:8px}
+  th,td{font-size:7px;padding:2px}.date-col{min-width:34px}.event-col{min-width:90px}
+  .cell{width:19px;height:18px;font-size:12px;border-radius:3px}
+  th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){position:static}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div><div class="brand">📊 FUJIWARA 月別ネタ一覧表</div><div class="sub">メインアプリ連動・イベント別の出店ネタを○で確認</div></div>
+    <div id="headStatus" class="badge">読込準備中</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <div class="controls">
+      <div><label>年</label><select id="yearSelect" onchange="renderAll()"></select></div>
+      <div><label>月</label><select id="monthSelect" onchange="renderAll()"></select></div>
+      <div class="wide"><label>イベント名・会場検索</label><input id="searchBox" placeholder="例：夜市、神戸" oninput="renderAll()"></div>
+      <button class="blue" onclick="loadData(true)">🔄 最新読込</button>
+      <button class="ghost" onclick="window.print()">🖨️ 印刷</button>
+      <button class="ghost" onclick="location.href='index.html'">🏠 メイン</button>
+    </div>
+    <div id="syncStatus" class="status">メインアプリのデータを読み込んでいます…</div>
+    <div class="legend">
+      <span><i class="dot d-green"></i>出店決定</span>
+      <span><i class="dot d-yellow"></i>準備中</span>
+      <span><i class="dot d-red"></i>中止・終了</span>
+      <span><i class="dot d-gray"></i>出店なし</span>
+    </div>
+  </section>
+
+  <section class="card summary">
+    <div class="sum"><div class="k">イベント数</div><div id="eventCount" class="v">0</div></div>
+    <div class="sum"><div class="k">出店ネタ延べ数</div><div id="netaCount" class="v">0</div></div>
+    <div class="sum"><div class="k">ネタ種類</div><div id="kindCount" class="v">0</div></div>
+    <div class="sum"><div class="k">選択月</div><div id="monthLabel" class="v">-</div></div>
+  </section>
+
+  <section class="card">
+    <div class="table-wrap">
+      <table id="matrixTable"><tbody><tr><td class="empty">読込中…</td></tr></tbody></table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <button onclick="changeMonth(-1)">◀ 前月</button>
+  <button onclick="goCurrentMonth()">今月</button>
+  <button onclick="changeMonth(1)">翌月 ▶</button>
+</footer>
+
+<div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">ネタ詳細</h2>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="close" onclick="closeModal()">閉じる</button>
+      <button class="green" id="shoppingBtn">🛒 買い物一覧を開く</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:5ec6b7e2a2165066956a94"
+};
+const DEFAULT_NETAS=[
+  "ポテト","かき氷","かすてら","いか焼き","やきそば","ホルそば","牛串","豚串","鳥串",
+  "チーズハットグ","電球ジュース","コットンキャンディー","とんかつスティック",
+  "肉巻きおにぎり","だんご","チョコバナナ","かまぼこ","からあげ","りんご飴","らーめん"
+];
+let db=null, events=[], invItems=[];
+
+function arr(v){return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==="object"?Object.values(v).filter(Boolean):[])}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function normalizeText(s){return String(s||"").replace(/[　\s]+/g,"").toLowerCase()}
+function init(){
+  if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+  db=firebase.database();
+  setupSelectors();
+  loadData(false);
+}
+function setupSelectors(){
+  const now=new Date();
+  const ys=document.getElementById("yearSelect");
+  let opts="";
+  for(let y=now.getFullYear()-2;y<=now.getFullYear()+3;y++)opts+=`<option value="${y}">${y}年</option>`;
+  ys.innerHTML=opts;ys.value=String(now.getFullYear());
+  const ms=document.getElementById("monthSelect");
+  ms.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1}月</option>`).join("");
+  ms.value=String(now.getMonth()+1);
+}
+async function loadData(manual){
+  const st=document.getElementById("syncStatus"), hs=document.getElementById("headStatus");
+  st.className="status";st.textContent="メインアプリの最新データを読み込んでいます…";hs.textContent="読込中";
+  try{
+    const snap=await Promise.race([
+      db.ref("fujiwara").once("value"),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error("タイムアウト")),7000))
+    ]);
+    const d=snap.val()||{};
+    events=arr(d.events);invItems=arr(d.invItems);
+    st.className="status ok";
+    st.textContent=`✅ 連動完了　イベント ${events.length}件／在庫品目 ${invItems.length}件`;
+    hs.textContent="連動中";
+    renderAll();
+    if(manual)alert("メインアプリの最新データを読み込みました");
+  }catch(e){
+    console.error(e);st.textContent="⚠️ メインアプリに接続できませんでした。再読込してください";hs.textContent="接続エラー";
+    events=[];invItems=[];renderAll();
+  }
+}
+function invById(id){return invItems.find(x=>String(x.id)===String(id))}
+function categoryNames(){
+  return [...new Set(invItems.map(x=>x.cat).filter(Boolean))];
+}
+function eventNeta(ev){
+  const names=[];
+  arr(ev.items).forEach(id=>{
+    const it=invById(id);
+    if(!it)return;
+    if(it.cat&&!names.includes(it.cat))names.push(it.cat);
+    if(it.name&&DEFAULT_NETAS.includes(it.name)&&!names.includes(it.name))names.push(it.name);
+  });
+  String(ev.itemsText||"").split(/[、,／/\n]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{
+    if(!names.includes(x))names.push(x);
+  });
+  const saleItems=(ev.sales&&typeof ev.sales==="object")?(ev.sales.items||ev.sales.itemSales||{}):{};
+  Object.keys(saleItems||{}).forEach(x=>{if(!names.includes(x))names.push(x)});
+  return names;
+}
+function displayNetas(filtered){
+  const used=[];
+  filtered.forEach(ev=>eventNeta(ev).forEach(n=>{if(!used.includes(n))used.push(n)}));
+  const preferred=DEFAULT_NETAS.filter(n=>used.includes(n));
+  const rest=used.filter(n=>!preferred.includes(n)).sort((a,b)=>a.localeCompare(b,"ja"));
+  return [...preferred,...rest];
+}
+function statusClass(ev){
+  const s=String(ev.status||"").toLowerCase();
+  if(s==="done"||s==="cancelled"||s==="canceled"||s.includes("中止")||s.includes("終了"))return "stop";
+  if(s==="planned"||s==="planning"||s.includes("予定")||s.includes("準備"))return "prep";
+  return "on";
+}
+function statusMark(ev){
+  const c=statusClass(ev);return c==="stop"?"×":c==="prep"?"△":"○";
+}
+function filteredEvents(){
+  const y=Number(document.getElementById("yearSelect").value);
+  const m=Number(document.getElementById("monthSelect").value);
+  const q=normalizeText(document.getElementById("searchBox").value);
+  return events.filter(ev=>{
+    const d=String(ev.date||"");
+    if(!d.startsWith(`${y}-${String(m).padStart(2,"0")}`))return false;
+    if(q&&!normalizeText(`${ev.name||""} ${ev.place||""} ${ev.zone||""}`).includes(q))return false;
+    return true;
+  }).sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||String(a.name||"").localeCompare(String(b.name||""),"ja"));
+}
+function renderAll(){
+  const list=filteredEvents();
+  const netas=displayNetas(list);
+  document.getElementById("eventCount").textContent=list.length;
+  document.getElementById("netaCount").textContent=list.reduce((s,e)=>s+eventNeta(e).length,0);
+  document.getElementById("kindCount").textContent=netas.length;
+  document.getElementById("monthLabel").textContent=`${document.getElementById("monthSelect").value}月`;
+  const t=document.getElementById("matrixTable");
+  if(!list.length){
+    t.innerHTML='<tbody><tr><td class="empty">この月のイベントはありません</td></tr></tbody>';return;
+  }
+  let h='<thead><tr><th class="date-col">日付</th><th class="event-col">イベント名・会場</th>';
+  netas.forEach(n=>h+=`<th class="neta-head">${esc(n)}</th>`);
+  h+='</tr></thead><tbody>';
+  list.forEach((ev,ri)=>{
+    const names=eventNeta(ev);
+    const d=String(ev.date||"");
+    const dateLabel=d?`${Number(d.slice(5,7))}/${Number(d.slice(8,10))}`:"";
+    h+=`<tr><td class="date-col">${esc(dateLabel)}</td><td class="event-col"><div class="event-name">${esc(ev.name||"名称未設定")}</div><div class="event-meta">${esc(ev.place||"会場未設定")}${ev.zone?"｜"+esc(ev.zone):""}</div></td>`;
+    netas.forEach(n=>{
+      if(names.includes(n)){
+        const cls=statusClass(ev),mark=statusMark(ev);
+        h+=`<td><button class="cell ${cls}" onclick='openDetail(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})'>${mark}</button></td>`;
+      }else h+='<td><button class="cell" disabled>－</button></td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody>';t.innerHTML=h;
+}
+function openDetail(eventId,neta){
+  const ev=events.find(e=>String(e.id)===String(eventId));if(!ev)return;
+  const sales=ev.sales||{}, itemSales=sales.items||sales.itemSales||{};
+  const target=Number(itemSales[neta]||sales[neta]||0);
+  document.getElementById("modalTitle").textContent=`${neta}｜${ev.name||""}`;
+  document.getElementById("modalBody").innerHTML=`
+    <div class="kv">
+      <b>日付</b><span>${esc(ev.date||"")}${ev.dateEnd?" ～ "+esc(ev.dateEnd):""}</span>
+      <b>会場</b><span>${esc(ev.place||"未設定")}</span>
+      <b>区分</b><span>${esc(ev.zone||"")}</span>
+      <b>状態</b><span>${statusMark(ev)} ${statusClass(ev)==="stop"?"中止・終了":statusClass(ev)==="prep"?"準備中":"出店決定"}</span>
+      <b>売上設定</b><span>${target?`¥${target.toLocaleString("ja-JP")}`:"未設定"}</span>
+      <b>メモ</b><span>${esc(ev.memo||"")}</span>
+    </div>`;
+  const btn=document.getElementById("shoppingBtn");
+  btn.onclick=()=>{
+    const url=`neta-shopping-list.html?eventId=${encodeURIComponent(ev.id||"")}&neta=${encodeURIComponent(neta)}`;
+    location.href=url;
+  };
+  document.getElementById("modalBg").classList.add("open");
+}
+function closeModal(){document.getElementById("modalBg").classList.remove("open")}
+function changeMonth(delta){
+  let y=Number(document.getElementById("yearSelect").value),m=Number(document.getElementById("monthSelect").value)+delta;
+  if(m<1){m=12;y--}if(m>12){m=1;y++}
+  document.getElementById("yearSelect").value=String(y);
+  document.getElementById("monthSelect").value=String(m);renderAll();
+}
+function goCurrentMonth(){
+  const d=new Date();document.getElementById("yearSelect").value=String(d.getFullYear());
+  document.getElementById("monthSelect").value=String(d.getMonth()+1);renderAll();
+}
+init();
+</script>
+</body>
+</html>
