@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>partner 損益計算書 試験版 - KING APP</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eef8ff,#fffaf0);color:#102043}
+#fujiwara-test-banner{position:sticky;top:0;z-index:9999;background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;text-align:center;padding:8px 12px;font-weight:900;font-size:13px;box-shadow:0 3px 12px rgba(0,0,0,.22)}
+.wrap{max-width:1150px;margin:0 auto;padding:18px 18px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.back,.refresh{border:0;border-radius:999px;padding:11px 16px;background:#fff;box-shadow:0 8px 22px rgba(45,68,100,.12);font-weight:900;color:#074aa4}
+h1{font-size:30px;margin:0;color:#074aa4}
+.card{background:rgba(255,255,255,.96);border-radius:22px;box-shadow:0 12px 30px rgba(45,68,100,.12);padding:18px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:14px}
+.kpi small{color:#647188;font-weight:800}.kpi b{display:block;font-size:30px;margin-top:5px}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th,td{padding:11px 10px;border-bottom:1px solid #edf0f5;text-align:left}
+th{color:#647188;font-size:13px}
+.num{text-align:right}.profit-plus{color:#168a58;font-weight:900}.profit-minus{color:#b91c1c;font-weight:900}
+.empty{text-align:center;padding:32px;color:#647188;font-weight:800}
+@media(max-width:700px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 12px 80px}h1{font-size:22px}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
+<body>
+<div id="fujiwara-test-banner">🧪 FUJIWARA Group 試験版（TEST）</div>
+<div class="wrap">
+  <div class="top">
+    <button class="back" onclick="location.href='king-test.html'">‹ キング試験版へ戻る</button>
+    <h1>🐩 partner 損益計算書</h1>
+    <button class="refresh" onclick="renderPartnerProfit()">更新</button>
+  </div>
+  <div class="card">
+    <div class="kpis">
+      <div class="kpi"><small>売上</small><b id="salesTotal">¥0</b></div>
+      <div class="kpi"><small>経費</small><b id="expenseTotal">¥0</b></div>
+      <div class="kpi"><small>利益</small><b id="profitTotal">¥0</b></div>
+    </div>
+  </div>
+  <div class="card" id="partnerTableBox"><div class="empty">partnerデータを読み込み中...</div></div>
+</div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94"};
+if(typeof firebase!=="undefined"&&!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+let partnerEvents=[];
+function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function profit(e){return Number(e.sales||0)-Number(e.fee||0)-Number(e.cost||0)-Number(e.labor||0)-Number(e.other||0)}
+function mergeEvents(target,incoming){const map={};(target||[]).concat(incoming||[]).forEach(e=>{if(!e)return;const k=String(e.mainId||e.id||'');if(k)map[k]=Object.assign({},map[k]||{},e)});return Object.values(map)}
+function localEvents(){try{const rows=JSON.parse(localStorage.getItem('partner_events_v4')||'[]');return Array.isArray(rows)?rows:[]}catch(e){return []}}
+function connectPartner(){
+  partnerEvents=localEvents();renderPartnerProfit();
+  if(typeof firebase==='undefined')return;
+  ['fujiwara/partner_shared_events','fujiwara/share_center/partner/events'].forEach(path=>{
+    firebase.database().ref(path).on('value',snap=>{
+      const val=snap.val()||{};
+      partnerEvents=mergeEvents(partnerEvents,Object.keys(val).map(k=>val[k]).filter(Boolean));
+      localStorage.setItem('partner_events_v4',JSON.stringify(partnerEvents));
+      renderPartnerProfit();
+    });
+  });
+}
+function renderPartnerProfit(){
+  const list=(partnerEvents.length?partnerEvents:localEvents()).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const totals=list.reduce((s,e)=>{s.sales+=Number(e.sales||0);s.exp+=Number(e.fee||0)+Number(e.cost||0)+Number(e.labor||0)+Number(e.other||0);s.profit+=profit(e);return s},{sales:0,exp:0,profit:0});
+  salesTotal.textContent=yen(totals.sales);expenseTotal.textContent=yen(totals.exp);profitTotal.textContent=yen(totals.profit);
+  profitTotal.className=totals.profit>=0?'profit-plus':'profit-minus';
+  const box=document.getElementById('partnerTableBox');
+  if(!list.length){box.innerHTML='<div class="empty">まだpartnerの損益計算書はありません。</div>';return}
+  box.innerHTML='<h2>イベント別損益</h2><div style="overflow:auto"><table><tr><th>日付</th><th>イベント</th><th class="num">売上</th><th class="num">場所代</th><th class="num">仕入</th><th class="num">人件費</th><th class="num">その他</th><th class="num">利益</th></tr>'
+   +list.map(e=>{const p=profit(e);return `<tr><td>${esc(e.date||'')}</td><td>${esc(e.title||'')}</td><td class="num">${yen(e.sales)}</td><td class="num">${yen(e.fee)}</td><td class="num">${yen(e.cost)}</td><td class="num">${yen(e.labor)}</td><td class="num">${yen(e.other)}</td><td class="num ${p>=0?'profit-plus':'profit-minus'}">${yen(p)}</td></tr>`}).join('')
+   +'</table></div>';
+}
+connectPartner();
+</script>
+</body>
+</html>

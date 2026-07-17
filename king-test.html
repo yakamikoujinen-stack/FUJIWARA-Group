@@ -63,10 +63,19 @@
 </section>
 <section class="app-row"><div class="card app-card"><div><div class="icon">🛡️</div><h2>メイン アプリ</h2><p>イベント管理・売上・人員・在庫管理</p></div><a class="open gold-btn" href="index-test.html">開く ›</a></div><div class="card app-card"><div><div class="icon">👥</div><h2>事務員 アプリ</h2><p>タイムカード・勤務集計・CSV</p></div><a class="open green-btn" href="office-timecard.html">開く ›</a></div><div class="card app-card"><div><div class="icon">👩‍💼</div><h2>MIYU パートナー</h2><p>AI統括パートナーがサポートします！</p></div><a class="open pink-btn" href="miyu.html">💬 話しかける</a></div><div class="card app-card"><div><div class="icon">🏗️</div><h2>建設 アプリ</h2><p>日報・現場管理・請求・写真管理</p></div><a class="open blue-btn" href="construction.html">開く ›</a></div><div class="card app-card"><div><div class="icon">🐩</div><h2>partner</h2><p>下請け業者共有・損益計算確認</p></div><a class="open purple-btn" href="partner.html">開く ›</a></div><div class="card app-card"><div><div class="icon">🦍🐷</div><h2>partner MEN</h2><p>男版partner・ネタ共有確認</p></div><a class="open blue-btn" href="partner-men.html">開く ›</a></div></section>
 <section class="dashboard"><div class="card panel"><div class="panel-head"><span>📅 今日の予定</span><a class="more" href="king-moncal.html">私用カレンダー›</a></div><ul class="schedule" id="todaySchedule"></ul></div><div class="card panel" style="text-align:center"><div class="panel-head"><span>￥ 本日の売上速報</span><span class="more">確認用</span></div><div style="font-size:45px;color:#208c3d;font-weight:950;margin:14px 0">¥258,750</div><div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px"><span>目標 ¥500,000</span><span>51.7%</span></div></div><div class="card panel"><div class="panel-head"><span>👥 事務員タイムカード</span><span class="more">Firebase連動</span></div><div class="staff-number">本日出勤 <b id="officeInCount">0</b> 名</div><div id="officeTimecardList" style="font-size:14px;font-weight:800;line-height:1.8;color:#334155;text-align:left;background:#fff7fb;border:1px solid #ffd6e5;border-radius:14px;padding:12px;margin:12px 0;">まだタイムカード入力がありません</div><button class="staff-btn" onclick="location.href='office-timecard.html'">事務員アプリを開く　›</button></div></section>
-<section class="card panel" id="partnerProfitPanel" style="margin-top:18px;"><div class="panel-head"><span>🐩 partner 損益計算書</span><button class="add-btn" onclick="renderPartnerProfitKing()">更新</button></div><div id="partnerProfitKingBox" style="margin-top:12px;font-weight:800;color:#334155;line-height:1.7;">partnerの入力を確認中...</div></section>
 
-
-
+<section class="card panel" id="partnerProfitPanel" style="margin-top:18px;">
+  <div class="panel-head">
+    <span>🐩 partner 損益計算書</span>
+    <span class="more">リーダー専用</span>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;flex-wrap:wrap;">
+    <div style="font-weight:800;color:#334155;line-height:1.7;">
+      売上・経費・利益・イベント別一覧を専用画面で確認
+    </div>
+    <a href="partner-profit-test.html" class="open purple-btn" style="margin:0;width:220px;">損益計算書を開く ›</a>
+  </div>
+</section>
 <section class="card panel" id="laborKingPanel" style="margin-top:18px;">
   <div class="panel-head"><span>👷 労務費・給与台帳</span><span class="more">リーダー専用</span></div>
   <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;flex-wrap:wrap;">
@@ -189,5 +198,5 @@ function renderLaborKing(){
  <h3>月別集計</h3><table style="width:100%">${mrow}</table>`;
 }
 
-updateClock();loadKingMiyuCommand();connectOfficeTimecardFirebase();connectPrivateCalendar();connectPartnerShareCenterKing();renderPartnerProfitKing();setInterval(updateClock,30000);
+updateClock();loadKingMiyuCommand();connectOfficeTimecardFirebase();connectPrivateCalendar();connectPartnerShareCenterKing();setInterval(updateClock,30000);
 </script></body></html>
