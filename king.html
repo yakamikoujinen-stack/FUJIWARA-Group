@@ -51,6 +51,11 @@
 <section class="dashboard"><div class="card panel"><div class="panel-head"><span>📅 今日の予定</span><a class="more" href="king-moncal.html">私用カレンダー›</a></div><ul class="schedule" id="todaySchedule"></ul></div><div class="card panel" style="text-align:center"><div class="panel-head"><span>￥ 本日の売上速報</span><span class="more">確認用</span></div><div style="font-size:45px;color:#208c3d;font-weight:950;margin:14px 0">¥258,750</div><div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px"><span>目標 ¥500,000</span><span>51.7%</span></div></div><div class="card panel"><div class="panel-head"><span>👥 事務員タイムカード</span><span class="more">Firebase連動</span></div><div class="staff-number">本日出勤 <b id="officeInCount">0</b> 名</div><div id="officeTimecardList" style="font-size:14px;font-weight:800;line-height:1.8;color:#334155;text-align:left;background:#fff7fb;border:1px solid #ffd6e5;border-radius:14px;padding:12px;margin:12px 0;">まだタイムカード入力がありません</div><button class="staff-btn" onclick="location.href='office-timecard.html'">事務員アプリを開く　›</button></div></section>
 <section class="card panel" id="partnerProfitPanel" style="margin-top:18px;"><div class="panel-head"><span>🐩 partner 損益計算書</span><button class="add-btn" onclick="renderPartnerProfitKing()">更新</button></div><div id="partnerProfitKingBox" style="margin-top:12px;font-weight:800;color:#334155;line-height:1.7;">partnerの入力を確認中...</div></section>
 
+
+<section class="card panel" id="laborKingPanel" style="margin-top:18px;">
+<div class="panel-head"><span>👷 労務費・給与台帳</span><button class="add-btn" onclick="renderLaborKing()">更新</button></div>
+<div id="laborKingBox" style="margin-top:12px">読み込み中...</div>
+</section>
 <section class="private"><div class="card panel"><div class="panel-head"><span>📅 私用の予定カレンダー</span><a class="more" href="king-moncal.html">MonCalで開く›</a></div><div class="cal-title"><button onclick="movePrivateMonth(-1)">‹</button><span id="privateMonthTitle"></span><button onclick="movePrivateMonth(1)">›</button></div><div class="calendar" id="privateCalendar"></div></div><div class="card panel"><div class="panel-head"><span id="personalTitle">今日の予定</span><button class="add-btn" onclick="location.href='king-moncal.html'">＋ MonCalで追加</button></div><ul class="personal-list" id="personalList"></ul></div></section>
 <section class="card tools"><h3>✨ 便利なアプリ ✨</h3><div class="tool-grid"><a class="tool" href="king-moncal.html"><span>📅</span>MonCal</a><a class="tool" href="king-money.html"><span>💰</span>お金管理</a><a class="tool" href="king-moncal.html"><span>🕘</span>私用予定</a><a class="tool" href="#"><span>💬</span>連絡掲示板</a><a class="tool" href="#"><span>🚚</span>ドライブ</a><a class="tool" href="#"><span>🖼️</span>写真管理</a><a class="tool" href="#"><span>🌤️</span>天気予報</a><a class="tool" href="#"><span>🧮</span>電卓</a><a class="tool" href="#"><span>📝</span>メモ帳</a><a class="tool" href="partner-men.html"><span>🦍🐷</span>partner MEN</a><a class="tool" href="project-room.html"><span>📂</span>プロジェクト管理室</a><a class="tool" href="system-management.html"><span>🛠️</span>開発室</a></div></section></main>
 <nav class="bottom"><button class="nav leader" onclick="alert('リーダールームは次に権限付きで作るで')"><span class="nav-icon">♛</span>リーダー</button><button class="nav" onclick="location.href='king-moncal.html'"><span class="nav-icon">📅</span>MonCal</button><button class="nav" onclick="location.href='king-money.html'"><span class="nav-icon">💰</span>お金管理</button><button class="nav" onclick="alert('ヘルプ画面は次に作るで')"><span class="nav-icon">❔</span>ヘルプ</button><button class="nav logout" onclick="alert('ログアウトしました')"><span class="nav-icon">↪</span>ログアウト</button></nav>
@@ -133,5 +138,36 @@ function loadKingMiyuCommand(){
   }
 }
 
-updateClock();loadKingMiyuCommand();connectOfficeTimecardFirebase();connectPrivateCalendar();connectPartnerShareCenterKing();renderPartnerProfitKing();setInterval(updateClock,30000);
+
+function laborYen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function renderLaborKing(){
+ const box=document.getElementById('laborKingBox');
+ if(!box)return;
+ let db={events:[]};
+ try{db=JSON.parse(localStorage.getItem('fg_labor_db_v1')||'{}')}catch(e){}
+ const ev=db.events||[];
+ if(!ev.length){box.innerHTML='労務費データはまだありません。';return;}
+ const people={}, months={}, unpaid=[];
+ let total=0;
+ ev.forEach(x=>{
+   (x.payments||[]).forEach(p=>{
+      const v=Number(p.rate||0);
+      total+=v;
+      people[p.staffName]=(people[p.staffName]||0)+v;
+      const m=(x.date||'').slice(0,7)||'未設定';
+      months[m]=(months[m]||0)+v;
+      if(!p.paid) unpaid.push({event:x.name||'',staff:p.staffName||'',amt:v});
+   });
+ });
+ const prow=Object.entries(people).sort((a,b)=>b[1]-a[1]).map(r=>`<tr><td>${r[0]}</td><td align="right">${laborYen(r[1])}</td></tr>`).join('');
+ const mrow=Object.entries(months).map(r=>`<tr><td>${r[0]}</td><td align="right">${laborYen(r[1])}</td></tr>`).join('');
+ box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+ <div class="miyu-box"><small>総労務費</small><br><b style="font-size:28px">${laborYen(total)}</b></div>
+ <div class="miyu-box"><small>イベント数</small><br><b style="font-size:28px">${ev.length}</b></div>
+ <div class="miyu-box"><small>未払い</small><br><b style="font-size:28px">${unpaid.length}件</b></div></div>
+ <h3>個人別給与台帳</h3><table style="width:100%">${prow}</table>
+ <h3>月別集計</h3><table style="width:100%">${mrow}</table>`;
+}
+
+updateClock();renderLaborKing();loadKingMiyuCommand();connectOfficeTimecardFirebase();connectPrivateCalendar();connectPartnerShareCenterKing();renderPartnerProfitKing();setInterval(updateClock,30000);
 </script></body></html>
