@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="月別ネタ表">
 <meta name="theme-color" content="#b8860b">
-<title>FUJIWARA 月別イベント・出店ネタ一覧表 v4.1</title>
+<title>FUJIWARA 月別イベント・出店ネタ一覧表 v4.2</title>
 <style>
 :root{
   --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;
@@ -36,10 +36,7 @@ font-size:12px;font-weight:800;color:#705300}.status.ok{background:#e8f7ef;borde
 table{border-collapse:separate;border-spacing:0;min-width:1100px;width:max-content;background:#fff}
 th,td{border-right:1px solid #e8d7a4;border-bottom:1px solid #e8d7a4;padding:7px;text-align:center;font-size:12px}
 th{position:sticky;top:0;z-index:5;background:#fff3d6;font-weight:950;white-space:nowrap}
-th:first-child,td:first-child{position:sticky;left:0;z-index:4;background:#fffdf6}
-th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:4;background:#fffdf6}
-th:nth-child(3),td:nth-child(3){position:sticky;left:252px;z-index:4;background:#fffdf6}
-th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
+th:first-child,th:nth-child(2){z-index:7}
 .date-col{min-width:72px}.event-col{min-width:180px;text-align:left}.type-col{min-width:64px;font-weight:950}
 .event-name{font-weight:950}.event-link{cursor:pointer;border-radius:9px;padding:5px;margin:-5px}.event-link:active{background:#fff0bd}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
 .neta-head{
@@ -59,7 +56,7 @@ th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
   background:linear-gradient(180deg,#fff3d6,#ffeab1);
 }
 .neta-head:nth-child(even){background:linear-gradient(180deg,#fff9e8,#f8e7b7)}
-th.date-col,th.event-col,th.type-col{
+th.date-col,th.event-col{
   background:#f1d580!important;
   color:#2f2100;
   font-size:13px;
@@ -118,7 +115,7 @@ justify-content:center;gap:8px;z-index:25}
   white-space:normal;
   line-height:1.15;
 }
- th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){position:static}
+ th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){position:static}
  .qty-input{width:28px!important;padding:1px!important;font-size:7px}
 }
 </style>
@@ -131,7 +128,7 @@ justify-content:center;gap:8px;z-index:25}
 </div></div>
 
 <header><div class="head">
-<div><div class="brand">📊 月別イベント・出店ネタ一覧表 <small style="font-size:11px">開発版 v4.1・イベント連動修正版</small></div><div class="sub">出店○／数量入力／▼でネタ買い物一覧へ</div></div>
+<div><div class="brand">📊 月別イベント・出店ネタ一覧表 <small style="font-size:11px">開発版 v4.2・全ネタ別列・イベント連動修正版</small></div><div class="sub">ネタを1種類ずつ別の列に表示・イベント名タップで買い物一覧へ</div></div>
 <div id="roleBadge" class="role">確認中</div>
 </div></header>
 
@@ -190,7 +187,7 @@ async function loadData(manual){
  try{
   const snap=await Promise.race([db.ref("fujiwara").once("value"),new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),7000))]);
   const d=snap.val()||{};events=arr(d.events);invItems=arr(d.invItems);
-  st.className="status ok";st.textContent=`✅ 連動完了　イベント ${events.length}件／在庫品目 ${invItems.length}件`;
+  st.className="status ok";st.textContent=`✅ 連動完了　イベント ${events.length}件／在庫品目 ${invItems.length}件／検出ネタ ${netasFor(events).length}種類`;
   render();if(manual)alert("最新データを読み込みました");
  }catch(e){st.textContent="⚠️ メインアプリに接続できませんでした。再読込してください";events=[];invItems=[];render()}
 }
@@ -221,19 +218,45 @@ function netasFor(list){
  const used=[];list.forEach(e=>eventNeta(e).forEach(n=>{if(!used.includes(n))used.push(n)}));
  return [...DEFAULT_NETAS.filter(n=>used.includes(n)),...used.filter(n=>!DEFAULT_NETAS.includes(n)).sort((a,b)=>a.localeCompare(b,"ja"))];
 }
+
+function netaEmoji(n){
+ const s=String(n||'');
+ if(s.includes('ポテト'))return '🍟';
+ if(s.includes('からあげ'))return '🍗';
+ if(s.includes('かき氷'))return '🍧';
+ if(s.includes('いか焼き'))return '🦑';
+ if(s.includes('牛串'))return '🥩';
+ if(s.includes('豚串'))return '🐷';
+ if(s.includes('鳥串'))return '🐔';
+ if(s.includes('とんかつ'))return '🍖';
+ if(s.includes('りんご飴'))return '🍎';
+ if(s.includes('チーズハットグ'))return '🧀';
+ return '';
+}
 function render(){
  const list=filtered(),netas=netasFor(list),t=document.getElementById("matrix");
- if(!list.length){t.innerHTML="<tbody><tr><td style='padding:30px'>この月のイベントはありません</td></tr></tbody>";return}
- let x="<thead><tr><th class='date-col'>日付</th><th class='event-col'>イベント名</th><th class='type-col'>区分</th>";
- netas.forEach(n=>x+=`<th class="neta-head">${esc(n)}</th>`);x+="</tr></thead><tbody>";
+ if(!list.length){
+  t.innerHTML="<tbody><tr><td style='padding:30px'>この月のイベントはありません</td></tr></tbody>";
+  return;
+ }
+ let x="<thead><tr><th class='date-col'>日付</th><th class='event-col'>イベント名</th>";
+ netas.forEach(n=>{
+  const icon=netaEmoji(n);
+  x+=`<th class="neta-head">${icon?`<div style="font-size:22px">${icon}</div>`:''}${esc(n)}</th>`;
+ });
+ x+="</tr></thead><tbody>";
  list.forEach(ev=>{
   const names=eventNeta(ev),date=String(ev.date||""),dl=date?`${Number(date.slice(5,7))}/${Number(date.slice(8,10))}`:"";
-  x+=`<tr><td rowspan="2">${esc(dl)}</td><td rowspan="2" class="event-col"><div class="event-link" role="button" tabindex="0" onclick='openEvent(${JSON.stringify(String(ev.id||""))})'><div class="event-name">${esc(ev.name||"名称未設定")}</div><div class="event-meta">${esc(ev.place||"会場未設定")}　<span style="color:#b8860b;font-weight:900">タップで詳細</span></div></div></td><td class="type-col">出店</td>`;
-  netas.forEach(n=>x+=names.includes(n)?`<td><span class="mark">○</span><br><button class="drop" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})'>▼</button></td>`:"<td></td>");
-  x+="</tr><tr><td class='type-col'>数量</td>";
-  netas.forEach(n=>x+=names.includes(n)?`<td><input class="qty-input" type="number" min="0" value="${esc(getQty(ev,n))}" oninput='saveQty(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)},this.value)'></td>`:"<td></td>");
+  x+=`<tr><td>${esc(dl)}</td><td class="event-col"><div class="event-link" role="button" tabindex="0" onclick='openEvent(${JSON.stringify(String(ev.id||""))})'><div class="event-name">${esc(ev.name||"名称未設定")}</div><div class="event-meta">${esc(ev.place||"会場未設定")}　<span style="color:#b8860b;font-weight:900">タップで詳細</span></div></div></td>`;
+  netas.forEach(n=>{
+   x+=names.includes(n)
+    ?`<td><button class="mark" style="cursor:pointer" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})' aria-label="${esc(n)}を開く">○</button></td>`
+    :"<td></td>";
+  });
   x+="</tr>";
- });x+="</tbody>";t.innerHTML=x;
+ });
+ x+="</tbody>";
+ t.innerHTML=x;
 }
 function setSelectedEventForShopping(eventId,neta){
  try{
