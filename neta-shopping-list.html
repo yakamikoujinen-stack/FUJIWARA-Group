@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v3.4 全員共有版</title>
+<title>ネタ買い物一覧 統一版</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -28,7 +28,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v3.4 全員共有版</div><div class="sub">メインアプリ連動｜保存＝全員へ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.0</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -51,6 +51,9 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 const LOCAL_KEY='fujiwara_neta_powerup_v25';
+const ENTRY_PARAMS=new URLSearchParams(location.search);
+const ENTRY_EVENT_ID=String(ENTRY_PARAMS.get('eventId')||'');
+const ENTRY_NETA=String(ENTRY_PARAMS.get('neta')||'');
 const DEFAULT_NETAS=['チーズハットグ','牛串','豚串','鳥串','かき氷','いか焼き','ポテト','からあげ','肉巻きおにぎり','りんご飴','やきそば','ホルそば','串','かまぼこ','だんご','らーめん','チョコバナナ','コットンキャンディー','かすてら','たこ焼き','焼きとうもろこし','フランクフルト','クレープ','串物','揚げ物','麺類','甘味','粉もの・焼き物','ご飯もの','その他'];
 const TEMPLATES={
 'チーズハットグ':['チーズハットグ','チーズブロック','ソーセージ','ミックス粉','パン粉','ケチャップ','マスタード','ハニーマスタード','砂糖','串','袋','パン'],
@@ -85,7 +88,12 @@ async function loadMainData(manual){
     note.innerHTML='✅ メインアプリと連動しました　<span class="sync">イベント '+main.events.length+'件／在庫 '+main.invItems.length+'件</span>';
     renderEventSelect();
     renderInventoryDatalist();
-    if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId))){
+    if(ENTRY_EVENT_ID && main.events.some(e=>String(e.id)===ENTRY_EVENT_ID)){
+      state.eventId=ENTRY_EVENT_ID;
+      if(ENTRY_NETA)state.selected=[ENTRY_NETA];
+      selectEvent(ENTRY_EVENT_ID,false);
+      localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
+    }else if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId))){
       selectEvent(state.eventId,false);
     }else if(main.events.length){
       selectEvent(main.events[0].id,false);
@@ -218,7 +226,12 @@ async function publishShoppingList(){
   }
 }
 
-function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];if(names.length)state.selected=[...new Set(names)];const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener()}
+function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];
+if(ENTRY_EVENT_ID===state.eventId && ENTRY_NETA){
+  state.selected=[ENTRY_NETA];
+}else if(names.length){
+  state.selected=[...new Set(names)];
+}const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener()}
 function readSalesPrices(ev){if(!ev)return;const sales=ev.sales||{};const itemSales=sales.items||sales.itemSales||{};Object.keys(itemSales||{}).forEach(k=>{state.prices[k]=Number(itemSales[k])||0});['yakisoba','kushi','mizu'].forEach(k=>{if(sales[k]!=null)state.prices[k]=Number(sales[k])||0})}
 function allNetaNames(){return [...new Set([...DEFAULT_NETAS,...Object.keys(TEMPLATES),...state.selected,...main.invItems.map(x=>x.cat).filter(Boolean)])]}
 function renderNeta(){const g=document.getElementById('netaGrid');g.innerHTML=allNetaNames().map(n=>`<label class="neta ${state.selected.includes(n)?'on':''}"><input type="checkbox" ${state.selected.includes(n)?'checked':''} onchange="toggleNeta('${esc(n)}',this.checked)">${esc(n)}</label>`).join('')}
