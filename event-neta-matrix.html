@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="月別ネタ表">
 <meta name="theme-color" content="#b8860b">
-<title>FUJIWARA 月別イベント・ネタ一覧表 v2.1</title>
+<title>FUJIWARA 月別イベント・出店ネタ一覧表 統一版</title>
 <style>
 :root{
   --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;
@@ -36,12 +36,11 @@ font-size:12px;font-weight:800;color:#705300}.status.ok{background:#e8f7ef;borde
 table{border-collapse:separate;border-spacing:0;min-width:1100px;width:max-content;background:#fff}
 th,td{border-right:1px solid #e8d7a4;border-bottom:1px solid #e8d7a4;padding:7px;text-align:center;font-size:12px}
 th{position:sticky;top:0;z-index:5;background:#fff3d6;font-weight:950;white-space:nowrap}
-th:first-child,td:first-child{position:sticky;left:0;z-index:4;background:#fffdf6}
-th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:4;background:#fffdf6}
-th:nth-child(3),td:nth-child(3){position:sticky;left:252px;z-index:4;background:#fffdf6}
-th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
-.date-col{min-width:72px}.event-col{min-width:180px;text-align:left}.type-col{min-width:64px;font-weight:950}
-.event-name{font-weight:950}.event-link{cursor:pointer;border-radius:9px;padding:5px;margin:-5px}.event-link:active{background:#fff0bd}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
+th:first-child,td:first-child{position:sticky;left:0;z-index:6;background:#fffdf6}
+th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:6;background:#fffdf6}
+th:first-child,th:nth-child(2){z-index:8}
+.date-col{min-width:72px;width:72px}.event-col{min-width:275px;width:275px;text-align:left}
+.event-name{font-weight:950;font-size:15px}.event-link{cursor:pointer;padding:6px;border-radius:9px}.event-link:active{background:#fff0bd}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
 .neta-head{
   min-width:116px;
   max-width:116px;
@@ -59,15 +58,14 @@ th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
   background:linear-gradient(180deg,#fff3d6,#ffeab1);
 }
 .neta-head:nth-child(even){background:linear-gradient(180deg,#fff9e8,#f8e7b7)}
-th.date-col,th.event-col,th.type-col{
-  background:#f1d580!important;
+th.date-col,th.event-col{
+  background:#fffdf6!important;
   color:#2f2100;
   font-size:13px;
 }
-td{
-  min-height:52px;
-}
+td{height:70px;min-height:70px;}
 .mark{
+  appearance:none;-webkit-appearance:none;padding:0;cursor:pointer;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -106,7 +104,7 @@ justify-content:center;gap:8px;z-index:25}
   th,td{font-size:12px;padding:6px}
 }
 @media print{
- @page{size:A4 landscape;margin:6mm}header,footer,.controls,.status,.drop{display:none!important}
+ @page{size:A4 landscape;margin:6mm}header,footer,.controls,.status{display:none!important}
  body{background:#fff;padding:0}.wrap{padding:0;max-width:none}.card{border:0;box-shadow:none;padding:0}
  .table-wrap{overflow:visible;max-height:none;border:0}table{width:100%;min-width:0}
  th,td{font-size:7px;padding:2px}.neta-head{
@@ -118,7 +116,7 @@ justify-content:center;gap:8px;z-index:25}
   white-space:normal;
   line-height:1.15;
 }
- th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){position:static}
+ th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){position:static}
  .qty-input{width:28px!important;padding:1px!important;font-size:7px}
 }
 </style>
@@ -131,7 +129,7 @@ justify-content:center;gap:8px;z-index:25}
 </div></div>
 
 <header><div class="head">
-<div><div class="brand">📊 月別イベント・ネタ一覧表 <small style="font-size:11px">開発版 v2.1</small></div><div class="sub">出店○／数量入力／▼でネタ買い物一覧へ</div></div>
+<div><div class="brand">📊 月別イベント・出店ネタ一覧表 <small style="font-size:11px">統一版 v1.0</small></div><div class="sub">ネタを1種類ずつ別の列に表示・該当ネタに○</div></div>
 <div id="roleBadge" class="role">確認中</div>
 </div></header>
 
@@ -146,6 +144,9 @@ justify-content:center;gap:8px;z-index:25}
 <button class="ghost" onclick="goBackApp()">← 戻る</button>
 </div>
 <div id="syncStatus" class="status">メインアプリのデータを読み込んでいます…</div>
+<div class="status" style="background:#eaf4ff;border-color:#9fc0e9;color:#2563a7">
+ポテト・からあげ・かき氷・いか焼き・牛串など、ネタはすべて別々の列で表示します。
+</div>
 </section>
 
 <section class="card">
@@ -197,10 +198,26 @@ async function loadData(manual){
 function invById(id){return invItems.find(x=>String(x.id)===String(id))}
 function eventNeta(ev){
  const names=[];
- arr(ev.items).forEach(id=>{const it=invById(id);if(!it)return;if(it.cat&&!names.includes(it.cat))names.push(it.cat);
- if(it.name&&DEFAULT_NETAS.includes(it.name)&&!names.includes(it.name))names.push(it.name)});
- String(ev.itemsText||"").split(/[、,／/\n]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!names.includes(x))names.push(x)});
- const sales=ev.sales||{},obj=sales.items||sales.itemSales||{};Object.keys(obj||{}).forEach(x=>{if(!names.includes(x))names.push(x)});
+ const addName=value=>{
+  const raw=String(value||"").trim();
+  if(!raw)return;
+  DEFAULT_NETAS.forEach(n=>{
+   if(raw.includes(n) && !names.includes(n)) names.push(n);
+  });
+ };
+ arr(ev.items).forEach(id=>{
+  const it=invById(id);
+  if(!it)return;
+  addName(it.cat);
+  addName(it.name);
+ });
+ String(ev.itemsText||"")
+  .split(/[、,／/\n・＋+]+/)
+  .map(x=>x.trim())
+  .filter(Boolean)
+  .forEach(addName);
+ const sales=ev.sales||{},obj=sales.items||sales.itemSales||{};
+ Object.keys(obj||{}).forEach(addName);
  return names;
 }
 function getQty(ev,neta){
@@ -221,19 +238,56 @@ function netasFor(list){
  const used=[];list.forEach(e=>eventNeta(e).forEach(n=>{if(!used.includes(n))used.push(n)}));
  return [...DEFAULT_NETAS.filter(n=>used.includes(n)),...used.filter(n=>!DEFAULT_NETAS.includes(n)).sort((a,b)=>a.localeCompare(b,"ja"))];
 }
+function netaEmoji(n){
+ const s=String(n||"");
+ if(s.includes("ポテト"))return "🍟";
+ if(s.includes("からあげ"))return "🍗";
+ if(s.includes("かき氷"))return "🍧";
+ if(s.includes("いか焼き"))return "🦑";
+ if(s.includes("牛串"))return "🥩";
+ if(s.includes("豚串"))return "🐷";
+ if(s.includes("鳥串"))return "🐔";
+ if(s.includes("とんかつ"))return "🍖";
+ if(s.includes("りんご飴"))return "🍎";
+ if(s.includes("チーズハットグ"))return "🧀";
+ return "";
+}
 function render(){
  const list=filtered(),netas=netasFor(list),t=document.getElementById("matrix");
- if(!list.length){t.innerHTML="<tbody><tr><td style='padding:30px'>この月のイベントはありません</td></tr></tbody>";return}
- let x="<thead><tr><th class='date-col'>日付</th><th class='event-col'>イベント名</th><th class='type-col'>区分</th>";
- netas.forEach(n=>x+=`<th class="neta-head">${esc(n)}</th>`);x+="</tr></thead><tbody>";
+ if(!list.length){
+  t.innerHTML="<tbody><tr><td style='padding:30px'>この月のイベントはありません</td></tr></tbody>";
+  return;
+ }
+ let x="<thead><tr><th class='date-col'>日付</th><th class='event-col'>イベント名</th>";
+ netas.forEach(n=>{
+  const icon=netaEmoji(n);
+  x+=`<th class="neta-head">${icon?`<div style="font-size:22px;line-height:1">${icon}</div>`:""}${esc(n)}</th>`;
+ });
+ x+="</tr></thead><tbody>";
  list.forEach(ev=>{
-  const names=eventNeta(ev),date=String(ev.date||""),dl=date?`${Number(date.slice(5,7))}/${Number(date.slice(8,10))}`:"";
-  x+=`<tr><td rowspan="2">${esc(dl)}</td><td rowspan="2" class="event-col"><div class="event-link" role="button" tabindex="0" onclick='openEvent(${JSON.stringify(String(ev.id||""))})'><div class="event-name">${esc(ev.name||"名称未設定")}</div><div class="event-meta">${esc(ev.place||"会場未設定")}　<span style="color:#b8860b;font-weight:900">タップで詳細</span></div></div></td><td class="type-col">出店</td>`;
-  netas.forEach(n=>x+=names.includes(n)?`<td><span class="mark">○</span><br><button class="drop" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})'>▼</button></td>`:"<td></td>");
-  x+="</tr><tr><td class='type-col'>数量</td>";
-  netas.forEach(n=>x+=names.includes(n)?`<td><input class="qty-input" type="number" min="0" value="${esc(getQty(ev,n))}" oninput='saveQty(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)},this.value)'></td>`:"<td></td>");
+  const names=eventNeta(ev);
+  const date=String(ev.date||"");
+  const dl=date?`${Number(date.slice(5,7))}/${Number(date.slice(8,10))}`:"";
+  x+=`<tr>
+    <td>${esc(dl)}</td>
+    <td class="event-col">
+      <div class="event-link" role="button" tabindex="0"
+        onclick='openEvent(${JSON.stringify(String(ev.id||""))})'>
+        <div class="event-name">${esc(ev.name||"名称未設定")}</div>
+        <div class="event-meta">${esc(ev.place||"会場未設定")}</div>
+      </div>
+    </td>`;
+  netas.forEach(n=>{
+   x+=names.includes(n)
+    ?`<td><button class="mark" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})' aria-label="${esc(n)}を開く">○</button></td>`
+    :"<td></td>";
+  });
   x+="</tr>";
- });x+="</tbody>";t.innerHTML=x;
+ });
+ x+="</tbody>";
+ t.innerHTML=x;
+ const wrap=t.closest(".table-wrap");
+ if(wrap)wrap.scrollLeft=0;
 }
 function setSelectedEventForShopping(eventId,neta){
  try{
@@ -246,16 +300,16 @@ function setSelectedEventForShopping(eventId,neta){
 }
 function openEvent(eventId){
  setSelectedEventForShopping(eventId,"");
- location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&from=matrix&role=${encodeURIComponent(role)}`;
+ location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&from=matrix&role=${encodeURIComponent(role)}&v=34`;
 }
 function openNeta(eventId,neta){
  setSelectedEventForShopping(eventId,neta);
- location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&neta=${encodeURIComponent(neta)}&from=matrix&role=${encodeURIComponent(role)}`;
+ location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&neta=${encodeURIComponent(neta)}&from=matrix&role=${encodeURIComponent(role)}&v=34`;
 }
 function changeMonth(d){let y=+yearSelect.value,m=+monthSelect.value+d;if(m<1){m=12;y--}if(m>12){m=1;y++}
  yearSelect.value=String(y);monthSelect.value=String(m);render()}
 function goCurrent(){const d=new Date();yearSelect.value=String(d.getFullYear());monthSelect.value=String(d.getMonth()+1);render()}
-function goBackApp(){location.href=role==="king"?"king-with-neta-matrix.html":"manager-app-with-neta-matrix.html"}
+function goBackApp(){location.href=role==="king"?"king-with-neta-matrix.html":"manager-app.html"}
 if(initRole()){setup();if(!firebase.apps.length)firebase.initializeApp(CFG);db=firebase.database();loadData(false)}
 </script>
 </body></html>
