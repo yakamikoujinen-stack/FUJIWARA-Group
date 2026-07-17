@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>労務費・給与台帳 試験版 - KING APP</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eef8ff,#fffaf0);color:#102043}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 18px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.back{border:0;border-radius:999px;padding:11px 16px;background:#fff;box-shadow:0 8px 22px rgba(45,68,100,.12);font-weight:900;color:#074aa4}
+h1{font-size:30px;margin:0;color:#074aa4}
+.card{background:rgba(255,255,255,.95);border-radius:22px;box-shadow:0 12px 30px rgba(45,68,100,.12);padding:18px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:14px}
+.kpi small{color:#647188;font-weight:800}.kpi b{display:block;font-size:30px;margin-top:5px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.tab{border:1px solid #dbe5f3;border-radius:999px;background:#fff;padding:10px 16px;font-weight:900;color:#1768c8}
+.tab.active{background:#1768c8;color:#fff}
+.section{display:none}.section.active{display:block}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{padding:11px 10px;border-bottom:1px solid #edf0f5;text-align:left}
+th{color:#647188;font-size:13px}
+.num{text-align:right}.paid{color:#168a58;font-weight:900}.unpaid{color:#b45309;font-weight:900}
+.empty{text-align:center;padding:30px;color:#647188;font-weight:800}
+@media(max-width:700px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 12px 80px}h1{font-size:23px}}
+</style>
+
+<style id="fujiwara-test-banner-style">
+#fujiwara-test-banner{
+  position:sticky;top:0;z-index:9999;
+  background:linear-gradient(90deg,#7c3aed,#2563eb);
+  color:#fff;text-align:center;padding:8px 12px;
+  font-weight:900;font-size:13px;letter-spacing:.5px;
+  box-shadow:0 3px 12px rgba(0,0,0,.22);
+}
+</style>
+
+</head>
+<body>
+
+<div id="fujiwara-test-banner">🧪 FUJIWARA Group 試験版（TEST）</div>
+
+<div class="wrap">
+  <div class="top">
+    <button class="back" onclick="location.href='king-test.html'">‹ キングへ戻る</button>
+    <h1>👷 労務費・給与台帳</h1>
+    <button class="back" onclick="renderAll()">更新</button>
+  </div>
+
+  <div class="card">
+    <div class="kpis">
+      <div class="kpi"><small>総労務費</small><b id="totalLabor">¥0</b></div>
+      <div class="kpi"><small>イベント数</small><b id="eventCount">0</b></div>
+      <div class="kpi"><small>未払い</small><b id="unpaidCount">0件</b></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('person',this)">個人別</button>
+    <button class="tab" onclick="showTab('month',this)">月別</button>
+    <button class="tab" onclick="showTab('event',this)">イベント別</button>
+    <button class="tab" onclick="showTab('unpaid',this)">未払い</button>
+    <button class="tab" onclick="showTab('paid',this)">支払済</button>
+  </div>
+
+  <div class="card section active" id="person"></div>
+  <div class="card section" id="month"></div>
+  <div class="card section" id="event"></div>
+  <div class="card section" id="unpaid"></div>
+  <div class="card section" id="paid"></div>
+</div>
+
+<script>
+const LABOR_DB_KEY='fg_labor_db_v1';
+function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function readDb(){try{return JSON.parse(localStorage.getItem(LABOR_DB_KEY)||'{}')}catch(e){return {events:[]}}}
+function showTab(id,btn){
+ document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active'); btn.classList.add('active');
+}
+function renderAll(){
+ const db=readDb(); const events=Array.isArray(db.events)?db.events:[];
+ const people={}, months={}, unpaid=[], paid=[];
+ let total=0;
+ events.forEach(ev=>{
+   (Array.isArray(ev.payments)?ev.payments:[]).forEach(p=>{
+     const v=Number(p.rate||0); total+=v;
+     const name=p.staffName||'名前未設定';
+     people[name]=(people[name]||0)+v;
+     const m=(ev.date||'').slice(0,7)||'未設定';
+     months[m]=(months[m]||0)+v;
+     const row={date:ev.date||'',event:ev.name||'',staff:name,amount:v,paid:!!p.paid,paidDate:p.paidDate||''};
+     (p.paid?paid:unpaid).push(row);
+   });
+ });
+ totalLabor.textContent=yen(total); eventCount.textContent=events.length; unpaidCount.textContent=unpaid.length+'件';
+
+ const pRows=Object.entries(people).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${esc(n)}</td><td class="num">${yen(v)}</td></tr>`).join('');
+ person.innerHTML=pRows?`<h2>個人別給与台帳</h2><div style="overflow:auto"><table><tr><th>スタッフ</th><th class="num">累計</th></tr>${pRows}</table></div>`:'<div class="empty">個人別データはありません。</div>';
+
+ const mRows=Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,v])=>`<tr><td>${esc(m)}</td><td class="num">${yen(v)}</td></tr>`).join('');
+ month.innerHTML=mRows?`<h2>月別集計</h2><div style="overflow:auto"><table><tr><th>月</th><th class="num">労務費</th></tr>${mRows}</table></div>`:'<div class="empty">月別データはありません。</div>';
+
+ const eRows=events.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(ev=>{
+   const v=(ev.payments||[]).reduce((s,p)=>s+Number(p.rate||0),0);
+   return `<tr><td>${esc(ev.date||'')}</td><td>${esc(ev.name||'')}</td><td>${esc(ev.place||'')}</td><td class="num">${yen(v)}</td></tr>`;
+ }).join('');
+ event.innerHTML=eRows?`<h2>イベント別労務費</h2><div style="overflow:auto"><table><tr><th>日付</th><th>イベント</th><th>場所</th><th class="num">労務費</th></tr>${eRows}</table></div>`:'<div class="empty">イベント別データはありません。</div>';
+
+ function paymentTable(title,rows,isPaid){
+   if(!rows.length)return `<div class="empty">${title}はありません。</div>`;
+   return `<h2>${title}</h2><div style="overflow:auto"><table><tr><th>日付</th><th>イベント</th><th>スタッフ</th><th class="num">金額</th><th>状況</th></tr>${
+     rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.event)}</td><td>${esc(r.staff)}</td><td class="num">${yen(r.amount)}</td><td class="${isPaid?'paid':'unpaid'}">${isPaid?'支払済 '+esc(r.paidDate):'未払い'}</td></tr>`).join('')
+   }</table></div>`;
+ }
+ unpaid.innerHTML=paymentTable('未払い一覧',unpaid,false);
+ paid.innerHTML=paymentTable('支払済一覧',paid,true);
+}
+renderAll();
+</script>
+</body>
+</html>
