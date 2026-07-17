@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="出店ネタ一覧">
+<meta name="theme-color" content="#b8860b">
+<title>FUJIWARA 月別イベント・出店ネタ一覧表 v5</title>
+<style>
+:root{
+  --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;
+  --card:#fffdfa;--text:#241900;--sub:#6d5a2b;--green:#168a58;
+  --blue:#2563a7;--red:#d64242
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Yu Gothic",sans-serif;
+  background:linear-gradient(180deg,#fff8e8,#f4ead0);color:var(--text);padding-bottom:72px
+}
+header{
+  position:sticky;top:0;z-index:30;
+  background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+  border-bottom:2px solid rgba(184,134,11,.45);padding:12px 14px
+}
+.head{max-width:1600px;margin:auto;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.brand{font-size:20px;font-weight:950}
+.sub{font-size:12px;color:var(--sub);margin-top:3px}
+.badge{padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:900;font-size:12px}
+.wrap{max-width:1600px;margin:auto;padding:12px}
+.card{
+  background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:13px;
+  box-shadow:0 3px 14px rgba(80,55,0,.10);margin-bottom:12px
+}
+.controls{display:grid;grid-template-columns:140px 140px 1fr auto auto auto;gap:8px;align-items:end}
+label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-bottom:4px}
+input,select,button{font:inherit}
+input,select{
+  width:100%;padding:11px;border:1.5px solid var(--line);border-radius:10px;
+  background:#fff;color:var(--text);font-size:15px
+}
+button{
+  border:0;border-radius:10px;padding:11px 13px;font-weight:900;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;white-space:nowrap
+}
+button.ghost{background:#fffaf0;border:1.5px solid var(--line);color:var(--sub)}
+button.blue{background:#e7f1ff;border:1px solid #9fc0e9;color:var(--blue)}
+.status{
+  margin-top:9px;padding:9px 11px;border-radius:11px;background:#fff6df;border:1px solid #e3c26b;
+  font-size:12px;font-weight:800;color:#705300
+}
+.status.ok{background:#e8f7ef;border-color:#9dd9b8;color:var(--green)}
+.note{
+  margin-top:9px;padding:9px 11px;border-radius:11px;background:#eef7ff;border:1px solid #9fc0e9;
+  font-size:12px;font-weight:800;color:#24527a
+}
+.table-wrap{overflow:auto;border:1.5px solid var(--line);border-radius:13px;background:#fff;max-height:72vh}
+table{border-collapse:separate;border-spacing:0;min-width:1500px;width:max-content;background:#fff}
+th,td{border-right:1px solid #e8d7a4;border-bottom:1px solid #e8d7a4;padding:8px;text-align:center;font-size:12px}
+th{position:sticky;top:0;z-index:5;background:#fff3d6;font-weight:950;white-space:normal;line-height:1.25}
+th:first-child,td:first-child{position:sticky;left:0;z-index:4;background:#fffdf6}
+th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:4;background:#fffdf6}
+th:first-child,th:nth-child(2){z-index:7}
+.date-col{min-width:72px}
+.event-col{min-width:200px;text-align:left}
+.event-name{font-weight:950;font-size:14px}
+.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
+.neta-head{
+  min-width:86px;max-width:86px;height:72px;
+  padding:6px 4px;font-size:11px;vertical-align:middle;
+  word-break:keep-all;overflow-wrap:anywhere;
+  background:linear-gradient(180deg,#fff3d6,#ffeab1)
+}
+.neta-head:nth-child(even){background:linear-gradient(180deg,#fff9e8,#f8e7b7)}
+.neta-icon{font-size:20px;display:block;margin-bottom:3px}
+.circle-btn{
+  width:42px;height:42px;border-radius:50%;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:2px solid var(--green);background:#e8f7ef;color:var(--green);
+  font-size:25px;line-height:1;box-shadow:none
+}
+.circle-btn:active{transform:scale(.95)}
+.empty{padding:30px;text-align:center;color:var(--sub)}
+footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:25;
+  background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);
+  border-top:2px solid rgba(184,134,11,.45);
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  display:flex;justify-content:center;gap:8px
+}
+@media(max-width:800px){
+  .controls{grid-template-columns:1fr 1fr}
+  .controls .wide{grid-column:1/-1}
+  .brand{font-size:18px}
+  .neta-head{min-width:82px;max-width:82px;font-size:10px}
+}
+@media print{
+  @page{size:A4 landscape;margin:6mm}
+  header,footer,.controls,.status,.note{display:none!important}
+  body{background:#fff;padding:0}.wrap{padding:0;max-width:none}.card{border:0;box-shadow:none;padding:0}
+  .table-wrap{overflow:visible;max-height:none;border:0}
+  table{width:100%;min-width:0}
+  th,td{font-size:6.5px;padding:2px}
+  .date-col{min-width:28px}.event-col{min-width:80px}
+  .neta-head{min-width:31px;max-width:31px;height:44px;font-size:5.8px}
+  .neta-icon{font-size:10px}
+  .circle-btn{width:17px;height:17px;font-size:10px;border-width:1px}
+  th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){position:static}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div>
+      <div class="brand">📊 月別イベント・出店ネタ一覧表 <small style="font-size:11px">開発版 v5・イベント選択修正</small></div>
+      <div class="sub">ネタを1種類ずつ別の列に表示・該当ネタに⭕️</div>
+    </div>
+    <div id="headBadge" class="badge">🛠 開発モード</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <div class="controls">
+      <div><label>年</label><select id="yearSelect" onchange="render()"></select></div>
+      <div><label>月</label><select id="monthSelect" onchange="render()"></select></div>
+      <div class="wide"><label>イベント名・会場検索</label><input id="searchBox" placeholder="例：夜市、サンドーム" oninput="render()"></div>
+      <button class="blue" onclick="loadData(true)">🔄 最新読込</button>
+      <button class="ghost" onclick="window.print()">🖨️ 印刷</button>
+      <button class="ghost" onclick="history.back()">← 戻る</button>
+    </div>
+    <div id="syncStatus" class="status">メインアプリのデータを読み込んでいます…</div>
+    <div class="note">ポテト・からあげ・かき氷・いか焼き・牛串など、ネタはすべて別々の列で表示します。</div>
+  </section>
+
+  <section class="card">
+    <div class="table-wrap">
+      <table id="matrix"><tbody><tr><td class="empty">読込中…</td></tr></tbody></table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <button onclick="changeMonth(-1)">◀ 前月</button>
+  <button onclick="goCurrent()">今月</button>
+  <button onclick="changeMonth(1)">翌月 ▶</button>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const CFG={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:5ec6b7e2a2165066956a94"
+};
+
+const NETA_COLUMNS=[
+  ["ポテト","🍟"],
+  ["からあげ","🍗"],
+  ["かき氷","🍧"],
+  ["いか焼き","🦑"],
+  ["牛串","🥩"],
+  ["豚串","🍖"],
+  ["鳥串","🍢"],
+  ["やきそば","🍜"],
+  ["ホルそば","🍜"],
+  ["かすてら","🍰"],
+  ["チーズハットグ","🌭"],
+  ["肉巻きおにぎり","🍙"],
+  ["りんご飴","🍎"],
+  ["だんご","🍡"],
+  ["コットンキャンディー","🍭"],
+  ["チョコバナナ","🍌"],
+  ["とんかつスティック","🥓"],
+  ["電球ジュース","💡"],
+  ["かまぼこ","🍥"],
+  ["らーめん","🍜"]
+];
+
+const ALIASES={
+  "焼きそば":"やきそば","焼そば":"やきそば","やきそば":"やきそば",
+  "ホルモン焼きそば":"ホルそば","ホルモンそば":"ホルそば","ホル焼きそば":"ホルそば",
+  "ベビーカステラ":"かすてら","カステラ":"かすてら","かすてら":"かすてら",
+  "ハットグ":"チーズハットグ","チーズドッグ":"チーズハットグ",
+  "綿菓子":"コットンキャンディー","わたがし":"コットンキャンディー","綿あめ":"コットンキャンディー",
+  "肉巻き":"肉巻きおにぎり","肉巻おにぎり":"肉巻きおにぎり",
+  "とんかつ":"とんかつスティック","トンカツ":"とんかつスティック",
+  "電球ソーダ":"電球ジュース","電球ドリンク":"電球ジュース",
+  "イカ焼き":"いか焼き","いかやき":"いか焼き",
+  "唐揚げ":"からあげ","から揚げ":"からあげ",
+  "牛くし":"牛串","豚くし":"豚串","鳥くし":"鳥串","鶏串":"鳥串",
+  "りんごあめ":"りんご飴","リンゴ飴":"りんご飴"
+};
+
+let db=null,events=[],invItems=[];
+
+function arr(v){
+  return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==="object"?Object.values(v).filter(Boolean):[]);
+}
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function canonical(name){
+  const n=String(name||"").trim();
+  return ALIASES[n]||n;
+}
+function setup(){
+  const now=new Date();
+  yearSelect.innerHTML=Array.from({length:6},(_,i)=>{
+    const y=now.getFullYear()-2+i;
+    return `<option value="${y}">${y}年</option>`;
+  }).join("");
+  yearSelect.value=String(now.getFullYear());
+  monthSelect.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1}月</option>`).join("");
+  monthSelect.value=String(now.getMonth()+1);
+}
+function invById(id){
+  return invItems.find(x=>String(x.id)===String(id));
+}
+function addNames(target,value){
+  if(value===null||typeof value==="undefined")return;
+
+  if(Array.isArray(value)){
+    value.forEach(v=>addNames(target,v));
+    return;
+  }
+
+  if(typeof value==="object"){
+    [
+      value.cat,value.category,value.neta,value.menu,value.name,value.title,
+      value.itemName,value.productName,value.label,value.text,value.value
+    ].forEach(v=>addNames(target,v));
+    if(value.id){
+      const hit=invById(value.id);
+      if(hit){
+        addNames(target,hit.cat);
+        addNames(target,hit.name);
+      }
+    }
+    return;
+  }
+
+  const raw=String(value||"").trim();
+  if(!raw)return;
+
+  const hit=invById(raw);
+  if(hit){
+    addNames(target,hit.cat);
+    addNames(target,hit.name);
+    return;
+  }
+
+  raw
+    .split(/\r?\n|、|,|・|／|\/|　|\||｜|＋|\+/)
+    .map(x=>canonical(x.trim()))
+    .filter(Boolean)
+    .forEach(x=>{
+      if(!target.includes(x))target.push(x);
+    });
+}
+function addSalesItemKeys(target,sales){
+  if(!sales||typeof sales!=="object")return;
+
+  addNames(target,Object.keys(sales.items||{}));
+  addNames(target,Object.keys(sales.itemSales||{}));
+
+  if(sales.days&&typeof sales.days==="object"){
+    Object.values(sales.days).forEach(day=>{
+      if(day&&typeof day==="object"){
+        addNames(target,Object.keys(day.items||{}));
+        addNames(target,Object.keys(day.itemSales||{}));
+      }
+    });
+  }
+
+  if(sales.simple&&typeof sales.simple==="object"){
+    addNames(target,Object.keys(sales.simple.items||{}));
+    addNames(target,Object.keys(sales.simple.itemSales||{}));
+  }
+}
+function eventNetas(ev){
+  const names=[];
+
+  addNames(names,ev.items);
+  addNames(names,ev.itemsText);
+
+  [
+    ev.netas,ev.neta,ev.menus,ev.menu,ev.products,ev.product,
+    ev.selectedMenus,ev.selectedItems,ev.shopItems,ev.foods,
+    ev.stalls,ev.booths,ev.categories,ev.category
+  ].forEach(v=>addNames(names,v));
+
+  addSalesItemKeys(names,ev.sales);
+
+  [...names].forEach(name=>{
+    invItems
+      .filter(x=>canonical(x.name)===canonical(name))
+      .forEach(x=>addNames(names,x.cat));
+  });
+
+  return [...new Set(names.map(canonical).filter(Boolean))];
+}
+function filteredEvents(){
+  const y=Number(yearSelect.value);
+  const m=Number(monthSelect.value);
+  const q=String(searchBox.value||"").toLowerCase();
+  return events.filter(ev=>{
+    const d=String(ev.date||"");
+    if(!d.startsWith(`${y}-${String(m).padStart(2,"0")}`))return false;
+    if(q&&!`${ev.name||""} ${ev.place||""}`.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||String(a.name||"").localeCompare(String(b.name||""),"ja"));
+}
+function render(){
+  const list=filteredEvents();
+  const table=document.getElementById("matrix");
+  if(!list.length){
+    table.innerHTML='<tbody><tr><td class="empty">この月のイベントはありません</td></tr></tbody>';
+    return;
+  }
+
+  let html='<thead><tr><th class="date-col">日付</th><th class="event-col">イベント名</th>';
+  NETA_COLUMNS.forEach(([name,icon])=>{
+    html+=`<th class="neta-head"><span class="neta-icon">${icon}</span>${esc(name)}</th>`;
+  });
+  html+='</tr></thead><tbody>';
+
+  list.forEach(ev=>{
+    const netas=eventNetas(ev);
+    const date=String(ev.date||"");
+    const dateLabel=date?`${Number(date.slice(5,7))}/${Number(date.slice(8,10))}`:"";
+
+    html+=`<tr>
+      <td class="date-col">${esc(dateLabel)}</td>
+      <td class="event-col">
+        <div class="event-name">${esc(ev.name||"名称未設定")}</div>
+        <div class="event-meta">${esc(ev.place||"会場未設定")}</div>
+      </td>`;
+
+    NETA_COLUMNS.forEach(([name])=>{
+      const matched=netas.some(n=>canonical(n)===canonical(name));
+      if(matched){
+        html+=`<td><button class="circle-btn" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(name)})'>○</button></td>`;
+      }else{
+        html+='<td></td>';
+      }
+    });
+    html+='</tr>';
+  });
+
+  html+='</tbody>';
+  table.innerHTML=html;
+}
+function openNeta(eventId,neta){
+  const ev=events.find(e=>String(e.id||"")===String(eventId||""))||{};
+  const params=new URLSearchParams({
+    eventId:String(eventId||""),
+    eventDate:String(ev.date||""),
+    eventName:String(ev.name||""),
+    eventPlace:String(ev.place||""),
+    neta:String(neta||""),
+    from:"matrix"
+  });
+  location.href=`neta-shopping-list-v3.4.html?${params.toString()}`;
+}
+function changeMonth(delta){
+  let y=Number(yearSelect.value),m=Number(monthSelect.value)+delta;
+  if(m<1){m=12;y--}
+  if(m>12){m=1;y++}
+  yearSelect.value=String(y);
+  monthSelect.value=String(m);
+  render();
+}
+function goCurrent(){
+  const d=new Date();
+  yearSelect.value=String(d.getFullYear());
+  monthSelect.value=String(d.getMonth()+1);
+  render();
+}
+async function loadData(manual){
+  const st=document.getElementById("syncStatus");
+  st.className="status";
+  st.textContent="メインアプリの最新データを読み込んでいます…";
+  try{
+    const snap=await Promise.race([
+      db.ref("fujiwara").once("value"),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error("timeout")),7000))
+    ]);
+    const data=snap.val()||{};
+    events=arr(data.events);
+    invItems=arr(data.invItems);
+    st.className="status ok";
+    const detected=[...new Set(events.flatMap(eventNetas))];
+    st.textContent=`✅ 連動完了　イベント ${events.length}件／在庫品目 ${invItems.length}件／検出ネタ ${detected.length}種類`;
+    render();
+    if(manual)alert("最新データを読み込みました");
+  }catch(e){
+    console.error(e);
+    st.textContent="⚠️ メインアプリに接続できませんでした。再読込してください";
+    events=[];
+    invItems=[];
+    render();
+  }
+}
+
+setup();
+if(!firebase.apps.length)firebase.initializeApp(CFG);
+db=firebase.database();
+loadData(false);
+</script>
+</body>
+</html>

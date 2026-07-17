@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 v3.3 第1段階</title>
+<title>ネタ買い物一覧 v3.4 イベント連動修正版</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -37,7 +37,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 v3.3 第1段階</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 v3.4 イベント連動修正版</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -46,7 +46,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <div class="grid3" style="margin-top:10px"><div><label>イベント名</label><input id="eventName" readonly></div><div><label>日付</label><input id="eventDate" readonly></div><div><label>会場</label><input id="place" readonly></div></div>
 <div class="grid2" style="margin-top:10px"><div><label>買った店</label><input id="shop" placeholder="例：業務スーパー" oninput="applyShopToRows();saveLocal()"></div><div><label>メモ</label><input id="memo" oninput="saveLocal()"></div></div>
 <div class="event-summary" id="eventBadges"></div>
-<div class="toolbar"><button class="blue" onclick="loadMainData(true)">🔄 メインアプリから再読込</button><button class="ghost" onclick="location.href='index.html'">🏠 メインアプリ</button></div>
+<div class="toolbar"><button class="blue" onclick="loadMainData(true)">🔄 メインアプリから再読込</button><button class="ghost" onclick="goBackFromShopping()">← 戻る</button></div>
 </section>
 <section class="card" id="netaSec"><h2>② 出店ネタ（イベントから自動反映）</h2><div class="notice">選択したイベントの出店品目を自動で表示します。追加で必要なネタも選択できます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="setAllNeta(false)">全部外す</button></div></section>
 <section class="card" id="priceSec"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
@@ -100,7 +100,7 @@ const TEMPLATES={
 'りんご飴':['りんご','飴粉','棒','袋'],'チョコバナナ':['バナナ','チョコレート','棒','袋'],'コットンキャンディー':['コットンキャンディー用ザラメ','袋','棒'],'かすてら':['カステラ粉','卵','砂糖','袋'],'だんご':['だんご','あんこ','串','容器'],'甘味':['りんご','飴粉','だんご','あんこ','チョコレート','バナナ','コットンキャンディー用ザラメ','カステラ粉','卵','砂糖','袋','棒'],
 'たこ焼き':['たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'粉もの・焼き物':['いか','たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'肉巻きおにぎり':['ごはん','豚バラ','タレ','海苔','容器'],'ご飯もの':['ごはん','豚バラ','タレ','海苔','容器'],'その他':['割り箸','手袋','輪ゴム','ラップ','キッチンペーパー','ゴミ袋']};
 let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;let sharedLoadTimer=null;
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}function goBackFromShopping(){const p=getMatrixParams();if(p.from==='matrix'){location.href='event-neta-matrix-v5.html';}else if(history.length>1){history.back();}else{location.href='index.html';}}
 
 function defaultMasterItems(){
   const out=[];
@@ -245,7 +245,21 @@ async function loadMainData(manual){
     note.innerHTML='✅ メインアプリと連動しました　<span class="sync">イベント '+main.events.length+'件／在庫 '+main.invItems.length+'件</span>';
     renderEventSelect();
     renderInventoryDatalist();
-    if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId))){
+    const requested=getMatrixParams();
+    const requestedEvent=findRequestedEvent(requested);
+
+    if(requestedEvent){
+      state.eventId=String(requestedEvent.id||'');
+      selectEvent(state.eventId,false);
+      applyRequestedNeta(requested.neta);
+      renderNeta();
+      renderSales();
+      rebuildRowsFromSelected(false);
+      note.className='notice';
+      note.innerHTML='✅ 指定イベントを開きました　<span class="sync">'+
+        esc(requestedEvent.date||'')+'｜'+esc(requestedEvent.name||'')+
+        (requestedEvent.place?'｜'+esc(requestedEvent.place):'')+'</span>';
+    }else if(state.eventId && main.events.some(e=>String(e.id)===String(state.eventId))){
       selectEvent(state.eventId,false);
     }else if(main.events.length){
       selectEvent(main.events[0].id,false);
@@ -266,6 +280,51 @@ async function loadMainData(manual){
   }
 }
 function toArray(v){if(Array.isArray(v))return v.filter(Boolean);if(v&&typeof v==='object')return Object.values(v).filter(Boolean);return []}
+function getMatrixParams(){
+  const p=new URLSearchParams(location.search);
+  return {
+    eventId:p.get('eventId')||'',
+    eventDate:p.get('eventDate')||'',
+    eventName:p.get('eventName')||'',
+    eventPlace:p.get('eventPlace')||'',
+    neta:p.get('neta')||'',
+    from:p.get('from')||''
+  };
+}
+function normalizeMatchText(v){
+  return String(v||'').replace(/[　\s]+/g,'').trim().toLowerCase();
+}
+function findRequestedEvent(params){
+  if(!params)return null;
+
+  if(params.eventId){
+    const exactById=main.events.find(e=>String(e.id||'')===String(params.eventId));
+    if(exactById)return exactById;
+  }
+
+  const targetDate=String(params.eventDate||'');
+  const targetName=normalizeMatchText(params.eventName);
+  const targetPlace=normalizeMatchText(params.eventPlace);
+
+  const exact=main.events.find(e=>
+    (!targetDate||String(e.date||'')===targetDate) &&
+    (!targetName||normalizeMatchText(e.name)===targetName) &&
+    (!targetPlace||normalizeMatchText(e.place)===targetPlace)
+  );
+  if(exact)return exact;
+
+  return main.events.find(e=>
+    (!targetDate||String(e.date||'')===targetDate) &&
+    (!targetName||normalizeMatchText(e.name).includes(targetName)||targetName.includes(normalizeMatchText(e.name))) &&
+    (!targetPlace||normalizeMatchText(e.place).includes(targetPlace)||targetPlace.includes(normalizeMatchText(e.place)))
+  )||null;
+}
+function applyRequestedNeta(neta){
+  const name=String(neta||'').trim();
+  if(!name)return;
+  if(!state.selected.includes(name))state.selected.push(name);
+}
+
 function renderEventSelect(){const s=document.getElementById('eventSelect');if(!main.events.length){s.innerHTML='<option value="">イベントなし</option>';return}s.innerHTML='<option value="">イベントを選択</option>'+main.events.map(e=>`<option value="${esc(e.id)}">${esc(e.date||'日付未設定')}　${esc(e.name||'名称未設定')}　${esc(e.place||'')}</option>`).join('');if(state.eventId)s.value=String(state.eventId)}
 function eventNetaNames(ev){let names=[];const ids=Array.isArray(ev.items)?ev.items:toArray(ev.items);ids.forEach(id=>{const it=main.invItems.find(x=>String(x.id)===String(id));if(it){if(it.cat&&!names.includes(it.cat))names.push(it.cat);if(it.name&&!names.includes(it.name)&&DEFAULT_NETAS.includes(it.name))names.push(it.name)}});const text=String(ev.itemsText||'');text.split(/[、,／/\n\s]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!names.includes(x))names.push(x)});return names}
 
@@ -378,7 +437,10 @@ async function publishShoppingList(){
   }
 }
 
-function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];if(names.length)state.selected=[...new Set(names)];const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener()}
+function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];
+const requestedNeta=getMatrixParams().neta;
+if(names.length)state.selected=[...new Set(names)];
+if(requestedNeta&&!state.selected.includes(requestedNeta))state.selected.push(requestedNeta);const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener()}
 function readSalesPrices(ev){if(!ev)return;const sales=ev.sales||{};const itemSales=sales.items||sales.itemSales||{};Object.keys(itemSales||{}).forEach(k=>{state.prices[k]=Number(itemSales[k])||0});['yakisoba','kushi','mizu'].forEach(k=>{if(sales[k]!=null)state.prices[k]=Number(sales[k])||0})}
 function allNetaNames(){return [...new Set([...DEFAULT_NETAS,...Object.keys(TEMPLATES),...state.selected,...main.invItems.map(x=>x.cat).filter(Boolean)])]}
 function renderNeta(){const g=document.getElementById('netaGrid');g.innerHTML=allNetaNames().map(n=>`<label class="neta ${state.selected.includes(n)?'on':''}"><input type="checkbox" ${state.selected.includes(n)?'checked':''} onchange="toggleNeta('${esc(n)}',this.checked)">${esc(n)}</label>`).join('')}
