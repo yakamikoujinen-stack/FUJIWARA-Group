@@ -41,11 +41,15 @@ td.checkcell input{width:25px;height:25px}
 .footer{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:4px;background:#fff;border-top:1px solid var(--line);padding:7px 7px calc(7px + env(safe-area-inset-bottom))}
 .footer button{flex:1;background:transparent;color:#5f4a6d;font-size:11px;padding:7px 3px}.empty{text-align:center;color:var(--sub);padding:18px}.note{font-size:12px;color:var(--sub);line-height:1.6}
 .badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#efe5f6;color:#5b2a86;font-size:12px;font-weight:900;margin:3px}
+.sync-status{max-width:980px;margin:10px auto 0;padding:10px 14px;border-radius:12px;background:#fff4d6;color:#775400;border:1px solid #e4ca78;font-size:13px;font-weight:900}
+.sync-status.ok{background:#e7f6ee;color:#167347;border-color:#b9dfca}
+.sync-status.error{background:#ffe8e8;color:#b52f2f;border-color:#efb9b9}
 @media(max-width:700px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜積込みチェックリスト</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<div id="syncStatus" class="sync-status">🔄 準備データを確認しています…</div>
 
 <div class="wrap">
 <section class="card" id="eventSec">
@@ -139,6 +143,21 @@ td.checkcell input{width:25px;height:25px}
 <button onclick="jump('listSec')">積込み表</button>
 </nav>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94"
+};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const preparationRef=firebase.database().ref("fujiwara/preparation_app");
+</script>
 <script>
 const KEY="fujiwara_preparation_app_v2";
 const DEFAULT_CATEGORIES={
@@ -152,8 +171,70 @@ const DEFAULT_CATEGORIES={
 const DEFAULT_COMMON=[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]];
 let state={items:[],history:[],commonItems:DEFAULT_COMMON.map(x=>({name:x[0],qty:x[1],checker:""}))};
 
-function load(){try{state={...state,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){}}
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function normalizeState(data){
+  const d=(data&&typeof data==="object")?data:{};
+  return {
+    items:Array.isArray(d.items)?d.items:[],
+    history:Array.isArray(d.history)?d.history:[],
+    commonItems:Array.isArray(d.commonItems)&&d.commonItems.length?d.commonItems:DEFAULT_COMMON.map(x=>({name:x[0],qty:x[1],checker:""}))
+  };
+}
+function itemKey(x){return [String(x?.category||""),String(x?.name||""),String(x?.qty??""),String(x?.checker||"")].join("||")}
+function mergeItems(a,b){
+  const m=new Map();
+  [...(b||[]),...(a||[])].forEach(x=>{if(x)m.set(itemKey(x),{...(m.get(itemKey(x))||{}),...x})});
+  return [...m.values()];
+}
+function mergeHistory(a,b){
+  const m=new Map();
+  [...(b||[]),...(a||[])].forEach(x=>{if(x&&x.id!=null)m.set(String(x.id),{...(m.get(String(x.id))||{}),...x})});
+  return [...m.values()].sort((x,y)=>Number(y.id||0)-Number(x.id||0));
+}
+function mergeCommon(a,b){
+  const m=new Map();
+  [...(b||[]),...(a||[])].forEach(x=>{if(x&&x.name)m.set(String(x.name),{...(m.get(String(x.name))||{}),...x})});
+  return [...m.values()];
+}
+function mergeStates(a,b){
+  const l=normalizeState(a),r=normalizeState(b);
+  return {items:mergeItems(l.items,r.items),history:mergeHistory(l.history,r.history),commonItems:mergeCommon(l.commonItems,r.commonItems)};
+}
+function setSyncStatus(msg,type){
+  const e=document.getElementById("syncStatus");if(!e)return;
+  e.textContent=msg;e.className="sync-status"+(type?" "+type:"");
+}
+function load(){
+  try{state=mergeStates(state,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
+}
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state))}
+let remoteReady=false,applyingRemote=false,saveTimer=null;
+function save(){
+  saveLocal();
+  if(applyingRemote)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    if(!remoteReady){setSyncStatus("📱 端末内に保存済みです。通信回復後に共有します","");return}
+    preparationRef.set(state).then(()=>setSyncStatus("✅ 全員共有で保存しました","ok"))
+      .catch(err=>{console.error(err);setSyncStatus("⚠️ 端末内には保存済みです。共有通信を確認してください","error")});
+  },180);
+}
+function startSafeSync(){
+  setSyncStatus("🔄 保存済みデータを壊さず共有準備中…","");
+  preparationRef.once("value").then(s=>{
+    state=mergeStates(state,s.val());saveLocal();return preparationRef.set(state);
+  }).then(()=>{
+    remoteReady=true;renderCommon();renderItems();renderHistory();
+    setSyncStatus("✅ 既存データを保持して全員共有中","ok");
+    preparationRef.on("value",s=>{
+      const merged=mergeStates(state,s.val());
+      if(JSON.stringify(merged)===JSON.stringify(state))return;
+      applyingRemote=true;state=merged;saveLocal();renderCommon();renderItems();renderHistory();applyingRemote=false;
+    },err=>{console.error(err);setSyncStatus("⚠️ 共有読込に失敗しました。端末内データは保護されています","error")});
+  }).catch(err=>{
+    console.error(err);remoteReady=false;saveLocal();renderCommon();renderItems();renderHistory();
+    setSyncStatus("⚠️ 共有接続できません。既存データは端末内に残っています","error");
+  });
+}
 function val(id){return document.getElementById(id)?.value||""}
 function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??""}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
@@ -254,7 +335,7 @@ function restoreHistory(id){
   save();renderItems();jump("listSec")
 }
 function deleteHistory(id){if(confirm("この履歴を削除しますか？")){state.history=state.history.filter(x=>x.id!==id);save();renderHistory()}}
-function boot(){load();renderCategories();renderCommon();renderItems();renderHistory();setVal("eventDate",val("eventDate")||today())}
+function boot(){load();renderCategories();renderCommon();renderItems();renderHistory();setVal("eventDate",val("eventDate")||today());startSafeSync()}
 boot();
 </script>
 </body>
