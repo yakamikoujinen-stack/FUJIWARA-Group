@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="月別ネタ表">
 <meta name="theme-color" content="#b8860b">
-<title>FUJIWARA 月別イベント・ネタ一覧表 v2</title>
+<title>FUJIWARA 月別イベント・ネタ一覧表 v2.1</title>
 <style>
 :root{
   --gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;
@@ -41,7 +41,7 @@ th:nth-child(2),td:nth-child(2){position:sticky;left:72px;z-index:4;background:#
 th:nth-child(3),td:nth-child(3){position:sticky;left:252px;z-index:4;background:#fffdf6}
 th:first-child,th:nth-child(2),th:nth-child(3){z-index:7}
 .date-col{min-width:72px}.event-col{min-width:180px;text-align:left}.type-col{min-width:64px;font-weight:950}
-.event-name{font-weight:950}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
+.event-name{font-weight:950}.event-link{cursor:pointer;border-radius:9px;padding:5px;margin:-5px}.event-link:active{background:#fff0bd}.event-meta{font-size:10px;color:var(--sub);line-height:1.4;margin-top:3px}
 .neta-head{
   min-width:116px;
   max-width:116px;
@@ -131,7 +131,7 @@ justify-content:center;gap:8px;z-index:25}
 </div></div>
 
 <header><div class="head">
-<div><div class="brand">📊 月別イベント・ネタ一覧表 <small style="font-size:11px">開発版 v2</small></div><div class="sub">出店○／数量入力／▼でネタ買い物一覧へ</div></div>
+<div><div class="brand">📊 月別イベント・ネタ一覧表 <small style="font-size:11px">開発版 v2.1</small></div><div class="sub">出店○／数量入力／▼でネタ買い物一覧へ</div></div>
 <div id="roleBadge" class="role">確認中</div>
 </div></header>
 
@@ -228,14 +228,28 @@ function render(){
  netas.forEach(n=>x+=`<th class="neta-head">${esc(n)}</th>`);x+="</tr></thead><tbody>";
  list.forEach(ev=>{
   const names=eventNeta(ev),date=String(ev.date||""),dl=date?`${Number(date.slice(5,7))}/${Number(date.slice(8,10))}`:"";
-  x+=`<tr><td rowspan="2">${esc(dl)}</td><td rowspan="2" class="event-col"><div class="event-name">${esc(ev.name||"名称未設定")}</div><div class="event-meta">${esc(ev.place||"会場未設定")}</div></td><td class="type-col">出店</td>`;
+  x+=`<tr><td rowspan="2">${esc(dl)}</td><td rowspan="2" class="event-col"><div class="event-link" role="button" tabindex="0" onclick='openEvent(${JSON.stringify(String(ev.id||""))})'><div class="event-name">${esc(ev.name||"名称未設定")}</div><div class="event-meta">${esc(ev.place||"会場未設定")}　<span style="color:#b8860b;font-weight:900">タップで詳細</span></div></div></td><td class="type-col">出店</td>`;
   netas.forEach(n=>x+=names.includes(n)?`<td><span class="mark">○</span><br><button class="drop" onclick='openNeta(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)})'>▼</button></td>`:"<td></td>");
   x+="</tr><tr><td class='type-col'>数量</td>";
   netas.forEach(n=>x+=names.includes(n)?`<td><input class="qty-input" type="number" min="0" value="${esc(getQty(ev,n))}" oninput='saveQty(${JSON.stringify(String(ev.id||""))},${JSON.stringify(n)},this.value)'></td>`:"<td></td>");
   x+="</tr>";
  });x+="</tbody>";t.innerHTML=x;
 }
+function setSelectedEventForShopping(eventId,neta){
+ try{
+  const key="fujiwara_neta_powerup_v25";
+  const current=JSON.parse(localStorage.getItem(key)||"{}");
+  current.eventId=String(eventId||"");
+  if(neta)current.selected=[String(neta)];
+  localStorage.setItem(key,JSON.stringify(current));
+ }catch(e){console.error(e)}
+}
+function openEvent(eventId){
+ setSelectedEventForShopping(eventId,"");
+ location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&from=matrix&role=${encodeURIComponent(role)}`;
+}
 function openNeta(eventId,neta){
+ setSelectedEventForShopping(eventId,neta);
  location.href=`neta-shopping-list.html?eventId=${encodeURIComponent(eventId)}&neta=${encodeURIComponent(neta)}&from=matrix&role=${encodeURIComponent(role)}`;
 }
 function changeMonth(d){let y=+yearSelect.value,m=+monthSelect.value+d;if(m<1){m=12;y--}if(m>12){m=1;y++}
