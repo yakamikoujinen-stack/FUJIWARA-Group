@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.13</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.14 日別スタッフ管理</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -493,6 +493,14 @@ body::before,#app::before,.page::before{
 .purchase-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
 
 
+/* ===== v4.3.14 複数日イベント・日別スタッフ管理 ===== */
+.day-staff-box{background:#fff8df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:10px 0;}
+.day-staff-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:14px;font-weight:900;color:#241900;}
+.day-staff-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.day-staff-chip{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:#fff;border:1px solid #d8bf75;padding:6px 9px;border-radius:9px;}
+.day-staff-summary{font-size:11px;color:#6d5a2b;margin-top:7px;line-height:1.6;}
+.day-badge{display:inline-block;font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px;background:#fff3d6;border:1px solid #d8bf75;color:#4d3a00;margin:2px 3px 2px 0;}
+
 /* ===== partner共有状態ボタン ===== */
 .btn-partner-shared{
   background:linear-gradient(135deg,#35b96f,#168a58)!important;
@@ -862,8 +870,8 @@ body::before,#app::before,.page::before{
     <input type="hidden" id="ef-id">
     <div class="fg"><label>イベント名 *</label><input type="text" id="ef-name" placeholder="例: 春の文化祭"></div>
     <div class="fg2">
-      <div class="fg"><label>開始日 *</label><input type="date" id="ef-date"></div>
-      <div class="fg"><label>終了日（複数日の場合）</label><input type="date" id="ef-date-end"></div>
+      <div class="fg"><label>開始日 *</label><input type="date" id="ef-date" onchange="renderEventDayStaffEditor()"></div>
+      <div class="fg"><label>終了日（複数日の場合）</label><input type="date" id="ef-date-end" onchange="renderEventDayStaffEditor()"></div>
     </div>
     <div class="fg2">
       <div class="fg"><label>発注先</label>
@@ -880,6 +888,11 @@ body::before,#app::before,.page::before{
     <div class="fg"><label>当日体制（必要人数）</label><input type="number" id="ef-required-staff" min="0" placeholder="例: 6"></div>
     <div class="fg"><label>担当スタッフ</label>
       <div id="ef-staff-checks" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+    </div>
+    <div class="fg" id="ef-day-staff-section" style="display:none">
+      <label>📅 日ごとの出勤スタッフ</label>
+      <div class="staff-portal-note">複数日開催の場合、各日ごとにスタッフと必要人数を設定できます。ここを設定した日は、上の「担当スタッフ」より日別設定を優先します。</div>
+      <div id="ef-day-staff-list"></div>
     </div>
     <!-- シークレットイベントチェック -->
     <div class="fg">
@@ -1662,13 +1675,10 @@ function getEventAvailability(ev){
   return ev.availability;
 }
 function getMyAvailability(ev){
-  var av=getEventAvailability(ev);
-  return av[userName] || '';
+  var ds=selDate||ev.date;
+  return getMyAvailabilityForDate(ev,ds);
 }
-function setMyAvailability(ev, val){
-  var av=getEventAvailability(ev);
-  av[userName]=val;
-}
+function setMyAvailability(ev, val, ds){ setMyAvailabilityForDate(ev,ds||selDate||ev.date,val); }
 function countAvailability(ev){
   var av=getEventAvailability(ev);
   var r={ok:0, maybe:0, no:0};
@@ -1731,31 +1741,32 @@ function openQuickAttendance(){
       +evs.map(function(ev){
         return '<div class="notice-card">'
           +'<div style="font-size:14px;font-weight:900;margin-bottom:5px">'+ev.name+'</div>'
-          +'<div class="ev-meta">現在：'+availabilityMark(getMyAvailability(ev))+' '+availabilityLabel(getMyAvailability(ev))+'</div>'
+          +'<div class="ev-meta">現在：'+availabilityMark(getMyAvailabilityForDate(ev,ds))+' '+availabilityLabel(getMyAvailabilityForDate(ev,ds))+'</div>'
           +'<div class="ev-actions" style="margin-top:10px">'
-          +'<button class="btn btn-green btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'ok\');openQuickAttendance()">⭕ 出勤可</button>'
-          +'<button class="btn btn-outline btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'maybe\');openQuickAttendance()">△ 未定</button>'
-          +'<button class="btn btn-danger btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'no\');openQuickAttendance()">❌ 不可</button>'
+          +'<button class="btn btn-green btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'ok\',\''+ds+'\');openQuickAttendance()">⭕ 出勤可</button>'
+          +'<button class="btn btn-outline btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'maybe\',\''+ds+'\');openQuickAttendance()">△ 未定</button>'
+          +'<button class="btn btn-danger btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'no\',\''+ds+'\');openQuickAttendance()">❌ 不可</button>'
           +'</div></div>';
       }).join('');
   }
   openModal('modal-quick-attendance');
 }
 
-function saveAvailability(eventId, val){
+function saveAvailability(eventId, val, ds){
   var ev=null;
   for(var i=0;i<state.events.length;i++){
     if(String(state.events[i].id)===String(eventId)){ ev=state.events[i]; break; }
   }
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
-  setMyAvailability(ev, val);
-  if(typeof addAudit==='function') addAudit('出勤可否登録', ev.name+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
+  ds=ds||selDate||ev.date;
+  setMyAvailability(ev, val, ds);
+  if(typeof addAudit==='function') addAudit('出勤可否登録', ev.name+'｜'+ds+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
   renderCalendar();
   renderEventList();
   renderHome();
   toast('✅ 出勤可否を保存しました');
   fbSave();
-  notifyLeaderEmail('出欠', (ev.name||'イベント名未設定')+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
+  notifyLeaderEmail('出欠', (ev.name||'イベント名未設定')+'｜'+ds+'｜'+availabilityMark(val)+' '+availabilityLabel(val));
 }
 
 
@@ -1846,7 +1857,7 @@ function renderCalendar() {
     var evs=byDate[ds]||[];
     var evNames=evs.slice(0,2).map(function(ev){
       var shortage=getStaffShortage(ev);
-      var required=parseInt(ev.requiredStaff)||0;
+      var required=getEventRequiredStaffForDate(ev,ds);
       var assigned=getAssignedStaffCount(ev);
 
       var bg=ev.zone==='B'?'rgba(46,204,138,.25)':'rgba(200,168,75,.25)';
@@ -2209,7 +2220,9 @@ function renderEventList(dateFilter) {
     var sClass=ev.status==='active'?'s-active':ev.status==='done'?'s-done':'s-planned';
     var sLabel=ev.status==='active'?'開催中':ev.status==='done'?'終了':'予定';
     var borderColor=ev.zone==='B'?'var(--green)':'var(--gold)';
-    var staffStr=Array.isArray(ev.staff)?ev.staff.join('・'):'未設定';
+    var displayDs=dateFilter||ev.date;
+    var displayStaff=getEventStaffForDate(ev,displayDs);
+    var staffStr=displayStaff.length?displayStaff.join('・'):'未設定';
     var memoHtml=ev.memo?'<span class="ev-zone" style="background:rgba(119,119,160,.1);color:var(--text2);border-color:var(--border)">📝 '+ev.memo+'</span>':'';
 
     var actionsHtml='';
@@ -2236,12 +2249,12 @@ function renderEventList(dateFilter) {
     if(typeof renderAvailabilitySummary==='function'){
       if(role!=='leader'){
         availabilityHtml='<div class="ev-actions" onclick="event.stopPropagation()" style="margin-top:8px">'
-          +'<button class="btn btn-green btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'ok\')">⭕ 出勤可</button>'
-          +'<button class="btn btn-outline btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'maybe\')">△ 未定</button>'
-          +'<button class="btn btn-danger btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'no\')">❌ 不可</button>'
+          +'<button class="btn btn-green btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'ok\',\''+displayDs+'\')">⭕ 出勤可</button>'
+          +'<button class="btn btn-outline btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'maybe\',\''+displayDs+'\')">△ 未定</button>'
+          +'<button class="btn btn-danger btn-sm" onclick="saveAvailability(\''+ev.id+'\',\'no\',\''+displayDs+'\')">❌ 不可</button>'
           +'</div>';
       } else {
-        var av=ev.availability||{};
+        var av=getEventAvailabilityForDate(ev,displayDs);
         var ok=[], maybe=[], no=[];
         Object.keys(av).forEach(function(n){
           if(av[n]==='ok') ok.push(n);
@@ -2256,12 +2269,12 @@ function renderEventList(dateFilter) {
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
-      +'<div class="ev-meta">👥 担当 '+staffStr+(ev.requiredStaff?'　🧑‍🍳 体制 '+ev.requiredStaff+'人':'')+'</div>'
-      +(typeof renderAvailabilitySummary==='function'?'<div class="ev-meta">出勤回答 '+renderAvailabilitySummary(ev)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailability(ev)):'')+'</div>':'')
+      +'<div class="ev-meta">👥 担当 '+staffStr+(getEventRequiredStaffForDate(ev,displayDs)?'　🧑‍🍳 体制 '+getEventRequiredStaffForDate(ev,displayDs)+'人':'')+'</div>'
+      +(typeof renderAvailabilitySummary==='function'?'<div class="ev-meta">出勤回答 '+renderAvailabilitySummaryForDate(ev,displayDs)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailabilityForDate(ev,displayDs)):'')+'</div>':'')
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
       +'<span class="status-badge '+sClass+'">'+sLabel+'</span>'
-      +(role==='leader'&&typeof renderAvailabilitySummary==='function'?'<span style="font-size:10px;font-weight:900">'+renderAvailabilitySummary(ev)+'</span>':'')
+      +(role==='leader'&&typeof renderAvailabilitySummary==='function'?'<span style="font-size:10px;font-weight:900">'+renderAvailabilitySummaryForDate(ev,displayDs)+'</span>':'')
       +'<span style="font-size:10px;color:var(--gold)">📋 詳細</span>'
       +'</div></div>'
       +availabilityHtml
@@ -2288,9 +2301,10 @@ function openBSheet(id) {
   var helper=ev.bsHelper||'未設定';
   var collectTime=ev.memo&&ev.memo.includes('集合')?ev.memo:'8:00集合';
 
-  // Bシート人員体制：必要人数・配置人数・不足人数を自動計算
-  var required=parseInt(ev.requiredStaff)||0;
-  var staffList=Array.isArray(ev.staff)?ev.staff:[];
+  // Bシート人員体制：カレンダーで選んだ日の日別設定を優先
+  var bsDate=(selDate && dateListForEvent(ev).indexOf(selDate)>=0)?selDate:ev.date;
+  var required=getEventRequiredStaffForDate(ev,bsDate);
+  var staffList=getEventStaffForDate(ev,bsDate);
   var assigned=staffList.length;
   if(ev.bsLeader && staffList.indexOf(ev.bsLeader)<0) assigned++;
   if(ev.bsHelper && staffList.indexOf(ev.bsHelper)<0) assigned++;
@@ -2642,19 +2656,22 @@ function renderStaffRouteList(name){
   var body=document.getElementById('staff-route-list-body');
   if(!body) return;
   var todayISO=(new Date()).toISOString().slice(0,10);
-  var evs=(state.events||[]).filter(function(ev){
-    if(isSecretEvent(ev) && !(role==='leader'||role==='staff')) return false;
-    if(!eventHasStaffRouteName(ev,name)) return false;
-    var last=ev.dateEnd && ev.dateEnd>ev.date ? ev.dateEnd : ev.date;
-    return !last || last>=todayISO;
-  }).sort(function(a,b){ return String(a.date||'').localeCompare(String(b.date||'')); });
+  var evs=[];
+  (state.events||[]).forEach(function(ev){
+    if(isSecretEvent(ev) && !(role==='leader'||role==='staff')) return;
+    dateListForEvent(ev).forEach(function(ds){
+      if(ds>=todayISO && getEventStaffForDate(ev,ds).some(function(x){return normalizeAccessName(x)===normalizeAccessName(name);})) evs.push({ev:ev,ds:ds});
+    });
+  });
+  evs.sort(function(a,b){ return String(a.ds).localeCompare(String(b.ds)); });
   if(!evs.length){
     body.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>'+escHtml(name)+' さんの今後の担当イベントはありません</p></div>';
     return;
   }
   body.innerHTML='<div class="staff-portal-note">'+escHtml(name)+' さんが担当に入っているイベントだけ表示中</div>'+
-    '<div class="staff-portal-list">'+evs.map(function(ev){
-      var date=escHtml(formatRouteDate(ev));
+    '<div class="staff-portal-list">'+evs.map(function(entry){
+      var ev=entry.ev, ds=entry.ds;
+      var date=escHtml(ds);
       var place=ev.place ? '📍 '+escHtml(ev.place) : '📍 場所未設定';
       var zone=ev.zone ? '　区分：'+escHtml(ev.zone) : '';
       var memo=ev.memo ? '<div class="staff-route-meta">📝 '+escHtml(ev.memo)+'</div>' : '';
@@ -2675,6 +2692,72 @@ function formatRouteDate(ev){
 function escHtml(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function escAttr(v){ return escHtml(v).replace(/`/g,'&#96;'); }
 
+
+// ════ DAY-BY-DAY STAFF HELPERS ════
+var eventDayStaffDraft={};
+function getEventDayRecord(ev, ds){
+  var map=(ev&&ev.dayAssignments&&typeof ev.dayAssignments==='object')?ev.dayAssignments:{};
+  var rec=map[ds]||{};
+  return {
+    staff:Array.isArray(rec.staff)?rec.staff.slice():(Array.isArray(ev&&ev.staff)?ev.staff.slice():[]),
+    requiredStaff:(rec.requiredStaff!==undefined&&rec.requiredStaff!==null&&rec.requiredStaff!=='')?(parseInt(rec.requiredStaff)||0):(parseInt(ev&&ev.requiredStaff)||0)
+  };
+}
+function getEventStaffForDate(ev, ds){ return getEventDayRecord(ev,ds).staff; }
+function getEventRequiredStaffForDate(ev, ds){ return getEventDayRecord(ev,ds).requiredStaff; }
+function getEventAvailabilityForDate(ev, ds){
+  if(ev&&ev.dayAvailability&&ev.dayAvailability[ds]) return ev.dayAvailability[ds];
+  return (ev&&ev.availability)||{};
+}
+function getMyAvailabilityForDate(ev,ds){ return getEventAvailabilityForDate(ev,ds)[userName]||''; }
+function setMyAvailabilityForDate(ev,ds,val){
+  if(!ev.dayAvailability||typeof ev.dayAvailability!=='object') ev.dayAvailability={};
+  if(!ev.dayAvailability[ds]||typeof ev.dayAvailability[ds]!=='object') ev.dayAvailability[ds]={};
+  ev.dayAvailability[ds][userName]=val;
+}
+function syncEventDayStaffDraftFromDom(){
+  document.querySelectorAll('#ef-day-staff-list .day-staff-box').forEach(function(box){
+    var ds=box.getAttribute('data-date'); if(!ds)return;
+    var staff=[];
+    box.querySelectorAll('input[type=checkbox]:checked').forEach(function(c){staff.push(c.value);});
+    var req=box.querySelector('input[type=number]');
+    eventDayStaffDraft[ds]={staff:staff,requiredStaff:parseInt(req&&req.value)||0};
+  });
+}
+function renderEventDayStaffEditor(){
+  syncEventDayStaffDraftFromDom();
+  var start=document.getElementById('ef-date').value;
+  var end=document.getElementById('ef-date-end').value;
+  var sec=document.getElementById('ef-day-staff-section');
+  var list=document.getElementById('ef-day-staff-list');
+  if(!start||!end||end<=start){ sec.style.display='none'; list.innerHTML=''; return; }
+  var dates=dateListForEvent({date:start,dateEnd:end});
+  sec.style.display='';
+  list.innerHTML=dates.map(function(ds){
+    var rec=eventDayStaffDraft[ds]||{staff:[],requiredStaff:0};
+    var chips=(state.staffList||[]).map(function(name){
+      var chk=rec.staff.indexOf(name)>=0?'checked':'';
+      return '<label class="day-staff-chip"><input type="checkbox" value="'+escAttr(name)+'" '+chk+' style="width:auto;margin:0"> '+escHtml(name)+'</label>';
+    }).join('');
+    return '<div class="day-staff-box" data-date="'+ds+'"><div class="day-staff-head"><span>📅 '+ds.slice(5).replace('-','/')+'</span><span class="day-badge">日別設定</span></div>'+
+      '<div class="fg"><label>必要人数</label><input type="number" min="0" value="'+(rec.requiredStaff||0)+'" placeholder="例：6"></div>'+
+      '<div class="day-staff-grid">'+chips+'</div></div>';
+  }).join('');
+}
+
+function renderAvailabilitySummaryForDate(ev,ds){
+  var av=getEventAvailabilityForDate(ev,ds), r={ok:0,maybe:0,no:0};
+  Object.keys(av).forEach(function(k){ if(av[k]==='ok')r.ok++; else if(av[k]==='maybe')r.maybe++; else if(av[k]==='no')r.no++; });
+  return '<span style="font-size:10px;color:var(--green);font-weight:900">⭕'+r.ok+'</span> '
+    +'<span style="font-size:10px;color:var(--gold2);font-weight:900">△'+r.maybe+'</span> '
+    +'<span style="font-size:10px;color:var(--red);font-weight:900">❌'+r.no+'</span>';
+}
+
+function dayStaffSummaryHtml(ev,ds){
+  var rec=getEventDayRecord(ev,ds);
+  return '<span class="day-badge">👥 '+rec.staff.length+'人'+(rec.requiredStaff?' / 必要'+rec.requiredStaff+'人':'')+'</span>';
+}
+
 // ════ EVENT FORM ════
 function openEventForm(id) {
   if(role==='user'){ toast('⛔ 権限がありません'); return; }
@@ -2690,6 +2773,9 @@ function openEventForm(id) {
   document.getElementById('ef-memo').value=ev?ev.memo:'';
   document.getElementById('ef-items-text').value=ev?ev.itemsText||'':'';
   document.getElementById('ef-date-end').value=ev?ev.dateEnd||'':'';
+  document.getElementById('ef-required-staff').value=ev?(parseInt(ev.requiredStaff)||0):'';
+  eventDayStaffDraft={};
+  if(ev&&ev.dayAssignments){ Object.keys(ev.dayAssignments).forEach(function(ds){ var r=ev.dayAssignments[ds]||{}; eventDayStaffDraft[ds]={staff:Array.isArray(r.staff)?r.staff.slice():[],requiredStaff:parseInt(r.requiredStaff)||0}; }); }
   document.getElementById('ef-del-btn').style.display=ev?'':'none';
   // シークレットイベントの状態を反映
   var secretChk=document.getElementById('ef-secret');
@@ -2698,6 +2784,7 @@ function openEventForm(id) {
     var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
     return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' style="width:auto;margin:0"> '+s+'</label>';
   }).join('');
+  renderEventDayStaffEditor();
   openModal('modal-event-form');
 }
 
@@ -2707,6 +2794,7 @@ function saveEventForm() {
   if(!name||!date){ toast('⚠️ イベント名と日付は必須です'); return; }
   var staff=[];
   document.querySelectorAll('#ef-staff-checks input:checked').forEach(function(c){ staff.push(c.value); });
+  syncEventDayStaffDraftFromDom();
   var rawId=document.getElementById('ef-id').value;
   var data={
     name:name,
@@ -2719,6 +2807,7 @@ function saveEventForm() {
     memo:document.getElementById('ef-memo').value,
     itemsText:document.getElementById('ef-items-text').value.trim(),
     staff:staff,
+    dayAssignments:(function(){ var out={}; var dates=dateListForEvent({date:date,dateEnd:document.getElementById('ef-date-end').value||''}); dates.forEach(function(ds){ if(eventDayStaffDraft[ds]) out[ds]={staff:(eventDayStaffDraft[ds].staff||[]).slice(),requiredStaff:parseInt(eventDayStaffDraft[ds].requiredStaff)||0}; }); return out; })(),
     items:[],
     // シークレットイベント設定
     secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
@@ -3522,10 +3611,14 @@ function renderEventStaffListTo(targetId){
     return d ? d < today : false;
   }
 
-  var events=(state.events||[]).slice().sort(function(a,b){
-    var ae=isEndedEvent(a), be=isEndedEvent(b);
-    if(ae!==be) return ae?1:-1; // 今後→終了の順
-    return String(a.date||'').localeCompare(String(b.date||''));
+  var events=[];
+  (state.events||[]).forEach(function(ev){
+    dateListForEvent(ev).forEach(function(ds){ events.push({ev:ev,ds:ds}); });
+  });
+  events.sort(function(a,b){
+    var ae=toDateOnly(a.ds)<today, be=toDateOnly(b.ds)<today;
+    if(ae!==be) return ae?1:-1;
+    return String(a.ds).localeCompare(String(b.ds));
   });
   if(!events.length){
     el.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text2)">イベント未登録</div>';
@@ -3534,15 +3627,16 @@ function renderEventStaffListTo(targetId){
 
   var html='';
   var wroteActive=false, wroteEnded=false;
-  events.forEach(function(ev){
-    var ended=isEndedEvent(ev);
+  events.forEach(function(entry){
+    var ev=entry.ev, ds=entry.ds;
+    var ended=(ev.status==='done'||ev.status==='ended'||ev.finished===true)||(toDateOnly(ds)<today);
     if(!ended && !wroteActive){ html+='<div class="att-section-title">これからのイベント</div>'; wroteActive=true; }
     if(ended && !wroteEnded){ html+='<div class="att-section-title ended">終了したイベント</div>'; wroteEnded=true; }
 
-    var staff=Array.isArray(ev.staff)?ev.staff.slice():[];
+    var staff=getEventStaffForDate(ev,ds).slice();
     if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
     if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
-    var av=ev.availability||{};
+    var av=getEventAvailabilityForDate(ev,ds);
     var ok=[], maybe=[], no=[], unanswered=[];
     staff.forEach(function(name){
       if(av[name]==='ok') ok.push(name);
@@ -3550,10 +3644,10 @@ function renderEventStaffListTo(targetId){
       else if(av[name]==='no') no.push(name);
       else unanswered.push(name);
     });
-    var required=parseInt(ev.requiredStaff)||0;
+    var required=getEventRequiredStaffForDate(ev,ds);
     var shortage=required ? Math.max(required-staff.length,0) : 0;
-    var dateText=String(ev.date||'').slice(5).replace('-','/');
-    var endText=ev.dateEnd ? '〜'+String(ev.dateEnd).slice(5).replace('-','/') : '';
+    var dateText=String(ds||'').slice(5).replace('-','/');
+    var endText='';
     var staffText=staff.length ? staff.map(escHtml).join('・') : '<span style="color:var(--red);font-weight:900">未設定</span>';
     var okText=ok.length ? ok.map(escHtml).join('・') : 'なし';
     var maybeText=maybe.length ? maybe.map(escHtml).join('・') : 'なし';
