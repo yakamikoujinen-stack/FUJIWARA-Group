@@ -1188,6 +1188,7 @@ var NAV = {
   ],
   user:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
+    {id:'attendance', icon:'👥', label:'日別出勤表'},
     {id:'home',     icon:'🏠', label:'ホーム'},
   ],
 };
@@ -1631,8 +1632,8 @@ function showPage(id) {
     toast('⛔ 売上・経費は許可された人だけ閲覧できます');
     id='calendar';
   }
-  if(id==='attendance' && role!=='leader'){
-    toast('⛔ スタッフ出勤一覧はリーダー専用です');
+  if(id==='attendance' && role!=='leader' && role!=='user'){
+    toast('⛔ 日別出勤表はリーダー・一般ユーザー用です');
     id='calendar';
   }
   if(id==='sales') renderSalesPage();
@@ -3582,13 +3583,17 @@ function escHtml(s){
 function renderAttendancePage(){
   var lock=document.getElementById('attendance-lock');
   var content=document.getElementById('attendance-content');
-  if(role!=='leader'){
-    if(lock) lockSection('attendance-lock','スタッフ出勤一覧はリーダー専用です');
+  if(role!=='leader' && role!=='user'){
+    if(lock) lockSection('attendance-lock','日別出勤表はリーダー・一般ユーザー用です');
     if(content) content.style.display='none';
     return;
   }
   if(lock) lock.innerHTML='';
   if(content) content.style.display='';
+  var title=document.querySelector('#page-attendance .page-title');
+  var sub=document.querySelector('#page-attendance .page-sub');
+  if(title) title.textContent=role==='user'?'👥 日別出勤表':'👥 スタッフ出勤一覧';
+  if(sub) sub.textContent=role==='user'?'連日イベントも、日付ごとの出勤スタッフを確認できます。':'イベントごとの参加スタッフ・出勤回答・未回答を確認できます。';
   renderEventStaffListTo('attendance-list-area');
 }
 
@@ -3613,6 +3618,7 @@ function renderEventStaffListTo(targetId){
 
   var events=[];
   (state.events||[]).forEach(function(ev){
+    if(role==='user' && isSecretEvent(ev)) return;
     dateListForEvent(ev).forEach(function(ds){ events.push({ev:ev,ds:ds}); });
   });
   events.sort(function(a,b){
@@ -3667,7 +3673,8 @@ function renderEventStaffListTo(targetId){
         +badge
       +'</div>'
       +'<div style="margin-top:8px;font-size:12px;line-height:1.8">'
-        +'<div><b>参加スタッフ：</b>'+staffText+'</div>'
+        +'<div><b>この日の出勤スタッフ：</b>'+staffText+'</div>'
+        +(required?'<div><b>必要人数：</b>'+required+'人　<b>配置人数：</b>'+staff.length+'人</div>':'')
         +'<div><b>⭕ 出勤可：</b><span style="color:var(--green);font-weight:900">'+okText+'</span></div>'
         +'<div><b>△ 未定：</b><span style="color:var(--gold);font-weight:900">'+maybeText+'</span></div>'
         +'<div><b>❌ 出勤不可：</b><span style="color:var(--red);font-weight:900">'+noText+'</span></div>'
