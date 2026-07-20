@@ -1906,11 +1906,28 @@ function prepSafeKey(v){ return String(v||'').replace(/[.#$\[\]\/]/g,'_'); }
 function getPrepSharedLocal(){ try{return JSON.parse(localStorage.getItem(PREPARATION_SHARE_LOCAL_KEY)||'{}')||{};}catch(e){return{};} }
 function savePrepSharedLocal(obj){ localStorage.setItem(PREPARATION_SHARE_LOCAL_KEY,JSON.stringify(obj||{})); }
 function isEventSharedToPreparation(id){ return !!getPrepSharedLocal()[String(id)]; }
+var PREPARATION_CATEGORY_ALIASES={
+  'チーズハットグ':['チーズハットグ','ハットグ'],
+  'ポテト':['ポテト','フライドポテト'],
+  '牛串':['牛串','牛肉串'],
+  'からあげ':['からあげ','唐揚げ','唐揚'],
+  'かき氷':['かき氷','カキ氷','かきごおり'],
+  'いか焼き':['いか焼き','イカ焼き','いか焼','イカ焼'],
+  'カステラ':['カステラ','ベビーカステラ'],
+  'りんご飴':['りんご飴','リンゴ飴','りんごあめ']
+};
+function extractPreparationCategories(text){
+  var raw=String(text||'').replace(/[　\s]+/g,'');
+  return Object.keys(PREPARATION_CATEGORY_ALIASES).filter(function(cat){
+    return PREPARATION_CATEGORY_ALIASES[cat].some(function(alias){return raw.indexOf(String(alias).replace(/[　\s]+/g,''))!==-1;});
+  });
+}
 function buildPreparationShareData(ev){
+  var itemsText=ev.itemsText||ev.itemsName||ev.menu||'';
   return {
     id:String(ev.id||''), mainId:String(ev.id||''), name:ev.name||'イベント', date:ev.date||'', endDate:ev.endDate||'',
     place:ev.place||'', vehicle:ev.vehicle||'', staff:Array.isArray(ev.staff)?ev.staff:[],
-    itemsText:ev.itemsText||ev.itemsName||ev.menu||'', memo:ev.memo||'', zone:ev.zone||'', status:ev.status||'planned',
+    itemsText:itemsText, categories:extractPreparationCategories(itemsText), memo:ev.memo||'', zone:ev.zone||'', status:ev.status||'planned',
     sharedAt:new Date().toISOString(), sharedBy:(typeof loginName!=='undefined'?loginName:'メインアプリ')
   };
 }

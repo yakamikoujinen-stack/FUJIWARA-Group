@@ -293,22 +293,45 @@ function goBack(){if(!get("editor").classList.contains("hidden"))showEventList()
 const PREPARATION_FB_PATH="fujiwara/preparation_shared_events";
 let sharedEvents={};
 function splitMenus(text){ return String(text||'').split(/[・、,\/\n]+/).map(x=>x.trim()).filter(Boolean); }
+const CATEGORY_ALIASES={
+ 'チーズハットグ':['チーズハットグ','ハットグ'],
+ 'ポテト':['ポテト','フライドポテト'],
+ '牛串':['牛串','牛肉串'],
+ 'からあげ':['からあげ','唐揚げ','唐揚'],
+ 'かき氷':['かき氷','カキ氷','かきごおり'],
+ 'いか焼き':['いか焼き','イカ焼き','いか焼','イカ焼'],
+ 'カステラ':['カステラ','ベビーカステラ'],
+ 'りんご飴':['りんご飴','リンゴ飴','りんごあめ']
+};
 function categoryFromMenu(name){
- const keys=Object.keys(CATEGORY_ITEMS); return keys.find(k=>name.includes(k)||k.includes(name))||null;
+ const raw=String(name||'').replace(/[\s　]+/g,'');
+ return Object.keys(CATEGORY_ITEMS).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||null;
+}
+function categoriesFromShared(src){
+ const direct=Array.isArray(src.categories)?src.categories.filter(c=>CATEGORY_ITEMS[c]):[];
+ if(direct.length)return [...new Set(direct)];
+ return [...new Set(splitMenus(src.itemsText).map(categoryFromMenu).filter(Boolean))];
 }
 function renderSharedEvents(){
  const box=get("sharedEventList"); if(!box)return;
  const list=Object.values(sharedEvents||{}).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
  if(!list.length){box.innerHTML='<div class="empty">共有されたイベントはまだありません。</div>';return;}
- box.innerHTML=list.map(e=>`<div class="event-card"><div class="event-head"><div><div class="event-title">${esc(e.name||'名称未入力')}</div><div class="event-meta">${esc(e.date||'日付未入力')}｜${esc(e.place||'会場未入力')}<br>出店ネタ：${esc(e.itemsText||'未設定')}</div></div><button class="gold" onclick="importSharedEvent('${esc(String(e.mainId||e.id))}')">準備表を作る</button></div></div>`).join('');
+ box.innerHTML=list.map(e=>{const cats=categoriesFromShared(e);return `<div class="event-card"><div class="event-head"><div><div class="event-title">${esc(e.name||'名称未入力')}</div><div class="event-meta">${esc(e.date||'日付未入力')}｜${esc(e.place||'会場未入力')}<br>出店ネタ：${esc(e.itemsText||'未設定')}<br>準備カテゴリー：${esc(cats.join('・')||'該当なし')}</div></div><button class="gold" onclick="importSharedEvent('${esc(String(e.mainId||e.id))}')">準備表を作る</button></div></div>`}).join('');
 }
 function importSharedEvent(mainId){
  const src=Object.values(sharedEvents).find(x=>String(x.mainId||x.id)===String(mainId)); if(!src)return;
  let e=db.events.find(x=>String(x.sourceMainId||'')===String(mainId));
  if(!e){ e=blankEvent(); e.sourceMainId=String(mainId); db.events.push(e); }
  e.name=src.name||e.name; e.date=src.date||e.date; e.place=src.place||e.place; e.vehicle=src.vehicle||e.vehicle; e.memo=src.memo||e.memo; e.staff=(Array.isArray(src.staff)&&src.staff.length?src.staff.join('・'):'繁充');
- const menus=splitMenus(src.itemsText); menus.forEach(m=>{ const c=categoryFromMenu(m); if(c) CATEGORY_ITEMS[c].forEach(x=>addItemToEvent(e,x[0],x[1],c)); });
- e.updatedAt=Date.now(); persist(); openEvent(e.id); toast('共有イベントの準備表を作りました');
+ const cats=categoriesFromShared(src);
+ // メインアプリ由来のカテゴリーだけを最新状態へ同期し、手動追加・共通備品・チェック状態は残します。
+ const oldByKey={}; (e.items||[]).forEach(it=>{oldByKey[(it.category||'')+'||'+(it.name||'')]=it;});
+ e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
+ cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
+   const key=c+'||'+x[0], old=oldByKey[key];
+   e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
+ }));
+ e.sharedCategories=cats; e.updatedAt=Date.now(); persist(); openEvent(e.id); toast('出店ネタと準備カテゴリーを共有しました');
 }
 function addItemToEvent(e,name,qty,category){
  const exists=(e.items||[]).find(x=>x.name===name&&x.category===category);
