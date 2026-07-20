@@ -56,6 +56,8 @@ textarea{min-height:70px;resize:vertical}
  .item-row .checker{grid-column:2/4}
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
@@ -68,6 +70,8 @@ textarea{min-height:70px;resize:vertical}
     <button class="primary" onclick="newEvent()">＋ 新しいイベントを作る</button>
   </div>
   <div id="eventList" class="event-list" style="margin-top:12px"></div>
+  <h2 style="margin-top:18px">メインアプリから共有されたイベント</h2>
+  <div id="sharedEventList" class="event-list"></div>
 </section>
 
 <div id="editor" class="hidden">
@@ -285,7 +289,40 @@ function renderItems(){
 }
 function goBack(){if(!get("editor").classList.contains("hidden"))showEventList();else if(history.length>1)history.back();else location.href="manager-app.html"}
 
-loadDB();renderCategories();renderEventList();
+
+const PREPARATION_FB_PATH="fujiwara/preparation_shared_events";
+let sharedEvents={};
+function splitMenus(text){ return String(text||'').split(/[・、,\/\n]+/).map(x=>x.trim()).filter(Boolean); }
+function categoryFromMenu(name){
+ const keys=Object.keys(CATEGORY_ITEMS); return keys.find(k=>name.includes(k)||k.includes(name))||null;
+}
+function renderSharedEvents(){
+ const box=get("sharedEventList"); if(!box)return;
+ const list=Object.values(sharedEvents||{}).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+ if(!list.length){box.innerHTML='<div class="empty">共有されたイベントはまだありません。</div>';return;}
+ box.innerHTML=list.map(e=>`<div class="event-card"><div class="event-head"><div><div class="event-title">${esc(e.name||'名称未入力')}</div><div class="event-meta">${esc(e.date||'日付未入力')}｜${esc(e.place||'会場未入力')}<br>出店ネタ：${esc(e.itemsText||'未設定')}</div></div><button class="gold" onclick="importSharedEvent('${esc(String(e.mainId||e.id))}')">準備表を作る</button></div></div>`).join('');
+}
+function importSharedEvent(mainId){
+ const src=Object.values(sharedEvents).find(x=>String(x.mainId||x.id)===String(mainId)); if(!src)return;
+ let e=db.events.find(x=>String(x.sourceMainId||'')===String(mainId));
+ if(!e){ e=blankEvent(); e.sourceMainId=String(mainId); db.events.push(e); }
+ e.name=src.name||e.name; e.date=src.date||e.date; e.place=src.place||e.place; e.vehicle=src.vehicle||e.vehicle; e.memo=src.memo||e.memo; e.staff=(Array.isArray(src.staff)&&src.staff.length?src.staff.join('・'):'繁充');
+ const menus=splitMenus(src.itemsText); menus.forEach(m=>{ const c=categoryFromMenu(m); if(c) CATEGORY_ITEMS[c].forEach(x=>addItemToEvent(e,x[0],x[1],c)); });
+ e.updatedAt=Date.now(); persist(); openEvent(e.id); toast('共有イベントの準備表を作りました');
+}
+function addItemToEvent(e,name,qty,category){
+ const exists=(e.items||[]).find(x=>x.name===name&&x.category===category);
+ if(exists)return; e.items=e.items||[]; e.items.push({id:uid(),name,qty:Number(qty||1),category,checker:'',done:false});
+}
+function startSharedEventSync(){
+ try{
+  const cfg={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+  if(!firebase.apps.length)firebase.initializeApp(cfg);
+  firebase.database().ref(PREPARATION_FB_PATH).on('value',snap=>{sharedEvents=snap.val()||{};renderSharedEvents();});
+ }catch(e){renderSharedEvents();}
+}
+
+loadDB();renderCategories();renderEventList();renderSharedEvents();startSharedEventSync();
 </script>
 </body>
 </html>
