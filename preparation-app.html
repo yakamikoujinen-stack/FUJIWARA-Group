@@ -1,342 +1,291 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#5b2a86">
-<title>準備アプリ</title>
+<meta name="theme-color" content="#6f3d8f">
+<title>準備アプリ｜イベント別チェックリスト</title>
 <style>
-:root{--purple:#5b2a86;--purple2:#7b3fb0;--bg:#f8f3fc;--card:#fff;--line:#dfd3ea;--text:#2b2034;--sub:#7a6a84;--green:#2f8f5b;--red:#d94f4f;--gold:#d8aa35;--shadow:0 8px 24px rgba(72,38,96,.12)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:linear-gradient(180deg,#fbf8fd,#f2eaf8);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;padding-bottom:84px}
-header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;padding:15px 16px;box-shadow:0 4px 16px rgba(61,28,83,.22)}
-.top{max-width:980px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
-h1{font-size:22px;margin:0;font-weight:900}.sub{font-size:12px;color:#eadcf6;margin-top:4px}
-.back{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:11px;padding:9px 12px;font-weight:900}
-.wrap{max-width:980px;margin:auto;padding:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
-h2{font-size:19px;margin:0 0 12px}
-label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:5px}
-input,select,textarea{width:100%;padding:11px 12px;border:1.5px solid #d8cbe3;border-radius:11px;background:#fff;font-size:16px;color:var(--text);outline:none}
-textarea{min-height:72px}
-.grid2,.grid3,.grid4{display:grid;gap:10px}.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}
-.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}
-.cat{display:flex;align-items:center;gap:9px;border:1.5px solid var(--line);border-radius:13px;padding:12px;background:#fcf9ff;font-weight:900}
-.cat input{width:22px;height:22px}.cat.on{background:#f0e2fb;border-color:#b78bd4}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
-button{border:0;border-radius:11px;padding:11px 14px;font-size:14px;font-weight:900;cursor:pointer}
-.primary{background:var(--purple);color:#fff}.green{background:var(--green);color:#fff}.ghost{background:#f0eaf4;color:#4f3f59}.danger{background:#ffe8e8;color:var(--red);border:1px solid #efb9b9}.gold{background:linear-gradient(135deg,#d7a72c,#efc967);color:#352600}
-.scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}
-th{background:#f0e6f7;border:1px solid var(--line);padding:10px 8px;font-size:13px;text-align:left}
-td{border:1px solid var(--line);padding:8px;vertical-align:middle}
-td input{padding:9px;font-size:15px}
-td.checkcell{width:76px;text-align:center}
-td.checkcell input{width:25px;height:25px}
-.done-row{background:#eaf7ef}
-.progress-box{background:#f5eef9;border:1px solid var(--line);border-radius:14px;padding:13px}.progress-line{height:18px;background:#e6dcef;border-radius:999px;overflow:hidden}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#6a32a0,#a85bd4)}.progress-text{text-align:center;font-size:24px;font-weight:900;margin-top:8px}
-.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-top:10px}.sum{background:#faf7fc;border:1px solid var(--line);border-radius:13px;padding:12px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:900;margin-top:4px}
-.saved-list{display:grid;gap:8px}.record{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.record-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.record-title{font-weight:900}.record-meta{font-size:13px;color:var(--sub);line-height:1.6;margin-top:5px}
-.footer{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:4px;background:#fff;border-top:1px solid var(--line);padding:7px 7px calc(7px + env(safe-area-inset-bottom))}
-.footer button{flex:1;background:transparent;color:#5f4a6d;font-size:11px;padding:7px 3px}.empty{text-align:center;color:var(--sub);padding:18px}.note{font-size:12px;color:var(--sub);line-height:1.6}
+:root{
+  --main:#6f3d8f;--main2:#9b65b7;--pale:#f5eef9;--gold:#b88418;
+  --text:#2c2430;--sub:#75677c;--line:#dfd2e5;--ok:#16864b;--danger:#c83d4c;
+  --shadow:0 8px 24px rgba(62,36,73,.10)
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f7f4f8;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--main),var(--main2));color:#fff;padding:14px 14px 12px;box-shadow:0 4px 14px rgba(50,20,65,.22)}
+.top{max-width:1000px;margin:auto;display:flex;justify-content:space-between;gap:10px;align-items:center}
+h1{font-size:21px;margin:0}.sub{font-size:12px;opacity:.9;margin-top:3px}.back{background:rgba(255,255,255,.18);color:#fff}
+.wrap{max-width:1000px;margin:auto;padding:14px 12px 100px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}
+h2{font-size:17px;margin:0 0 12px}
+label{display:block;font-size:12px;font-weight:800;color:var(--sub);margin-bottom:5px}
+input,select,textarea{width:100%;border:1px solid #cfc1d6;border-radius:11px;padding:11px;background:#fff;color:var(--text);font-size:16px}
+textarea{min-height:70px;resize:vertical}
+.grid2,.grid3,.grid4{display:grid;gap:9px}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.primary{background:var(--main);color:#fff}.gold{background:var(--gold);color:#fff}.ghost{background:#eee8f1;color:#5f4a6d}.danger{background:#fbe7ea;color:var(--danger)}.ok{background:#e2f5ea;color:var(--ok)}
+.note{font-size:12px;color:var(--sub);line-height:1.6}
+.event-list{display:grid;gap:9px}
+.event-card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.event-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.event-title{font-size:16px;font-weight:900}.event-meta{font-size:12px;color:var(--sub);line-height:1.6;margin-top:4px}
+.progress{height:9px;border-radius:99px;background:#eee7f1;overflow:hidden;margin-top:8px}.progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--main),#c294d8)}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px}
+.category{border:1px solid var(--line);background:#fff;color:#5c4668}
+.category.active{background:var(--main);color:#fff;border-color:var(--main)}
+.item-row{display:grid;grid-template-columns:42px minmax(135px,1fr) 82px minmax(100px,1fr) 48px;gap:7px;align-items:center;border-bottom:1px solid #eee7f1;padding:9px 0}
+.item-row.done .item-name{text-decoration:line-through;color:#8a7d90}
+.check{width:28px;height:28px;accent-color:var(--ok)}
+.item-name{font-weight:800}.small-input{padding:9px;font-size:15px}
+.delete{background:#f8e4e7;color:var(--danger);padding:9px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.sum{background:#faf7fc;border:1px solid var(--line);border-radius:13px;padding:12px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:900;margin-top:4px}
+.empty{text-align:center;color:var(--sub);padding:18px}
 .badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#efe5f6;color:#5b2a86;font-size:12px;font-weight:900;margin:3px}
-.sync-status{max-width:980px;margin:10px auto 0;padding:10px 14px;border-radius:12px;background:#fff4d6;color:#775400;border:1px solid #e4ca78;font-size:13px;font-weight:900}
-.sync-status.ok{background:#e7f6ee;color:#167347;border-color:#b9dfca}
-.sync-status.error{background:#ffe8e8;color:#b52f2f;border-color:#efb9b9}
-@media(max-width:700px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.hidden{display:none!important}
+.footer{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:5px;background:#fff;border-top:1px solid var(--line);padding:7px 7px calc(7px + env(safe-area-inset-bottom))}
+.footer button{flex:1;font-size:12px;padding:10px 5px}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#241b28;color:#fff;padding:10px 15px;border-radius:99px;opacity:0;pointer-events:none;transition:.2s;z-index:50;white-space:nowrap}
+.toast.show{opacity:1}
+@media(max-width:700px){
+ .grid2,.grid3,.grid4{grid-template-columns:1fr}
+ .item-row{grid-template-columns:38px 1fr 70px 45px}
+ .item-row .checker{grid-column:2/4}
+}
 </style>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜積込みチェックリスト</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
-<div id="syncStatus" class="sync-status">🔄 準備データを確認しています…</div>
+<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
-<section class="card" id="eventSec">
+<section class="card" id="eventListSec">
+  <h2>イベント別チェックリスト</h2>
+  <div class="note">イベントごとに内容とチェック状態を別々に保存します。</div>
+  <div class="toolbar">
+    <button class="primary" onclick="newEvent()">＋ 新しいイベントを作る</button>
+  </div>
+  <div id="eventList" class="event-list" style="margin-top:12px"></div>
+</section>
+
+<div id="editor" class="hidden">
+<section class="card">
 <h2>① イベント情報</h2>
+<input type="hidden" id="eventId">
 <div class="grid3">
-<div><label>イベント名</label><input id="eventName"></div>
+<div><label>イベント名</label><input id="eventName" placeholder="例：柳まつり"></div>
 <div><label>日付</label><input id="eventDate" type="date"></div>
 <div><label>積込み担当</label><input id="staffName" value="繁充"></div>
 </div>
 <div class="grid2" style="margin-top:10px">
-<div><label>会場</label><input id="place"></div>
-<div><label>車両</label><input id="vehicle"></div>
+<div><label>会場</label><input id="place" placeholder="例：柳まつり会場"></div>
+<div><label>車両</label><input id="vehicle" placeholder="例：2号車"></div>
+</div>
+<div style="margin-top:10px"><label>メモ</label><textarea id="eventMemo" placeholder="集合時間・注意事項など"></textarea></div>
+<div class="toolbar">
+<button class="primary" onclick="saveCurrentEvent()">イベント情報を保存</button>
+<button class="ghost" onclick="closeEditor()">イベント一覧へ戻る</button>
+<button class="danger" onclick="deleteCurrentEvent()">このイベントを削除</button>
 </div>
 </section>
 
-<section class="card" id="categorySec">
-<h2>② カテゴリー選択</h2>
-<div class="note">複数選択できます。選択したカテゴリーの項目を積込み表へ追加します。</div>
+<section class="card">
+<h2>② 出店カテゴリー</h2>
+<div class="note">複数選択して、必要な準備品をこのイベントへ追加します。</div>
 <div class="category-grid" id="categoryGrid"></div>
 <div class="toolbar">
-<button class="gold" onclick="buildFromCategories()">選択カテゴリーを追加</button>
+<button class="gold" onclick="addSelectedCategories()">選択カテゴリーを追加</button>
 <button class="ghost" onclick="clearCategorySelection()">選択を外す</button>
 </div>
 </section>
 
-<section class="card" id="commonSec">
-<h2>③ 共通項目を作成</h2>
-<div class="note">ここで登録した項目は「共通備品」として保存され、次回以降も使えます。</div>
-<div class="grid3">
-<div><label>共通項目名</label><input id="commonName" placeholder="例：テント"></div>
-<div><label>数量</label><input id="commonQty" type="number" value="1" min="0"></div>
-<div><label>確認者</label><input id="commonChecker" placeholder="例：繁充"></div>
-</div>
+<section class="card">
+<h2>③ 共通備品</h2>
+<div id="commonBadges"></div>
 <div class="toolbar">
-<button class="primary" onclick="addCommonItem()">＋ 共通項目に追加</button>
-<button class="ghost" onclick="addAllCommonToList()">共通項目を積込み表へ入れる</button>
+<button class="ghost" onclick="addAllCommon()">共通備品をこのイベントへ追加</button>
 </div>
-<div id="commonList"></div>
 </section>
 
-<section class="card" id="addSec">
-<h2>④ 項目と数量を自分で追加</h2>
+<section class="card">
+<h2>④ 項目を手動追加</h2>
 <div class="grid4">
-<div><label>カテゴリー</label><input id="newCategory" placeholder="例：チーズハットグ"></div>
-<div><label>品名</label><input id="newItemName" placeholder="例：フライヤー"></div>
-<div><label>数量</label><input id="newQty" type="number" value="1" min="0"></div>
-<div><label>確認者</label><input id="newChecker" placeholder="例：繁充"></div>
+<div><label>項目名</label><input id="manualName" placeholder="例：予備トング"></div>
+<div><label>数量</label><input id="manualQty" type="number" min="0" value="1"></div>
+<div><label>確認者</label><input id="manualChecker" placeholder="例：繁充"></div>
+<div><label>分類</label><input id="manualCategory" placeholder="例：共通"></div>
 </div>
-<div class="toolbar"><button class="primary" onclick="addManualItem()">＋ 項目を追加</button></div>
+<div class="toolbar"><button class="primary" onclick="addManualItem()">＋ 項目追加</button></div>
 </section>
 
-<section class="card" id="listSec">
-<h2>⑤ 積込みチェック表</h2>
-<div class="note">図のように「確認・項目・数量・確認者」で一覧表示します。</div>
-<div class="scroll">
-<table>
-<thead><tr><th>確認</th><th>カテゴリー</th><th>項目</th><th>数量</th><th>確認者</th><th></th></tr></thead>
-<tbody id="itemBody"></tbody>
-</table>
-</div>
+<section class="card">
+<h2>⑤ 積込みチェックリスト</h2>
+<div id="summary" class="summary"></div>
+<div id="items"></div>
 <div class="toolbar">
-<button class="green" onclick="saveCurrent()">💾 保存</button>
-<button class="ghost" onclick="setAll(true)">全てチェック</button>
-<button class="ghost" onclick="setAll(false)">全て外す</button>
-<button class="danger" onclick="clearAllItems()">表を全部消す</button>
+<button class="ok" onclick="checkAll()">すべてチェック</button>
+<button class="ghost" onclick="uncheckAll()">チェックを全部外す</button>
 </div>
 </section>
-
-<section class="card">
-<h2>⑥ 積込み進捗</h2>
-<div class="progress-box"><div class="progress-line"><div class="progress-bar" id="progressBar"></div></div><div class="progress-text" id="progressText">0%</div></div>
-<div class="summary">
-<div class="sum"><div class="k">全項目</div><div class="v" id="totalCount">0</div></div>
-<div class="sum"><div class="k">確認済み</div><div class="v" id="doneCount">0</div></div>
-<div class="sum"><div class="k">未確認</div><div class="v" id="remainCount">0</div></div>
 </div>
-<div style="margin-top:10px"><label>全体メモ</label><textarea id="memo"></textarea></div>
-<div class="toolbar"><button class="green" onclick="completeLoading()">✅ 積込み完了として保存</button></div>
-</section>
-
-<section class="card">
-<h2>⑦ 保存履歴</h2>
-<div id="historyList" class="saved-list"></div>
-</section>
 </div>
 
-<nav class="footer">
-<button onclick="jump('eventSec')">イベント</button>
-<button onclick="jump('categorySec')">カテゴリー</button>
-<button onclick="jump('commonSec')">共通項目</button>
-<button onclick="jump('listSec')">積込み表</button>
-</nav>
+<div class="footer">
+<button class="ghost" onclick="showEventList()">📅 イベント一覧</button>
+<button class="primary" onclick="saveCurrentEvent()">💾 保存</button>
+<button class="gold" onclick="newEvent()">＋ 新規</button>
+</div>
+<div class="toast" id="toast"></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-const firebaseConfig={
-  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
-  authDomain:"fujiwara-group-3a600.firebaseapp.com",
-  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
-  projectId:"fujiwara-group-3a600",
-  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
-  messagingSenderId:"709887362301",
-  appId:"1:709887362301:web:8ff756d645bc0398956a94"
-};
-if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-const preparationRef=firebase.database().ref("fujiwara/preparation_app");
-</script>
-<script>
-const KEY="fujiwara_preparation_app_v2";
-const DEFAULT_CATEGORIES={
-"チーズハットグ":[["フライヤー",1],["ガス台",1],["ガスボンベ",2],["油",1],["チーズ",1],["ソーセージ",1],["ミックス粉",1],["パン粉",1],["ケチャップ",1],["マスタード",1],["串",1],["袋",1]],
+const STORAGE_KEY="fujiwara_preparation_events_v2";
+const OLD_KEY="fujiwara_preparation_app_v1";
+
+const CATEGORY_ITEMS={
+"チーズハットグ":[["ガス台",1],["ガスボンベ",2],["油",1],["チーズ",1],["ソーセージ",1],["ミックス粉",1],["パン粉",1],["ケチャップ",1],["マスタード",1],["串",1],["袋",1]],
+"ポテト":[["フライヤー",1],["ガス台",1],["ガスボンベ",2],["油",1],["冷凍ポテト",1],["塩",1],["カップ",1],["トング",2]],
 "牛串":[["焼き台",1],["ガスボンベ",2],["牛串",1],["タレ",1],["塩こしょう",1],["トング",2],["容器",1]],
 "からあげ":[["フライヤー",1],["ガス台",1],["ガスボンベ",2],["油",1],["鶏肉",1],["唐揚げ粉",1],["トング",2],["容器",1]],
 "かき氷":[["かき氷機",1],["ブロック氷",1],["シロップ",1],["カップ",1],["スプーン",1],["練乳",1],["延長コード",1]],
 "いか焼き":[["焼き台",1],["ガスボンベ",2],["いか",1],["タレ",1],["串",1],["トング",2],["容器",1]],
-"カステラ":[["カステラ機",1],["ガスボンベ",2],["カステラ粉",1],["卵",1],["砂糖",1],["油",1],["袋",1],["ピック",1]]
+"カステラ":[["カステラ機",1],["ガスボンベ",2],["カステラ粉",1],["卵",1],["砂糖",1],["油",1],["袋",1],["ピック",1]],
+"りんご飴":[["りんご",1],["砂糖",1],["水あめ",1],["食紅",1],["串",1],["袋",1],["鍋",1],["温度計",1]]
 };
-const DEFAULT_COMMON=[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]];
-let state={items:[],history:[],commonItems:DEFAULT_COMMON.map(x=>({name:x[0],qty:x[1],checker:""}))};
+const COMMON=[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]];
 
-function normalizeState(data){
-  const d=(data&&typeof data==="object")?data:{};
-  return {
-    items:Array.isArray(d.items)?d.items:[],
-    history:Array.isArray(d.history)?d.history:[],
-    commonItems:Array.isArray(d.commonItems)&&d.commonItems.length?d.commonItems:DEFAULT_COMMON.map(x=>({name:x[0],qty:x[1],checker:""}))
-  };
-}
-function itemKey(x){return [String(x?.category||""),String(x?.name||""),String(x?.qty??""),String(x?.checker||"")].join("||")}
-function mergeItems(a,b){
-  const m=new Map();
-  [...(b||[]),...(a||[])].forEach(x=>{if(x)m.set(itemKey(x),{...(m.get(itemKey(x))||{}),...x})});
-  return [...m.values()];
-}
-function mergeHistory(a,b){
-  const m=new Map();
-  [...(b||[]),...(a||[])].forEach(x=>{if(x&&x.id!=null)m.set(String(x.id),{...(m.get(String(x.id))||{}),...x})});
-  return [...m.values()].sort((x,y)=>Number(y.id||0)-Number(x.id||0));
-}
-function mergeCommon(a,b){
-  const m=new Map();
-  [...(b||[]),...(a||[])].forEach(x=>{if(x&&x.name)m.set(String(x.name),{...(m.get(String(x.name))||{}),...x})});
-  return [...m.values()];
-}
-function mergeStates(a,b){
-  const l=normalizeState(a),r=normalizeState(b);
-  return {items:mergeItems(l.items,r.items),history:mergeHistory(l.history,r.history),commonItems:mergeCommon(l.commonItems,r.commonItems)};
-}
-function setSyncStatus(msg,type){
-  const e=document.getElementById("syncStatus");if(!e)return;
-  e.textContent=msg;e.className="sync-status"+(type?" "+type:"");
-}
-function load(){
-  try{state=mergeStates(state,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
-}
-function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state))}
-let remoteReady=false,applyingRemote=false,saveTimer=null;
-function save(){
-  saveLocal();
-  if(applyingRemote)return;
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{
-    if(!remoteReady){setSyncStatus("📱 端末内に保存済みです。通信回復後に共有します","");return}
-    preparationRef.set(state).then(()=>setSyncStatus("✅ 全員共有で保存しました","ok"))
-      .catch(err=>{console.error(err);setSyncStatus("⚠️ 端末内には保存済みです。共有通信を確認してください","error")});
-  },180);
-}
-function startSafeSync(){
-  setSyncStatus("🔄 保存済みデータを壊さず共有準備中…","");
-  preparationRef.once("value").then(s=>{
-    state=mergeStates(state,s.val());saveLocal();return preparationRef.set(state);
-  }).then(()=>{
-    remoteReady=true;renderCommon();renderItems();renderHistory();
-    setSyncStatus("✅ 既存データを保持して全員共有中","ok");
-    preparationRef.on("value",s=>{
-      const merged=mergeStates(state,s.val());
-      if(JSON.stringify(merged)===JSON.stringify(state))return;
-      applyingRemote=true;state=merged;saveLocal();renderCommon();renderItems();renderHistory();applyingRemote=false;
-    },err=>{console.error(err);setSyncStatus("⚠️ 共有読込に失敗しました。端末内データは保護されています","error")});
-  }).catch(err=>{
-    console.error(err);remoteReady=false;saveLocal();renderCommon();renderItems();renderHistory();
-    setSyncStatus("⚠️ 共有接続できません。既存データは端末内に残っています","error");
-  });
-}
-function val(id){return document.getElementById(id)?.value||""}
-function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??""}
+let db={events:[]};
+let selectedCategories=new Set();
+let currentId=null;
+
+function uid(){return "ev_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
 function today(){return new Date().toISOString().slice(0,10)}
-function jump(id){document.getElementById(id)?.scrollIntoView({behavior:"smooth"})}
-function goBack(){if(history.length>1)history.back();else location.href="manager-app.html"}
+function get(id){return document.getElementById(id)}
+function val(id){return get(id)?.value??""}
+function toast(msg){const t=get("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)}
+function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(db))}
 
+function loadDB(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+    if(saved&&Array.isArray(saved.events)) db=saved;
+  }catch(e){}
+  migrateOldData();
+}
+function migrateOldData(){
+  if(db.events.length) return;
+  try{
+    const old=JSON.parse(localStorage.getItem(OLD_KEY)||"null");
+    if(!old) return;
+    const source=Array.isArray(old.history)?old.history:[];
+    source.forEach((r,i)=>{
+      db.events.push({
+        id:uid(),name:r.eventName||r.name||("旧イベント "+(i+1)),date:r.eventDate||r.date||"",
+        staff:r.staffName||r.staff||"繁充",place:r.place||"",vehicle:r.vehicle||"",
+        memo:r.memo||"",items:Array.isArray(r.items)?r.items:[],updatedAt:Date.now()-i
+      })
+    });
+    if(source.length){persist();toast("以前の保存履歴を引き継ぎました")}
+  }catch(e){}
+}
+
+function blankEvent(){
+ return {id:uid(),name:"",date:today(),staff:"繁充",place:"",vehicle:"",memo:"",items:[],updatedAt:Date.now()}
+}
+function currentEvent(){return db.events.find(e=>e.id===currentId)}
+
+function renderEventList(){
+ const box=get("eventList");
+ const list=[...db.events].sort((a,b)=>(b.date||"").localeCompare(a.date||"") || (b.updatedAt||0)-(a.updatedAt||0));
+ if(!list.length){box.innerHTML='<div class="empty">まだイベントがありません。<br>「新しいイベントを作る」から始めてください。</div>';return}
+ box.innerHTML=list.map(e=>{
+   const total=e.items?.length||0,done=(e.items||[]).filter(x=>x.done).length,pct=total?Math.round(done/total*100):0;
+   return `<div class="event-card">
+    <div class="event-head">
+      <div><div class="event-title">${esc(e.name||"名称未入力")}</div>
+      <div class="event-meta">${esc(e.date||"日付未入力")}｜${esc(e.place||"会場未入力")}<br>担当：${esc(e.staff||"未入力")}　車両：${esc(e.vehicle||"未入力")}</div></div>
+      <button class="primary" onclick="openEvent('${e.id}')">開く</button>
+    </div>
+    <div class="event-meta">進捗 ${done}/${total}（${pct}%）</div><div class="progress"><span style="width:${pct}%"></span></div>
+   </div>`
+ }).join("")
+}
 function renderCategories(){
-  const names=[...Object.keys(DEFAULT_CATEGORIES),"共通備品"];
-  document.getElementById("categoryGrid").innerHTML=names.map((cat,i)=>`<label class="cat" id="catWrap-${i}"><input type="checkbox" class="catCheck" value="${esc(cat)}" onchange="paintCat(${i})"><span>${esc(cat)}</span></label>`).join("")
+ get("categoryGrid").innerHTML=Object.keys(CATEGORY_ITEMS).map(c=>`<button class="category ${selectedCategories.has(c)?"active":""}" onclick="toggleCategory('${c}')">${esc(c)}</button>`).join("");
+ get("commonBadges").innerHTML=COMMON.map(x=>`<span class="badge">${esc(x[0])} × ${x[1]}</span>`).join("");
 }
-function paintCat(i){const cb=document.querySelectorAll(".catCheck")[i];document.getElementById(`catWrap-${i}`).classList.toggle("on",cb.checked)}
-function clearCategorySelection(){document.querySelectorAll(".catCheck").forEach((cb,i)=>{cb.checked=false;paintCat(i)})}
+function toggleCategory(c){selectedCategories.has(c)?selectedCategories.delete(c):selectedCategories.add(c);renderCategories()}
+function clearCategorySelection(){selectedCategories.clear();renderCategories()}
 
-function buildFromCategories(){
-  const selected=[...document.querySelectorAll(".catCheck:checked")].map(x=>x.value);
-  if(!selected.length){alert("カテゴリーを選択してください");return}
-  selected.forEach(cat=>{
-    const source=cat==="共通備品"?state.commonItems.map(x=>[x.name,x.qty,x.checker]):(DEFAULT_CATEGORIES[cat]||[]).map(x=>[x[0],x[1],""]);
-    source.forEach(([name,qty,checker])=>{
-      if(!state.items.some(x=>x.category===cat&&x.name===name))state.items.push({category:cat,name,qty,checker:checker||"",done:false})
-    })
-  });
-  save();renderItems();clearCategorySelection();jump("listSec")
+function newEvent(){
+ const e=blankEvent();db.events.push(e);currentId=e.id;persist();openEvent(e.id);toast("新しいイベントを作りました")
 }
-
-function addCommonItem(){
-  const name=val("commonName").trim(),qty=Number(val("commonQty"))||0,checker=val("commonChecker").trim();
-  if(!name){alert("共通項目名を入力してください");return}
-  const hit=state.commonItems.find(x=>x.name===name);
-  if(hit){hit.qty=qty;hit.checker=checker}else state.commonItems.push({name,qty,checker});
-  save();renderCommon();setVal("commonName","");setVal("commonQty",1);setVal("commonChecker","")
+function openEvent(id){
+ currentId=id;const e=currentEvent();if(!e)return;
+ get("eventId").value=e.id;get("eventName").value=e.name||"";get("eventDate").value=e.date||"";
+ get("staffName").value=e.staff||"繁充";get("place").value=e.place||"";get("vehicle").value=e.vehicle||"";get("eventMemo").value=e.memo||"";
+ get("eventListSec").classList.add("hidden");get("editor").classList.remove("hidden");
+ selectedCategories.clear();renderCategories();renderItems();window.scrollTo({top:0,behavior:"smooth"})
 }
-function renderCommon(){
-  const box=document.getElementById("commonList");
-  if(!state.commonItems.length){box.innerHTML='<div class="empty">共通項目はありません</div>';return}
-  box.innerHTML=state.commonItems.map((x,i)=>`<span class="badge">${esc(x.name)} × ${esc(x.qty)} ${x.checker?"/ "+esc(x.checker):""} <button onclick="deleteCommon(${i})" style="padding:3px 7px;margin-left:5px">×</button></span>`).join("")
+function closeEditor(){saveCurrentEvent(false);showEventList()}
+function showEventList(){get("editor").classList.add("hidden");get("eventListSec").classList.remove("hidden");renderEventList();window.scrollTo({top:0,behavior:"smooth"})}
+function saveCurrentEvent(show=true){
+ const e=currentEvent();if(!e){if(show)toast("先にイベントを作ってください");return}
+ e.name=val("eventName").trim();e.date=val("eventDate");e.staff=val("staffName").trim();e.place=val("place").trim();e.vehicle=val("vehicle").trim();e.memo=val("eventMemo").trim();e.updatedAt=Date.now();
+ persist();renderEventList();if(show)toast("このイベントを保存しました")
 }
-function deleteCommon(i){state.commonItems.splice(i,1);save();renderCommon()}
-function addAllCommonToList(){
-  state.commonItems.forEach(x=>{if(!state.items.some(r=>r.category==="共通備品"&&r.name===x.name))state.items.push({category:"共通備品",name:x.name,qty:x.qty,checker:x.checker||"",done:false})});
-  save();renderItems();jump("listSec")
+function deleteCurrentEvent(){
+ const e=currentEvent();if(!e)return;
+ if(!confirm(`「${e.name||"名称未入力"}」を削除しますか？`))return;
+ db.events=db.events.filter(x=>x.id!==e.id);persist();currentId=null;showEventList();toast("イベントを削除しました")
 }
 
+function addItem(name,qty,category,checker=""){
+ const e=currentEvent();if(!e)return;
+ const exists=e.items.find(x=>x.name===name&&x.category===category);
+ if(exists){exists.qty=Number(exists.qty||0)+Number(qty||0)}
+ else e.items.push({id:uid(),name,qty:Number(qty||1),category,checker,done:false});
+ e.updatedAt=Date.now()
+}
+function addSelectedCategories(){
+ if(!selectedCategories.size){toast("カテゴリーを選んでください");return}
+ selectedCategories.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>addItem(x[0],x[1],c)));
+ selectedCategories.clear();persist();renderCategories();renderItems();toast("カテゴリーの準備品を追加しました")
+}
+function addAllCommon(){COMMON.forEach(x=>addItem(x[0],x[1],"共通備品"));persist();renderItems();toast("共通備品を追加しました")}
 function addManualItem(){
-  const category=val("newCategory").trim()||"手動追加",name=val("newItemName").trim(),qty=Number(val("newQty"))||0,checker=val("newChecker").trim();
-  if(!name){alert("品名を入力してください");return}
-  state.items.push({category,name,qty,checker,done:false});
-  save();renderItems();setVal("newItemName","");setVal("newQty",1);setVal("newChecker","")
+ const name=val("manualName").trim();if(!name){toast("項目名を入力してください");return}
+ addItem(name,Number(val("manualQty")||1),val("manualCategory").trim()||"手動追加",val("manualChecker").trim());
+ persist();get("manualName").value="";get("manualQty").value=1;renderItems();toast("項目を追加しました")
 }
+function updateItem(id,field,value){
+ const e=currentEvent(),it=e?.items.find(x=>x.id===id);if(!it)return;
+ it[field]=field==="qty"?Number(value||0):field==="done"?Boolean(value):value;e.updatedAt=Date.now();persist();renderItems()
+}
+function deleteItem(id){const e=currentEvent();if(!e)return;e.items=e.items.filter(x=>x.id!==id);persist();renderItems()}
+function checkAll(){const e=currentEvent();if(!e)return;e.items.forEach(x=>x.done=true);persist();renderItems()}
+function uncheckAll(){const e=currentEvent();if(!e)return;e.items.forEach(x=>x.done=false);persist();renderItems()}
+
 function renderItems(){
-  const body=document.getElementById("itemBody");
-  if(!state.items.length){body.innerHTML='<tr><td colspan="6" class="empty">積込み項目はまだありません</td></tr>';updateProgress();return}
-  body.innerHTML=state.items.map((r,i)=>`<tr class="${r.done?"done-row":""}">
-    <td class="checkcell"><input type="checkbox" ${r.done?"checked":""} onchange="updateItem(${i},'done',this.checked)"></td>
-    <td><input value="${esc(r.category)}" onblur="updateItem(${i},'category',this.value)"></td>
-    <td><input value="${esc(r.name)}" onblur="updateItem(${i},'name',this.value)"></td>
-    <td><input type="number" min="0" value="${esc(r.qty)}" oninput="updateItem(${i},'qty',this.value)"></td>
-    <td><input value="${esc(r.checker||"")}" placeholder="確認者" onblur="updateItem(${i},'checker',this.value)"></td>
-    <td><button class="danger" onclick="deleteItem(${i})">削除</button></td>
-  </tr>`).join("");
-  updateProgress()
+ const e=currentEvent();const box=get("items");if(!e)return;
+ const items=e.items||[],done=items.filter(x=>x.done).length,pct=items.length?Math.round(done/items.length*100):0;
+ get("summary").innerHTML=`<div class="sum"><div class="k">全項目</div><div class="v">${items.length}</div></div><div class="sum"><div class="k">積込み済み</div><div class="v">${done}</div></div><div class="sum"><div class="k">残り</div><div class="v">${items.length-done}</div></div><div class="sum"><div class="k">進捗</div><div class="v">${pct}%</div></div>`;
+ if(!items.length){box.innerHTML='<div class="empty">カテゴリー・共通備品・手動追加から項目を入れてください。</div>';return}
+ const groups={};items.forEach(x=>(groups[x.category||"その他"]??=[]).push(x));
+ box.innerHTML=Object.entries(groups).map(([cat,rows])=>`<div style="margin-top:15px"><h3 style="font-size:15px;margin:0 0 4px">${esc(cat)}</h3>${rows.map(it=>`
+ <div class="item-row ${it.done?"done":""}">
+  <input class="check" type="checkbox" ${it.done?"checked":""} onchange="updateItem('${it.id}','done',this.checked)">
+  <div class="item-name">${esc(it.name)}</div>
+  <input class="small-input" type="number" min="0" value="${Number(it.qty||0)}" onchange="updateItem('${it.id}','qty',this.value)">
+  <input class="small-input checker" value="${esc(it.checker||"")}" placeholder="確認者" onchange="updateItem('${it.id}','checker',this.value)">
+  <button class="delete" onclick="deleteItem('${it.id}')">×</button>
+ </div>`).join("")}</div>`).join("")
 }
-function updateItem(i,key,value){
-  if(key==="done")state.items[i][key]=!!value;
-  else if(key==="qty")state.items[i][key]=Number(value)||0;
-  else state.items[i][key]=value;
-  save();renderItems()
-}
-function deleteItem(i){if(confirm("この項目を削除しますか？")){state.items.splice(i,1);save();renderItems()}}
-function setAll(on){state.items.forEach(x=>x.done=on);save();renderItems()}
-function clearAllItems(){if(confirm("積込み表を全部消しますか？")){state.items=[];save();renderItems()}}
-function updateProgress(){
-  const total=state.items.length,done=state.items.filter(x=>x.done).length,p=total?Math.round(done/total*100):0;
-  document.getElementById("progressBar").style.width=p+"%";
-  document.getElementById("progressText").textContent=p+"%";
-  document.getElementById("totalCount").textContent=total;
-  document.getElementById("doneCount").textContent=done;
-  document.getElementById("remainCount").textContent=total-done
-}
-function saveCurrent(){save();alert("保存しました")}
-function completeLoading(){
-  if(!state.items.length){alert("積込み項目がありません");return}
-  const remain=state.items.filter(x=>!x.done).length;
-  if(remain>0&&!confirm(`未確認が${remain}件あります。このまま保存しますか？`))return;
-  state.history.unshift({id:Date.now(),eventName:val("eventName").trim()||"名称未設定",date:val("eventDate")||today(),staff:val("staffName").trim()||"繁充",place:val("place").trim(),vehicle:val("vehicle").trim(),memo:val("memo").trim(),total:state.items.length,done:state.items.filter(x=>x.done).length,items:JSON.parse(JSON.stringify(state.items))});
-  save();renderHistory();alert("積込み完了として保存しました")
-}
-function renderHistory(){
-  const box=document.getElementById("historyList");
-  if(!state.history.length){box.innerHTML='<div class="empty">保存履歴はまだありません</div>';return}
-  box.innerHTML=state.history.map(r=>`<div class="record"><div class="record-head"><div class="record-title">${esc(r.eventName)}</div><strong>${r.done}/${r.total}</strong></div><div class="record-meta">日付：${esc(r.date)}　担当：${esc(r.staff)}<br>${r.place?`会場：${esc(r.place)}<br>`:""}${r.vehicle?`車両：${esc(r.vehicle)}<br>`:""}${r.memo?`メモ：${esc(r.memo)}`:""}</div><div class="toolbar"><button class="ghost" onclick="restoreHistory(${r.id})">呼び出す</button><button class="danger" onclick="deleteHistory(${r.id})">履歴削除</button></div></div>`).join("")
-}
-function restoreHistory(id){
-  const r=state.history.find(x=>x.id===id);if(!r)return;
-  state.items=JSON.parse(JSON.stringify(r.items));
-  setVal("eventName",r.eventName);setVal("eventDate",r.date);setVal("staffName",r.staff);setVal("place",r.place);setVal("vehicle",r.vehicle);setVal("memo",r.memo);
-  save();renderItems();jump("listSec")
-}
-function deleteHistory(id){if(confirm("この履歴を削除しますか？")){state.history=state.history.filter(x=>x.id!==id);save();renderHistory()}}
-function boot(){load();renderCategories();renderCommon();renderItems();renderHistory();setVal("eventDate",val("eventDate")||today());startSafeSync()}
-boot();
+function goBack(){if(!get("editor").classList.contains("hidden"))showEventList();else if(history.length>1)history.back();else location.href="manager-app.html"}
+
+loadDB();renderCategories();renderEventList();
 </script>
 </body>
 </html>
