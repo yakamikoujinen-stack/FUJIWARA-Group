@@ -1,96 +1,37 @@
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1565a8">
-<title>松笠商店（LPG）管理</title>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1565a8"><title>松笠商店（LPG）管理</title>
 <style>
-:root{--blue:#1565a8;--blue2:#2f8bd0;--bg:#eef7fc;--card:#fff;--line:#cfe0ec;--text:#183044;--sub:#637b8d;--green:#168957;--red:#cc4050;--gold:#c68a09;--shadow:0 8px 24px rgba(23,72,105,.12)}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(#f6fbff,#eaf4fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
-button,input,select,textarea{font:inherit}button{border:0;border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer}
-header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:16px 14px;box-shadow:0 4px 16px rgba(10,65,100,.25)}
-.top{max-width:1050px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:22px;margin:0}.sub{font-size:12px;opacity:.9;margin-top:4px}.back{background:rgba(255,255,255,.18);color:#fff}
-.wrap{max-width:1050px;margin:auto;padding:14px 12px 90px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}h2{font-size:17px;margin:0 0 12px}
-.grid2,.grid3,.grid4{display:grid;gap:9px}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}
-label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-bottom:5px}input,select,textarea{width:100%;border:1px solid #bdd1df;border-radius:11px;padding:11px;background:#fff;font-size:16px;color:var(--text)}textarea{min-height:65px;resize:vertical}
-.primary{background:var(--blue);color:#fff}.green{background:var(--green);color:#fff}.ghost{background:#eaf1f6;color:#36566d}.danger{background:#fde8eb;color:var(--red)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.site{border:1px solid var(--line);border-radius:15px;padding:12px;background:#fbfdff}.site h3{margin:0 0 9px;font-size:16px}.gasgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.gas{border-radius:12px;padding:10px;text-align:center;background:#eef7fc}.gas .type{font-size:12px;color:var(--sub);font-weight:900}.gas .stock{font-size:25px;font-weight:1000;margin-top:3px}.gas .order{font-size:11px;color:var(--gold);font-weight:900;margin-top:3px}
-.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:9px 8px;border-bottom:1px solid #dfebf2;text-align:left;font-size:13px}th{background:#edf6fb;color:#375b73;font-size:12px;position:sticky;top:0}.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900}.in{background:#e3f5eb;color:var(--green)}.out{background:#fde8eb;color:var(--red)}
-.empty{text-align:center;padding:18px;color:var(--sub)}.summary{font-size:12px;color:var(--sub);line-height:1.6}
-@media(max-width:700px){.grid2,.grid3,.grid4{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<header><div class="top"><div><h1>🔥 松笠商店（LPG）管理</h1><div class="sub">仕入・返却・発注・在庫累計</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+:root{--b:#1565a8;--b2:#2f8bd0;--bg:#eef7fc;--c:#fff;--l:#cfe0ec;--t:#183044;--s:#637b8d;--g:#168957;--r:#cc4050;--o:#c68a09;--sh:0 8px 24px rgba(23,72,105,.12)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#f6fbff,#eaf4fa);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}button,input,select,textarea{font:inherit}button{border:0;border-radius:12px;padding:11px 14px;font-weight:900}header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--b),var(--b2));color:#fff;padding:16px 14px}.top{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center}h1{font-size:22px;margin:0}.sub{font-size:12px;margin-top:4px}.back{background:rgba(255,255,255,.18);color:#fff}.wrap{max-width:1100px;margin:auto;padding:14px 12px 100px}.card{background:var(--c);border:1px solid var(--l);border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--sh)}h2{font-size:17px;margin:0 0 12px}.g2,.g3,.g4,.g5{display:grid;gap:9px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}label{display:block;font-size:12px;font-weight:900;color:var(--s);margin-bottom:5px}input,select,textarea{width:100%;border:1px solid #bdd1df;border-radius:11px;padding:11px;background:#fff;font-size:16px;color:var(--t)}textarea{min-height:65px}.primary{background:var(--b);color:#fff}.green{background:var(--g);color:#fff}.gold{background:var(--o);color:#fff}.ghost{background:#eaf1f6;color:#36566d}.danger{background:#fde8eb;color:var(--r)}.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.site{border:1px solid var(--l);border-radius:15px;padding:12px;background:#fbfdff}.site h3{margin:0 0 9px}.gasgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.gas{border-radius:12px;padding:10px;text-align:center;background:#eef7fc}.gas.low{background:#fff0f1;border:1px solid #efb7bd}.type{font-size:12px;color:var(--s);font-weight:900}.stock{font-size:25px;font-weight:1000}.order{font-size:11px;color:var(--o);font-weight:900}.warn{margin-top:7px;color:var(--r);font-size:11px;font-weight:900}.tbl{overflow:auto}table{width:100%;border-collapse:collapse;min-width:820px}th,td{padding:9px 8px;border-bottom:1px solid #dfebf2;text-align:left;font-size:13px}th{background:#edf6fb;color:#375b73;font-size:12px}.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900}.in{background:#e3f5eb;color:var(--g)}.out{background:#fde8eb;color:var(--r)}.empty{text-align:center;padding:18px;color:var(--s)}.summary,.small{font-size:12px;color:var(--s);line-height:1.6}.alert{background:#fff1f2;border:1px solid #efb7bd;border-radius:13px;padding:11px;color:#9d2635;font-weight:900;line-height:1.7}.order-card{border:1px solid var(--l);border-left:5px solid var(--o);border-radius:12px;padding:11px;background:#fffdf8;margin-bottom:8px}
+@media(max-width:800px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}}
+</style></head><body>
+<header><div class="top"><div><h1>🔥 松笠商店（LPG）管理</h1><div class="sub">仕入・返却・発注・在庫・イベント必要本数</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="wrap">
-<section class="card">
-<h2>現在庫・今回発注数量</h2>
-<div id="stockCards" class="kpis"></div>
-<div class="summary" style="margin-top:10px">現在庫 ＝ 仕入合計 − 返却合計。管理先・ガス種類ごとに自動計算します。</div>
-</section>
-
-<section class="card">
-<h2>仕入・返却を登録</h2>
-<div class="grid4">
-<div><label>日付</label><input id="date" type="date"></div>
-<div><label>管理先</label><select id="site"><option>FUJIWARA Group</option><option>尼崎</option></select></div>
-<div><label>区分</label><select id="kind"><option>仕入</option><option>返却</option></select></div>
-<div><label>ガスの種類</label><select id="gas"><option>20kg</option><option>10kg</option><option>8kg</option></select></div>
-</div>
-<div class="grid2" style="margin-top:9px">
-<div><label>仕入・返却数量（本）</label><input id="qty" type="number" min="1" value="1"></div>
-<div><label>今回発注数量（本）</label><input id="orderQty" type="number" min="0" value="0"></div>
-</div>
-<div style="margin-top:9px"><label>備考</label><textarea id="memo" placeholder="担当者名・伝票番号・注意事項など"></textarea></div>
-<div class="toolbar"><button class="primary" onclick="saveEntry()">登録する</button><button class="ghost" onclick="resetForm()">入力を戻す</button></div>
-</section>
-
-<section class="card">
-<h2>履歴</h2>
-<div class="grid3">
-<div><label>管理先で絞る</label><select id="filterSite" onchange="render()"><option value="">すべて</option><option>FUJIWARA Group</option><option>尼崎</option></select></div>
-<div><label>ガス種類で絞る</label><select id="filterGas" onchange="render()"><option value="">すべて</option><option>20kg</option><option>10kg</option><option>8kg</option></select></div>
-<div><label>区分で絞る</label><select id="filterKind" onchange="render()"><option value="">すべて</option><option>仕入</option><option>返却</option></select></div>
-</div>
-<div id="history" class="tablewrap" style="margin-top:10px"></div>
-</section>
+<section class="card"><h2>現在庫・今回発注数量</h2><div id="alerts"></div><div id="stockCards" class="kpis" style="margin-top:10px"></div><div class="summary">現在庫＝仕入合計−返却合計。イベント必要本数も差し引いて表示します。</div></section>
+<section class="card"><h2>仕入・返却を登録</h2><div class="g5"><div><label>日付</label><input id="date" type="date"></div><div><label>管理先</label><select id="site"><option>FUJIWARA Group</option><option>尼崎</option></select></div><div><label>区分</label><select id="kind"><option>仕入</option><option>返却</option></select></div><div><label>ガス種類</label><select id="gas"><option>20kg</option><option>10kg</option><option>8kg</option></select></div><div><label>ボンベ管理番号</label><input id="cylinderNo" placeholder="例：20-001"></div></div><div class="g2" style="margin-top:9px"><div><label>仕入・返却数量（本）</label><input id="qty" type="number" min="1" value="1"></div><div><label>今回発注数量（本）</label><input id="orderQty" type="number" min="0" value="0"></div></div><div style="margin-top:9px"><label>備考</label><textarea id="memo"></textarea></div><div class="tools"><button class="primary" onclick="saveEntry()">登録する</button><button class="ghost" onclick="resetForm()">入力を戻す</button></div></section>
+<section class="card"><h2>発注一覧</h2><div id="orderList"></div></section>
+<section class="card"><h2>イベント予定から必要本数を計算</h2><div class="summary">共有イベントを読み込み、ガス種類と必要本数を設定できます。</div><div class="g5" style="margin-top:10px"><div><label>イベント日</label><input id="eventDate" type="date"></div><div><label>イベント名</label><input id="eventName"></div><div><label>管理先</label><select id="eventSite"><option>FUJIWARA Group</option><option>尼崎</option></select></div><div><label>ガス種類</label><select id="eventGas"><option>20kg</option><option>10kg</option><option>8kg</option></select></div><div><label>必要本数</label><input id="eventQty" type="number" min="1" value="1"></div></div><div class="tools"><button class="gold" onclick="saveEventNeed()">必要本数を登録</button><button class="ghost" onclick="importSharedEvents()">共有イベントを読込</button></div><div id="eventNeeds" class="tbl" style="margin-top:10px"></div></section>
+<section class="card"><h2>警告設定</h2><div class="g3"><div><label>20kg 警告本数</label><input id="th20" type="number" min="0"></div><div><label>10kg 警告本数</label><input id="th10" type="number" min="0"></div><div><label>8kg 警告本数</label><input id="th8" type="number" min="0"></div></div><div class="tools"><button class="green" onclick="saveThresholds()">警告設定を保存</button></div></section>
+<section class="card"><h2>履歴・月別CSV</h2><div class="g4"><div><label>管理先</label><select id="filterSite" onchange="render()"><option value="">すべて</option><option>FUJIWARA Group</option><option>尼崎</option></select></div><div><label>ガス種類</label><select id="filterGas" onchange="render()"><option value="">すべて</option><option>20kg</option><option>10kg</option><option>8kg</option></select></div><div><label>区分</label><select id="filterKind" onchange="render()"><option value="">すべて</option><option>仕入</option><option>返却</option></select></div><div><label>対象月</label><input id="csvMonth" type="month"></div></div><div class="tools"><button class="green" onclick="exportCSV()">月別CSV出力</button></div><div id="historyBox" class="tbl" style="margin-top:10px"></div></section>
 </div>
 <script>
-const KEY="fujiwara_lpg_matsukasa_v1";
-let rows=[];
-function uid(){return Date.now()+"_"+Math.random().toString(36).slice(2,7)}
-function today(){return new Date().toISOString().slice(0,10)}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function load(){try{const v=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(v))rows=v}catch(e){}}
-function persist(){localStorage.setItem(KEY,JSON.stringify(rows))}
-function resetForm(){document.getElementById("date").value=today();document.getElementById("site").value="FUJIWARA Group";document.getElementById("kind").value="仕入";document.getElementById("gas").value="20kg";document.getElementById("qty").value=1;document.getElementById("orderQty").value=0;document.getElementById("memo").value=""}
-function saveEntry(){
- const qty=Number(document.getElementById("qty").value||0),orderQty=Number(document.getElementById("orderQty").value||0);
- if(qty<1){alert("仕入・返却数量を入力してください");return}
- rows.push({id:uid(),date:document.getElementById("date").value||today(),site:document.getElementById("site").value,kind:document.getElementById("kind").value,gas:document.getElementById("gas").value,qty,orderQty,memo:document.getElementById("memo").value.trim(),createdAt:Date.now()});
- persist();resetForm();render()
-}
-function del(id){if(!confirm("この履歴を削除しますか？"))return;rows=rows.filter(x=>x.id!==id);persist();render()}
-function calc(site,gas){
- const list=rows.filter(x=>x.site===site&&x.gas===gas);
- const incoming=list.filter(x=>x.kind==="仕入").reduce((a,b)=>a+Number(b.qty||0),0);
- const outgoing=list.filter(x=>x.kind==="返却").reduce((a,b)=>a+Number(b.qty||0),0);
- const order=list.reduce((a,b)=>a+Number(b.orderQty||0),0);
- return {stock:incoming-outgoing,order}
-}
-function renderStocks(){
- const sites=["FUJIWARA Group","尼崎"],gases=["20kg","10kg","8kg"];
- document.getElementById("stockCards").innerHTML=sites.map(s=>`<div class="site"><h3>${s}</h3><div class="gasgrid">${gases.map(g=>{const c=calc(s,g);return `<div class="gas"><div class="type">${g}</div><div class="stock">${c.stock}<small style="font-size:12px">本</small></div><div class="order">今回発注累計 ${c.order}本</div></div>`}).join("")}</div></div>`).join("")
-}
-function render(){
- renderStocks();
- const fs=document.getElementById("filterSite").value,fg=document.getElementById("filterGas").value,fk=document.getElementById("filterKind").value;
- let list=[...rows].filter(x=>(!fs||x.site===fs)&&(!fg||x.gas===fg)&&(!fk||x.kind===fk)).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
- document.getElementById("history").innerHTML=list.length?`<table><thead><tr><th>日付</th><th>管理先</th><th>区分</th><th>種類</th><th>数量</th><th>今回発注</th><th>備考</th><th></th></tr></thead><tbody>${list.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.site)}</td><td><span class="badge ${x.kind==="仕入"?"in":"out"}">${esc(x.kind)}</span></td><td>${esc(x.gas)}</td><td>${Number(x.qty)}本</td><td>${Number(x.orderQty||0)}本</td><td>${esc(x.memo)}</td><td><button class="danger" onclick="del('${x.id}')">削除</button></td></tr>`).join("")}</tbody></table>`:'<div class="empty">まだ履歴がありません。</div>'
-}
-function goBack(){if(history.length>1)history.back();else location.href="manager-app.html"}
-load();resetForm();render();
-</script>
-</body>
-</html>
+const KEY="fujiwara_lpg_matsukasa_v1",EKEY="fujiwara_lpg_event_needs_v1",TKEY="fujiwara_lpg_thresholds_v1";let rows=[],eventNeeds=[],thresholds={"20kg":2,"10kg":2,"8kg":2};
+const $=id=>document.getElementById(id),today=()=>new Date().toISOString().slice(0,10),uid=()=>Date.now()+"_"+Math.random().toString(36).slice(2,7),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(v))rows=v}catch(e){}try{let v=JSON.parse(localStorage.getItem(EKEY)||"[]");if(Array.isArray(v))eventNeeds=v}catch(e){}try{let v=JSON.parse(localStorage.getItem(TKEY)||"null");if(v)thresholds={...thresholds,...v}}catch(e){}}
+function persist(){localStorage.setItem(KEY,JSON.stringify(rows));localStorage.setItem(EKEY,JSON.stringify(eventNeeds));localStorage.setItem(TKEY,JSON.stringify(thresholds))}
+function resetForm(){date.value=today();site.value="FUJIWARA Group";kind.value="仕入";gas.value="20kg";cylinderNo.value="";qty.value=1;orderQty.value=0;memo.value="";eventDate.value=today();eventName.value="";eventSite.value="FUJIWARA Group";eventGas.value="20kg";eventQty.value=1;csvMonth.value=today().slice(0,7);th20.value=thresholds["20kg"];th10.value=thresholds["10kg"];th8.value=thresholds["8kg"]}
+function saveEntry(){let q=+qty.value||0;if(q<1)return alert("数量を入力してください");rows.push({id:uid(),date:date.value||today(),site:site.value,kind:kind.value,gas:gas.value,cylinderNo:cylinderNo.value.trim(),qty:q,orderQty:+orderQty.value||0,memo:memo.value.trim(),createdAt:Date.now()});persist();resetForm();render()}
+function del(id){if(confirm("削除しますか？")){rows=rows.filter(x=>x.id!==id);persist();render()}}
+function calc(s,g){let a=rows.filter(x=>x.site===s&&x.gas===g),i=a.filter(x=>x.kind==="仕入").reduce((n,x)=>n+(+x.qty||0),0),o=a.filter(x=>x.kind==="返却").reduce((n,x)=>n+(+x.qty||0),0),r=a.reduce((n,x)=>n+(+x.orderQty||0),0);return{stock:i-o,orders:r}}
+function need(s,g){return eventNeeds.filter(x=>x.site===s&&x.gas===g).reduce((n,x)=>n+(+x.qty||0),0)}
+function renderStocks(){let sites=["FUJIWARA Group","尼崎"],gases=["20kg","10kg","8kg"],al=[];stockCards.innerHTML=sites.map(s=>`<div class="site"><h3>${s}</h3><div class="gasgrid">${gases.map(g=>{let c=calc(s,g),n=need(s,g),a=c.stock-n,l=a<=+thresholds[g];if(l)al.push(`${s}の${g}が予定使用後${a}本です`);return `<div class="gas ${l?"low":""}"><div class="type">${g}</div><div class="stock">${c.stock}本</div><div class="order">今回発注累計 ${c.orders}本</div><div class="small">イベント必要 ${n}本／予定後 ${a}本</div>${l?'<div class="warn">⚠ 発注確認</div>':""}</div>`}).join("")}</div></div>`).join("");alerts.innerHTML=al.length?`<div class="alert">${al.map(x=>"⚠ "+esc(x)).join("<br>")}</div>`:""}
+function renderOrders(){let a=rows.filter(x=>+x.orderQty>0).sort((a,b)=>b.date.localeCompare(a.date));orderList.innerHTML=a.length?a.map(x=>`<div class="order-card"><b>${esc(x.site)}｜${esc(x.gas)}｜${x.orderQty}本</b><div class="small">${esc(x.date)} ${x.cylinderNo?"管理番号："+esc(x.cylinderNo):""}<br>${esc(x.memo)}</div></div>`).join(""):'<div class="empty">発注登録はありません。</div>'}
+function saveEventNeed(){if(!eventName.value.trim()||+eventQty.value<1)return alert("イベント名と必要本数を入力してください");eventNeeds.push({id:uid(),date:eventDate.value||today(),name:eventName.value.trim(),site:eventSite.value,gas:eventGas.value,qty:+eventQty.value,source:"手動"});persist();eventName.value="";render()}
+function importSharedEvents(){let keys=["fujiwara_preparation_shared_events_v1","fujiwara_preparation_events_v2","fujiwara_shared_preparation_events"],n=0;keys.forEach(k=>{try{let r=JSON.parse(localStorage.getItem(k)||"null"),a=Array.isArray(r)?r:(r&&Array.isArray(r.events)?r.events:[]);a.forEach(e=>{let name=e.name||e.eventName||e.title||"",d=e.date||e.eventDate||"";if(name&&!eventNeeds.some(x=>x.name===name&&x.date===d)){eventNeeds.push({id:uid(),date:d||today(),name,site:"FUJIWARA Group",gas:"20kg",qty:1,source:"共有"});n++}})}catch(e){}});persist();render();alert(n?`${n}件読み込みました`:"新しい共有イベントはありません")}
+function updE(id,f,v){let x=eventNeeds.find(x=>x.id===id);if(x){x[f]=f==="qty"?+v:v;persist();renderStocks()}}
+function delE(id){eventNeeds=eventNeeds.filter(x=>x.id!==id);persist();render()}
+function renderEvents(){let a=[...eventNeeds].sort((a,b)=>a.date.localeCompare(b.date));eventNeeds.innerHTML=a.length?`<table><tr><th>日付</th><th>イベント</th><th>管理先</th><th>種類</th><th>必要本数</th><th>元</th><th></th></tr>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.name)}</td><td><select onchange="updE('${x.id}','site',this.value)"><option ${x.site==="FUJIWARA Group"?"selected":""}>FUJIWARA Group</option><option ${x.site==="尼崎"?"selected":""}>尼崎</option></select></td><td><select onchange="updE('${x.id}','gas',this.value)"><option ${x.gas==="20kg"?"selected":""}>20kg</option><option ${x.gas==="10kg"?"selected":""}>10kg</option><option ${x.gas==="8kg"?"selected":""}>8kg</option></select></td><td><input type="number" value="${x.qty}" onchange="updE('${x.id}','qty',this.value)"></td><td>${x.source}</td><td><button class="danger" onclick="delE('${x.id}')">削除</button></td></tr>`).join("")}</table>`:'<div class="empty">イベント必要本数は未登録です。</div>'}
+function saveThresholds(){thresholds={"20kg":+th20.value||0,"10kg":+th10.value||0,"8kg":+th8.value||0};persist();render();alert("保存しました")}
+function exportCSV(){let m=csvMonth.value,a=rows.filter(x=>x.date.startsWith(m));if(!a.length)return alert("対象月の履歴がありません");let c=[["日付","管理先","区分","ガス種類","管理番号","数量","今回発注数量","備考"],...a.map(x=>[x.date,x.site,x.kind,x.gas,x.cylinderNo||"",x.qty,x.orderQty||0,x.memo||""])].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n"),b=new Blob(["\ufeff"+c],{type:"text/csv"}),u=URL.createObjectURL(b),aTag=document.createElement("a");aTag.href=u;aTag.download=`LPG管理_${m}.csv`;aTag.click();URL.revokeObjectURL(u)}
+function render(){renderStocks();renderOrders();renderEvents();let fs=filterSite.value,fg=filterGas.value,fk=filterKind.value,a=[...rows].filter(x=>(!fs||x.site===fs)&&(!fg||x.gas===fg)&&(!fk||x.kind===fk)).sort((a,b)=>b.date.localeCompare(a.date));historyBox.innerHTML=a.length?`<table><tr><th>日付</th><th>管理先</th><th>区分</th><th>種類</th><th>管理番号</th><th>数量</th><th>今回発注</th><th>備考</th><th></th></tr>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.site)}</td><td><span class="badge ${x.kind==="仕入"?"in":"out"}">${x.kind}</span></td><td>${x.gas}</td><td>${esc(x.cylinderNo)}</td><td>${x.qty}本</td><td>${x.orderQty||0}本</td><td>${esc(x.memo)}</td><td><button class="danger" onclick="del('${x.id}')">削除</button></td></tr>`).join("")}</table>`:'<div class="empty">履歴はありません。</div>'}
+function goBack(){history.length>1?history.back():location.href="manager-app.html"}load();resetForm();render();
+</script></body></html>
