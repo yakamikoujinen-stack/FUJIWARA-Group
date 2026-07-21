@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.17 連続イベント保存修正版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.18 売上保存強化版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3529,6 +3529,41 @@ function openSalesEdit(id, selectedDate) {
   var totalInput=document.getElementById('se-total'); if(totalInput){totalInput.readOnly=true;totalInput.style.background='#fff7df';}
   updateSimpleSalesEditTotals(); openModal('modal-sales-edit'); showPage('sales'); var sel=document.getElementById('sales-ev-select'); if(sel){sel.value=id;renderSalesDetail();}
 }
+
+// ===== v4.3.18 売上データ二重保存（Firebase再読込みによる消失防止） =====
+var SALES_LOCAL_BACKUP_KEY='fujiwara_sales_local_backup_v4318';
+function saveSalesLocalBackup(ev){
+  try{
+    if(!ev || !ev.id) return;
+    var all=JSON.parse(localStorage.getItem(SALES_LOCAL_BACKUP_KEY)||'{}');
+    all[String(ev.id)]={sales:ev.sales||{},savedAt:new Date().toISOString()};
+    localStorage.setItem(SALES_LOCAL_BACKUP_KEY,JSON.stringify(all));
+  }catch(e){ console.warn('売上ローカル保存失敗',e); }
+}
+function salesLatestTime(sales){
+  var latest='';
+  try{
+    if(sales&&sales.simple&&sales.simple.updatedAt) latest=String(sales.simple.updatedAt);
+    var days=(sales&&sales.days)||{};
+    Object.keys(days).forEach(function(k){
+      var x=days[k]&&days[k].simple?days[k].simple:days[k];
+      if(x&&x.updatedAt&&String(x.updatedAt)>latest) latest=String(x.updatedAt);
+    });
+  }catch(e){}
+  return latest;
+}
+function restoreSalesLocalBackups(){
+  try{
+    var all=JSON.parse(localStorage.getItem(SALES_LOCAL_BACKUP_KEY)||'{}');
+    (state.events||[]).forEach(function(ev){
+      var b=all[String(ev.id)];
+      if(!b||!b.sales) return;
+      var localTime=salesLatestTime(b.sales), remoteTime=salesLatestTime(ev.sales||{});
+      if(!ev.sales || localTime>remoteTime){ ev.sales=b.sales; }
+    });
+  }catch(e){ console.warn('売上ローカル復元失敗',e); }
+}
+
 function saveSalesEdit() {
   if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
   var id=document.getElementById('se-ev-id').value, ev=null;
@@ -3538,7 +3573,7 @@ function saveSalesEdit() {
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
   var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:collectStaffPayments()},memo:(document.getElementById('simple-sales-memo')||{}).value||'',updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
-  ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple}; aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
+  ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple}; aggregateDailySimpleSales(ev); saveSalesLocalBackup(ev); syncSimpleMoneyToKing(ev);
   addAudit('日別売上表入力/修正',ev.name+'｜'+ds+'｜入力者 '+(userName||'未入力'));
   closeModal('modal-sales-edit'); renderSalesPage(); toast('✅ '+ds+' の売上・スタッフ支払を保存しました'); fbSave();
 }
@@ -4099,7 +4134,8 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
     startPartnerRealtimeSync();
     if(document.getElementById('app').style.display!=='none'){
-      renderCalendar();
+      restoreSalesLocalBackups();
+    renderCalendar();
       renderInventory();
       renderSalesPage();
       renderHome();
