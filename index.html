@@ -676,7 +676,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">まゆみ・藤原・将・文太専用：かんたん売上表</p>
+        <p class="page-sub">まゆみ・藤原・将・文太専用：日別かんたん売上表 v4.3.15</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 まゆみ＝編集 / 藤原＝閲覧 / 将・文太＝編集｜仕入・経費はキング/事務員アプリで管理</div>
@@ -3108,7 +3108,7 @@ function renderSalesPage(preselectId) {
     return String(eventNameSafe(a)||'').localeCompare(String(eventNameSafe(b)||''),'ja');
   });
   sel.innerHTML=visible.map(function(ev){
-    return '<option value="'+ev.id+'">'+(ev.date||'').slice(5).replace('-','/')+' '+eventNameSafe(ev)+'</option>';
+    var ds=normalizeEventDateValue(ev.date)||String(ev.date||''); return '<option value="'+ev.id+'">'+ds.slice(5).replace('-','/')+' '+eventNameSafe(ev)+'</option>';
   }).join('');
   if(!visible.length){
     var detail=document.getElementById('sales-detail');
@@ -3361,15 +3361,33 @@ function renderSalesItemsRows(ev){
 }
 
 
+function normalizeEventDateValue(v){
+  if(!v) return '';
+  var m=String(v).trim().match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if(!m) return '';
+  return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+}
 function dateListForEvent(ev){
   var dates=[];
-  if(!ev || !ev.date) return dates;
-  var cur=new Date(ev.date);
-  var endValue=ev.dateEnd||ev.endDate||ev.toDate||ev.date;
-  var end=endValue && endValue>ev.date ? new Date(endValue) : new Date(ev.date);
-  while(cur<=end){
+  if(!ev) return dates;
+  var start=normalizeEventDateValue(ev.date||ev.startDate||ev.fromDate);
+  if(!start) return dates;
+  var candidates=[ev.dateEnd,ev.endDate,ev.toDate,ev.finishDate,ev.lastDate];
+  if(Array.isArray(ev.dates)) candidates=candidates.concat(ev.dates);
+  if(Array.isArray(ev.eventDates)) candidates=candidates.concat(ev.eventDates);
+  if(ev.dayAssignments && typeof ev.dayAssignments==='object') candidates=candidates.concat(Object.keys(ev.dayAssignments));
+  if(ev.sales && ev.sales.days && typeof ev.sales.days==='object') candidates=candidates.concat(Object.keys(ev.sales.days));
+  var end=start;
+  candidates.forEach(function(v){
+    var d=normalizeEventDateValue(v);
+    if(d && d>=start && d>end) end=d;
+  });
+  var cur=new Date(start+'T00:00:00');
+  var last=new Date(end+'T00:00:00');
+  var guard=0;
+  while(cur<=last && guard<32){
     dates.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'));
-    cur.setDate(cur.getDate()+1);
+    cur.setDate(cur.getDate()+1); guard++;
   }
   return dates;
 }
