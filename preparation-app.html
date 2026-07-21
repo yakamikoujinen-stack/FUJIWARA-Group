@@ -43,6 +43,7 @@ textarea{min-height:70px;resize:vertical}
 .check{width:28px;height:28px;accent-color:var(--ok)}
 .item-name{font-weight:800}.small-input{padding:9px;font-size:15px}
 .delete{background:#f8e4e7;color:var(--danger);padding:9px}
+.checker-buttons{display:flex;gap:5px;flex-wrap:wrap}.checker-btn{padding:7px 9px;border:1px solid #cfc1d6;background:#f5eef9;color:#5f4a6d;font-size:12px}.checker-btn.active{background:var(--main);color:#fff;border-color:var(--main)}
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
 .sum{background:#faf7fc;border:1px solid var(--line);border-radius:13px;padding:12px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:900;margin-top:4px}
 .empty{text-align:center;color:var(--sub);padding:18px}
@@ -62,7 +63,7 @@ textarea{min-height:70px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト v1.1</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト v1.2 v1.1</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
@@ -120,7 +121,7 @@ textarea{min-height:70px;resize:vertical}
 <div class="grid4">
 <div><label>項目名</label><input id="manualName" placeholder="例：予備トング"></div>
 <div><label>数量</label><input id="manualQty" type="number" min="0" value="1"></div>
-<div><label>確認者</label><input id="manualChecker" placeholder="例：繁充"></div>
+<div><label>確認者（タップ選択）</label><input type="hidden" id="manualChecker"><div id="manualCheckerButtons" class="checker-buttons"></div></div>
 <div><label>分類</label><input id="manualCategory" placeholder="例：共通"></div>
 </div>
 <div class="toolbar"><button class="primary" onclick="addManualItem()">＋ 項目追加</button></div>
@@ -148,6 +149,8 @@ textarea{min-height:70px;resize:vertical}
 <script>
 const STORAGE_KEY="fujiwara_preparation_events_v2";
 const OLD_KEY="fujiwara_preparation_app_v1";
+const PREPARATION_SHARE_LOCAL_KEY="fujiwara_preparation_shared_events_v1";
+const CHECKERS=["社長","将","文太","繁充"];
 
 const CATEGORY_ITEMS={
 "チーズハットグ":[["ガス台",1],["ガスボンベ",2],["油",1],["チーズ",1],["ソーセージ",1],["ミックス粉",1],["パン粉",1],["ケチャップ",1],["マスタード",1],["串",1],["袋",1]],
@@ -171,6 +174,10 @@ function today(){return new Date().toISOString().slice(0,10)}
 function get(id){return document.getElementById(id)}
 function val(id){return get(id)?.value??""}
 function toast(msg){const t=get("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)}
+function checkerButtonsHtml(selected,onClick){return CHECKERS.map(n=>`<button type="button" class="checker-btn ${selected===n?"active":""}" onclick="${onClick}('${n}')">${n}</button>`).join("")}
+function selectManualChecker(name){get("manualChecker").value=name;renderManualCheckerButtons()}
+function renderManualCheckerButtons(){const box=get("manualCheckerButtons");if(box)box.innerHTML=checkerButtonsHtml(val("manualChecker"),"selectManualChecker")}
+function selectItemChecker(id,name){updateItem(id,"checker",name)}
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(db))}
 
 function loadDB(){
@@ -243,7 +250,7 @@ function openEvent(id){
  get("eventId").value=e.id;get("eventName").value=e.name||"";get("eventDate").value=e.date||"";
  get("staffName").value=e.staff||"繁充";get("place").value=e.place||"";get("vehicle").value=e.vehicle||"";get("eventMemo").value=e.memo||"";
  get("eventListSec").classList.add("hidden");get("editor").classList.remove("hidden");
- selectedCategories.clear();renderCategories();renderItems();window.scrollTo({top:0,behavior:"smooth"})
+ selectedCategories.clear();renderCategories();renderManualCheckerButtons();renderItems();window.scrollTo({top:0,behavior:"smooth"})
 }
 function closeEditor(){saveCurrentEvent(false);showEventList()}
 function showEventList(){get("editor").classList.add("hidden");get("eventListSec").classList.remove("hidden");renderEventList();window.scrollTo({top:0,behavior:"smooth"})}
@@ -274,7 +281,7 @@ function addAllCommon(){COMMON.forEach(x=>addItem(x[0],x[1],"共通備品"));per
 function addManualItem(){
  const name=val("manualName").trim();if(!name){toast("項目名を入力してください");return}
  addItem(name,Number(val("manualQty")||1),val("manualCategory").trim()||"手動追加",val("manualChecker").trim());
- persist();get("manualName").value="";get("manualQty").value=1;renderItems();toast("項目を追加しました")
+ persist();get("manualName").value="";get("manualQty").value=1;get("manualChecker").value="";renderManualCheckerButtons();renderItems();toast("項目を追加しました")
 }
 function updateItem(id,field,value){
  const e=currentEvent(),it=e?.items.find(x=>x.id===id);if(!it)return;
@@ -295,7 +302,7 @@ function renderItems(){
   <input class="check" type="checkbox" ${it.done?"checked":""} onchange="updateItem('${it.id}','done',this.checked)">
   <div class="item-name">${esc(it.name)}</div>
   <input class="small-input" type="number" min="0" value="${Number(it.qty||0)}" onchange="updateItem('${it.id}','qty',this.value)">
-  <input class="small-input checker" value="${esc(it.checker||"")}" placeholder="確認者" onchange="updateItem('${it.id}','checker',this.value)">
+  <div class="checker checker-buttons">${CHECKERS.map(n=>`<button type="button" class="checker-btn ${it.checker===n?"active":""}" onclick="selectItemChecker('${it.id}','${n}')">${n}</button>`).join("")}</div>
   <button class="delete" onclick="deleteItem('${it.id}')">×</button>
  </div>`).join("")}</div>`).join("")
 }
@@ -391,29 +398,39 @@ function normalizeMainEvents(root){
  });
  return out;
 }
+
+function readLocalSharedEvents(){
+ try{
+  const raw=JSON.parse(localStorage.getItem(PREPARATION_SHARE_LOCAL_KEY)||'{}')||{};
+  const out={};
+  Object.values(raw).forEach((e,i)=>{if(e){const id=String(e.mainId||e.id||('local_'+i));out[id]={...e,id,mainId:id};}});
+  return out;
+ }catch(e){return {}}
+}
 function startSharedEventSync(){
  try{
   const cfg={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
   if(!firebase.apps.length)firebase.initializeApp(cfg);
   const database=firebase.database();
-  let directShared={};
+  let directShared=readLocalSharedEvents();
   let mainShared={};
   const mergeAndRender=()=>{
    sharedEvents={...mainShared,...directShared};
    renderSharedEvents();
   };
   database.ref(PREPARATION_FB_PATH).on('value',snap=>{
-   directShared=snap.val()||{};
+   const raw=snap.val()||{}; directShared={}; Object.values(raw).forEach((e,i)=>{if(e){const id=String(e.mainId||e.id||('fb_'+i));directShared[id]={...e,id,mainId:id};}});
+   try{localStorage.setItem(PREPARATION_SHARE_LOCAL_KEY,JSON.stringify(directShared));}catch(e){}
    mergeAndRender();
   },()=>mergeAndRender());
   database.ref('fujiwara').on('value',snap=>{
    mainShared=normalizeMainEvents(snap.val()||{});
    mergeAndRender();
   },()=>mergeAndRender());
- }catch(e){renderSharedEvents();}
+ }catch(e){sharedEvents={...readLocalSharedEvents()};renderSharedEvents();}
 }
 
-loadDB();renderCategories();renderEventList();renderSharedEvents();startSharedEventSync();
+loadDB();renderCategories();renderManualCheckerButtons();renderEventList();sharedEvents=readLocalSharedEvents();renderSharedEvents();startSharedEventSync();
 </script>
 </body>
 </html>
