@@ -3102,7 +3102,11 @@ function renderSalesPage(preselectId) {
   var sel=document.getElementById('sales-ev-select');
   if(!sel) return;
   var cur=preselectId || sel.value;
-  var visible=(state.events||[]).filter(function(ev){ return canViewSalesRecord(ev); });
+  var visible=(state.events||[]).filter(function(ev){ return canViewSalesRecord(ev); }).slice().sort(function(a,b){
+    var ad=String(a.date||'9999-12-31'), bd=String(b.date||'9999-12-31');
+    if(ad!==bd) return ad.localeCompare(bd);
+    return String(eventNameSafe(a)||'').localeCompare(String(eventNameSafe(b)||''),'ja');
+  });
   sel.innerHTML=visible.map(function(ev){
     return '<option value="'+ev.id+'">'+(ev.date||'').slice(5).replace('-','/')+' '+eventNameSafe(ev)+'</option>';
   }).join('');
@@ -3361,7 +3365,8 @@ function dateListForEvent(ev){
   var dates=[];
   if(!ev || !ev.date) return dates;
   var cur=new Date(ev.date);
-  var end=ev.dateEnd && ev.dateEnd>ev.date ? new Date(ev.dateEnd) : new Date(ev.date);
+  var endValue=ev.dateEnd||ev.endDate||ev.toDate||ev.date;
+  var end=endValue && endValue>ev.date ? new Date(endValue) : new Date(ev.date);
   while(cur<=end){
     dates.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'));
     cur.setDate(cur.getDate()+1);
