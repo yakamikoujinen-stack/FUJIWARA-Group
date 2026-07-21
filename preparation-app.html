@@ -63,7 +63,7 @@ textarea{min-height:70px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト v1.2 v1.1</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ v1.3</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト v1.2 v1.1</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
@@ -327,9 +327,15 @@ function categoryFromMenu(name){
  return Object.keys(CATEGORY_ITEMS).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||null;
 }
 function categoriesFromShared(src){
- const direct=Array.isArray(src.categories)?src.categories.filter(c=>CATEGORY_ITEMS[c]):[];
- if(direct.length)return [...new Set(direct)];
- return [...new Set(splitMenus(src.itemsText).map(categoryFromMenu).filter(Boolean))];
+ const found=[];
+ const add=(value)=>{
+   const c=categoryFromMenu(value);
+   if(c&&!found.includes(c))found.push(c);
+ };
+ toArray(src.categories||src.netas||src.menuCategories).forEach(add);
+ splitMenus(src.itemsText||src.itemsName||src.menu||src.netaText||src.menuText||'').forEach(add);
+ toArray(src.itemNames||src.netaNames||src.menus).forEach(add);
+ return found;
 }
 function renderSharedEvents(){
  const box=get("sharedEventList"); if(!box)return;
@@ -415,7 +421,28 @@ function startSharedEventSync(){
   let directShared=readLocalSharedEvents();
   let mainShared={};
   const mergeAndRender=()=>{
-   sharedEvents={...mainShared,...directShared};
+   const merged={};
+   const ids=new Set([...Object.keys(mainShared||{}),...Object.keys(directShared||{})]);
+   ids.forEach(id=>{
+     const main=mainShared[id]||{};
+     const direct=directShared[id]||{};
+     const categories=[...new Set([
+       ...categoriesFromShared(main),
+       ...categoriesFromShared(direct)
+     ])];
+     merged[id]={
+       ...main,
+       ...direct,
+       id:String(direct.id||main.id||id),
+       mainId:String(direct.mainId||main.mainId||id),
+       name:direct.name||main.name||'',
+       date:direct.date||main.date||'',
+       place:direct.place||main.place||'',
+       itemsText:direct.itemsText||main.itemsText||categories.join('・'),
+       categories
+     };
+   });
+   sharedEvents=merged;
    renderSharedEvents();
   };
   database.ref(PREPARATION_FB_PATH).on('value',snap=>{
