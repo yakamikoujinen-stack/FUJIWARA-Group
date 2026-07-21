@@ -29,7 +29,8 @@ const DEFAULTS=[
 {key:"neta",icon:"📋",title:"ネタ一覧表アプリ",owner:"文太",desc:"ネタ一覧・必要数量・買い出し・購入済みチェック",url:"neta-shopping-list.html"},
 {key:"vehicle",icon:"🚚",title:"車両管理アプリ",owner:"将",desc:"車両点検・車検・保険・洗車・修理記録",url:"vehicle-management.html"},
 {key:"prepare",icon:"📦",title:"準備アプリ",owner:"繁充",desc:"積込チェック・準備確認・シート記入・完了報告",url:"preparation-app.html"},
-{key:"lpg",icon:"🔥",title:"松笠商店（LPG）管理",owner:"繁充",desc:"20kg・10kg・8kgの仕入、返却、今回発注数量、在庫累計",url:"lpg-management.html"}];
+{key:"lpg",icon:"🔥",title:"松笠商店（LPG）管理",owner:"繁充",desc:"20kg・10kg・8kgの仕入、返却、今回発注数量、在庫累計",url:"lpg-management.html"},
+{key:"order",icon:"📦",title:"発注集計アプリ",owner:"文太",desc:"取引先別の発注表・注文量・ロット・単価・金額を自動集計",url:"order-management.html?role=manager"}];
 function clone(v){return JSON.parse(JSON.stringify(v))}
 function getData(){try{const saved=JSON.parse(localStorage.getItem("fujiwara_manager_apps_v1"));if(Array.isArray(saved)){const out=clone(DEFAULTS);saved.forEach(s=>{const i=out.findIndex(x=>x.key===s.key);if(i>=0)out[i]={...out[i],...s}});localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(out));return out}}catch(e){}return clone(DEFAULTS)}
 let data=getData();

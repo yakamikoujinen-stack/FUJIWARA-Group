@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#8b6508">
+<title>発注集計アプリ</title>
+<style>
+:root{--gold:#b8860b;--gold2:#e2b84d;--bg:#fff8e8;--card:#fffdfa;--line:#d9c078;--text:#2a1d00;--sub:#6e5a2a;--green:#168a58;--red:#c73b47;--blue:#2a69a6;--shadow:0 8px 24px rgba(88,64,0,.12)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#fffaf0,#f4ead0);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Yu Gothic",sans-serif}
+button,input,select,textarea{font:inherit}button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:pointer}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#fff0bf,#ffe09a,#fff0bf);border-bottom:2px solid var(--line);padding:13px 14px}
+.head{max-width:1400px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{font-size:21px;font-weight:950}.sub{font-size:12px;color:var(--sub);margin-top:3px}.back{background:#fff7dd;border:1px solid var(--line);color:var(--sub)}
+.wrap{max-width:1400px;margin:auto;padding:12px 10px 90px}.card{background:var(--card);border:1.5px solid var(--line);border-radius:17px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}h2{font-size:18px;margin:0 0 11px}
+.grid2,.grid3,.grid4,.grid5{display:grid;gap:9px}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.grid5{grid-template-columns:repeat(5,1fr)}
+label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-bottom:4px}input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;background:#fff;color:var(--text);font-size:16px}textarea{min-height:64px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1e1500}.green{background:#e7f7ee;border:1px solid #95d0ad;color:var(--green)}.blue{background:#e9f3ff;border:1px solid #a7c6e8;color:var(--blue)}.ghost{background:#fffaf0;border:1px solid var(--line);color:var(--sub)}.danger{background:#ffe9eb;border:1px solid #e8aeb4;color:var(--red)}
+.notice{background:#fff4ce;border:1px solid #e5c76b;border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.6;color:#725500}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.sum{background:#fff8e8;border:1px solid var(--line);border-radius:12px;padding:11px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:950;margin-top:3px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}table{border-collapse:collapse;min-width:1580px;width:100%}th,td{border:1px solid #e7d7a7;padding:7px;font-size:12px;vertical-align:middle}th{background:#fff1c8;white-space:nowrap}td input,td select{padding:7px;font-size:14px}.money{text-align:right;font-weight:900;color:var(--green)}.empty{text-align:center;color:var(--sub);padding:20px}
+.lock{position:fixed;inset:0;background:linear-gradient(#fff8e8,#f4ead0);z-index:999;display:none;place-items:center;padding:20px}.lock.show{display:grid}.lock-card{background:#fff;border:2px solid var(--line);border-radius:20px;padding:24px;max-width:430px;text-align:center}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff1c8;color:#7d5900;font-size:12px;font-weight:900}
+@media(max-width:800px){.grid2,.grid3,.grid4,.grid5{grid-template-columns:1fr}.brand{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="lock" class="lock"><div class="lock-card"><h2>🔒 閲覧制限</h2><p>この発注集計は、リーダーと担当者のみ利用できます。</p><button class="gold" onclick="history.back()">戻る</button></div></div>
+<header><div class="head"><div><div class="brand">📦 発注集計アプリ</div><div class="sub">取引先別・イベント別・自動計算</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<div class="wrap">
+<section class="card">
+<h2>① 発注先・イベント情報</h2>
+<div class="notice">リーダー・担当者専用。発注先と項目は自由に追加できます。</div>
+<div class="grid4" style="margin-top:10px">
+<div><label>発注先</label><select id="supplier"></select></div>
+<div><label>到着日</label><input id="arrivalDate" type="date"></div>
+<div><label>使用開始日</label><input id="useFrom" type="date"></div>
+<div><label>使用終了日</label><input id="useTo" type="date"></div>
+</div>
+<div class="grid3" style="margin-top:9px">
+<div><label>使用場所</label><input id="place" placeholder="例：天神"></div>
+<div><label>イベントID／名称</label><input id="eventName" placeholder="例：大阪天神"></div>
+<div><label>担当者</label><input id="person" placeholder="例：文太"></div>
+</div>
+<div class="toolbar">
+<button class="blue" onclick="importShoppingList()">ネタ一覧から取込</button>
+<button class="green" onclick="saveOrder()">この発注表を保存</button>
+<button class="ghost" onclick="newOrder()">新規発注表</button>
+</div>
+</section>
+
+<section class="card">
+<h2>② 取引先を追加・管理</h2>
+<div class="grid3"><div><label>取引先名</label><input id="newSupplier" placeholder="例：瀬戸内食品"></div><div><label>電話・連絡先</label><input id="supplierContact"></div><div><label>備考</label><input id="supplierMemo"></div></div>
+<div class="toolbar"><button class="gold" onclick="addSupplier()">＋ 取引先を追加</button><button class="danger" onclick="deleteSupplier()">選択中の取引先を削除</button></div>
+<div id="supplierBadges" style="margin-top:9px"></div>
+</section>
+
+<section class="card">
+<h2>③ 発注明細</h2>
+<div class="toolbar"><button class="gold" onclick="addItem()">＋ 項目を追加</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearItems()">明細を全部消す</button></div>
+<div class="tablewrap" style="margin-top:10px"><table>
+<thead><tr><th>項目</th><th>設定金額</th><th>販売金額</th><th>在庫</th><th>今回使用料</th><th>注文量</th><th>注文ロット</th><th>単価</th><th>金額</th><th>備考</th><th>削除</th></tr></thead>
+<tbody id="tbody"></tbody></table></div>
+<div id="summary" class="summary" style="margin-top:10px"></div>
+</section>
+
+<section class="card">
+<h2>④ 保存済み発注表</h2>
+<div id="history"></div>
+</section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const ROLE=new URLSearchParams(location.search).get("role")||"";
+if(!["manager","leader","king"].includes(ROLE))document.getElementById("lock").classList.add("show");
+const CFG={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+if(!firebase.apps.length)firebase.initializeApp(CFG);const db=firebase.database();
+const SUP_KEY="fujiwara_order_suppliers_v1",ORD_KEY="fujiwara_order_sheets_v1";
+let suppliers=[],orders=[],items=[],currentId="";
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),yen=n=>"¥"+(Number(n)||0).toLocaleString("ja-JP"),uid=()=>Date.now()+"_"+Math.random().toString(36).slice(2,7);
+function load(){try{suppliers=JSON.parse(localStorage.getItem(SUP_KEY)||"[]")}catch(e){}try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||"[]")}catch(e){}if(!suppliers.length)suppliers=[{id:uid(),name:"瀬戸内食品",contact:"",memo:""}];renderSuppliers();newOrder();renderHistory()}
+function persist(){localStorage.setItem(SUP_KEY,JSON.stringify(suppliers));localStorage.setItem(ORD_KEY,JSON.stringify(orders))}
+function renderSuppliers(){supplier.innerHTML=suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");supplierBadges.innerHTML=suppliers.map(s=>`<span class="badge">${esc(s.name)}</span>`).join("")}
+function addSupplier(){const name=newSupplier.value.trim();if(!name)return alert("取引先名を入力してください");suppliers.push({id:uid(),name,contact:supplierContact.value.trim(),memo:supplierMemo.value.trim()});persist();renderSuppliers();supplier.value=suppliers.at(-1).id;newSupplier.value=supplierContact.value=supplierMemo.value=""}
+function deleteSupplier(){if(suppliers.length<=1)return alert("取引先を1件以上残してください");const id=supplier.value;if(!confirm("選択中の取引先を削除しますか？"))return;suppliers=suppliers.filter(s=>s.id!==id);persist();renderSuppliers()}
+function blankItem(){return{id:uid(),name:"",target:0,salePrice:0,stock:0,useQty:0,orderQty:0,lot:1,unitPrice:0,note:""}}
+function newOrder(){currentId="";items=[blankItem()];arrivalDate.value=useFrom.value=useTo.value="";place.value=eventName.value=person.value="";renderItems()}
+function addItem(data){items.push({...blankItem(),...(data||{})});renderItems()}
+function clearItems(){if(confirm("明細を全部消しますか？")){items=[];renderItems()}}
+function updateItem(i,k,v){const x=items[i];if(!x)return;x[k]=["target","salePrice","stock","useQty","orderQty","lot","unitPrice"].includes(k)?Number(v)||0:v;if(["stock","useQty","lot"].includes(k)){const raw=Math.max((Number(x.useQty)||0)-(Number(x.stock)||0),0);const lot=Math.max(Number(x.lot)||1,1);x.orderQty=Math.ceil(raw/lot)*lot}renderItems()}
+function removeItem(i){items.splice(i,1);renderItems()}
+function renderItems(){if(!items.length){tbody.innerHTML='<tr><td colspan="11" class="empty">「項目を追加」から明細を作ってください。</td></tr>';renderSummary();return}
+tbody.innerHTML=items.map((x,i)=>`<tr>
+<td><input value="${esc(x.name)}" oninput="updateItem(${i},'name',this.value)"></td>
+<td><input type="number" value="${x.target||""}" oninput="updateItem(${i},'target',this.value)"></td>
+<td><input type="number" value="${x.salePrice||""}" oninput="updateItem(${i},'salePrice',this.value)"></td>
+<td><input type="number" value="${x.stock||""}" oninput="updateItem(${i},'stock',this.value)"></td>
+<td><input type="number" value="${x.useQty||""}" oninput="updateItem(${i},'useQty',this.value)"></td>
+<td><input type="number" value="${x.orderQty||0}" oninput="updateItem(${i},'orderQty',this.value)"></td>
+<td><input type="number" min="1" value="${x.lot||1}" oninput="updateItem(${i},'lot',this.value)"></td>
+<td><input type="number" value="${x.unitPrice||""}" oninput="updateItem(${i},'unitPrice',this.value)"></td>
+<td class="money">${yen((x.orderQty||0)*(x.unitPrice||0))}</td>
+<td><input value="${esc(x.note)}" oninput="updateItem(${i},'note',this.value)"></td>
+<td><button class="danger" onclick="removeItem(${i})">削除</button></td></tr>`).join("");renderSummary()}
+function renderSummary(){const total=items.reduce((s,x)=>s+(Number(x.orderQty)||0)*(Number(x.unitPrice)||0),0),qty=items.reduce((s,x)=>s+(Number(x.orderQty)||0),0);summary.innerHTML=`<div class="sum"><div class="k">項目数</div><div class="v">${items.length}</div></div><div class="sum"><div class="k">注文量合計</div><div class="v">${qty}</div></div><div class="sum"><div class="k">発注金額合計</div><div class="v">${yen(total)}</div></div>`}
+async function importShoppingList(){const eventId=prompt("ネタ一覧のイベントIDを入力してください。月別ネタ一覧から開いたURLの eventId= の後ろです。");if(!eventId)return;try{const key=String(eventId).replace(/[.#$\\[\\]\\/]/g,"_"),snap=await db.ref("fujiwara/shoppingLists/"+key).once("value"),d=snap.val();if(!d)return alert("保存されたネタ一覧が見つかりません");eventName.value=d.eventName||"";useFrom.value=d.eventDate||"";useTo.value=d.eventDate||"";place.value=d.place||"";person.value=d.buyer||"";items=(d.rows||[]).map(r=>({id:uid(),name:r.item||"",target:Number((d.prices||{})[r.neta])||0,salePrice:0,stock:Number(r.stock)||0,useQty:Number(r.need)||0,orderQty:Number(r.add)||0,lot:1,unitPrice:Number(r.unitPrice)||0,note:r.note||""}));if(!items.length)items=[blankItem()];renderItems();alert("ネタ一覧の保存内容を取り込みました")}catch(e){alert("取込に失敗しました")}}
+function saveOrder(){const sup=suppliers.find(s=>s.id===supplier.value);const rec={id:currentId||uid(),supplierId:supplier.value,supplierName:sup?.name||"",arrivalDate:arrivalDate.value,useFrom:useFrom.value,useTo:useTo.value,place:place.value.trim(),eventName:eventName.value.trim(),person:person.value.trim(),items:JSON.parse(JSON.stringify(items)),updatedAt:Date.now()};const i=orders.findIndex(x=>x.id===rec.id);if(i>=0)orders[i]=rec;else orders.push(rec);currentId=rec.id;persist();renderHistory();alert("発注表を保存しました")}
+function openOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;currentId=o.id;supplier.value=o.supplierId;arrivalDate.value=o.arrivalDate||"";useFrom.value=o.useFrom||"";useTo.value=o.useTo||"";place.value=o.place||"";eventName.value=o.eventName||"";person.value=o.person||"";items=JSON.parse(JSON.stringify(o.items||[]));renderItems();scrollTo({top:0,behavior:"smooth"})}
+function deleteOrder(id){if(!confirm("この発注表を削除しますか？"))return;orders=orders.filter(x=>x.id!==id);persist();renderHistory()}
+function renderHistory(){history.innerHTML=orders.length?orders.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).map(o=>{const total=(o.items||[]).reduce((s,x)=>s+(Number(x.orderQty)||0)*(Number(x.unitPrice)||0),0);return `<div style="border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px"><b>${esc(o.supplierName)}｜${esc(o.eventName||"名称未入力")}</b><div class="small">${esc(o.useFrom||"")}〜${esc(o.useTo||"")}｜${esc(o.place||"")}｜${yen(total)}</div><div class="toolbar"><button class="blue" onclick="openOrder('${o.id}')">開く</button><button class="danger" onclick="deleteOrder('${o.id}')">削除</button></div></div>`}).join(""):'<div class="empty">保存済み発注表はありません。</div>'}
+function goBack(){location.href=ROLE==="king"?"king.html":"manager-app.html"}load();
+</script>
+</body></html>
