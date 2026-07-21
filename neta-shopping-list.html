@@ -28,7 +28,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.0</div><div class="sub">メインアプリ連動｜自動安全接続｜保存＝スタッフへ即時反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.1</div><div class="sub">イベント別金額保存｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -49,9 +49,9 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <datalist id="inventoryList"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
 const LOCAL_KEY='fujiwara_neta_powerup_v25';
+const EVENT_STATE_KEY='fujiwara_neta_event_states_v1';
 const ENTRY_PARAMS=new URLSearchParams(location.search);
 const ENTRY_EVENT_ID=String(ENTRY_PARAMS.get('eventId')||'');
 const ENTRY_NETA=String(ENTRY_PARAMS.get('neta')||'');
@@ -63,43 +63,62 @@ const TEMPLATES={
 'やきそば':['麺','焼きそば麺','キャベツ','肉','ソース','青のり','紅しょうが','容器','はし'],'ホルそば':['そば玉','ホルモン','キャベツ','ソース','青のり','紅しょうが','容器','はし'],'らーめん':['ラーメン麺','スープ','容器','はし'],'麺類':['そば玉','焼きそば麺','ホルモン','ラーメン麺','スープ','キャベツ','ソース','青のり','紅しょうが'],
 'りんご飴':['りんご','飴粉','棒','袋'],'チョコバナナ':['バナナ','チョコレート','棒','袋'],'コットンキャンディー':['コットンキャンディー用ザラメ','袋','棒'],'かすてら':['カステラ粉','卵','砂糖','袋'],'だんご':['だんご','あんこ','串','容器'],'甘味':['りんご','飴粉','だんご','あんこ','チョコレート','バナナ','コットンキャンディー用ザラメ','カステラ粉','卵','砂糖','袋','棒'],
 'たこ焼き':['たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'粉もの・焼き物':['いか','たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'肉巻きおにぎり':['ごはん','豚バラ','タレ','海苔','容器'],'ご飯もの':['ごはん','豚バラ','タレ','海苔','容器'],'その他':['割り箸','手袋','輪ゴム','ラップ','キッチンペーパー','ゴミ袋']};
-let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;let sharedLoadTimer=null;let authReady=false;
+let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;let sharedLoadTimer=null;
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
-function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');state={...state,...x};}catch(e){}}
-function saveLocal(show){if(applyingRemote)return;state.buyer=document.getElementById('buyer')?.value||state.buyer;state.shop=document.getElementById('shop')?.value||state.shop;state.memo=document.getElementById('memo')?.value||state.memo;localStorage.setItem(LOCAL_KEY,JSON.stringify(state));if(show)alert('この端末に保存しました');}
-function initFirebase(){
+function loadLocal(){
   try{
-    if(db)return db;
-    if(!firebase.apps.length)firebase.initializeApp({
-      apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',
-      authDomain:'fujiwara-group-3a600.firebaseapp.com',
-      databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',
-      projectId:'fujiwara-group-3a600',
-      storageBucket:'fujiwara-group-3a600.firebasestorage.app',
-      messagingSenderId:'709887362301',
-      appId:'1:709887362301:web:5ec6b7e2a2165066956a94'
-    });
-    db=firebase.database();
-    return db;
-  }catch(e){
-    console.error(e);
-    return null;
-  }
+    const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');
+    state={...state,...x};
+  }catch(e){}
 }
-async function ensureFirebaseAuth(){
-  initFirebase();
-  if(authReady && firebase.auth().currentUser)return firebase.auth().currentUser;
-  const auth=firebase.auth();
-  if(auth.currentUser){authReady=true;return auth.currentUser;}
+function readEventStates(){
   try{
-    const result=await auth.signInAnonymously();
-    authReady=true;
-    return result.user;
-  }catch(e){
-    console.error('匿名認証失敗',e);
-    throw e;
-  }
+    const x=JSON.parse(localStorage.getItem(EVENT_STATE_KEY)||'{}');
+    return x&&typeof x==='object'?x:{};
+  }catch(e){return {}}
 }
+function saveEventState(){
+  if(!state.eventId)return;
+  const all=readEventStates();
+  all[String(state.eventId)]={
+    buyer:state.buyer||'',
+    shop:state.shop||'',
+    memo:state.memo||'',
+    selected:Array.isArray(state.selected)?state.selected:[],
+    prices:state.prices&&typeof state.prices==='object'?state.prices:{},
+    rows:Array.isArray(state.rows)?state.rows:[],
+    unitPrices:state.unitPrices&&typeof state.unitPrices==='object'?state.unitPrices:{},
+    savedAt:Date.now()
+  };
+  localStorage.setItem(EVENT_STATE_KEY,JSON.stringify(all));
+}
+function loadEventState(eventId){
+  const saved=readEventStates()[String(eventId||'')];
+  if(saved){
+    state.buyer=saved.buyer||'';
+    state.shop=saved.shop||'';
+    state.memo=saved.memo||'';
+    state.selected=Array.isArray(saved.selected)?saved.selected:[];
+    state.prices=saved.prices&&typeof saved.prices==='object'?saved.prices:{};
+    state.rows=Array.isArray(saved.rows)?saved.rows:[];
+    state.unitPrices=saved.unitPrices&&typeof saved.unitPrices==='object'?saved.unitPrices:{};
+    return true;
+  }
+  state.selected=[];
+  state.prices={};
+  state.rows=[];
+  return false;
+}
+function saveLocal(show){
+  if(applyingRemote)return;
+  state.buyer=document.getElementById('buyer')?.value||state.buyer;
+  state.shop=document.getElementById('shop')?.value||state.shop;
+  state.memo=document.getElementById('memo')?.value||state.memo;
+  localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
+  saveEventState();
+  if(show)alert('このイベントの設定を保存しました');
+}
+function initFirebase(){try{if(db)return db;if(!firebase.apps.length)firebase.initializeApp({apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'});db=firebase.database();return db;}catch(e){return null}}
 async function loadMainData(manual){
   const note=document.getElementById('syncNotice');
   const sel=document.getElementById('eventSelect');
@@ -107,7 +126,6 @@ async function loadMainData(manual){
   note.textContent='メインアプリの最新データを読み込んでいます…';
   if(sel)sel.innerHTML='<option value="">読み込み中…</option>';
   try{
-    await ensureFirebaseAuth();
     const database=initFirebase();
     if(!database)throw new Error('Firebase初期化失敗');
     const snap=await Promise.race([
@@ -163,11 +181,10 @@ function setPublishStatus(type,text){
 function detachSharedListener(){
   if(sharedRef){sharedRef.off();sharedRef=null;}
 }
-async function attachSharedListener(){
+function attachSharedListener(){
   detachSharedListener();
   if(sharedLoadTimer){clearTimeout(sharedLoadTimer);sharedLoadTimer=null;}
   const key=sharedEventKey();
-  try{await ensureFirebaseAuth();}catch(e){setPublishStatus('error','安全接続に失敗しました');return;}
   const database=initFirebase();
   if(!database||!key){
     setPublishStatus('','イベントを選ぶと、スタッフ共有の更新状況を表示します');
@@ -207,6 +224,7 @@ async function attachSharedListener(){
     document.getElementById('memo').value=state.memo;
     renderNeta();renderSales();renderRows();
     localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
+    saveEventState();
     applyingRemote=false;
   },err=>{
     if(sharedLoadTimer){clearTimeout(sharedLoadTimer);sharedLoadTimer=null;}
@@ -221,7 +239,6 @@ async function saveAndPublish(){
 }
 async function publishShoppingList(){
   if(!state.eventId){alert('先にイベントを選択してください');return;}
-  try{await ensureFirebaseAuth();}catch(e){alert('安全接続に失敗しました');return;}
   const database=initFirebase();
   if(!database){alert('通信の初期化に失敗しました');return;}
   saveLocal(false);
@@ -252,7 +269,8 @@ async function publishShoppingList(){
       database.ref('fujiwara/shoppingLists/'+sharedEventKey()).set(payload),
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('保存タイムアウト')),7000))
     ]);
-    alert('保存しました。スタッフの画面へすぐ反映されます');
+    saveEventState();
+    alert('このイベントの売上設定金額を保存し、スタッフへ反映しました');
   }catch(e){
     console.error(e);
     setPublishStatus('error','共有保存に失敗しました。端末内には保存されています');
@@ -262,13 +280,45 @@ async function publishShoppingList(){
   }
 }
 
-function selectEvent(id,save=true){state.eventId=String(id||'');const ev=main.events.find(e=>String(e.id)===state.eventId);document.getElementById('eventSelect').value=state.eventId;document.getElementById('eventName').value=ev?.name||'';document.getElementById('eventDate').value=ev?.date||'';document.getElementById('place').value=ev?.place||'';document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';const names=ev?eventNetaNames(ev):[];
-if(ENTRY_EVENT_ID===state.eventId && ENTRY_NETA){
-  state.selected=[ENTRY_NETA];
-}else if(names.length){
-  state.selected=[...new Set(names)];
-}const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener()}
-function readSalesPrices(ev){if(!ev)return;const sales=ev.sales||{};const itemSales=sales.items||sales.itemSales||{};Object.keys(itemSales||{}).forEach(k=>{state.prices[k]=Number(itemSales[k])||0});['yakisoba','kushi','mizu'].forEach(k=>{if(sales[k]!=null)state.prices[k]=Number(sales[k])||0})}
+function selectEvent(id,save=true){
+  const nextId=String(id||'');
+  if(state.eventId && String(state.eventId)!==nextId)saveLocal(false);
+
+  state.eventId=nextId;
+  const ev=main.events.find(e=>String(e.id)===state.eventId);
+  const hadSaved=loadEventState(state.eventId);
+
+  document.getElementById('eventSelect').value=state.eventId;
+  document.getElementById('eventName').value=ev?.name||'';
+  document.getElementById('eventDate').value=ev?.date||'';
+  document.getElementById('place').value=ev?.place||'';
+  document.getElementById('buyer').value=state.buyer||'';
+  document.getElementById('shop').value=state.shop||'';
+  document.getElementById('memo').value=state.memo||'';
+
+  const names=ev?eventNetaNames(ev):[];
+
+  if(!hadSaved){
+    if(ENTRY_EVENT_ID===state.eventId && ENTRY_NETA){
+      state.selected=[ENTRY_NETA];
+    }else if(names.length){
+      state.selected=[...new Set(names)];
+    }
+    readSalesPrices(ev);
+    rebuildRowsFromSelected(false);
+  }
+
+  const badges=document.getElementById('eventBadges');
+  badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';
+
+  renderNeta();
+  renderSales();
+  renderRows();
+
+  if(save)saveLocal(false);
+  attachSharedListener();
+}
+function readSalesPrices(ev){if(!ev)return;const sales=ev.sales||{};const itemSales=sales.items||sales.itemSales||{};Object.keys(itemSales||{}).forEach(k=>{if(state.prices[k]==null)state.prices[k]=Number(itemSales[k])||0});['yakisoba','kushi','mizu'].forEach(k=>{if(sales[k]!=null&&state.prices[k]==null)state.prices[k]=Number(sales[k])||0})}
 function allNetaNames(){return [...new Set([...DEFAULT_NETAS,...Object.keys(TEMPLATES),...state.selected,...main.invItems.map(x=>x.cat).filter(Boolean)])]}
 function renderNeta(){const g=document.getElementById('netaGrid');g.innerHTML=allNetaNames().map(n=>`<label class="neta ${state.selected.includes(n)?'on':''}"><input type="checkbox" ${state.selected.includes(n)?'checked':''} onchange="toggleNeta('${esc(n)}',this.checked)">${esc(n)}</label>`).join('')}
 function toggleNeta(n,on){
