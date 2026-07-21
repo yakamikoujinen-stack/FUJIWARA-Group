@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.16 連続イベント日別売上</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.17 連続イベント保存修正版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -676,7 +676,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">まゆみ・藤原・将・文太専用：日別かんたん売上表 v4.3.16</p>
+        <p class="page-sub">まゆみ・藤原・将・文太専用：日別かんたん売上表 v4.3.17</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 まゆみ＝編集 / 藤原＝閲覧 / 将・文太＝編集｜仕入・経費はキング/事務員アプリで管理</div>
@@ -2689,9 +2689,42 @@ function renderStaffRouteList(name){
 }
 function formatRouteDate(ev){
   var s=ev.date||'';
-  var e=ev.dateEnd||'';
+  var e=inferEventEndDate(ev)||'';
   if(e && e>s) return s+' ～ '+e;
   return s;
+}
+function normalizeEventMatchName(v){
+  return String(v||'').replace(/[\s　・･()（）【】［］\-ー_]/g,'').replace(/^神戸/,'').trim();
+}
+function inferEventEndDate(ev){
+  if(!ev) return '';
+  var start=normalizeEventDateValue(ev.date||ev.startDate||ev.fromDate);
+  var candidates=[];
+  function add(v){ var d=normalizeEventDateValue(v); if(d && (!start || d>=start)) candidates.push(d); }
+  [ev.dateEnd,ev.endDate,ev.toDate,ev.finishDate,ev.lastDate].forEach(add);
+  [ev.dates,ev.eventDates,ev.openDates].forEach(function(a){ if(Array.isArray(a)) a.forEach(add); });
+  [ev.dayAssignments,ev.dayAvailability,ev.dailyStaff,ev.attendanceByDate].forEach(function(m){ if(m&&typeof m==='object') Object.keys(m).forEach(add); });
+  if(ev.sales&&ev.sales.days&&typeof ev.sales.days==='object') Object.keys(ev.sales.days).forEach(add);
+  try{
+    var base=normalizeEventMatchName(eventNameSafe(ev)||ev.name);
+    (state.events||[]).forEach(function(o){
+      if(!o||String(o.id)===String(ev.id)) return;
+      var other=normalizeEventMatchName(eventNameSafe(o)||o.name);
+      var nameMatch=base&&other&&(base===other||base.indexOf(other)>=0||other.indexOf(base)>=0);
+      var p1=String(ev.place||'').trim(), p2=String(o.place||'').trim();
+      var placeMatch=!p1||!p2||p1===p2;
+      if(nameMatch&&placeMatch) add(o.date||o.startDate||o.fromDate);
+    });
+  }catch(e){}
+  candidates=Array.from(new Set(candidates)).sort();
+  if(!start) return candidates[candidates.length-1]||'';
+  var cur=new Date(start+'T00:00:00'), end=start;
+  for(var guard=0;guard<31;guard++){
+    var next=new Date(cur); next.setDate(next.getDate()+1);
+    var ds=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0')+'-'+String(next.getDate()).padStart(2,'0');
+    if(candidates.indexOf(ds)>=0){ end=ds; cur=next; } else break;
+  }
+  return end>start?end:(candidates[candidates.length-1]||'');
 }
 function escHtml(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function escAttr(v){ return escHtml(v).replace(/`/g,'&#96;'); }
@@ -2776,7 +2809,7 @@ function openEventForm(id) {
   document.getElementById('ef-status').value=ev?ev.status:'planned';
   document.getElementById('ef-memo').value=ev?ev.memo:'';
   document.getElementById('ef-items-text').value=ev?ev.itemsText||'':'';
-  document.getElementById('ef-date-end').value=ev?ev.dateEnd||'':'';
+  document.getElementById('ef-date-end').value=ev?(inferEventEndDate(ev)||''):'';
   document.getElementById('ef-required-staff').value=ev?(parseInt(ev.requiredStaff)||0):'';
   eventDayStaffDraft={};
   if(ev&&ev.dayAssignments){ Object.keys(ev.dayAssignments).forEach(function(ds){ var r=ev.dayAssignments[ds]||{}; eventDayStaffDraft[ds]={staff:Array.isArray(r.staff)?r.staff.slice():[],requiredStaff:parseInt(r.requiredStaff)||0}; }); }
@@ -2800,10 +2833,16 @@ function saveEventForm() {
   document.querySelectorAll('#ef-staff-checks input:checked').forEach(function(c){ staff.push(c.value); });
   syncEventDayStaffDraftFromDom();
   var rawId=document.getElementById('ef-id').value;
+  var savedEnd=document.getElementById('ef-date-end').value||'';
+  var savedDates=dateListForEvent({date:date,dateEnd:savedEnd,endDate:savedEnd,toDate:savedEnd});
   var data={
     name:name,
     date:date,
-    dateEnd:document.getElementById('ef-date-end').value||'',
+    dateEnd:savedEnd,
+    endDate:savedEnd,
+    toDate:savedEnd,
+    dates:savedDates,
+    eventDates:savedDates,
     zone:document.getElementById('ef-zone').value,
     place:document.getElementById('ef-place').value,
     status:document.getElementById('ef-status').value,
@@ -3377,13 +3416,14 @@ function dateListForEvent(ev){
   [ev.dateEnd,ev.endDate,ev.toDate,ev.finishDate,ev.lastDate].forEach(addDate);
   if(Array.isArray(ev.dates)) ev.dates.forEach(addDate);
   if(Array.isArray(ev.eventDates)) ev.eventDates.forEach(addDate);
-  if(ev.dayAssignments && typeof ev.dayAssignments==='object') Object.keys(ev.dayAssignments).forEach(addDate);
+  [ev.dayAssignments,ev.dayAvailability,ev.dailyStaff,ev.attendanceByDate].forEach(function(m){ if(m&&typeof m==='object') Object.keys(m).forEach(addDate); });
   if(ev.sales && ev.sales.days && typeof ev.sales.days==='object') Object.keys(ev.sales.days).forEach(addDate);
   // カレンダー上で同名・同会場が別イベントとして連日登録されている場合も1つの日別編集にまとめる
   try{
     (state.events||[]).forEach(function(other){
       if(!other || String(other.id)===String(ev.id)) return;
-      var sameName=String(eventNameSafe(other)||'').trim()===String(eventNameSafe(ev)||'').trim();
+      var n1=normalizeEventMatchName(eventNameSafe(ev)||ev.name), n2=normalizeEventMatchName(eventNameSafe(other)||other.name);
+      var sameName=n1&&n2&&(n1===n2||n1.indexOf(n2)>=0||n2.indexOf(n1)>=0);
       var samePlace=!String(ev.place||'').trim() || !String(other.place||'').trim() || String(other.place||'').trim()===String(ev.place||'').trim();
       if(sameName && samePlace) addDate(other.date||other.startDate||other.fromDate);
     });
