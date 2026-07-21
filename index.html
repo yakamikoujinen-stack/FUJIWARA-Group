@@ -1174,7 +1174,6 @@ var state = {
 var NAV = {
   leader:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
-    {id:'inventory',icon:'📦', label:'在庫'},
     {id:'sales',    icon:'📊', label:'売上・経費'},
     {id:'attendance', icon:'👥', label:'出勤一覧'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
@@ -1182,7 +1181,6 @@ var NAV = {
   ],
   staff:[
     {id:'calendar', icon:'📅', label:'カレンダー'},
-    {id:'inventory',icon:'📦', label:'在庫'},
     {id:'belongings', icon:'📝', label:'忘れ物'},
     {id:'settings', icon:'⚙️', label:'設定'},
   ],
@@ -1540,7 +1538,12 @@ function initApp() {
   renderHome();
   renderSettings();
   renderBelongingsPage();
-  showPage('calendar');
+  var entryPage = new URLSearchParams(location.search).get('open');
+  if((entryPage==='inventory' || entryPage==='purchases') && role!=='user'){
+    showPage(entryPage);
+  }else{
+    showPage('calendar');
+  }
 }
 
 function applyPermissions() {
@@ -4119,13 +4122,10 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   window._purchasePhotoData='';
 
   function patchNav(){
+    // 在庫・仕入は担当者アプリから開くため、メイン下部メニューには表示しない。
     if(window.NAV){
-      ['leader','staff'].forEach(function(r){
-        NAV[r]=NAV[r]||[];
-        if(!NAV[r].some(function(n){return n.id==='purchases'})){
-          var at = Math.min(3,NAV[r].length);
-          NAV[r].splice(at,0,{id:'purchases',icon:'📷',label:'仕入'});
-        }
+      ['leader','staff','user'].forEach(function(r){
+        NAV[r]=(NAV[r]||[]).filter(function(n){return n.id!=='inventory' && n.id!=='purchases';});
       });
     }
   }
