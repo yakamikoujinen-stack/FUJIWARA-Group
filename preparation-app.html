@@ -63,7 +63,7 @@ textarea{min-height:70px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ v1.5</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト｜旧イベント自動再連携｜肉巻き対応</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ v2.0</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト｜イベント別保存｜全出店ネタ同期｜同一ネタ準備テンプレート共有</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
@@ -152,6 +152,7 @@ const STORAGE_KEY="fujiwara_preparation_events_v2";
 const OLD_KEY="fujiwara_preparation_app_v1";
 const PREPARATION_SHARE_LOCAL_KEY="fujiwara_preparation_shared_events_v1";
 const CHECKERS=["社長","将","文太","繁充"];
+const CATEGORY_TEMPLATE_KEY="fujiwara_preparation_category_templates_v1";
 
 const CATEGORY_ITEMS={
 "チーズハットグ":[["ガス台",1],["ガスボンベ",2],["油",1],["チーズ",1],["ソーセージ",1],["ミックス粉",1],["パン粉",1],["ケチャップ",1],["マスタード",1],["串",1],["袋",1]],
@@ -164,6 +165,20 @@ const CATEGORY_ITEMS={
 "りんご飴":[["りんご",1],["砂糖",1],["水あめ",1],["食紅",1],["串",1],["袋",1],["鍋",1],["温度計",1]],
 "肉巻きおにぎり":[["焼き台",1],["ガス台",1],["ガスボンベ",2],["ごはん",1],["豚バラ",1],["タレ",1],["海苔",1],["トング",2],["容器",1]]
 };
+function loadCategoryTemplates(){try{return JSON.parse(localStorage.getItem(CATEGORY_TEMPLATE_KEY)||"{}")||{}}catch(e){return {}}}
+function saveCategoryTemplates(v){try{localStorage.setItem(CATEGORY_TEMPLATE_KEY,JSON.stringify(v||{}))}catch(e){}}
+function categoryItems(category){
+ const base=Array.isArray(CATEGORY_ITEMS[category])?CATEGORY_ITEMS[category]:[];
+ const custom=Array.isArray(loadCategoryTemplates()[category])?loadCategoryTemplates()[category]:[];
+ const merged=[];[...base,...custom].forEach(x=>{if(Array.isArray(x)&&x[0]&&!merged.some(y=>y[0]===x[0]))merged.push([x[0],Number(x[1]||1)])});
+ return merged;
+}
+function rememberCategoryItem(category,name,qty){
+ if(!category||category==="手動追加"||category==="共通備品"||!name)return;
+ const all=loadCategoryTemplates(), list=Array.isArray(all[category])?all[category]:[];
+ const hit=list.find(x=>x[0]===name);if(hit)hit[1]=Number(qty||1);else list.push([name,Number(qty||1)]);
+ all[category]=list;saveCategoryTemplates(all);
+}
 const COMMON=[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]];
 
 let db={events:[]};
@@ -254,7 +269,7 @@ function syncSharedCategoriesToEvent(e,src,quiet=true){
  e.sourceMainId=String(src.mainId||src.id||e.sourceMainId||'');
  const oldByKey={};(e.items||[]).forEach(it=>oldByKey[(it.category||'')+'||'+(it.name||'')]=it);
  e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
- cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
+ cats.forEach(c=>categoryItems(c).forEach(x=>{
    const key=c+'||'+x[0],old=oldByKey[key];
    e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
  }));
@@ -314,13 +329,16 @@ function addItem(name,qty,category,checker=""){
 }
 function addSelectedCategories(){
  if(!selectedCategories.size){toast("カテゴリーを選んでください");return}
- selectedCategories.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>addItem(x[0],x[1],c)));
- selectedCategories.clear();persist();renderCategories();renderItems();toast("カテゴリーの準備品を追加しました")
+ selectedCategories.forEach(c=>categoryItems(c).forEach(x=>addItem(x[0],x[1],c)));
+ const empty=[...selectedCategories].filter(c=>categoryItems(c).length===0);selectedCategories.clear();persist();renderCategories();renderItems();toast(empty.length?"カテゴリーを反映しました。準備品は手動追加すると次回から共通利用できます":"カテゴリーの準備品を追加しました")
 }
 function addAllCommon(){COMMON.forEach(x=>addItem(x[0],x[1],"共通備品"));persist();renderItems();toast("共通備品を追加しました")}
 function addManualItem(){
  const name=val("manualName").trim();if(!name){toast("項目名を入力してください");return}
- addItem(name,Number(val("manualQty")||1),val("manualCategory").trim()||"手動追加",val("manualChecker").trim());
+ const category=val("manualCategory").trim()||"手動追加";
+ const qty=Number(val("manualQty")||1);
+ addItem(name,qty,category,val("manualChecker").trim());
+ rememberCategoryItem(category,name,qty);
  persist();get("manualName").value="";get("manualQty").value=1;get("manualChecker").value="";renderManualCheckerButtons();renderItems();toast("項目を追加しました")
 }
 function updateItem(id,field,value){
@@ -365,7 +383,7 @@ const CATEGORY_ALIASES={
 };
 function categoryFromMenu(name){
  const raw=String(name||'').replace(/[\s　]+/g,'');
- return Object.keys(CATEGORY_ITEMS).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||null;
+ return Object.keys(CATEGORY_ALIASES).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||String(name||'').trim()||null;
 }
 function categoriesFromShared(src){
  const found=[];
@@ -394,7 +412,7 @@ function importSharedEvent(mainId){
  // メインアプリ由来のカテゴリーだけを最新状態へ同期し、手動追加・共通備品・チェック状態は残します。
  const oldByKey={}; (e.items||[]).forEach(it=>{oldByKey[(it.category||'')+'||'+(it.name||'')]=it;});
  e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
- cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
+ cats.forEach(c=>categoryItems(c).forEach(x=>{
    const key=c+'||'+x[0], old=oldByKey[key];
    e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
  }));
