@@ -18,28 +18,35 @@ label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-botto
 .notice{background:#fff4ce;border:1px solid #e5c76b;border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.6;color:#725500}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.sum{background:#fff8e8;border:1px solid var(--line);border-radius:12px;padding:11px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:950;margin-top:3px}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}table{border-collapse:collapse;min-width:1580px;width:100%}th,td{border:1px solid #e7d7a7;padding:7px;font-size:12px;vertical-align:middle}th{background:#fff1c8;white-space:nowrap}td input,td select{padding:7px;font-size:14px}.money{text-align:right;font-weight:900;color:var(--green)}.empty{text-align:center;color:var(--sub);padding:20px}
 .lock{position:fixed;inset:0;background:linear-gradient(#fff8e8,#f4ead0);z-index:999;display:none;place-items:center;padding:20px}.lock.show{display:grid}.lock-card{background:#fff;border:2px solid var(--line);border-radius:20px;padding:24px;max-width:430px;text-align:center}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff1c8;color:#7d5900;font-size:12px;font-weight:900}
+.easy-guide{background:#eaf7ef;border:2px solid #83c99f;border-radius:14px;padding:12px;font-size:15px;font-weight:900;color:#136c40;margin-bottom:10px}
+.supplier-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.big-select{font-size:20px;font-weight:900;padding:14px}
 @media print{header,.toolbar,.lock,#history{display:none!important}.wrap{padding:0}.card{box-shadow:none;border:0}.tablewrap{overflow:visible}table{min-width:0;font-size:8px}th,td{padding:2px}input,select{border:0;padding:1px;font-size:8px}}
 @media(max-width:800px){.grid2,.grid3,.grid4,.grid5{grid-template-columns:1fr}.brand{font-size:18px}}
 </style>
 </head>
 <body>
 <div id="lock" class="lock"><div class="lock-card"><h2>🔒 閲覧制限</h2><p>この発注集計は、リーダーと担当者のみ利用できます。</p><button class="gold" onclick="history.back()">戻る</button></div></div>
-<header><div class="head"><div><div class="brand">📦 発注集計アプリ <small style="font-size:11px">完成版 v1.1</small></div><div class="sub">取引先別・イベント別・自動計算</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="head"><div><div class="brand">📦 かんたん発注集計 <small style="font-size:11px">紙の表ベース v2.0</small></div><div class="sub">在庫と使用料を入れるだけ｜注文量・金額は自動</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="wrap">
 <section class="card">
-<h2>① 発注先・イベント情報</h2>
-<div class="notice">リーダー・担当者専用。発注先と項目は自由に追加できます。</div>
+<h2>① 発注先とイベント</h2>
+<div class="easy-guide">① 発注先を選ぶ → ② 日付と場所を入れる → ③ 明細は「在庫」と「今回使用料」を入れるだけです。</div>
+<div class="grid2">
+<div><label>発注先</label><select id="supplier" class="big-select" onchange="loadSupplierEdit();saveDraft()"></select></div>
+<div><label>担当者</label><input id="person" placeholder="例：文太" oninput="saveDraft()"></div>
+</div>
+<div class="supplier-actions">
+<button class="blue" onclick="showSupplierEdit()">発注先を編集</button>
+<button class="gold" onclick="startNewSupplier()">＋ 新しい発注先</button>
+</div>
 <div class="grid4" style="margin-top:10px">
-<div><label>発注先</label><select id="supplier"></select></div>
-<div><label>到着日</label><input id="arrivalDate" type="date"></div>
-<div><label>使用開始日</label><input id="useFrom" type="date"></div>
-<div><label>使用終了日</label><input id="useTo" type="date"></div>
+<div><label>到着日</label><input id="arrivalDate" type="date" oninput="saveDraft()"></div>
+<div><label>使用日（自）</label><input id="useFrom" type="date" oninput="saveDraft()"></div>
+<div><label>使用日（至）</label><input id="useTo" type="date" oninput="saveDraft()"></div>
+<div><label>使用場所</label><input id="place" placeholder="例：天神" oninput="saveDraft()"></div>
 </div>
-<div class="grid3" style="margin-top:9px">
-<div><label>使用場所</label><input id="place" placeholder="例：天神"></div>
-<div><label>イベントID／名称</label><input id="eventName" placeholder="例：大阪天神"></div>
-<div><label>担当者</label><input id="person" placeholder="例：文太"></div>
-</div>
+<div style="margin-top:9px"><label>イベント名</label><input id="eventName" placeholder="例：大阪天神" oninput="saveDraft()"></div>
 <div class="toolbar">
 <button class="blue" onclick="importShoppingList()">ネタ一覧から取込</button>
 <button class="green" onclick="saveOrder()">この発注表を保存</button>
@@ -47,16 +54,24 @@ label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-botto
 </div>
 </section>
 
-<section class="card">
-<h2>② 取引先を追加・管理</h2>
-<div class="grid3"><div><label>取引先名</label><input id="newSupplier" placeholder="例：瀬戸内食品"></div><div><label>電話・連絡先</label><input id="supplierContact"></div><div><label>備考</label><input id="supplierMemo"></div></div>
-<div class="toolbar"><button class="gold" onclick="addSupplier()">＋ 取引先を追加</button><button class="danger" onclick="deleteSupplier()">選択中の取引先を削除</button></div>
+<section class="card" id="supplierEditCard">
+<h2>② 発注先の編集</h2>
+<div class="grid4">
+<div><label>発注先名</label><input id="editSupplierName" placeholder="例：瀬戸内食品"></div>
+<div><label>担当者名</label><input id="editSupplierPerson" placeholder="例：山田さん"></div>
+<div><label>電話・FAX</label><input id="editSupplierContact"></div>
+<div><label>備考</label><input id="editSupplierMemo"></div>
+</div>
+<div class="toolbar">
+<button class="green" onclick="saveSupplierEdit()">この発注先を保存</button>
+<button class="danger" onclick="deleteSupplier()">この発注先を削除</button>
+</div>
 <div id="supplierBadges" style="margin-top:9px"></div>
 </section>
 
 <section class="card">
-<h2>③ 発注明細</h2>
-<div class="toolbar"><button class="gold" onclick="addItem()">＋ 項目を追加</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearItems()">明細を全部消す</button></div>
+<h2>③ 紙と同じ発注明細</h2><div class="easy-guide">主に入力するのは「在庫」と「今回使用料」です。注文量はロット単位で自動計算されます。</div>
+<div class="toolbar"><button class="gold" onclick="addItem()">＋ 項目を追加</button><button class="green" onclick="saveOrder()">💾 保存</button><button class="blue" onclick="markOrdered()">✅ 発注済</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearItems()">明細を全部消す</button></div>
 <div class="tablewrap" style="margin-top:10px"><table>
 <thead><tr><th>項目</th><th>設定金額</th><th>販売金額</th><th>在庫</th><th>今回使用料</th><th>注文量</th><th>注文ロット</th><th>単価</th><th>金額</th><th>備考</th><th>削除</th></tr></thead>
 <tbody id="tbody"></tbody></table></div>
@@ -78,13 +93,13 @@ if(!["manager","leader","king"].includes(ROLE))document.getElementById("lock").c
 const CFG={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
 if(!firebase.apps.length)firebase.initializeApp(CFG);const db=firebase.database();
 const SUP_KEY="fujiwara_order_suppliers_v1",ORD_KEY="fujiwara_order_sheets_v1",ITEM_KEY="fujiwara_order_item_master_v1",DRAFT_KEY="fujiwara_order_draft_v1";
-let suppliers=[],orders=[],items=[],itemMaster=[],currentId="",draftTimer=null;
+let suppliers=[],orders=[],items=[],itemMaster=[],currentId="",draftTimer=null,ordered=false;
 const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),yen=n=>"¥"+(Number(n)||0).toLocaleString("ja-JP"),uid=()=>Date.now()+"_"+Math.random().toString(36).slice(2,7);
 function load(){
  try{suppliers=JSON.parse(localStorage.getItem(SUP_KEY)||"[]")}catch(e){}
  try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||"[]")}catch(e){}
  try{itemMaster=JSON.parse(localStorage.getItem(ITEM_KEY)||"[]")}catch(e){}
- if(!suppliers.length)suppliers=[{id:uid(),name:"瀬戸内食品",contact:"",memo:""}];
+ if(!suppliers.length)suppliers=[{id:uid(),name:"瀬戸内食品",person:"",contact:"",memo:""}];
  renderSuppliers();
  const draft=readDraft();
  if(draft){applyDraft(draft)}else{newOrder(false)}
@@ -127,11 +142,44 @@ function applyDraft(d){
  items=Array.isArray(d.items)&&d.items.length?d.items:[blankItem()];
  renderItems();
 }
-function renderSuppliers(){supplier.innerHTML=suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");supplierBadges.innerHTML=suppliers.map(s=>`<span class="badge">${esc(s.name)}</span>`).join("")}
-function addSupplier(){const name=newSupplier.value.trim();if(!name)return alert("取引先名を入力してください");if(suppliers.some(s=>s.name===name))return alert("同じ取引先が登録済みです");suppliers.push({id:uid(),name,contact:supplierContact.value.trim(),memo:supplierMemo.value.trim()});persist();renderSuppliers();supplier.value=suppliers.at(-1).id;newSupplier.value=supplierContact.value=supplierMemo.value="";saveDraft()}
-function deleteSupplier(){if(suppliers.length<=1)return alert("取引先を1件以上残してください");const id=supplier.value;if(!confirm("選択中の取引先を削除しますか？"))return;suppliers=suppliers.filter(s=>s.id!==id);persist();renderSuppliers();saveDraft()}
+function renderSuppliers(){
+ supplier.innerHTML=suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+ supplierBadges.innerHTML=suppliers.map(s=>`<span class="badge">${esc(s.name)}</span>`).join("");
+ if(!supplier.value&&suppliers[0])supplier.value=suppliers[0].id;
+ loadSupplierEdit();
+}
+function loadSupplierEdit(){
+ const s=suppliers.find(x=>x.id===supplier.value);
+ if(!s)return;
+ editSupplierName.value=s.name||"";
+ editSupplierPerson.value=s.person||"";
+ editSupplierContact.value=s.contact||"";
+ editSupplierMemo.value=s.memo||"";
+}
+function showSupplierEdit(){
+ document.getElementById("supplierEditCard").scrollIntoView({behavior:"smooth"});
+ loadSupplierEdit();
+ setTimeout(()=>editSupplierName.focus(),300);
+}
+function startNewSupplier(){
+ const s={id:uid(),name:"新しい発注先",person:"",contact:"",memo:""};
+ suppliers.push(s);persist();renderSuppliers();supplier.value=s.id;loadSupplierEdit();showSupplierEdit();
+}
+function saveSupplierEdit(){
+ const s=suppliers.find(x=>x.id===supplier.value);if(!s)return;
+ const name=editSupplierName.value.trim();if(!name)return alert("発注先名を入力してください");
+ if(suppliers.some(x=>x.id!==s.id&&x.name===name))return alert("同じ発注先名があります");
+ s.name=name;s.person=editSupplierPerson.value.trim();s.contact=editSupplierContact.value.trim();s.memo=editSupplierMemo.value.trim();
+ persist();renderSuppliers();supplier.value=s.id;loadSupplierEdit();alert("発注先を保存しました");
+}
+function addSupplier(){startNewSupplier()}
+function deleteSupplier(){
+ if(suppliers.length<=1)return alert("発注先を1件以上残してください");
+ const id=supplier.value;if(!confirm("この発注先を削除しますか？"))return;
+ suppliers=suppliers.filter(s=>s.id!==id);persist();renderSuppliers();saveDraft();
+}
 function blankItem(){return{id:uid(),name:"",target:0,salePrice:0,stock:0,useQty:0,orderQty:0,lot:1,unitPrice:0,note:""}}
-function newOrder(confirmClear=true){if(confirmClear&&items.length&& !confirm("入力中の内容を新規表に切り替えますか？"))return;currentId="";items=[blankItem()];arrivalDate.value=useFrom.value=useTo.value="";place.value=eventName.value=person.value="";clearDraft();renderItems();saveDraft()}
+function newOrder(confirmClear=true){ordered=false;if(confirmClear&&items.length&& !confirm("入力中の内容を新規表に切り替えますか？"))return;currentId="";items=[blankItem()];arrivalDate.value=useFrom.value=useTo.value="";place.value=eventName.value=person.value="";clearDraft();renderItems();saveDraft()}
 function addItem(data){items.push({...blankItem(),...(data||{})});renderItems();saveDraft()}
 function clearItems(){if(confirm("明細を全部消しますか？")){items=[];renderItems();saveDraft()}}
 function updateItem(i,k,v){
@@ -174,7 +222,7 @@ function saveOrder(){
  const validItems=items.filter(x=>String(x.name||"").trim());
  if(!validItems.length)return alert("発注明細を1件以上入力してください");
  const sup=suppliers.find(s=>s.id===supplier.value);
- const rec={id:currentId||uid(),supplierId:supplier.value,supplierName:sup?.name||"",arrivalDate:arrivalDate.value,useFrom:useFrom.value,useTo:useTo.value,place:place.value.trim(),eventName:eventName.value.trim(),person:person.value.trim(),items:JSON.parse(JSON.stringify(validItems)),updatedAt:Date.now()};
+ const rec={id:currentId||uid(),supplierId:supplier.value,supplierName:sup?.name||"",arrivalDate:arrivalDate.value,useFrom:useFrom.value,useTo:useTo.value,place:place.value.trim(),eventName:eventName.value.trim(),person:person.value.trim(),ordered:!!ordered,items:JSON.parse(JSON.stringify(validItems)),updatedAt:Date.now()};
  const i=orders.findIndex(x=>x.id===rec.id);if(i>=0)orders[i]=rec;else orders.push(rec);
  currentId=rec.id;
  validItems.forEach(x=>{
@@ -186,9 +234,10 @@ function saveOrder(){
  items=validItems;
  persist();clearDraft();renderItems();renderHistory();alert("発注表を保存しました");
 }
-function openOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;currentId=o.id;supplier.value=o.supplierId;arrivalDate.value=o.arrivalDate||"";useFrom.value=o.useFrom||"";useTo.value=o.useTo||"";place.value=o.place||"";eventName.value=o.eventName||"";person.value=o.person||"";items=JSON.parse(JSON.stringify(o.items||[]));renderItems();saveDraft();scrollTo({top:0,behavior:"smooth"})}
+function markOrdered(){ordered=true;saveOrder();alert("発注済みにしました")}
+function openOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;currentId=o.id;ordered=!!o.ordered;supplier.value=o.supplierId;arrivalDate.value=o.arrivalDate||"";useFrom.value=o.useFrom||"";useTo.value=o.useTo||"";place.value=o.place||"";eventName.value=o.eventName||"";person.value=o.person||"";items=JSON.parse(JSON.stringify(o.items||[]));renderItems();saveDraft();scrollTo({top:0,behavior:"smooth"})}
 function deleteOrder(id){if(!confirm("この発注表を削除しますか？"))return;orders=orders.filter(x=>x.id!==id);if(currentId===id)newOrder(false);persist();renderHistory()}
-function renderHistory(){history.innerHTML=orders.length?orders.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).map(o=>{const total=(o.items||[]).reduce((s,x)=>s+(Number(x.orderQty)||0)*(Number(x.unitPrice)||0),0);return `<div style="border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px"><b>${esc(o.supplierName)}｜${esc(o.eventName||"名称未入力")}</b><div class="small">${esc(o.useFrom||"")}〜${esc(o.useTo||"")}｜${esc(o.place||"")}｜${yen(total)}</div><div class="toolbar"><button class="blue" onclick="openOrder('${o.id}')">開く</button><button class="danger" onclick="deleteOrder('${o.id}')">削除</button></div></div>`}).join(""):'<div class="empty">保存済み発注表はありません。</div>'}
+function renderHistory(){history.innerHTML=orders.length?orders.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).map(o=>{const total=(o.items||[]).reduce((s,x)=>s+(Number(x.orderQty)||0)*(Number(x.unitPrice)||0),0);return `<div style="border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px"><b>${esc(o.supplierName)}｜${esc(o.eventName||"名称未入力")}</b> <span class="badge">${o.ordered?"発注済":"未発注"}</span><div class="small">${esc(o.useFrom||"")}〜${esc(o.useTo||"")}｜${esc(o.place||"")}｜${yen(total)}</div><div class="toolbar"><button class="blue" onclick="openOrder('${o.id}')">開く</button><button class="danger" onclick="deleteOrder('${o.id}')">削除</button></div></div>`}).join(""):'<div class="empty">保存済み発注表はありません。</div>'}
 function goBack(){location.href=ROLE==="king"?"king.html":"manager-app.html"}
 ["supplier","arrivalDate","useFrom","useTo","place","eventName","person"].forEach(id=>{
  document.getElementById(id)?.addEventListener("input",saveDraft);
