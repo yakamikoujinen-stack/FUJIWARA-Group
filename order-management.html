@@ -18,12 +18,13 @@ label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-botto
 .notice{background:#fff4ce;border:1px solid #e5c76b;border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.6;color:#725500}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.sum{background:#fff8e8;border:1px solid var(--line);border-radius:12px;padding:11px}.sum .k{font-size:12px;color:var(--sub)}.sum .v{font-size:21px;font-weight:950;margin-top:3px}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}table{border-collapse:collapse;min-width:1580px;width:100%}th,td{border:1px solid #e7d7a7;padding:7px;font-size:12px;vertical-align:middle}th{background:#fff1c8;white-space:nowrap}td input,td select{padding:7px;font-size:14px}.money{text-align:right;font-weight:900;color:var(--green)}.empty{text-align:center;color:var(--sub);padding:20px}
 .lock{position:fixed;inset:0;background:linear-gradient(#fff8e8,#f4ead0);z-index:999;display:none;place-items:center;padding:20px}.lock.show{display:grid}.lock-card{background:#fff;border:2px solid var(--line);border-radius:20px;padding:24px;max-width:430px;text-align:center}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff1c8;color:#7d5900;font-size:12px;font-weight:900}
+@media print{header,.toolbar,.lock,#history{display:none!important}.wrap{padding:0}.card{box-shadow:none;border:0}.tablewrap{overflow:visible}table{min-width:0;font-size:8px}th,td{padding:2px}input,select{border:0;padding:1px;font-size:8px}}
 @media(max-width:800px){.grid2,.grid3,.grid4,.grid5{grid-template-columns:1fr}.brand{font-size:18px}}
 </style>
 </head>
 <body>
 <div id="lock" class="lock"><div class="lock-card"><h2>🔒 閲覧制限</h2><p>この発注集計は、リーダーと担当者のみ利用できます。</p><button class="gold" onclick="history.back()">戻る</button></div></div>
-<header><div class="head"><div><div class="brand">📦 発注集計アプリ</div><div class="sub">取引先別・イベント別・自動計算</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="head"><div><div class="brand">📦 発注集計アプリ <small style="font-size:11px">完成版 v1.1</small></div><div class="sub">取引先別・イベント別・自動計算</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="wrap">
 <section class="card">
 <h2>① 発注先・イベント情報</h2>
@@ -68,6 +69,7 @@ label{display:block;font-size:12px;font-weight:900;color:var(--sub);margin-botto
 </section>
 </div>
 
+<datalist id="orderItemMaster"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
@@ -75,23 +77,85 @@ const ROLE=new URLSearchParams(location.search).get("role")||"";
 if(!["manager","leader","king"].includes(ROLE))document.getElementById("lock").classList.add("show");
 const CFG={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
 if(!firebase.apps.length)firebase.initializeApp(CFG);const db=firebase.database();
-const SUP_KEY="fujiwara_order_suppliers_v1",ORD_KEY="fujiwara_order_sheets_v1";
-let suppliers=[],orders=[],items=[],currentId="";
+const SUP_KEY="fujiwara_order_suppliers_v1",ORD_KEY="fujiwara_order_sheets_v1",ITEM_KEY="fujiwara_order_item_master_v1",DRAFT_KEY="fujiwara_order_draft_v1";
+let suppliers=[],orders=[],items=[],itemMaster=[],currentId="",draftTimer=null;
 const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),yen=n=>"¥"+(Number(n)||0).toLocaleString("ja-JP"),uid=()=>Date.now()+"_"+Math.random().toString(36).slice(2,7);
-function load(){try{suppliers=JSON.parse(localStorage.getItem(SUP_KEY)||"[]")}catch(e){}try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||"[]")}catch(e){}if(!suppliers.length)suppliers=[{id:uid(),name:"瀬戸内食品",contact:"",memo:""}];renderSuppliers();newOrder();renderHistory()}
-function persist(){localStorage.setItem(SUP_KEY,JSON.stringify(suppliers));localStorage.setItem(ORD_KEY,JSON.stringify(orders))}
+function load(){
+ try{suppliers=JSON.parse(localStorage.getItem(SUP_KEY)||"[]")}catch(e){}
+ try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||"[]")}catch(e){}
+ try{itemMaster=JSON.parse(localStorage.getItem(ITEM_KEY)||"[]")}catch(e){}
+ if(!suppliers.length)suppliers=[{id:uid(),name:"瀬戸内食品",contact:"",memo:""}];
+ renderSuppliers();
+ const draft=readDraft();
+ if(draft){applyDraft(draft)}else{newOrder(false)}
+ renderHistory();
+}
+function persist(){
+ localStorage.setItem(SUP_KEY,JSON.stringify(suppliers));
+ localStorage.setItem(ORD_KEY,JSON.stringify(orders));
+ localStorage.setItem(ITEM_KEY,JSON.stringify(itemMaster));
+}
+function draftPayload(){
+ return {
+  currentId,
+  supplierId:supplier.value,
+  arrivalDate:arrivalDate.value,
+  useFrom:useFrom.value,
+  useTo:useTo.value,
+  place:place.value,
+  eventName:eventName.value,
+  person:person.value,
+  items:JSON.parse(JSON.stringify(items)),
+  savedAt:Date.now()
+ };
+}
+function saveDraft(){
+ clearTimeout(draftTimer);
+ draftTimer=setTimeout(()=>localStorage.setItem(DRAFT_KEY,JSON.stringify(draftPayload())),150);
+}
+function readDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"null")}catch(e){return null}}
+function clearDraft(){localStorage.removeItem(DRAFT_KEY)}
+function applyDraft(d){
+ currentId=d.currentId||"";
+ if(d.supplierId&&suppliers.some(s=>s.id===d.supplierId))supplier.value=d.supplierId;
+ arrivalDate.value=d.arrivalDate||"";
+ useFrom.value=d.useFrom||"";
+ useTo.value=d.useTo||"";
+ place.value=d.place||"";
+ eventName.value=d.eventName||"";
+ person.value=d.person||"";
+ items=Array.isArray(d.items)&&d.items.length?d.items:[blankItem()];
+ renderItems();
+}
 function renderSuppliers(){supplier.innerHTML=suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");supplierBadges.innerHTML=suppliers.map(s=>`<span class="badge">${esc(s.name)}</span>`).join("")}
-function addSupplier(){const name=newSupplier.value.trim();if(!name)return alert("取引先名を入力してください");suppliers.push({id:uid(),name,contact:supplierContact.value.trim(),memo:supplierMemo.value.trim()});persist();renderSuppliers();supplier.value=suppliers.at(-1).id;newSupplier.value=supplierContact.value=supplierMemo.value=""}
-function deleteSupplier(){if(suppliers.length<=1)return alert("取引先を1件以上残してください");const id=supplier.value;if(!confirm("選択中の取引先を削除しますか？"))return;suppliers=suppliers.filter(s=>s.id!==id);persist();renderSuppliers()}
+function addSupplier(){const name=newSupplier.value.trim();if(!name)return alert("取引先名を入力してください");if(suppliers.some(s=>s.name===name))return alert("同じ取引先が登録済みです");suppliers.push({id:uid(),name,contact:supplierContact.value.trim(),memo:supplierMemo.value.trim()});persist();renderSuppliers();supplier.value=suppliers.at(-1).id;newSupplier.value=supplierContact.value=supplierMemo.value="";saveDraft()}
+function deleteSupplier(){if(suppliers.length<=1)return alert("取引先を1件以上残してください");const id=supplier.value;if(!confirm("選択中の取引先を削除しますか？"))return;suppliers=suppliers.filter(s=>s.id!==id);persist();renderSuppliers();saveDraft()}
 function blankItem(){return{id:uid(),name:"",target:0,salePrice:0,stock:0,useQty:0,orderQty:0,lot:1,unitPrice:0,note:""}}
-function newOrder(){currentId="";items=[blankItem()];arrivalDate.value=useFrom.value=useTo.value="";place.value=eventName.value=person.value="";renderItems()}
-function addItem(data){items.push({...blankItem(),...(data||{})});renderItems()}
-function clearItems(){if(confirm("明細を全部消しますか？")){items=[];renderItems()}}
-function updateItem(i,k,v){const x=items[i];if(!x)return;x[k]=["target","salePrice","stock","useQty","orderQty","lot","unitPrice"].includes(k)?Number(v)||0:v;if(["stock","useQty","lot"].includes(k)){const raw=Math.max((Number(x.useQty)||0)-(Number(x.stock)||0),0);const lot=Math.max(Number(x.lot)||1,1);x.orderQty=Math.ceil(raw/lot)*lot}renderItems()}
-function removeItem(i){items.splice(i,1);renderItems()}
-function renderItems(){if(!items.length){tbody.innerHTML='<tr><td colspan="11" class="empty">「項目を追加」から明細を作ってください。</td></tr>';renderSummary();return}
+function newOrder(confirmClear=true){if(confirmClear&&items.length&& !confirm("入力中の内容を新規表に切り替えますか？"))return;currentId="";items=[blankItem()];arrivalDate.value=useFrom.value=useTo.value="";place.value=eventName.value=person.value="";clearDraft();renderItems();saveDraft()}
+function addItem(data){items.push({...blankItem(),...(data||{})});renderItems();saveDraft()}
+function clearItems(){if(confirm("明細を全部消しますか？")){items=[];renderItems();saveDraft()}}
+function updateItem(i,k,v){
+ const x=items[i];if(!x)return;
+ x[k]=["target","salePrice","stock","useQty","orderQty","lot","unitPrice"].includes(k)?Number(v)||0:v;
+ if(["stock","useQty","lot"].includes(k)){
+  const raw=Math.max((Number(x.useQty)||0)-(Number(x.stock)||0),0);
+  const lot=Math.max(Number(x.lot)||1,1);
+  x.orderQty=Math.ceil(raw/lot)*lot;
+ }
+ if(k==="name"&&String(v).trim()){
+  const saved=itemMaster.find(m=>m.name===String(v).trim());
+  if(saved){
+   if(!x.salePrice)x.salePrice=saved.salePrice||0;
+   if(!x.lot||x.lot===1)x.lot=saved.lot||1;
+   if(!x.unitPrice)x.unitPrice=saved.unitPrice||0;
+  }
+ }
+ renderItems();saveDraft();
+}
+function removeItem(i){items.splice(i,1);renderItems();saveDraft()}
+function renderItems(){document.getElementById("orderItemMaster").innerHTML=itemMaster.map(m=>`<option value="${esc(m.name)}">ロット ${m.lot||1}／単価 ${m.unitPrice||0}</option>`).join("");if(!items.length){tbody.innerHTML='<tr><td colspan="11" class="empty">「項目を追加」から明細を作ってください。</td></tr>';renderSummary();return}
 tbody.innerHTML=items.map((x,i)=>`<tr>
-<td><input value="${esc(x.name)}" oninput="updateItem(${i},'name',this.value)"></td>
+<td><input list="orderItemMaster" value="${esc(x.name)}" oninput="updateItem(${i},'name',this.value)"></td>
 <td><input type="number" value="${x.target||""}" oninput="updateItem(${i},'target',this.value)"></td>
 <td><input type="number" value="${x.salePrice||""}" oninput="updateItem(${i},'salePrice',this.value)"></td>
 <td><input type="number" value="${x.stock||""}" oninput="updateItem(${i},'stock',this.value)"></td>
@@ -104,10 +168,33 @@ tbody.innerHTML=items.map((x,i)=>`<tr>
 <td><button class="danger" onclick="removeItem(${i})">削除</button></td></tr>`).join("");renderSummary()}
 function renderSummary(){const total=items.reduce((s,x)=>s+(Number(x.orderQty)||0)*(Number(x.unitPrice)||0),0),qty=items.reduce((s,x)=>s+(Number(x.orderQty)||0),0);summary.innerHTML=`<div class="sum"><div class="k">項目数</div><div class="v">${items.length}</div></div><div class="sum"><div class="k">注文量合計</div><div class="v">${qty}</div></div><div class="sum"><div class="k">発注金額合計</div><div class="v">${yen(total)}</div></div>`}
 async function importShoppingList(){const eventId=prompt("ネタ一覧のイベントIDを入力してください。月別ネタ一覧から開いたURLの eventId= の後ろです。");if(!eventId)return;try{const key=String(eventId).replace(/[.#$\\[\\]\\/]/g,"_"),snap=await db.ref("fujiwara/shoppingLists/"+key).once("value"),d=snap.val();if(!d)return alert("保存されたネタ一覧が見つかりません");eventName.value=d.eventName||"";useFrom.value=d.eventDate||"";useTo.value=d.eventDate||"";place.value=d.place||"";person.value=d.buyer||"";items=(d.rows||[]).map(r=>({id:uid(),name:r.item||"",target:Number((d.prices||{})[r.neta])||0,salePrice:0,stock:Number(r.stock)||0,useQty:Number(r.need)||0,orderQty:Number(r.add)||0,lot:1,unitPrice:Number(r.unitPrice)||0,note:r.note||""}));if(!items.length)items=[blankItem()];renderItems();alert("ネタ一覧の保存内容を取り込みました")}catch(e){alert("取込に失敗しました")}}
-function saveOrder(){const sup=suppliers.find(s=>s.id===supplier.value);const rec={id:currentId||uid(),supplierId:supplier.value,supplierName:sup?.name||"",arrivalDate:arrivalDate.value,useFrom:useFrom.value,useTo:useTo.value,place:place.value.trim(),eventName:eventName.value.trim(),person:person.value.trim(),items:JSON.parse(JSON.stringify(items)),updatedAt:Date.now()};const i=orders.findIndex(x=>x.id===rec.id);if(i>=0)orders[i]=rec;else orders.push(rec);currentId=rec.id;persist();renderHistory();alert("発注表を保存しました")}
-function openOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;currentId=o.id;supplier.value=o.supplierId;arrivalDate.value=o.arrivalDate||"";useFrom.value=o.useFrom||"";useTo.value=o.useTo||"";place.value=o.place||"";eventName.value=o.eventName||"";person.value=o.person||"";items=JSON.parse(JSON.stringify(o.items||[]));renderItems();scrollTo({top:0,behavior:"smooth"})}
-function deleteOrder(id){if(!confirm("この発注表を削除しますか？"))return;orders=orders.filter(x=>x.id!==id);persist();renderHistory()}
+function saveOrder(){
+ if(!supplier.value)return alert("取引先を選択してください");
+ if(!eventName.value.trim())return alert("イベント名を入力してください");
+ const validItems=items.filter(x=>String(x.name||"").trim());
+ if(!validItems.length)return alert("発注明細を1件以上入力してください");
+ const sup=suppliers.find(s=>s.id===supplier.value);
+ const rec={id:currentId||uid(),supplierId:supplier.value,supplierName:sup?.name||"",arrivalDate:arrivalDate.value,useFrom:useFrom.value,useTo:useTo.value,place:place.value.trim(),eventName:eventName.value.trim(),person:person.value.trim(),items:JSON.parse(JSON.stringify(validItems)),updatedAt:Date.now()};
+ const i=orders.findIndex(x=>x.id===rec.id);if(i>=0)orders[i]=rec;else orders.push(rec);
+ currentId=rec.id;
+ validItems.forEach(x=>{
+  const name=String(x.name||"").trim();if(!name)return;
+  const old=itemMaster.find(m=>m.name===name);
+  const data={name,salePrice:Number(x.salePrice)||0,lot:Math.max(Number(x.lot)||1,1),unitPrice:Number(x.unitPrice)||0};
+  if(old)Object.assign(old,data);else itemMaster.push(data);
+ });
+ items=validItems;
+ persist();clearDraft();renderItems();renderHistory();alert("発注表を保存しました");
+}
+function openOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;currentId=o.id;supplier.value=o.supplierId;arrivalDate.value=o.arrivalDate||"";useFrom.value=o.useFrom||"";useTo.value=o.useTo||"";place.value=o.place||"";eventName.value=o.eventName||"";person.value=o.person||"";items=JSON.parse(JSON.stringify(o.items||[]));renderItems();saveDraft();scrollTo({top:0,behavior:"smooth"})}
+function deleteOrder(id){if(!confirm("この発注表を削除しますか？"))return;orders=orders.filter(x=>x.id!==id);if(currentId===id)newOrder(false);persist();renderHistory()}
 function renderHistory(){history.innerHTML=orders.length?orders.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).map(o=>{const total=(o.items||[]).reduce((s,x)=>s+(Number(x.orderQty)||0)*(Number(x.unitPrice)||0),0);return `<div style="border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px"><b>${esc(o.supplierName)}｜${esc(o.eventName||"名称未入力")}</b><div class="small">${esc(o.useFrom||"")}〜${esc(o.useTo||"")}｜${esc(o.place||"")}｜${yen(total)}</div><div class="toolbar"><button class="blue" onclick="openOrder('${o.id}')">開く</button><button class="danger" onclick="deleteOrder('${o.id}')">削除</button></div></div>`}).join(""):'<div class="empty">保存済み発注表はありません。</div>'}
-function goBack(){location.href=ROLE==="king"?"king.html":"manager-app.html"}load();
+function goBack(){location.href=ROLE==="king"?"king.html":"manager-app.html"}
+["supplier","arrivalDate","useFrom","useTo","place","eventName","person"].forEach(id=>{
+ document.getElementById(id)?.addEventListener("input",saveDraft);
+ document.getElementById(id)?.addEventListener("change",saveDraft);
+});
+window.addEventListener("beforeunload",()=>{try{localStorage.setItem(DRAFT_KEY,JSON.stringify(draftPayload()))}catch(e){}});
+load();
 </script>
 </body></html>
