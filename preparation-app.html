@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#6f3d8f">
-<title>準備アプリ｜イベント別チェックリスト</title>
+<title>準備アプリ｜イベント別チェックリスト v1.1</title>
 <style>
 :root{
   --main:#6f3d8f;--main2:#9b65b7;--pale:#f5eef9;--gold:#b88418;
@@ -62,7 +62,7 @@ textarea{min-height:70px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト v1.1</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
@@ -350,11 +350,66 @@ function addItemToEvent(e,name,qty,category){
  const exists=(e.items||[]).find(x=>x.name===name&&x.category===category);
  if(exists)return; e.items=e.items||[]; e.items.push({id:uid(),name,qty:Number(qty||1),category,checker:'',done:false});
 }
+function toArray(v){
+ if(Array.isArray(v))return v.filter(Boolean);
+ if(v&&typeof v==='object')return Object.values(v).filter(Boolean);
+ return [];
+}
+function mainEventCategories(ev,invItems){
+ const found=[];
+ const add=(name)=>{
+  const c=categoryFromMenu(name);
+  if(c&&!found.includes(c))found.push(c);
+ };
+ splitMenus(ev.itemsText||ev.netaText||ev.menuText||'').forEach(add);
+ toArray(ev.categories||ev.netas||ev.menuCategories).forEach(add);
+ toArray(ev.items).forEach(id=>{
+  const it=invItems.find(x=>String(x.id)===String(id));
+  if(it){add(it.cat);add(it.name);}
+  else if(typeof id==='string')add(id);
+ });
+ return found;
+}
+function normalizeMainEvents(root){
+ const events=toArray(root.events);
+ const invItems=toArray(root.invItems);
+ const out={};
+ events.forEach((ev,index)=>{
+  const id=String(ev.id||ev.eventId||('main_'+index));
+  const cats=mainEventCategories(ev,invItems);
+  out[id]={
+   id,mainId:id,
+   name:ev.name||ev.eventName||'',
+   date:ev.date||ev.startDate||'',
+   place:ev.place||ev.location||'',
+   vehicle:ev.vehicle||'',
+   memo:ev.memo||ev.note||'',
+   staff:ev.staff||ev.staffs||[],
+   categories:cats,
+   itemsText:cats.join('・') || ev.itemsText || ''
+  };
+ });
+ return out;
+}
 function startSharedEventSync(){
  try{
   const cfg={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
   if(!firebase.apps.length)firebase.initializeApp(cfg);
-  firebase.database().ref(PREPARATION_FB_PATH).on('value',snap=>{sharedEvents=snap.val()||{};renderSharedEvents();});
+  const database=firebase.database();
+  let directShared={};
+  let mainShared={};
+  const mergeAndRender=()=>{
+   sharedEvents={...mainShared,...directShared};
+   renderSharedEvents();
+  };
+  database.ref(PREPARATION_FB_PATH).on('value',snap=>{
+   directShared=snap.val()||{};
+   mergeAndRender();
+  },()=>mergeAndRender());
+  database.ref('fujiwara').on('value',snap=>{
+   mainShared=normalizeMainEvents(snap.val()||{});
+   mergeAndRender();
+  },()=>mergeAndRender());
  }catch(e){renderSharedEvents();}
 }
 
