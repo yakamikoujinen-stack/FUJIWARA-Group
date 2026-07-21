@@ -30,10 +30,13 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 .staff-mode input[readonly],.staff-mode .staff-readonly{background:#f2f5f7!important;color:#475569!important}
 .staff-banner{display:none;background:#e7f1ff;border:1.5px solid #9fc0e9;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;font-weight:900;color:#2563a7}
 .staff-mode .staff-banner{display:block}
+
+.auth-lock{position:fixed;inset:0;z-index:9999;background:linear-gradient(#fff8e8,#f4ead0);display:grid;place-items:center;padding:20px}.auth-lock.hidden{display:none}.auth-card{width:min(420px,100%);background:#fff;border:2px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 12px 40px rgba(80,55,0,.18)}.auth-card h2{font-size:22px}.auth-error{color:var(--red);font-size:13px;font-weight:800;min-height:20px;margin-top:8px}.auth-user{font-size:11px;color:var(--sub);margin-top:4px}.logout-btn{position:absolute;right:12px;top:10px;background:#fffaf0;border:1px solid var(--line);color:var(--sub);padding:7px 10px}.role-chip{display:inline-block;padding:4px 9px;border-radius:999px;background:#e7f1ff;color:var(--blue);font-size:11px;font-weight:900;margin-left:6px}
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.0</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<div id="authLock" class="auth-lock"><div class="auth-card"><h2>🔐 FUJIWARA Group ログイン</h2><div class="notice warn">登録済みのメールアドレスとパスワードでログインしてください。</div><label>メールアドレス</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@example.com"><label style="margin-top:10px">パスワード</label><input id="authPassword" type="password" autocomplete="current-password"><div class="toolbar"><button class="gold" onclick="secureLogin()">ログイン</button></div><div id="authError" class="auth-error"></div></div></div>
+<header style="position:sticky"><button class="logout-btn" onclick="secureLogout()">ログアウト</button><div class="brand">🛒 ネタ買い物一覧 統一版 v1.0</div><div class="sub">メインアプリ連動｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap"><div class="staff-banner">👷 スタッフ表示｜金額・単価はリーダー設定を自動反映します。購入済みチェックと備考は共有保存されます。</div>
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -54,13 +57,18 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <datalist id="inventoryList"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
 const LOCAL_KEY='fujiwara_neta_powerup_v25';
 const ENTRY_PARAMS=new URLSearchParams(location.search);
 const ENTRY_EVENT_ID=String(ENTRY_PARAMS.get('eventId')||'');
 const ENTRY_NETA=String(ENTRY_PARAMS.get('neta')||'');
-const APP_ROLE=String(ENTRY_PARAMS.get('role')||'manager');
-const IS_STAFF=APP_ROLE==='staff'||APP_ROLE==='user'||APP_ROLE==='general';
+let APP_ROLE='';
+let IS_STAFF=false;
+let CURRENT_USER=null;
+let CURRENT_ROLE='';
+let checksRef=null;
+let sharedChecks={};
 let staffSaveTimer=null;
 const DEFAULT_NETAS=['チーズハットグ','牛串','豚串','鳥串','かき氷','いか焼き','ポテト','からあげ','肉巻きおにぎり','りんご飴','やきそば','ホルそば','串','かまぼこ','だんご','らーめん','チョコバナナ','コットンキャンディー','かすてら','たこ焼き','焼きとうもろこし','フランクフルト','クレープ','串物','揚げ物','麺類','甘味','粉もの・焼き物','ご飯もの','その他'];
 const TEMPLATES={
@@ -72,6 +80,53 @@ const TEMPLATES={
 'たこ焼き':['たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'粉もの・焼き物':['いか','たこ','小麦粉','天かす','かつお節','青のり','ソース','マヨネーズ','容器'],'肉巻きおにぎり':['ごはん','豚バラ','タレ','海苔','容器'],'ご飯もの':['ごはん','豚バラ','タレ','海苔','容器'],'その他':['割り箸','手袋','輪ゴム','ラップ','キッチンペーパー','ゴミ袋']};
 let main={events:[],invItems:[]};let state={eventId:'',buyer:'',shop:'',memo:'',selected:[],prices:{},rows:[],unitPrices:{}};let db=null;let sharedRef=null;let applyingRemote=false;let sharedLoadTimer=null;
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}function jump(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+function firebaseApp(){initFirebase();return firebase.app();}
+async function secureLogin(){
+ const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
+ document.getElementById('authError').textContent='';
+ if(!email||!password){document.getElementById('authError').textContent='メールアドレスとパスワードを入力してください';return;}
+ try{await firebase.auth().signInWithEmailAndPassword(email,password)}catch(e){console.error(e);document.getElementById('authError').textContent='ログインできません。メールアドレスまたはパスワードを確認してください';}
+}
+function secureLogout(){firebase.auth().signOut()}
+async function readSecureRole(user){
+ const snap=await firebase.database().ref('fujiwara/userRoles/'+user.uid).once('value');
+ const data=snap.val()||{};const role=String(data.role||'');
+ if(!['manager','staff'].includes(role))throw new Error('role-not-set');
+ return role;
+}
+async function initializeSecureAuth(){
+ initFirebase();
+ firebase.auth().onAuthStateChanged(async user=>{
+  if(!user){CURRENT_USER=null;CURRENT_ROLE='';document.getElementById('authLock').classList.remove('hidden');return;}
+  try{
+   CURRENT_USER=user;CURRENT_ROLE=await readSecureRole(user);APP_ROLE=CURRENT_ROLE;IS_STAFF=CURRENT_ROLE==='staff';
+   document.getElementById('authLock').classList.add('hidden');
+   applyRoleMode();
+   const brand=document.querySelector('header .brand');if(brand)brand.insertAdjacentHTML('beforeend',`<span class="role-chip">${IS_STAFF?'スタッフ':'管理者'}</span>`);
+   loadLocal();document.getElementById('buyer').value=state.buyer||user.email||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();
+   if(IS_STAFF){const btn=document.getElementById('publishBtn');if(btn)btn.textContent='💾 購入状況を共有';}
+   loadMainData(false);
+  }catch(e){console.error(e);await firebase.auth().signOut();document.getElementById('authError').textContent='このアカウントには利用権限が設定されていません';}
+ });
+}
+function safeRowKey(r,i){return btoa(unescape(encodeURIComponent(String(r.neta||'')+'|'+String(r.item||'')+'|'+i))).replace(/[=+/]/g,'_')}
+function detachChecksListener(){if(checksRef){checksRef.off();checksRef=null}sharedChecks={}}
+function attachChecksListener(){
+ detachChecksListener();if(!state.eventId||!CURRENT_USER)return;
+ checksRef=firebase.database().ref('fujiwara/shoppingChecks/'+sharedEventKey());
+ checksRef.on('value',snap=>{sharedChecks=snap.val()||{};applySharedChecks()});
+}
+function applySharedChecks(){
+ if(!state.rows?.length)return;
+ applyingRemote=true;
+ state.rows.forEach((r,i)=>{const key=safeRowKey(r,i),byUser=sharedChecks[key]||{},vals=Object.values(byUser);if(vals.length){const latest=vals.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];r.bought=vals.some(v=>v&&v.bought===true);if(latest&&latest.note)r.note=latest.note;}});
+ renderRows();applyingRemote=false;
+}
+async function publishStaffChecks(silent=false){
+ if(!CURRENT_USER||!state.eventId)return;
+ const updates={};state.rows.forEach((r,i)=>{updates[safeRowKey(r,i)+'/'+CURRENT_USER.uid]={bought:!!r.bought,note:r.note||'',updatedAt:firebase.database.ServerValue.TIMESTAMP,updatedBy:CURRENT_USER.email||'staff'}});
+ try{await firebase.database().ref('fujiwara/shoppingChecks/'+sharedEventKey()).update(updates);if(!silent)alert('購入状況を共有しました')}catch(e){console.error(e);if(!silent)alert('購入状況の共有に失敗しました')}
+}
 function applyRoleMode(){if(!IS_STAFF)return;document.body.classList.add('staff-mode');const b=document.querySelector('header .brand');if(b)b.textContent='🛒 ネタ買い物一覧 スタッフ版';const sub=document.querySelector('header .sub');if(sub)sub.textContent='リーダー設定を自動反映｜購入済みチェック・備考を共有';}
 function scheduleStaffPublish(){if(!IS_STAFF||!state.eventId||applyingRemote)return;clearTimeout(staffSaveTimer);staffSaveTimer=setTimeout(()=>publishShoppingList(true),700)}
 function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');state={...state,...x};}catch(e){}}
@@ -195,6 +250,7 @@ async function saveAndPublish(){
   await publishShoppingList();
 }
 async function publishShoppingList(silent=false){
+  if(IS_STAFF){return publishStaffChecks(silent);}
   if(!state.eventId){alert('先にイベントを選択してください');return;}
   const database=initFirebase();
   if(!database){alert('通信の初期化に失敗しました');return;}
@@ -241,7 +297,7 @@ if(ENTRY_EVENT_ID===state.eventId && ENTRY_NETA){
   state.selected=[ENTRY_NETA];
 }else if(names.length){
   state.selected=[...new Set(names)];
-}const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener()}
+}const badges=document.getElementById('eventBadges');badges.innerHTML=ev?`<span class="badge">${esc(ev.zone||'')}</span>${names.map(n=>`<span class="badge">${esc(n)}</span>`).join('')}`:'';readSalesPrices(ev);renderNeta();renderSales();rebuildRowsFromSelected(false);if(save)saveLocal();attachSharedListener();attachChecksListener()}
 function readSalesPrices(ev){if(!ev)return;const sales=ev.sales||{};const itemSales=sales.items||sales.itemSales||{};Object.keys(itemSales||{}).forEach(k=>{state.prices[k]=Number(itemSales[k])||0});['yakisoba','kushi','mizu'].forEach(k=>{if(sales[k]!=null)state.prices[k]=Number(sales[k])||0})}
 function allNetaNames(){return [...new Set([...DEFAULT_NETAS,...Object.keys(TEMPLATES),...state.selected,...main.invItems.map(x=>x.cat).filter(Boolean)])]}
 function renderNeta(){const g=document.getElementById('netaGrid');g.innerHTML=allNetaNames().map(n=>`<label class="neta ${state.selected.includes(n)?'on':''}"><input type="checkbox" ${state.selected.includes(n)?'checked':''} onchange="toggleNeta('${esc(n)}',this.checked)">${esc(n)}</label>`).join('')}
@@ -352,6 +408,6 @@ function renderRows(){const b=document.getElementById('tbody');if(!state.rows.le
 function updateNoteShop(i,v){state.rows[i].note=v;saveLocal();updateSummary();scheduleStaffPublish()}
 function updateSummary(){const rows=state.rows||[];document.getElementById('rowCount').textContent=rows.length;document.getElementById('qtyTotal').textContent=rows.reduce((s,r)=>s+(Number(r.add)||0),0);document.getElementById('moneyTotal').textContent=yen(rows.reduce((s,r)=>s+(Number(r.add)||0)*(Number(r.unitPrice)||0),0))}
 function copyText(){const ev=main.events.find(e=>String(e.id)===state.eventId);let t=`【買い物一覧】\n${ev?.date||''} ${ev?.name||''} ${ev?.place||''}\n担当：${state.buyer||''}\n今回売上設定金額：${yen(state.selected.reduce((sum,n)=>sum+(Number(state.prices[n])||0),0))}\n`;state.selected.forEach(n=>{if(Number(state.prices[n])>0)t+=`・${n} 売上設定 ${yen(state.prices[n])}\n`});state.rows.filter(r=>!r.bought&&(Number(r.add)||0)>0).forEach(r=>{t+=`・${r.item} ${r.add}${r.unit||''} × ${yen(r.unitPrice)} = ${yen((Number(r.add)||0)*(Number(r.unitPrice)||0))}\n`});navigator.clipboard?.writeText(t).then(()=>alert('買い物一覧をコピーしました')).catch(()=>prompt('この文字をコピーしてください',t))}
-applyRoleMode();loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();if(IS_STAFF){const btn=document.getElementById('publishBtn');if(btn)btn.textContent='💾 購入状況を共有';}loadMainData(false);
+initializeSecureAuth();
 </script>
 </body></html>
