@@ -63,7 +63,7 @@ textarea{min-height:70px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ v1.3</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト v1.2 v1.1</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ v1.4</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト｜旧イベント自動再連携</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
@@ -100,7 +100,8 @@ textarea{min-height:70px;resize:vertical}
 
 <section class="card">
 <h2>② 出店カテゴリー</h2>
-<div class="note">メインアプリの出店ネタは「✓ メイン反映」で自動表示されます。必要に応じて手動カテゴリーも追加できます。</div>
+<div class="note">メインアプリの出店ネタは「✓ メイン反映」で自動表示されます。以前に作ったイベントも、イベント名・日付・会場から自動で再連携します。</div>
+<div id="categorySyncStatus" class="note" style="margin:8px 0;padding:9px 11px;border-radius:10px;background:#f5eef9;font-weight:900">メインアプリの出店ネタを確認中…</div>
 <div class="category-grid" id="categoryGrid"></div>
 <div class="toolbar">
 <button class="gold" onclick="addSelectedCategories()">選択カテゴリーを追加</button>
@@ -231,9 +232,47 @@ function linkedCategoriesForCurrentEvent(){
  const itemCats=(e.items||[]).filter(x=>x.fromMainCategory).map(x=>x.category).filter(Boolean);
  return new Set([...saved,...itemCats]);
 }
+function normalizeMatchText(v){return String(v||'').replace(/[\s　・、,，。()（）「」『』_-]+/g,'').toLowerCase()}
+function sharedForEvent(e){
+ if(!e)return null;
+ const list=Object.values(sharedEvents||{});
+ if(e.sourceMainId){const byId=list.find(x=>String(x.mainId||x.id||'')===String(e.sourceMainId));if(byId)return byId;}
+ const en=normalizeMatchText(e.name), ed=String(e.date||''), ep=normalizeMatchText(e.place);
+ return list.find(x=>{
+   const xn=normalizeMatchText(x.name), xd=String(x.date||''), xp=normalizeMatchText(x.place);
+   const nameOK=en&&xn&&(en===xn||en.includes(xn)||xn.includes(en));
+   const dateOK=!ed||!xd||ed===xd;
+   const placeOK=!ep||!xp||ep===xp||ep.includes(xp)||xp.includes(ep);
+   return nameOK&&dateOK&&placeOK;
+ })||null;
+}
+function syncSharedCategoriesToEvent(e,src,quiet=true){
+ if(!e||!src)return false;
+ const cats=categoriesFromShared(src);
+ if(!cats.length)return false;
+ e.sourceMainId=String(src.mainId||src.id||e.sourceMainId||'');
+ const oldByKey={};(e.items||[]).forEach(it=>oldByKey[(it.category||'')+'||'+(it.name||'')]=it);
+ e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
+ cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
+   const key=c+'||'+x[0],old=oldByKey[key];
+   e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
+ }));
+ e.sharedCategories=cats;e.updatedAt=Date.now();persist();
+ if(!quiet)toast('出店ネタを自動反映しました');
+ return true;
+}
 function renderCategories(){
+ const e=currentEvent();
+ const src=sharedForEvent(e);
+ if(e&&src)syncSharedCategoriesToEvent(e,src,true);
  const linked=linkedCategoriesForCurrentEvent();
- get("categoryGrid").innerHTML=Object.keys(CATEGORY_ITEMS).map(c=>{
+ const status=get('categorySyncStatus');
+ if(status){
+  if(linked.size){status.style.background='#e2f5ea';status.style.color='#126d40';status.textContent='✅ メイン反映：'+[...linked].join('・');}
+  else{status.style.background='#fff4df';status.style.color='#8a5a00';status.textContent='⚠️ このイベントの出店ネタが見つかりません。メインアプリで出店ネタを保存後、準備共有を押してください。';}
+ }
+ const order=[...linked,...Object.keys(CATEGORY_ITEMS).filter(c=>!linked.has(c))];
+ get("categoryGrid").innerHTML=order.map(c=>{
    const cls=["category",selectedCategories.has(c)?"active":"",linked.has(c)?"linked":""].filter(Boolean).join(" ");
    return `<button class="${cls}" onclick="toggleCategory('${c}')">${esc(c)}</button>`;
  }).join("");
@@ -250,7 +289,7 @@ function openEvent(id){
  get("eventId").value=e.id;get("eventName").value=e.name||"";get("eventDate").value=e.date||"";
  get("staffName").value=e.staff||"繁充";get("place").value=e.place||"";get("vehicle").value=e.vehicle||"";get("eventMemo").value=e.memo||"";
  get("eventListSec").classList.add("hidden");get("editor").classList.remove("hidden");
- selectedCategories.clear();renderCategories();renderManualCheckerButtons();renderItems();window.scrollTo({top:0,behavior:"smooth"})
+ selectedCategories.clear();const src=sharedForEvent(e);if(src)syncSharedCategoriesToEvent(e,src,false);renderCategories();renderManualCheckerButtons();renderItems();window.scrollTo({top:0,behavior:"smooth"})
 }
 function closeEditor(){saveCurrentEvent(false);showEventList()}
 function showEventList(){get("editor").classList.add("hidden");get("eventListSec").classList.remove("hidden");renderEventList();window.scrollTo({top:0,behavior:"smooth"})}
@@ -444,6 +483,7 @@ function startSharedEventSync(){
    });
    sharedEvents=merged;
    renderSharedEvents();
+   const ce=currentEvent();if(ce){const src=sharedForEvent(ce);if(src)syncSharedCategoriesToEvent(ce,src,true);renderCategories();renderItems();}
   };
   database.ref(PREPARATION_FB_PATH).on('value',snap=>{
    const raw=snap.val()||{}; directShared={}; Object.values(raw).forEach((e,i)=>{if(e){const id=String(e.mainId||e.id||('fb_'+i));directShared[id]={...e,id,mainId:id};}});
