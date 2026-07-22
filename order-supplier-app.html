@@ -34,7 +34,7 @@ header{margin:0 -14px 16px;padding:20px 18px;background:linear-gradient(135deg,v
 </section>
 <section class="panel">
 <div class="tabs"><button class="tab active" id="tabItems" onclick="setTab('items')">在庫品目表</button><button class="tab" id="tabDup" onclick="setTab('dup')">重複整理</button></div>
-<div class="toolbar"><button class="btn primary" onclick="addItem()">＋ 項目追加</button><button class="btn gold" onclick="importInventory()">📥 在庫データ読込</button><button class="btn light" onclick="saveAll(true)">💾 保存・商品マスター反映</button><button class="btn danger" onclick="deleteChecked()">🗑 選択項目を削除</button></div>
+<div class="toolbar"><button class="btn primary" onclick="addItem()">＋ 項目追加</button><button class="btn gold" onclick="importInventory()">📥 在庫データ読込</button><button class="btn light" onclick="saveAll(true)">💾 保存・商品マスター反映</button><button class="btn light" onclick="restoreLatestBackup()">↩️ 最新バックアップ復元</button><button class="btn light" onclick="exportBackup()">📤 バックアップ保存</button><button class="btn danger" onclick="deleteChecked()">🗑 選択項目を削除</button></div>
 <div class="search"><input id="searchInput" placeholder="品目名・出店ネタ・発注先で検索" oninput="renderItems()"><button class="btn light" onclick="clearSearch()">クリア</button></div>
 <div class="notice" style="margin:0 0 10px">出店ネタ別にまとめて表示します。下の「↑」「↓」でカテゴリーの表示順を変更できます。</div>
 <div class="category-tools"><button class="btn primary" type="button" onclick="addCategory()">＋ 出店ネタ追加</button></div>
@@ -51,22 +51,76 @@ const SHARED_REF=firebase.database().ref("fujiwara/order_supplier");
 const STORE='fujiwara_order_supplier_v2';
 const LEGACY_STORE='fujiwara_order_supplier_v1';
 const PRODUCT_MASTER_STORE='fujiwara_product_master_v1';
+const BACKUP_PREFIX='fujiwara_order_supplier_backup_';
+const BACKUP_INDEX='fujiwara_order_supplier_backup_index_v1';
+const DEVICE_ID_KEY='fujiwara_device_id_v1';
+const DEVICE_ID=localStorage.getItem(DEVICE_ID_KEY)||(()=>{const id='dev_'+uid();localStorage.setItem(DEVICE_ID_KEY,id);return id})()
 const state={vendors:[],items:[],tab:'items',categoryOrder:[],customCategories:[]};
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function norm(s=''){return String(s).trim().replace(/[\s　]+/g,'').toLowerCase()}
-function applyData(x){if(!x||typeof x!=='object')return;if(Array.isArray(x.items))state.items=x.items.map(i=>({unitPrice:'',minLot:'',orderUnit:'',packQty:'',...i,checked:false}));if(Array.isArray(x.vendors))state.vendors=x.vendors;if(Array.isArray(x.categoryOrder))state.categoryOrder=x.categoryOrder;if(Array.isArray(x.customCategories))state.customCategories=x.customCategories;ensureCategoryOrder()}
-function localPayload(){return {vendors:state.vendors,items:state.items.map(({checked,...i})=>i),categoryOrder:state.categoryOrder,customCategories:state.customCategories,updatedAt:new Date().toISOString()}}
+function cleanVendor(v={}){return {id:v.id||uid(),type:v.type||'発注先',name:String(v.name||'').trim(),phone:v.phone||'',memo:v.memo||'',updatedAt:v.updatedAt||''}}
+function cleanItem(i={}){return {unitPrice:'',minLot:'',orderUnit:'',packQty:'',category:'',name:'',spec:'',stock:'',reorder:'',vendorId:'',route:'発注',memo:'',...i,id:i.id||uid(),checked:false}}
+function vendorKey(v){return norm(v.name)}
+function itemKey(i){return [norm(i.category),norm(i.name),norm(i.spec)].join('|')}
+function newer(a,b){const at=Date.parse(a?.updatedAt||0)||0,bt=Date.parse(b?.updatedAt||0)||0;return bt>at?b:a}
+function mergeData(localData={},remoteData={}){
+ const lv=Array.isArray(localData.vendors)?localData.vendors.map(cleanVendor):[];
+ const rv=Array.isArray(remoteData.vendors)?remoteData.vendors.map(cleanVendor):[];
+ const vendorsByKey=new Map();
+ [...lv,...rv].forEach(v=>{if(!v.name)return;const k=vendorKey(v);const prev=vendorsByKey.get(k);vendorsByKey.set(k,prev?{...prev,...newer(prev,v),id:prev.id||v.id}:v)});
+ const vendors=[...vendorsByKey.values()];
+ const vendorIdMap=new Map();
+ [...lv,...rv].forEach(v=>{const hit=vendors.find(x=>vendorKey(x)===vendorKey(v));if(hit&&v.id)vendorIdMap.set(v.id,hit.id)});
+ const li=Array.isArray(localData.items)?localData.items.map(cleanItem):[];
+ const ri=Array.isArray(remoteData.items)?remoteData.items.map(cleanItem):[];
+ const itemsByKey=new Map();
+ [...li,...ri].forEach(i=>{
+   if(!String(i.name||'').trim()){itemsByKey.set('blank|'+i.id,i);return}
+   const k=itemKey(i);const prev=itemsByKey.get(k);
+   const merged=prev?{...prev,...newer(prev,i),id:prev.id||i.id}:i;
+   if(merged.vendorId&&vendorIdMap.has(merged.vendorId))merged.vendorId=vendorIdMap.get(merged.vendorId);
+   itemsByKey.set(k,merged)
+ });
+ const categoryOrder=[];
+ const append=x=>{String(x||'').trim()&&!categoryOrder.includes(x)&&categoryOrder.push(x)};
+ (localData.categoryOrder||[]).forEach(append);(remoteData.categoryOrder||[]).forEach(append);
+ const customCategories=[];
+ [...(localData.customCategories||[]),...(remoteData.customCategories||[])].forEach(x=>{if(x&&!customCategories.includes(x))customCategories.push(x)});
+ return {vendors,items:[...itemsByKey.values()],categoryOrder,customCategories,updatedAt:new Date().toISOString(),updatedBy:DEVICE_ID,version:3}
+}
+function applyData(x){if(!x||typeof x!=='object')return;if(Array.isArray(x.items))state.items=x.items.map(cleanItem);if(Array.isArray(x.vendors))state.vendors=x.vendors.map(cleanVendor);if(Array.isArray(x.categoryOrder))state.categoryOrder=x.categoryOrder;if(Array.isArray(x.customCategories))state.customCategories=x.customCategories;ensureCategoryOrder()}
+function localPayload(){return {vendors:state.vendors.map(v=>({...v,updatedAt:v.updatedAt||new Date().toISOString()})),items:state.items.map(({checked,...i})=>({...i,updatedAt:i.updatedAt||new Date().toISOString()})),categoryOrder:state.categoryOrder,customCategories:state.customCategories,updatedAt:new Date().toISOString(),updatedBy:DEVICE_ID,version:3}}
+function createBackup(reason='自動'){
+ try{
+  const payload=localPayload(),stamp=new Date().toISOString().replace(/[:.]/g,'-'),key=BACKUP_PREFIX+stamp;
+  localStorage.setItem(key,JSON.stringify({...payload,backupReason:reason}));
+  let idx=JSON.parse(localStorage.getItem(BACKUP_INDEX)||'[]');idx.unshift(key);idx=[...new Set(idx)].slice(0,20);
+  localStorage.setItem(BACKUP_INDEX,JSON.stringify(idx));idx.slice(10).forEach(k=>localStorage.removeItem(k));
+ }catch(e){console.warn('backup failed',e)}
+}
+function restoreLatestBackup(){
+ try{
+  const idx=JSON.parse(localStorage.getItem(BACKUP_INDEX)||'[]');if(!idx.length)return alert('復元できるバックアップがありません');
+  const raw=localStorage.getItem(idx[0]);if(!raw)return alert('バックアップが見つかりません');
+  if(!confirm('最新バックアップを現在のデータと合体して復元しますか？'))return;
+  const merged=mergeData(localPayload(),JSON.parse(raw));applyData(merged);localStorage.setItem(STORE,JSON.stringify(merged));syncProductMaster();renderAll();saveAll(true)
+ }catch(e){alert('復元に失敗しました')}
+}
+function exportBackup(){
+ const blob=new Blob([JSON.stringify(localPayload(),null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='発注先購入先バックアップ_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)
+}
 function setSyncStatus(text,type='wait'){const el=document.getElementById('syncStatus');if(!el)return;el.textContent=text;el.className='sync-status '+type}
 let remoteReady=false,remoteApplying=false,saveTimer=null;
-function load(){try{let raw=localStorage.getItem(STORE)||localStorage.getItem(LEGACY_STORE);const x=raw?JSON.parse(raw):null;applyData(x)}catch(e){}ensureCategoryOrder();renderAll();connectFirebase()}
+function load(){try{let raw=localStorage.getItem(STORE)||localStorage.getItem(LEGACY_STORE);const x=raw?JSON.parse(raw):null;applyData(x);if(x)createBackup('起動時')}catch(e){}ensureCategoryOrder();renderAll();connectFirebase()}
 function syncProductMaster(){const products=state.items.filter(i=>String(i.name||'').trim()).map(i=>({id:i.id,name:String(i.name||'').trim(),category:i.category||'',spec:i.spec||'',unitPrice:Number(i.unitPrice)||0,minLot:Number(i.minLot)||0,orderUnit:i.orderUnit||'',packQty:Number(i.packQty)||0,vendorId:i.vendorId||'',vendorName:state.vendors.find(v=>v.id===i.vendorId)?.name||'',route:i.route||'発注',updatedAt:new Date().toISOString()}));localStorage.setItem(PRODUCT_MASTER_STORE,JSON.stringify({version:1,products,updatedAt:new Date().toISOString()}))}
-function saveAll(show=false){ensureCategoryOrder();const payload=localPayload();localStorage.setItem(STORE,JSON.stringify(payload));syncProductMaster();if(remoteReady&&!remoteApplying){clearTimeout(saveTimer);setSyncStatus('共有へ保存中…','wait');saveTimer=setTimeout(()=>SHARED_REF.set(payload).then(()=>{setSyncStatus('Firebase共有中','ok');if(show)alert('保存して全端末へ共有しました')}).catch(e=>{setSyncStatus('共有エラー','err');if(show)alert('端末には保存しましたが、Firebase共有に失敗しました\n'+e.message)}),250)}else if(show){alert('端末に保存しました。Firebase接続後に共有されます')}}
-function addVendor(){const name=document.getElementById('vendorName').value.trim();if(!name)return alert('会社名・店舗名を入力してください');if(state.vendors.some(v=>norm(v.name)===norm(name)))return alert('同じ名前が登録されています');state.vendors.push({id:uid(),type:document.getElementById('vendorType').value,name,phone:document.getElementById('vendorPhone').value.trim(),memo:document.getElementById('vendorMemo').value.trim()});['vendorName','vendorPhone','vendorMemo'].forEach(id=>document.getElementById(id).value='');saveAll();renderAll()}
+function saveAll(show=false){ensureCategoryOrder();createBackup('保存前');const payload=localPayload();localStorage.setItem(STORE,JSON.stringify(payload));syncProductMaster();if(remoteReady&&!remoteApplying){clearTimeout(saveTimer);setSyncStatus('共有へ安全保存中…','wait');saveTimer=setTimeout(async()=>{try{const snap=await SHARED_REF.once('value');const merged=mergeData(payload,snap.val()||{});localStorage.setItem(STORE,JSON.stringify(merged));await SHARED_REF.set(merged);applyData(merged);syncProductMaster();renderAll();setSyncStatus('Firebase共有中・上書き防止','ok');if(show)alert('既存データと合体して全端末へ共有しました')}catch(e){setSyncStatus('共有エラー・端末保存済','err');if(show)alert('端末には安全保存しましたが、Firebase共有に失敗しました\n'+e.message)}},250)}else if(show){alert('端末に安全保存しました。Firebase接続後に自動合体します')}}
+function addVendor(){const name=document.getElementById('vendorName').value.trim();if(!name)return alert('会社名・店舗名を入力してください');if(state.vendors.some(v=>norm(v.name)===norm(name)))return alert('同じ名前が登録されています');state.vendors.push({id:uid(),type:document.getElementById('vendorType').value,name,phone:document.getElementById('vendorPhone').value.trim(),memo:document.getElementById('vendorMemo').value.trim(),updatedAt:new Date().toISOString()});['vendorName','vendorPhone','vendorMemo'].forEach(id=>document.getElementById(id).value='');saveAll();renderAll()}
 function deleteVendor(id){const v=state.vendors.find(x=>x.id===id);if(!v||!confirm(`${v.name}を削除しますか？\n品目の仕分けは「未設定」に戻ります。`))return;state.vendors=state.vendors.filter(x=>x.id!==id);state.items.forEach(x=>{if(x.vendorId===id)x.vendorId=''});saveAll();renderAll()}
 function renderVendors(){const el=document.getElementById('vendorList');if(!state.vendors.length){el.innerHTML='<div class="empty">まだ登録されていません</div>';return}el.innerHTML='<div class="tablewrap"><table style="min-width:650px"><thead><tr><th>区分</th><th>会社名・店舗名</th><th>電話</th><th>担当者・メモ</th><th>操作</th></tr></thead><tbody>'+state.vendors.map(v=>`<tr><td>${esc(v.type)}</td><td><b>${esc(v.name)}</b></td><td>${esc(v.phone)}</td><td>${esc(v.memo)}</td><td><button class="iconbtn del" onclick="deleteVendor('${v.id}')">🗑</button></td></tr>`).join('')+'</tbody></table></div>'}
-function addItem(seed={}){state.items.unshift({id:uid(),category:seed.category||'',name:seed.name||'',spec:seed.spec||'',unitPrice:seed.unitPrice??'',minLot:seed.minLot??'',orderUnit:seed.orderUnit||'',packQty:seed.packQty??'',stock:seed.stock??'',reorder:seed.reorder??'',vendorId:seed.vendorId||'',route:seed.route||'発注',memo:seed.memo||'',checked:false});saveAll();renderItems();setTimeout(()=>document.querySelector('#itemBody tr input[data-field="name"]')?.focus(),50)}
-function updateItem(id,field,value){const x=state.items.find(i=>i.id===id);if(!x)return;x[field]=(field==='checked')?!!value:value;saveAll();renderStats();if(field==='name'||field==='category')renderItems()}
+function addItem(seed={}){state.items.unshift({id:uid(),category:seed.category||'',name:seed.name||'',spec:seed.spec||'',unitPrice:seed.unitPrice??'',minLot:seed.minLot??'',orderUnit:seed.orderUnit||'',packQty:seed.packQty??'',stock:seed.stock??'',reorder:seed.reorder??'',vendorId:seed.vendorId||'',route:seed.route||'発注',memo:seed.memo||'',updatedAt:new Date().toISOString(),checked:false});saveAll();renderItems();setTimeout(()=>document.querySelector('#itemBody tr input[data-field="name"]')?.focus(),50)}
+function updateItem(id,field,value){const x=state.items.find(i=>i.id===id);if(!x)return;x[field]=(field==='checked')?!!value:value;if(field!=='checked')x.updatedAt=new Date().toISOString();saveAll();renderStats();if(field==='name'||field==='category')renderItems()}
 function deleteItem(id){const x=state.items.find(i=>i.id===id);if(x&&confirm(`「${x.name||'名称未入力'}」を削除しますか？`)){state.items=state.items.filter(i=>i.id!==id);saveAll();renderItems()}}
 function copyItem(id){const x=state.items.find(i=>i.id===id);if(!x)return;addItem({...x,name:x.name+' コピー',stock:''})}
 function duplicates(){const map={};state.items.forEach(i=>{const k=norm(i.name);if(k)(map[k]??=[]).push(i)});return Object.values(map).filter(a=>a.length>1).flat()}
@@ -85,22 +139,23 @@ function extractItems(obj,out,depth=0){if(depth>5||obj==null)return;if(Array.isA
 function importInventory(){const candidates=['fujiwara_inventory','fujiwara_inventory_v1','inventoryData','inventory_data','stockData','fujiwara_main_data','fujiwara_events_v1','fujiwara_neta_master','fujiwara_product_master'];let found=[];candidates.forEach(k=>{try{const raw=localStorage.getItem(k);if(raw)extractItems(JSON.parse(raw),found)}catch(e){}});for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||'';if(/inventory|stock|product|neta|item|zaiko/i.test(k)&&!candidates.includes(k)){try{extractItems(JSON.parse(localStorage.getItem(k)),found)}catch(e){}}}const existing=new Set(state.items.map(x=>norm(x.name)));const unique=[];found.forEach(x=>{const n=norm(x.name);if(n&&!existing.has(n)&&!unique.some(y=>norm(y.name)===n))unique.push(x)});if(!unique.length)return alert('読み込める在庫品目が見つかりませんでした。\n「＋項目追加」から登録してください。');unique.forEach(x=>state.items.push({id:uid(),category:x.category||'',name:x.name,spec:x.spec||'',stock:x.stock??'',reorder:'',vendorId:'',route:'発注',memo:'在庫管理から読込',checked:false}));saveAll();renderAll();alert(`${unique.length}件の品目を読み込みました`)}
 
 function connectFirebase(){
- setSyncStatus('Firebase 接続中…','wait');
- SHARED_REF.once('value').then(snap=>{
-   remoteReady=true;
-   if(snap.exists()){
-     remoteApplying=true;applyData(snap.val());localStorage.setItem(STORE,JSON.stringify(localPayload()));syncProductMaster();renderAll();remoteApplying=false;
-   }else if(state.items.length||state.vendors.length){
-     return SHARED_REF.set(localPayload());
-   }
- }).then(()=>{
-   remoteReady=true;setSyncStatus('Firebase共有中','ok');
-   SHARED_REF.on('value',snap=>{
-     if(!snap.exists()||!remoteReady)return;
-     remoteApplying=true;applyData(snap.val());localStorage.setItem(STORE,JSON.stringify(localPayload()));syncProductMaster();renderAll();remoteApplying=false;setSyncStatus('Firebase共有中','ok');
-   },e=>setSyncStatus('共有エラー','err'));
- }).catch(e=>{remoteReady=false;setSyncStatus('オフライン保存','err');console.error(e)});
- window.addEventListener('online',()=>{if(!remoteReady)connectFirebase()});
+ setSyncStatus('Firebase 安全接続中…','wait');
+ SHARED_REF.once('value').then(async snap=>{
+   remoteReady=true;remoteApplying=true;
+   const local=localPayload(),remote=snap.exists()?snap.val():{};
+   const merged=mergeData(local,remote);
+   createBackup('Firebase合体前');
+   applyData(merged);localStorage.setItem(STORE,JSON.stringify(merged));syncProductMaster();renderAll();
+   await SHARED_REF.set(merged);
+   remoteApplying=false;setSyncStatus('Firebase共有中・上書き防止','ok');
+   SHARED_REF.off('value');
+   SHARED_REF.on('value',snap2=>{
+     if(!snap2.exists()||!remoteReady||remoteApplying)return;
+     const merged2=mergeData(localPayload(),snap2.val());
+     remoteApplying=true;createBackup('他端末受信前');applyData(merged2);localStorage.setItem(STORE,JSON.stringify(merged2));syncProductMaster();renderAll();remoteApplying=false;setSyncStatus('Firebase共有中・自動合体','ok');
+   },e=>setSyncStatus('共有エラー・端末保存継続','err'));
+ }).catch(e=>{remoteReady=false;setSyncStatus('オフライン安全保存','err');console.error(e)});
+ window.addEventListener('online',()=>{if(!remoteReady)connectFirebase()},{once:true});
 }
 
 function renderStats(){const dups=new Set(duplicates().map(x=>x.id));document.getElementById('itemCount').textContent=state.items.length;document.getElementById('supplierCount').textContent=state.vendors.length;document.getElementById('unassignedCount').textContent=state.items.filter(x=>!x.vendorId).length;document.getElementById('duplicateCount').textContent=dups.size}

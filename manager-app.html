@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17324d">
-<title>担当者専用アプリ｜統一版</title>
+<title>担当者専用アプリ｜安全対策版</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--sky:#eaf4ff;--gold:#f4b942;--green:#2e8b57;--text:#1c2733;--muted:#66788a;--line:#dbe5ee;--white:#fff;--shadow:0 10px 28px rgba(18,46,72,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100vh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#f6fbff,#eef6fb)}
@@ -52,7 +52,8 @@ function renderSettings(){
   return `<div class="setting-row"><label>${esc(x.title)}の担当者名</label><input id="owner-${i}" value="${esc(x.owner)}"><label>${esc(x.title)}のURL／ファイル名</label><input id="url-${i}" value="${esc(x.url)}"></div>`;
  }).join("");
 }
-function saveSettings(){data=data.map((x,i)=>({...x,owner:document.getElementById(`owner-${i}`).value.trim()||"未設定",url:document.getElementById(`url-${i}`).value.trim()}));localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(data));renderCards();alert("設定を保存しました")}
+function backupManagerSettings(){try{const raw=localStorage.getItem("fujiwara_manager_apps_v1");if(raw)localStorage.setItem("fujiwara_manager_apps_backup_v1",raw)}catch(e){}}
+function saveSettings(){backupManagerSettings();data=data.map((x,i)=>({...x,owner:document.getElementById(`owner-${i}`).value.trim()||"未設定",url:document.getElementById(`url-${i}`).value.trim()}));localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(data));renderCards();alert("設定を保存しました")}
 function loadSettingsForm(){data=getData();renderCards();renderSettings()}
 function editItem(i){document.getElementById("settings").open=true;setTimeout(()=>document.getElementById(`owner-${i}`).focus(),80)}
 function openApp(i){if(data[i]?.leaderOnly)return alert("発注集計アプリはリーダー専用です");const u=(data[i].url||"").trim();if(!u)return alert("URLを設定してください");location.href=u}
