@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>発注先・購入先管理 v2.3｜FUJIWARA Group</title>
+<title>発注先・購入先管理 v2.4 Firebase共有｜FUJIWARA Group</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--sky:#eaf4ff;--gold:#f4b942;--green:#2e8b57;--red:#c94545;--text:#1c2733;--muted:#66788a;--line:#dbe5ee;--white:#fff;--shadow:0 10px 28px rgba(18,46,72,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#f6fbff,#eef6fb);min-height:100vh}button,input,select,textarea{font:inherit}.app{max-width:1180px;margin:auto;padding:env(safe-area-inset-top) 14px calc(30px + env(safe-area-inset-bottom))}
-header{margin:0 -14px 16px;padding:20px 18px;background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-radius:0 0 24px 24px;box-shadow:var(--shadow)}.top{display:flex;justify-content:space-between;gap:10px;align-items:center}h1{margin:0;font-size:clamp(23px,5vw,34px)}.sub{margin:7px 0 0;color:#dcecff}.back{border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:10px 13px;font-weight:900}
+header{margin:0 -14px 16px;padding:20px 18px;background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-radius:0 0 24px 24px;box-shadow:var(--shadow)}.top{display:flex;justify-content:space-between;gap:10px;align-items:center}h1{margin:0;font-size:clamp(23px,5vw,34px)}.sub{margin:7px 0 0;color:#dcecff}.sync-status{display:inline-block;margin-top:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:900}.sync-status.ok{background:#dff6e8;color:#17613a}.sync-status.wait{background:#fff3cd;color:#765300}.sync-status.err{background:#fee2e2;color:#9b1c1c}.back{border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:10px 13px;font-weight:900}
 .notice{background:#fff8df;border:1px solid #f0d77e;border-radius:15px;padding:12px 14px;margin-bottom:14px;font-weight:750;color:#655015;line-height:1.6}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.btn{border:0;border-radius:13px;padding:12px 14px;font-weight:900;min-height:46px;cursor:pointer}.primary{background:var(--navy);color:#fff}.green{background:var(--green);color:#fff}.gold{background:var(--gold);color:#2d2100}.light{background:#eaf0f5;color:#294055}.danger{background:#fee8e8;color:#a72626}.btn:disabled{opacity:.45;cursor:not-allowed}
 .summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}.stat{background:#fff;border:1px solid var(--line);border-radius:17px;padding:13px;box-shadow:var(--shadow)}.stat b{display:block;font-size:24px}.stat span{color:var(--muted);font-size:13px;font-weight:800}
 .panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:var(--shadow);margin-bottom:15px}.panel h2{margin:0 0 12px;font-size:21px}.formgrid{display:grid;grid-template-columns:1fr;gap:10px}.field label{display:block;font-size:13px;font-weight:900;color:#425568;margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd8e3;border-radius:11px;padding:11px 12px;background:#fff;min-height:44px}.field textarea{min-height:72px;resize:vertical}
@@ -23,7 +23,7 @@ header{margin:0 -14px 16px;padding:20px 18px;background:linear-gradient(135deg,v
 </style>
 </head>
 <body><div class="app">
-<header><div class="top"><div><h1>発注先・購入先管理</h1><p class="sub">会社別・店舗別に在庫品目を仕分け</p></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>発注先・購入先管理</h1><p class="sub">会社別・店舗別に在庫品目を仕分け</p><div id="syncStatus" class="sync-status wait">Firebase 接続中…</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="notice">商品ごとに単価・最低ロット・発注単位・入数を登録できます。保存すると共通の商品マスターへ反映され、次の段階で担当者アプリのネタ一覧表へ自動表示できる設計です。</div>
 <div class="summary"><div class="stat"><b id="itemCount">0</b><span>登録品目</span></div><div class="stat"><b id="supplierCount">0</b><span>発注先・購入先</span></div><div class="stat"><b id="unassignedCount">0</b><span>未仕分け</span></div><div class="stat"><b id="duplicateCount">0</b><span>重複候補</span></div></div>
 <section class="panel">
@@ -42,7 +42,12 @@ header{margin:0 -14px 16px;padding:20px 18px;background:linear-gradient(135deg,v
 <div class="tablewrap"><table style="min-width:1480px"><thead><tr><th>選択</th><th class="category-cell">出店ネタ</th><th class="name-cell">品目名</th><th>規格</th><th>単価（円）</th><th>最低ロット</th><th>発注単位</th><th>入数</th><th>在庫数</th><th>発注点</th><th>発注先・購入先</th><th>区分</th><th>備考</th><th>操作</th></tr></thead><tbody id="itemBody"></tbody></table></div>
 </section>
 </div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const SHARED_REF=firebase.database().ref("fujiwara/order_supplier");
 const STORE='fujiwara_order_supplier_v2';
 const LEGACY_STORE='fujiwara_order_supplier_v1';
 const PRODUCT_MASTER_STORE='fujiwara_product_master_v1';
@@ -50,9 +55,13 @@ const state={vendors:[],items:[],tab:'items',categoryOrder:[],customCategories:[
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function norm(s=''){return String(s).trim().replace(/[\s　]+/g,'').toLowerCase()}
-function load(){try{let raw=localStorage.getItem(STORE)||localStorage.getItem(LEGACY_STORE);const x=raw?JSON.parse(raw):null;if(x&&Array.isArray(x.items)){state.items=x.items.map(i=>({unitPrice:'',minLot:'',orderUnit:'',packQty:'',...i}));state.vendors=Array.isArray(x.vendors)?x.vendors:[];state.categoryOrder=Array.isArray(x.categoryOrder)?x.categoryOrder:[];state.customCategories=Array.isArray(x.customCategories)?x.customCategories:[]}}catch(e){};ensureCategoryOrder();renderAll()}
+function applyData(x){if(!x||typeof x!=='object')return;if(Array.isArray(x.items))state.items=x.items.map(i=>({unitPrice:'',minLot:'',orderUnit:'',packQty:'',...i,checked:false}));if(Array.isArray(x.vendors))state.vendors=x.vendors;if(Array.isArray(x.categoryOrder))state.categoryOrder=x.categoryOrder;if(Array.isArray(x.customCategories))state.customCategories=x.customCategories;ensureCategoryOrder()}
+function localPayload(){return {vendors:state.vendors,items:state.items.map(({checked,...i})=>i),categoryOrder:state.categoryOrder,customCategories:state.customCategories,updatedAt:new Date().toISOString()}}
+function setSyncStatus(text,type='wait'){const el=document.getElementById('syncStatus');if(!el)return;el.textContent=text;el.className='sync-status '+type}
+let remoteReady=false,remoteApplying=false,saveTimer=null;
+function load(){try{let raw=localStorage.getItem(STORE)||localStorage.getItem(LEGACY_STORE);const x=raw?JSON.parse(raw):null;applyData(x)}catch(e){}ensureCategoryOrder();renderAll();connectFirebase()}
 function syncProductMaster(){const products=state.items.filter(i=>String(i.name||'').trim()).map(i=>({id:i.id,name:String(i.name||'').trim(),category:i.category||'',spec:i.spec||'',unitPrice:Number(i.unitPrice)||0,minLot:Number(i.minLot)||0,orderUnit:i.orderUnit||'',packQty:Number(i.packQty)||0,vendorId:i.vendorId||'',vendorName:state.vendors.find(v=>v.id===i.vendorId)?.name||'',route:i.route||'発注',updatedAt:new Date().toISOString()}));localStorage.setItem(PRODUCT_MASTER_STORE,JSON.stringify({version:1,products,updatedAt:new Date().toISOString()}))}
-function saveAll(show=false){ensureCategoryOrder();localStorage.setItem(STORE,JSON.stringify({vendors:state.vendors,items:state.items,categoryOrder:state.categoryOrder,customCategories:state.customCategories,updatedAt:new Date().toISOString()}));syncProductMaster();if(show)alert('保存しました。商品マスターにも反映しました')}
+function saveAll(show=false){ensureCategoryOrder();const payload=localPayload();localStorage.setItem(STORE,JSON.stringify(payload));syncProductMaster();if(remoteReady&&!remoteApplying){clearTimeout(saveTimer);setSyncStatus('共有へ保存中…','wait');saveTimer=setTimeout(()=>SHARED_REF.set(payload).then(()=>{setSyncStatus('Firebase共有中','ok');if(show)alert('保存して全端末へ共有しました')}).catch(e=>{setSyncStatus('共有エラー','err');if(show)alert('端末には保存しましたが、Firebase共有に失敗しました\n'+e.message)}),250)}else if(show){alert('端末に保存しました。Firebase接続後に共有されます')}}
 function addVendor(){const name=document.getElementById('vendorName').value.trim();if(!name)return alert('会社名・店舗名を入力してください');if(state.vendors.some(v=>norm(v.name)===norm(name)))return alert('同じ名前が登録されています');state.vendors.push({id:uid(),type:document.getElementById('vendorType').value,name,phone:document.getElementById('vendorPhone').value.trim(),memo:document.getElementById('vendorMemo').value.trim()});['vendorName','vendorPhone','vendorMemo'].forEach(id=>document.getElementById(id).value='');saveAll();renderAll()}
 function deleteVendor(id){const v=state.vendors.find(x=>x.id===id);if(!v||!confirm(`${v.name}を削除しますか？\n品目の仕分けは「未設定」に戻ります。`))return;state.vendors=state.vendors.filter(x=>x.id!==id);state.items.forEach(x=>{if(x.vendorId===id)x.vendorId=''});saveAll();renderAll()}
 function renderVendors(){const el=document.getElementById('vendorList');if(!state.vendors.length){el.innerHTML='<div class="empty">まだ登録されていません</div>';return}el.innerHTML='<div class="tablewrap"><table style="min-width:650px"><thead><tr><th>区分</th><th>会社名・店舗名</th><th>電話</th><th>担当者・メモ</th><th>操作</th></tr></thead><tbody>'+state.vendors.map(v=>`<tr><td>${esc(v.type)}</td><td><b>${esc(v.name)}</b></td><td>${esc(v.phone)}</td><td>${esc(v.memo)}</td><td><button class="iconbtn del" onclick="deleteVendor('${v.id}')">🗑</button></td></tr>`).join('')+'</tbody></table></div>'}
@@ -74,6 +83,26 @@ function setTab(t){state.tab=t;document.getElementById('tabItems').classList.tog
 function clearSearch(){document.getElementById('searchInput').value='';renderItems()}
 function extractItems(obj,out,depth=0){if(depth>5||obj==null)return;if(Array.isArray(obj)){obj.forEach(x=>extractItems(x,out,depth+1));return}if(typeof obj!=='object')return;const name=obj.name||obj.itemName||obj.productName||obj.label||obj.title||obj.netaName||obj.ingredientName;const category=obj.category||obj.group||obj.type||obj.neta||'';if(typeof name==='string'&&name.trim()&&name.length<80){out.push({name:name.trim(),category:typeof category==='string'?category:'',stock:obj.stock??obj.quantity??obj.inventory??'',spec:obj.unit||obj.spec||''})}Object.values(obj).forEach(v=>extractItems(v,out,depth+1))}
 function importInventory(){const candidates=['fujiwara_inventory','fujiwara_inventory_v1','inventoryData','inventory_data','stockData','fujiwara_main_data','fujiwara_events_v1','fujiwara_neta_master','fujiwara_product_master'];let found=[];candidates.forEach(k=>{try{const raw=localStorage.getItem(k);if(raw)extractItems(JSON.parse(raw),found)}catch(e){}});for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||'';if(/inventory|stock|product|neta|item|zaiko/i.test(k)&&!candidates.includes(k)){try{extractItems(JSON.parse(localStorage.getItem(k)),found)}catch(e){}}}const existing=new Set(state.items.map(x=>norm(x.name)));const unique=[];found.forEach(x=>{const n=norm(x.name);if(n&&!existing.has(n)&&!unique.some(y=>norm(y.name)===n))unique.push(x)});if(!unique.length)return alert('読み込める在庫品目が見つかりませんでした。\n「＋項目追加」から登録してください。');unique.forEach(x=>state.items.push({id:uid(),category:x.category||'',name:x.name,spec:x.spec||'',stock:x.stock??'',reorder:'',vendorId:'',route:'発注',memo:'在庫管理から読込',checked:false}));saveAll();renderAll();alert(`${unique.length}件の品目を読み込みました`)}
+
+function connectFirebase(){
+ setSyncStatus('Firebase 接続中…','wait');
+ SHARED_REF.once('value').then(snap=>{
+   remoteReady=true;
+   if(snap.exists()){
+     remoteApplying=true;applyData(snap.val());localStorage.setItem(STORE,JSON.stringify(localPayload()));syncProductMaster();renderAll();remoteApplying=false;
+   }else if(state.items.length||state.vendors.length){
+     return SHARED_REF.set(localPayload());
+   }
+ }).then(()=>{
+   remoteReady=true;setSyncStatus('Firebase共有中','ok');
+   SHARED_REF.on('value',snap=>{
+     if(!snap.exists()||!remoteReady)return;
+     remoteApplying=true;applyData(snap.val());localStorage.setItem(STORE,JSON.stringify(localPayload()));syncProductMaster();renderAll();remoteApplying=false;setSyncStatus('Firebase共有中','ok');
+   },e=>setSyncStatus('共有エラー','err'));
+ }).catch(e=>{remoteReady=false;setSyncStatus('オフライン保存','err');console.error(e)});
+ window.addEventListener('online',()=>{if(!remoteReady)connectFirebase()});
+}
+
 function renderStats(){const dups=new Set(duplicates().map(x=>x.id));document.getElementById('itemCount').textContent=state.items.length;document.getElementById('supplierCount').textContent=state.vendors.length;document.getElementById('unassignedCount').textContent=state.items.filter(x=>!x.vendorId).length;document.getElementById('duplicateCount').textContent=dups.size}
 function renderAll(){renderVendors();renderItems();renderStats();renderCategoryManager()}
 function goBack(){if(history.length>1)history.back();else location.href='manager-app.html'}
