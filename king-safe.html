@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>金庫番｜FUJIWARA KING SYSTEM</title>
+<link rel="apple-touch-icon" sizes="180x180" href="king-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="king-icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#138a3b">
+<style>
+:root{
+  --green:#138a3b;--green2:#eaf7e9;--deep:#173b2c;--blue:#174f78;
+  --red:#b33232;--line:#dfe8df;--text:#13233f;--sub:#647188;
+  --shadow:0 12px 30px rgba(45,68,100,.12)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  color:var(--text);background:linear-gradient(180deg,#effbf1,#fff 52%,#f7fbff);min-height:100vh
+}
+button,input,textarea{font:inherit}
+.wrap{max-width:1100px;margin:auto;padding:16px 14px 105px}
+.card{background:rgba(255,255,255,.97);border:1px solid #e6eee7;border-radius:22px;box-shadow:var(--shadow)}
+.header{padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:60px;height:60px;border-radius:18px;background:#e3f5df;display:grid;place-items:center;font-size:32px}
+h1{margin:0;font-size:30px;color:var(--deep)}
+.sub{color:var(--sub);font-weight:800;font-size:13px;margin-top:4px}
+.back{border:0;border-radius:12px;background:#eef4f8;color:var(--blue);padding:11px 14px;font-weight:950}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.sum{padding:16px;text-align:center}.sum small{color:var(--sub);font-weight:850}
+.sum b{display:block;font-size:29px;margin-top:6px}.income b{color:#168a43}.expense b{color:var(--red)}.balance b{color:#0d5f9f}
+
+.entry{margin-top:14px;padding:18px}
+.entry-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.entry-head h2{margin:0;font-size:22px;color:var(--deep)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}
+label{font-size:14px;font-weight:950;color:#475569}
+input,textarea{width:100%;border:1px solid #d6dfe8;border-radius:12px;padding:14px;font-size:18px;background:#fff}
+textarea{min-height:105px;resize:vertical}
+.actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:950}
+.save{background:var(--green);color:#fff}.clear{background:#eef2f7;color:#334155}.delete{background:#ffe9e9;color:#a61f1f;margin-right:auto;display:none}
+
+.panel{margin-top:14px;padding:16px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.panel-head h2{margin:0;font-size:22px;color:var(--deep)}
+.status{font-size:13px;font-weight:900;color:var(--sub)}
+.table-wrap{overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:12px 10px;border-bottom:1px solid #edf1ed;text-align:left;font-size:14px}
+th{background:var(--green2);color:#17652f;font-weight:950;position:sticky;top:0}
+td.money{text-align:right;font-weight:900}
+.detail-btn{border:1px solid #6cc17c;background:#fff;color:#18733a;border-radius:999px;padding:7px 14px;font-weight:950}
+.empty{text-align:center;padding:32px;color:var(--sub);font-weight:850}
+.note{margin-top:12px;padding:12px 14px;background:#fffbe8;border:1px solid #f1dd95;border-radius:12px;color:#765b00;font-size:13px;font-weight:800}
+
+.bottom{
+  position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);
+  backdrop-filter:blur(14px);border-top:1px solid #e8ece8;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px;z-index:20
+}
+.bottom button{min-width:170px;border:0;border-radius:13px;padding:13px 18px;font-size:16px;font-weight:950}
+.king{background:#17324d;color:#fff}.new{background:var(--green);color:#fff}
+
+@media(max-width:700px){
+  .header{align-items:flex-start}.header h1{font-size:25px}
+  .summary{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
+  .entry-head,.panel-head{align-items:flex-start;flex-direction:column}
+  .actions{display:grid;grid-template-columns:1fr 1fr}
+  .delete{grid-column:1/-1;margin:0}
+  .bottom button{min-width:0;flex:1}
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="card header">
+    <div class="brand">
+      <div class="logo">🔐</div>
+      <div><h1>金庫番</h1><div class="sub">現金金庫専用｜入出金管理</div></div>
+    </div>
+    <button class="back" type="button" onclick="location.href='king.html'">← KINGへ戻る</button>
+  </section>
+
+  <section class="summary">
+    <div class="card sum income"><small>入金合計</small><b id="incomeTotal">¥0</b></div>
+    <div class="card sum expense"><small>出金合計</small><b id="expenseTotal">¥0</b></div>
+    <div class="card sum balance"><small>現在の残金</small><b id="balanceTotal">¥0</b></div>
+  </section>
+
+  <section class="card entry" id="entrySection">
+    <div class="entry-head">
+      <h2 id="entryTitle">入出金を追加</h2>
+      <span class="status" id="saveStatus">Firebase共有</span>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="dateInput">日付</label>
+        <input id="dateInput" type="date">
+      </div>
+      <div class="field">
+        <label for="itemInput">項目</label>
+        <input id="itemInput" type="text" placeholder="例：イベント売上">
+      </div>
+      <div class="field">
+        <label for="incomeInput">入金</label>
+        <input id="incomeInput" type="number" inputmode="numeric" min="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="expenseInput">出金</label>
+        <input id="expenseInput" type="number" inputmode="numeric" min="0" placeholder="0">
+      </div>
+      <div class="field full">
+        <label for="detailInput">詳細</label>
+        <textarea id="detailInput" placeholder="内容・相手先・イベント名など"></textarea>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn delete" id="deleteButton" type="button">削除</button>
+      <button class="btn clear" id="clearButton" type="button">入力を消す</button>
+      <button class="btn save" id="saveButton" type="button">保存</button>
+    </div>
+  </section>
+
+  <section class="card panel">
+    <div class="panel-head">
+      <h2>入出金一覧</h2>
+      <span class="status">日付／項目／入金／出金／残金／詳細</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>日付</th><th>項目</th><th>入金</th><th>出金</th><th>残金</th><th>詳細</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="note">「お金管理アプリ」とは別用途です。ここでは金庫内の現金だけを記録します。</div>
+  </section>
+</main>
+
+<nav class="bottom">
+  <button class="king" type="button" onclick="location.href='king.html'">👑 KINGへ戻る</button>
+  <button class="new" id="newButton" type="button">＋ 新規入力</button>
+</nav>
+
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94",
+  measurementId:"G-1VHX1GQV0C"
+};
+if(typeof firebase!=="undefined"&&!firebase.apps.length){firebase.initializeApp(firebaseConfig)}
+
+const DB_PATH="fujiwara/king_safe_book";
+const LOCAL_KEY="king_safe_book_v2";
+let entries=[];
+let editingId=null;
+let firebaseReady=false;
+
+const el=id=>document.getElementById(id);
+const dateInput=el("dateInput"),itemInput=el("itemInput"),incomeInput=el("incomeInput"),
+expenseInput=el("expenseInput"),detailInput=el("detailInput"),rows=el("rows"),
+incomeTotal=el("incomeTotal"),expenseTotal=el("expenseTotal"),balanceTotal=el("balanceTotal"),
+entryTitle=el("entryTitle"),deleteButton=el("deleteButton"),saveStatus=el("saveStatus");
+
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+}
+function yen(value){return Number(value||0).toLocaleString("ja-JP",{style:"currency",currency:"JPY",maximumFractionDigits:0})}
+function today(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function loadLocal(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(LOCAL_KEY)||"[]");
+    entries=Array.isArray(saved)?saved:[];
+  }catch(e){entries=[]}
+}
+function saveLocal(){localStorage.setItem(LOCAL_KEY,JSON.stringify(entries))}
+function sortOldestFirst(){
+  return entries.slice().sort((a,b)=>{
+    const d=String(a.date||"").localeCompare(String(b.date||""));
+    return d!==0?d:Number(a.createdAt||0)-Number(b.createdAt||0);
+  });
+}
+function render(){
+  const ordered=sortOldestFirst();
+  let running=0,totalIn=0,totalOut=0;
+  const calculated=ordered.map(entry=>{
+    const incoming=Number(entry.income||0);
+    const outgoing=Number(entry.expense||0);
+    totalIn+=incoming; totalOut+=outgoing; running+=incoming-outgoing;
+    return {...entry,runningBalance:running};
+  }).reverse();
+
+  incomeTotal.textContent=yen(totalIn);
+  expenseTotal.textContent=yen(totalOut);
+  balanceTotal.textContent=yen(running);
+
+  if(!calculated.length){
+    rows.innerHTML='<tr><td colspan="6" class="empty">まだ記録がありません。上の入力欄から登録してください。</td></tr>';
+    return;
+  }
+  rows.innerHTML=calculated.map(entry=>`
+    <tr>
+      <td>${escapeHtml(entry.date)}</td>
+      <td><b>${escapeHtml(entry.item)}</b></td>
+      <td class="money" style="color:#168a43">${Number(entry.income||0)?yen(entry.income):"-"}</td>
+      <td class="money" style="color:#b33232">${Number(entry.expense||0)?yen(entry.expense):"-"}</td>
+      <td class="money">${yen(entry.runningBalance)}</td>
+      <td><button class="detail-btn" type="button" data-id="${escapeHtml(entry.id)}">詳細</button></td>
+    </tr>
+  `).join("");
+}
+function resetForm(scroll=true){
+  editingId=null;
+  entryTitle.textContent="入出金を追加";
+  dateInput.value=today();itemInput.value="";incomeInput.value="";expenseInput.value="";detailInput.value="";
+  deleteButton.style.display="none";
+  if(scroll)el("entrySection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function editEntry(id){
+  const entry=entries.find(x=>String(x.id)===String(id));
+  if(!entry)return;
+  editingId=entry.id;
+  entryTitle.textContent="入出金の詳細・編集";
+  dateInput.value=entry.date||today();
+  itemInput.value=entry.item||"";
+  incomeInput.value=entry.income||"";
+  expenseInput.value=entry.expense||"";
+  detailInput.value=entry.detail||"";
+  deleteButton.style.display="inline-block";
+  el("entrySection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function saveEntry(){
+  const date=dateInput.value;
+  const item=itemInput.value.trim();
+  const incoming=Number(incomeInput.value||0);
+  const outgoing=Number(expenseInput.value||0);
+  const detail=detailInput.value.trim();
+
+  if(!date){alert("日付を入力してください");return}
+  if(!item){alert("項目を入力してください");return}
+  if(incoming<=0&&outgoing<=0){alert("入金または出金を入力してください");return}
+  if(incoming>0&&outgoing>0){alert("1件につき、入金か出金のどちらか一方だけ入力してください");return}
+
+  const id=editingId||("safe_"+Date.now());
+  const old=entries.find(x=>String(x.id)===String(id));
+  const record={id,date,item,income:incoming,expense:outgoing,detail,createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
+
+  try{
+    saveStatus.textContent="保存中…";
+    if(firebaseReady){
+      await firebase.database().ref(DB_PATH+"/"+id).set(record);
+    }else{
+      const index=entries.findIndex(x=>String(x.id)===String(id));
+      if(index>=0)entries[index]=record;else entries.push(record);
+      saveLocal();render();
+    }
+    saveStatus.textContent=firebaseReady?"Firebase保存済み":"端末保存済み";
+    resetForm(false);
+  }catch(error){
+    saveStatus.textContent="保存失敗";
+    alert("保存に失敗しました。通信状態を確認してください。");
+  }
+}
+async function deleteEntry(){
+  if(!editingId||!confirm("この記録を削除しますか？"))return;
+  try{
+    if(firebaseReady){
+      await firebase.database().ref(DB_PATH+"/"+editingId).remove();
+    }else{
+      entries=entries.filter(x=>String(x.id)!==String(editingId));
+      saveLocal();render();
+    }
+    resetForm(false);
+  }catch(error){alert("削除に失敗しました。")}
+}
+function connect(){
+  loadLocal();render();resetForm(false);
+  if(typeof firebase==="undefined"){saveStatus.textContent="端末保存";return}
+  firebaseReady=true;
+  saveStatus.textContent="Firebase接続中…";
+  firebase.database().ref(DB_PATH).on("value",snapshot=>{
+    const value=snapshot.val()||{};
+    entries=Object.keys(value).map(id=>({id,...(value[id]||{})}));
+    saveLocal();render();
+    saveStatus.textContent="Firebase共有中";
+  },()=>{
+    firebaseReady=false;
+    saveStatus.textContent="端末保存";
+  });
+}
+
+el("saveButton").addEventListener("click",saveEntry);
+el("clearButton").addEventListener("click",()=>resetForm(false));
+deleteButton.addEventListener("click",deleteEntry);
+el("newButton").addEventListener("click",()=>resetForm(true));
+rows.addEventListener("click",event=>{
+  const button=event.target.closest("[data-id]");
+  if(button)editEntry(button.dataset.id);
+});
+
+connect();
+</script>
+</body>
+</html>
