@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>担当者アプリ v3 STEP2</title>
+<style>
+:root{--navy:#17324d;--sky:#eaf4ff;--gold:#f4b942;--green:#2e8b57;--text:#1c2733;--muted:#66788a;--line:#dbe5ee;--shadow:0 10px 28px rgba(18,46,72,.12)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",sans-serif;background:linear-gradient(#f6fbff,#eef6fb);color:var(--text)}
+.app{max-width:1050px;margin:auto;padding:0 14px 28px}header{background:linear-gradient(135deg,var(--navy),#285f8c);color:white;margin:0 -14px 18px;padding:22px 18px;border-radius:0 0 26px 26px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}h1{margin:0;font-size:27px}.sub{margin:8px 0 0;color:#dcecff}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.15);color:white;font-weight:900}
+.banner{background:#fff4cc;border:2px solid #e6c45c;border-radius:18px;padding:14px;margin-bottom:15px;font-weight:850;line-height:1.6;color:#665000}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:17px;box-shadow:var(--shadow);position:relative;overflow:hidden}.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--green)}.card.master:before{background:var(--gold)}
+.head{display:flex;align-items:center;gap:13px}.icon{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:31px;background:var(--sky)}h2{margin:0;font-size:21px}.owner{font-size:13px;color:var(--muted);margin-top:4px}.desc{line-height:1.7;color:#425568}.btn{width:100%;border:0;border-radius:14px;padding:13px;font-weight:950;min-height:48px;background:var(--navy);color:#fff}
+.section{font-size:18px;font-weight:950;margin:18px 2px 10px}.badge{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:999px;background:#e7f7ee;color:#176b45;font-size:12px;font-weight:900}
+footer{text-align:center;color:#7b8d9e;font-size:12px;margin-top:22px}
+@media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}.card{display:flex;flex-direction:column}.desc{flex:1}}
+</style>
+</head>
+<body><div class="app">
+<header><div class="top"><div><h1>担当者アプリ v3｜STEP2</h1><p class="sub">共通在庫マスターを追加しました</p></div><button class="back" onclick="location.href='manager-app.html'">← 現行版</button></div></header>
+<div class="banner">🛡️ 開発版です。現行の担当者アプリ・メイン・KINGには上書きしていません。</div>
+
+<div class="section">新しく完成した機能</div>
+<div class="grid">
+<section class="card master"><div class="head"><div class="icon">📦</div><div><h2>共通在庫マスター</h2><div class="owner">メインと同じ在庫データ</div></div></div><span class="badge">STEP2 完成</span><p class="desc">カテゴリー、品目、在庫、最低在庫、単位、単価、発注先、ロットを確認できます。リーダーは編集、担当者は閲覧のみです。</p><button class="btn" onclick="openInventory()">共通在庫を開く</button></section>
+</div>
+
+<div class="section">既存アプリへの入口</div>
+<div class="grid">
+<section class="card"><div class="head"><div class="icon">📅</div><div><h2>メインアプリ</h2><div class="owner">既存機能</div></div></div><p class="desc">イベント、カレンダー、売上、出勤確認。</p><button class="btn" onclick="location.href='index.html'">開く</button></section>
+<section class="card"><div class="head"><div class="icon">📋</div><div><h2>ネタ一覧</h2><div class="owner">既存データ</div></div></div><p class="desc">イベント別ネタ、必要数量、買い物一覧。</p><button class="btn" onclick="location.href='neta-shopping-list.html'">開く</button></section>
+<section class="card"><div class="head"><div class="icon">✅</div><div><h2>準備チェック</h2><div class="owner">既存アプリ</div></div></div><p class="desc">イベント別の積込み・準備チェック。</p><button class="btn" onclick="location.href='preparation-app.html'">開く</button></section>
+<section class="card"><div class="head"><div class="icon">🚚</div><div><h2>車両管理</h2><div class="owner">既存アプリ</div></div></div><p class="desc">点検、車検、保険、修理記録。</p><button class="btn" onclick="location.href='vehicle-management.html'">開く</button></section>
+<section class="card"><div class="head"><div class="icon">🔥</div><div><h2>LPG管理</h2><div class="owner">既存アプリ</div></div></div><p class="desc">仕入、返却、発注数量、在庫累計。</p><button class="btn" onclick="location.href='lpg-management.html'">開く</button></section>
+</div>
+<footer>FUJIWARA Group 担当者アプリ v3 開発版 STEP2</footer>
+</div>
+<script>
+const ROLE=new URLSearchParams(location.search).get("role")||"manager";
+function openInventory(){location.href="common-inventory-master-dev.html?role="+encodeURIComponent(ROLE)}
+</script>
+</body></html>

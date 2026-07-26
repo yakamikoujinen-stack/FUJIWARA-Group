@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>共通在庫マスター｜開発版</title>
+<style>
+:root{--navy:#17324d;--blue:#2f6fa7;--gold:#f4b942;--green:#218a57;--red:#c94c4c;--bg:#f2f8fc;--card:#fff;--line:#d7e3ec;--text:#1c2733;--muted:#647688;--shadow:0 10px 26px rgba(18,46,72,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(#f7fbff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",Meiryo,sans-serif;padding-bottom:92px}
+button,input,select{font:inherit}
+header{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;padding:14px 15px;box-shadow:var(--shadow)}
+.head{max-width:1250px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:21px;margin:0}.sub{font-size:12px;color:#dcecff;margin-top:4px}.back{border:0;border-radius:11px;padding:10px 12px;background:rgba(255,255,255,.15);color:#fff;font-weight:900}
+.wrap{max-width:1250px;margin:auto;padding:12px}
+.notice{border:1.5px solid #e0c568;background:#fff6d7;color:#6a5100;border-radius:14px;padding:11px 13px;margin-bottom:11px;font-size:13px;font-weight:800;line-height:1.6}
+.notice.ok{background:#e8f7ef;border-color:#91cfac;color:#176b45}.notice.err{background:#ffe9eb;border-color:#e4a9af;color:#9b2934}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:11px;box-shadow:var(--shadow)}
+h2{font-size:17px;margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;border:1.5px solid #cbd9e4;border-radius:10px;padding:10px 11px;background:#fff;color:var(--text);font-size:16px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{border:0;border-radius:11px;padding:10px 13px;font-weight:900}.gold{background:linear-gradient(135deg,#d6a62d,#f2c95d);color:#2a2000}.green{background:#e7f7ee;color:var(--green);border:1px solid #9dd2b3}.blue{background:#e9f3ff;color:var(--blue);border:1px solid #a9c9e8}.danger{background:#ffe9eb;color:var(--red);border:1px solid #e3acb1}.ghost{background:#f1f5f8;color:#496071;border:1px solid #d4e0e8}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k{background:#f7fbff;border:1px solid var(--line);border-radius:13px;padding:11px}.k small{color:var(--muted);font-weight:800}.k strong{display:block;font-size:22px;margin-top:4px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:1080px}th,td{border-bottom:1px solid #e3ebf1;padding:8px;font-size:12px;text-align:left}th{background:#eef5fa;white-space:nowrap}td input,td select{padding:7px;font-size:14px}
+.low{background:#fff0f1}.okrow{background:#f6fff9}.status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.status.low{background:#ffe1e4;color:#a32431}.status.ok{background:#e1f5e9;color:#166c43}
+.lock{position:fixed;inset:0;z-index:999;background:rgba(240,247,252,.97);display:none;place-items:center;padding:20px}.lock.show{display:grid}.lockbox{background:#fff;border:2px solid var(--line);border-radius:20px;padding:24px;max-width:420px;text-align:center;box-shadow:var(--shadow)}
+.footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:40}.footer button{flex:1}
+.readonly-note{font-size:12px;color:#7a5600;background:#fff4cc;border:1px solid #e5ca70;padding:8px 10px;border-radius:10px}
+@media(max-width:780px){.grid,.kpi{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.kpi{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><h1>📦 共通在庫マスター</h1><div class="sub">メインアプリと同じ Firebase「fujiwara / invItems」を使用</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+
+<div class="wrap">
+<div id="sync" class="notice">Firebaseの在庫を読み込んでいます…</div>
+<div id="roleNote" class="readonly-note"></div>
+
+<section class="card">
+<h2>在庫の集計</h2>
+<div class="kpi">
+<div class="k"><small>品目数</small><strong id="countAll">0</strong></div>
+<div class="k"><small>在庫不足</small><strong id="countLow">0</strong></div>
+<div class="k"><small>カテゴリー数</small><strong id="countCat">0</strong></div>
+<div class="k"><small>在庫合計</small><strong id="countStock">0</strong></div>
+</div>
+</section>
+
+<section class="card" id="editCard">
+<h2>品目を追加・編集</h2>
+<div class="grid">
+<div><label>カテゴリー</label><input id="cat" placeholder="例：ポテト"></div>
+<div><label>品目名</label><input id="name" placeholder="例：冷凍ポテト"></div>
+<div><label>現在在庫</label><input id="stock" type="number" inputmode="decimal" value="0"></div>
+<div><label>最低在庫</label><input id="minStock" type="number" inputmode="decimal" value="0"></div>
+<div><label>単位</label><input id="unit" placeholder="本・袋・箱"></div>
+<div><label>単価（円）</label><input id="unitPrice" type="number" inputmode="decimal" value="0"></div>
+<div><label>発注先</label><input id="supplier" placeholder="例：瀬戸内食品"></div>
+<div><label>最低ロット</label><input id="lot" type="number" inputmode="decimal" value="1"></div>
+</div>
+<div class="toolbar">
+<button class="btn gold" onclick="saveItem()">💾 保存</button>
+<button class="btn ghost" onclick="clearForm()">新規入力</button>
+<button class="btn danger" id="deleteBtn" onclick="deleteCurrent()" disabled>削除</button>
+</div>
+</section>
+
+<section class="card">
+<h2>在庫一覧</h2>
+<div class="grid">
+<div><label>検索</label><input id="search" placeholder="品目・カテゴリー・発注先" oninput="render()"></div>
+<div><label>カテゴリー絞込み</label><select id="catFilter" onchange="render()"><option value="">すべて</option></select></div>
+</div>
+<div class="toolbar"><button class="btn blue" onclick="reload()">🔄 最新データ再読込</button></div>
+<div class="tablewrap" style="margin-top:10px">
+<table>
+<thead><tr><th>状態</th><th>カテゴリー</th><th>品目</th><th>在庫</th><th>最低在庫</th><th>単位</th><th>単価</th><th>発注先</th><th>ロット</th><th>操作</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</section>
+</div>
+
+<div class="footer"><button class="btn blue" onclick="reload()">最新在庫</button><button class="btn green" onclick="goBack()">担当者アプリへ戻る</button></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const PARAMS=new URLSearchParams(location.search);
+const ROLE=PARAMS.get("role")||"manager";
+const CAN_EDIT=["leader","king"].includes(ROLE);
+const CFG={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+if(!firebase.apps.length)firebase.initializeApp(CFG);
+const db=firebase.database();
+let items=[],editingId="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>Number(v)||0;
+const safeKey=s=>String(s||Date.now()).replace(/[.#$\\[\\]\\/]/g,"_");
+
+function toArrayWithIds(v){
+ if(Array.isArray(v))return v.map((x,i)=>x?({...x,id:String(x.id??i)}):null).filter(Boolean);
+ if(v&&typeof v==="object")return Object.entries(v).map(([k,x])=>x?({...x,id:String(x.id??k)}):null).filter(Boolean);
+ return [];
+}
+function applyRole(){
+ roleNote.textContent=CAN_EDIT?"👑 リーダー権限：在庫の追加・編集・削除ができます。":"👷 担当者権限：在庫の閲覧のみです。編集はできません。";
+ if(!CAN_EDIT){
+   editCard.style.display="none";
+ }
+}
+async function reload(){
+ sync.className="notice";
+ sync.textContent="Firebaseの在庫を読み込んでいます…";
+ try{
+  const snap=await db.ref("fujiwara/invItems").once("value");
+  items=toArrayWithIds(snap.val());
+  sync.className="notice ok";
+  sync.textContent="✅ メインアプリと同じ在庫を読み込みました。品目 "+items.length+"件";
+  renderFilters();render();
+ }catch(e){
+  console.error(e);
+  sync.className="notice err";
+  sync.textContent="⚠️ 在庫を読み込めませんでした。通信またはFirebaseルールを確認してください。";
+ }
+}
+function renderFilters(){
+ const current=catFilter.value;
+ const cats=[...new Set(items.map(x=>String(x.cat||"").trim()).filter(Boolean))].sort();
+ catFilter.innerHTML='<option value="">すべて</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+ if(cats.includes(current))catFilter.value=current;
+}
+function render(){
+ const q=search.value.trim().toLowerCase(), cf=catFilter.value;
+ const rows=items.filter(x=>{
+  const hit=!q||[x.cat,x.name,x.supplier].join(" ").toLowerCase().includes(q);
+  return hit&&(!cf||String(x.cat||"")===cf);
+ }).sort((a,b)=>String(a.cat||"").localeCompare(String(b.cat||""),"ja")||String(a.name||"").localeCompare(String(b.name||""),"ja"));
+ tbody.innerHTML=rows.length?rows.map(x=>{
+  const low=num(x.stock)<num(x.minStock);
+  const action=CAN_EDIT?`<button class="btn blue" onclick="editItem('${esc(x.id)}')">編集</button>`:'閲覧のみ';
+  return `<tr class="${low?"low":"okrow"}"><td><span class="status ${low?"low":"ok"}">${low?"不足":"OK"}</span></td><td>${esc(x.cat||"")}</td><td><b>${esc(x.name||"")}</b></td><td>${num(x.stock)}</td><td>${num(x.minStock)}</td><td>${esc(x.unit||"")}</td><td>¥${num(x.unitPrice).toLocaleString("ja-JP")}</td><td>${esc(x.supplier||"")}</td><td>${num(x.lot)||1}</td><td>${action}</td></tr>`;
+ }).join(""):'<tr><td colspan="10" style="text-align:center;padding:22px;color:#647688">在庫品目がありません</td></tr>';
+ countAll.textContent=items.length;
+ countLow.textContent=items.filter(x=>num(x.stock)<num(x.minStock)).length;
+ countCat.textContent=new Set(items.map(x=>x.cat).filter(Boolean)).size;
+ countStock.textContent=items.reduce((s,x)=>s+num(x.stock),0).toLocaleString("ja-JP");
+}
+function clearForm(){
+ editingId="";
+ cat.value=name.value=unit.value=supplier.value="";
+ stock.value=minStock.value=unitPrice.value=0;
+ lot.value=1;
+ deleteBtn.disabled=true;
+}
+function editItem(id){
+ if(!CAN_EDIT)return;
+ const x=items.find(i=>String(i.id)===String(id));if(!x)return;
+ editingId=String(x.id);
+ cat.value=x.cat||"";name.value=x.name||"";stock.value=num(x.stock);minStock.value=num(x.minStock);
+ unit.value=x.unit||"";unitPrice.value=num(x.unitPrice);supplier.value=x.supplier||"";lot.value=num(x.lot)||1;
+ deleteBtn.disabled=false;
+ editCard.scrollIntoView({behavior:"smooth"});
+}
+async function saveItem(){
+ if(!CAN_EDIT)return alert("リーダーのみ編集できます");
+ const n=name.value.trim();if(!n)return alert("品目名を入力してください");
+ const id=editingId||safeKey("inv_"+Date.now()+"_"+Math.random().toString(36).slice(2,7));
+ const old=items.find(x=>String(x.id)===String(id))||{};
+ const item={...old,id,cat:cat.value.trim(),name:n,stock:num(stock.value),minStock:num(minStock.value),unit:unit.value.trim(),unitPrice:num(unitPrice.value),supplier:supplier.value.trim(),lot:Math.max(num(lot.value),1),updatedAt:firebase.database.ServerValue.TIMESTAMP,updatedBy:ROLE};
+ try{
+  await db.ref("fujiwara/invItems/"+safeKey(id)).set(item);
+  clearForm();await reload();alert("在庫品目を保存しました");
+ }catch(e){console.error(e);alert("保存できませんでした。Firebaseルールを確認してください")}
+}
+async function deleteCurrent(){
+ if(!CAN_EDIT||!editingId)return;
+ const x=items.find(i=>String(i.id)===String(editingId));if(!x)return;
+ if(!confirm("「"+(x.name||"この品目")+"」を削除しますか？"))return;
+ try{
+  const backup={...x,deletedAt:firebase.database.ServerValue.TIMESTAMP,deletedBy:ROLE};
+  await db.ref("fujiwara/inventoryTrash/"+safeKey(editingId+"_"+Date.now())).set(backup);
+  await db.ref("fujiwara/invItems/"+safeKey(editingId)).remove();
+  clearForm();await reload();alert("削除しました。バックアップは残しています");
+ }catch(e){console.error(e);alert("削除できませんでした")}
+}
+function goBack(){
+ const role=encodeURIComponent(ROLE);
+ location.href="manager-app-v3-dev-step2.html?role="+role;
+}
+applyRole();reload();
+</script>
+</body>
+</html>
