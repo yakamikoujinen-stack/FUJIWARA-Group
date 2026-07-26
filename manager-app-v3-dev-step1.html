@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>担当者アプリ v3 開発版</title>
+<style>
+:root{--navy:#17324d;--blue:#2f6fa7;--sky:#eaf4ff;--gold:#f4b942;--green:#2e8b57;--text:#1c2733;--muted:#66788a;--line:#dbe5ee;--shadow:0 10px 28px rgba(18,46,72,.12)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",sans-serif;background:linear-gradient(#f6fbff,#eef6fb);color:var(--text)}
+.app{max-width:1050px;margin:auto;padding:0 14px 28px}
+header{background:linear-gradient(135deg,var(--navy),#285f8c);color:white;margin:0 -14px 18px;padding:22px 18px;border-radius:0 0 26px 26px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}h1{margin:0;font-size:28px}.sub{margin:8px 0 0;color:#dcecff}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.15);color:white;font-weight:900}
+.banner{background:#fff4cc;border:2px solid #e6c45c;border-radius:18px;padding:14px;margin-bottom:15px;font-weight:850;line-height:1.6;color:#665000}
+.section{font-size:18px;font-weight:950;margin:18px 2px 10px}.grid{display:grid;grid-template-columns:1fr;gap:14px}
+.card{background:white;border:1px solid var(--line);border-radius:22px;padding:17px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--green)}.card.future:before{background:#a7b3bf}.card.leader:before{background:var(--gold)}
+.head{display:flex;align-items:center;gap:13px}.icon{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:31px;background:var(--sky)}
+h2{margin:0;font-size:21px}.owner{font-size:13px;color:var(--muted);margin-top:4px}.desc{line-height:1.7;color:#425568}
+.btn{width:100%;border:0;border-radius:14px;padding:13px;font-weight:950;min-height:48px}.open{background:var(--navy);color:#fff}.lock{background:#eceff2;color:#7b8792}
+.badge{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:999px;background:#fff0c7;color:#765300;font-size:12px;font-weight:900}
+footer{text-align:center;color:#7b8d9e;font-size:12px;margin-top:22px}
+@media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}.card{display:flex;flex-direction:column}.desc{flex:1}}
+</style>
+</head>
+<body><div class="app">
+<header><div class="top"><div><h1>担当者アプリ v3</h1><p class="sub">開発版｜現在の担当者アプリは変更していません</p></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<div class="banner">🛡️ 新しい開発版です。現在使っている担当者アプリ・メインアプリ・KINGアプリには上書きしません。</div>
+
+<div class="section">今すぐ使える入口</div>
+<div class="grid">
+<section class="card"><div class="head"><div class="icon">📅</div><div><h2>イベント・メイン</h2><div class="owner">既存機能</div></div></div><p class="desc">イベント、カレンダー、売上、出勤確認を開きます。</p><button class="btn open" onclick="location.href='index.html'">メインアプリを開く</button></section>
+<section class="card"><div class="head"><div class="icon">📋</div><div><h2>ネタ一覧</h2><div class="owner">既存データを維持</div></div></div><p class="desc">ネタ、必要数量、買い物一覧、売上設定を開きます。</p><button class="btn open" onclick="location.href='neta-shopping-list.html'">ネタ一覧を開く</button></section>
+<section class="card"><div class="head"><div class="icon">✅</div><div><h2>準備チェック</h2><div class="owner">既存アプリ</div></div></div><p class="desc">イベント別の積込み・準備チェックを開きます。</p><button class="btn open" onclick="location.href='preparation-app.html'">準備アプリを開く</button></section>
+<section class="card"><div class="head"><div class="icon">🚚</div><div><h2>車両管理</h2><div class="owner">既存アプリ</div></div></div><p class="desc">車両点検、車検、保険、修理記録を開きます。</p><button class="btn open" onclick="location.href='vehicle-management.html'">車両管理を開く</button></section>
+<section class="card"><div class="head"><div class="icon">🔥</div><div><h2>LPG管理</h2><div class="owner">既存アプリ</div></div></div><p class="desc">松笠商店（LPG）の仕入・返却・在庫を開きます。</p><button class="btn open" onclick="location.href='lpg-management.html'">LPG管理を開く</button></section>
+<section class="card leader"><div class="head"><div class="icon">📦</div><div><h2>発注集計</h2><div class="owner">リーダー専用</div></div></div><span class="badge">担当者は操作不可</span><p class="desc">発注先別の注文量、ロット、単価、金額を管理します。</p><button class="btn lock" disabled>🔒 リーダー専用</button></section>
+</div>
+
+<div class="section">次に1つずつ追加</div>
+<div class="grid">
+<section class="card future"><div class="head"><div class="icon">📦</div><div><h2>共通在庫マスター</h2><div class="owner">次の工程</div></div></div><span class="badge">まだ開発前</span><p class="desc">メインとネタ一覧が同じ在庫数を見るための共通画面です。</p><button class="btn lock" disabled>次に作成</button></section>
+<section class="card future"><div class="head"><div class="icon">🏢</div><div><h2>発注先マスター</h2><div class="owner">後の工程</div></div></div><span class="badge">まだ開発前</span><p class="desc">発注先、担当者、電話、ロット、単価を共通管理します。</p><button class="btn lock" disabled>準備中</button></section>
+<section class="card future"><div class="head"><div class="icon">🧾</div><div><h2>品目マスター</h2><div class="owner">後の工程</div></div></div><span class="badge">まだ開発前</span><p class="desc">品目名、カテゴリー、単位、単価、最低ロットを共通管理します。</p><button class="btn lock" disabled>準備中</button></section>
+</div>
+<footer>FUJIWARA Group 担当者アプリ v3 開発版<br>既存アプリには影響しません</footer>
+</div>
+<script>function goBack(){if(history.length>1)history.back();else location.href='manager-app.html'}</script>
+</body></html>
