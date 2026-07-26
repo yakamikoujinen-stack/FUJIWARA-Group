@@ -3293,7 +3293,125 @@ function updateSimpleSalesEditTotals(){
   var cut=document.getElementById('simple-auto-cut'); if(cut) cut.textContent='¥'+m.cutAmount.toLocaleString('ja-JP');
   var expected=document.getElementById('simple-auto-expected'); if(expected) expected.textContent='¥'+m.expectedAmount.toLocaleString('ja-JP');
   var staff=document.getElementById('simple-auto-staffpay'); if(staff) staff.textContent='¥'+m.staffPay.toLocaleString('ja-JP');
+  refreshSimpleSafeTransferStatus(m.cash);
 }
+
+function currentSalesEditEvent(){
+  var id=(document.getElementById('se-ev-id')||{}).value||'', ev=null;
+  for(var i=0;i<state.events.length;i++){
+    if(String(state.events[i].id)===String(id)){ ev=state.events[i]; break; }
+  }
+  return ev;
+}
+function currentSimpleCashSummary(){
+  var items={};
+  document.querySelectorAll('.simple-sales-input').forEach(function(inp){
+    items[inp.dataset.key]=parseInt(String(inp.value||'').replace(/[^0-9]/g,''))||0;
+  });
+  return calcSimpleMoneySummary({
+    items:items,
+    expenses:{
+      basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,
+      shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,
+      kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,
+      other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,
+      labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}
+    },
+    money:{
+      deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,
+      unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0
+    },
+    settlement:{
+      cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,
+      receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,
+      staffPayments:collectStaffPayments()
+    }
+  });
+}
+function refreshSimpleSafeTransferStatus(currentCash){
+  var ev=currentSalesEditEvent(), ds=(document.getElementById('simple-sales-date')||{}).value||'';
+  var btn=document.getElementById('simple-safe-transfer-btn');
+  var status=document.getElementById('simple-safe-transfer-status');
+  if(!btn||!status||!ev)return;
+  var saved=getDaySimpleSales(ev,ds);
+  var transfer=saved&&saved.safeTransfer;
+  if(transfer&&transfer.completed){
+    btn.textContent='✅ 金庫番へ入金済み';
+    btn.disabled=true;
+    btn.style.opacity='.65';
+    status.textContent='入金済み：¥'+Number(transfer.amount||0).toLocaleString('ja-JP')+'（'+String(transfer.transferredAt||'')+'）';
+  }else{
+    btn.textContent='🔐 手元残 ¥'+Number(currentCash||0).toLocaleString('ja-JP')+' を金庫番へ入金';
+    btn.disabled=Number(currentCash||0)<=0;
+    btn.style.opacity=Number(currentCash||0)>0?'1':'.55';
+    status.textContent=Number(currentCash||0)>0?'同じイベント・同じ日付は二重登録できません。':'手元残が0円のため入金できません。';
+  }
+}
+function safeFirebaseKey(value){
+  return String(value||'').replace(/[.#$\[\]\/]/g,'_');
+}
+function transferSimpleCashToSafe(){
+  var ev=currentSalesEditEvent();
+  if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
+  var ds=(document.getElementById('simple-sales-date')||{}).value||ev.date||'';
+  var summary=currentSimpleCashSummary();
+  var amount=Number(summary.cash||0);
+  if(amount<=0){ toast('⚠️ 手元残が0円のため入金できません'); return; }
+  if(typeof firebase==='undefined'||!firebase.database){
+    toast('⚠️ Firebase接続後にもう一度押してください');
+    return;
+  }
+  var existing=getDaySimpleSales(ev,ds);
+  if(existing&&existing.safeTransfer&&existing.safeTransfer.completed){
+    toast('✅ この日の手元残は金庫番へ入金済みです');
+    refreshSimpleSafeTransferStatus(amount);
+    return;
+  }
+  if(!confirm((ev.name||'イベント')+'｜'+ds+'\n手元残 ¥'+amount.toLocaleString('ja-JP')+' を金庫番へ入金しますか？'))return;
+
+  var transferId='event_'+safeFirebaseKey(ev.id)+'_'+safeFirebaseKey(ds);
+  var ref=firebase.database().ref('fujiwara/king_safe_book/'+transferId);
+  ref.once('value').then(function(snapshot){
+    if(snapshot.exists()){
+      toast('✅ この日の手元残はすでに金庫番へ入金済みです');
+      existing.safeTransfer={completed:true,amount:amount,transferId:transferId,transferredAt:new Date().toLocaleString('ja-JP')};
+      ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:existing};
+      aggregateDailySimpleSales(ev); fbSave(); refreshSimpleSafeTransferStatus(amount);
+      return null;
+    }
+    var detail='メインアプリ精算｜売上 ¥'+Number(summary.sales||0).toLocaleString('ja-JP')
+      +'／経費 ¥'+Number(summary.expense||0).toLocaleString('ja-JP')
+      +'／スタッフ支払 ¥'+Number(summary.staffPay||0).toLocaleString('ja-JP')
+      +'／預金 ¥'+Number(summary.deposit||0).toLocaleString('ja-JP')
+      +'／未精算 ¥'+Number(summary.unpaid||0).toLocaleString('ja-JP');
+    var record={
+      id:transferId,
+      date:ds,
+      item:(ev.name||'イベント')+' 精算手元残',
+      income:amount,
+      expense:0,
+      detail:detail,
+      source:'main_app_settlement',
+      sourceEventId:String(ev.id||''),
+      sourceDate:ds,
+      createdAt:Date.now(),
+      updatedAt:Date.now()
+    };
+    return ref.set(record).then(function(){
+      existing.safeTransfer={completed:true,amount:amount,transferId:transferId,transferredAt:new Date().toLocaleString('ja-JP')};
+      ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:existing};
+      aggregateDailySimpleSales(ev);
+      addAudit('金庫番へ入金',ev.name+'｜'+ds+'｜¥'+amount.toLocaleString('ja-JP'));
+      fbSave();
+      refreshSimpleSafeTransferStatus(amount);
+      toast('✅ 手元残を金庫番へ入金しました');
+    });
+  }).catch(function(error){
+    console.error(error);
+    toast('⚠️ 金庫番への入金に失敗しました');
+  });
+}
+
 function syncSimpleMoneyToKing(ev){
   try{
     var list=JSON.parse(localStorage.getItem('fujiwara_king_money_ledger')||'[]');
@@ -3534,7 +3652,7 @@ function openSalesEdit(id, selectedDate) {
     +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
     +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:#1769c2;margin-bottom:8px">現金売上・売掛売上</div><div class="fg2"><div class="fg"><label>現金売上（円）</label><input type="number" id="simple-cash-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.cashSales)||'')+'"></div><div class="fg"><label>売掛売上（円）</label><input type="number" id="simple-receivable-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.receivableSales)||'')+'"></div></div></div>'
     +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:var(--gold)">この日のスタッフ支払</div><button type="button" class="btn btn-outline btn-sm" onclick="addStaffPaymentRow({})">＋スタッフ追加</button></div><div id="staff-payment-list">'+((simple.settlement&&simple.settlement.staffPayments)||[]).map(function(x,i){return settlementRowHtml(x,i);}).join('')+'</div><div class="profit-row"><span>スタッフ支払合計</span><b id="simple-auto-staffpay">¥0</b></div></div>'
-    +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">この日の経費・お金</div><div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="simple-exp-basho" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.basho)||'')+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="simple-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.shiire)||'')+'"></div></div><div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="simple-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.kotsu)||'')+'"></div><div class="fg"><label>その他経費</label><input type="number" id="simple-exp-other" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.other)||'')+'"></div></div><div class="fg"><label>労務費 合計</label><input type="number" id="simple-exp-labor" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||'')+'"></div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
+    +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">この日の経費・お金</div><div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="simple-exp-basho" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.basho)||'')+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="simple-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.shiire)||'')+'"></div></div><div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="simple-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.kotsu)||'')+'"></div><div class="fg"><label>その他経費</label><input type="number" id="simple-exp-other" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.other)||'')+'"></div></div><div class="fg"><label>労務費 合計</label><input type="number" id="simple-exp-labor" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||'')+'"></div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><button type="button" id="simple-safe-transfer-btn" class="btn btn-green btn-full" style="margin:2px 0 8px;font-size:14px" onclick="transferSimpleCashToSafe()">🔐 手元残を金庫番へ入金</button><div id="simple-safe-transfer-status" style="font-size:11px;color:var(--text2);font-weight:900;margin:0 0 12px"></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
     +'<input type="hidden" id="simple-customer" value=""><input type="hidden" id="simple-closing-day" value="月末締め"><input type="hidden" id="simple-cut-rate" value="0"><input type="hidden" id="simple-payment-date"><input type="hidden" id="simple-actual-amount" value="0"><input type="hidden" id="simple-received-date"><input type="checkbox" id="simple-received" style="display:none">'
     +'<div class="fg"><label>この日のメモ</label><textarea id="simple-sales-memo">'+escHtml(simple.memo||'')+'</textarea></div></div>';
   var laborBox=document.getElementById('se-labor-inputs'); if(laborBox){ laborBox.innerHTML=''; var old=document.getElementById('se-daily-inputs'); if(old)old.remove(); laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>'); }
@@ -3549,7 +3667,7 @@ function saveSalesEdit() {
   var ds=(document.getElementById('simple-sales-date')||{}).value||ev.date, items={},labels={};
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
-  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:collectStaffPayments()},memo:(document.getElementById('simple-sales-memo')||{}).value||'',updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
+  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:collectStaffPayments()},memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(getDaySimpleSales(ev,ds).safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
   ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple}; aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
   addAudit('日別売上表入力/修正',ev.name+'｜'+ds+'｜入力者 '+(userName||'未入力'));
   closeModal('modal-sales-edit'); renderSalesPage(); toast('✅ '+ds+' の売上・スタッフ支払を保存しました'); fbSave();
