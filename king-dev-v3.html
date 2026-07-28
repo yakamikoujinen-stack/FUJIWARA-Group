@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KING APP 開発版 v2｜業務通知・MIYU連携</title>
+<style>
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff;color:#102043}
+.loading{min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px}
+.loading-card{background:white;border-radius:24px;padding:28px;box-shadow:0 12px 30px rgba(45,68,100,.15);max-width:520px}
+.loading-card h1{margin:0 0 12px;color:#b47c00}
+.error{color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;border-radius:14px;padding:14px;margin-top:14px;text-align:left}
+</style>
+</head>
+<body>
+<div class="loading" id="devLoader">
+  <div class="loading-card">
+    <h1>👑 KING APP 開発版 v2</h1>
+    <p>本番の機能を保護したまま、通知・MIYU連携を読み込んでいます。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const EXTRA_CSS = `
+/* ===== KING DEV v2：業務通知・MIYU連携（本番機能を壊さない追加） ===== */
+.top > .notice{display:none !important;}
+.top{grid-template-columns:1.05fr .95fr !important;}
+@media(max-width:980px){.top{grid-template-columns:1fr !important;}}
+.king-hub a.hub-card[href="miyu.html"]{display:none !important;}
+.king-dev-badge{position:fixed;right:12px;top:12px;z-index:9999;background:#7c2d12;color:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:950;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.king-business-center{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-top:18px}
+.king-business-card{padding:18px}
+.king-business-head{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #e8edf5;padding-bottom:11px}
+.king-business-head h2{margin:0;font-size:22px;color:#123b66}
+.king-live{background:#dcfce7;color:#166534;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950}
+.king-notice-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.king-notice-tab{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;color:#334155}
+.king-notice-tab.active{background:#123b66;color:#fff;border-color:#123b66}
+.king-business-list{display:grid;gap:9px}
+.king-business-item{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:start;border:1px solid #e5ebf2;border-radius:15px;padding:12px;background:#fff}
+.king-business-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:#eef6ff}
+.king-business-item.order .king-business-icon{background:#fff7d6}
+.king-business-item.construction .king-business-icon{background:#e8f4ff}
+.king-business-item.manager .king-business-icon{background:#eefbea}
+.king-business-title{font-weight:950;font-size:14px}
+.king-business-meta{font-size:12px;color:#647188;font-weight:750;line-height:1.55;margin-top:3px}
+.king-business-time{font-size:11px;color:#647188;white-space:nowrap}
+.king-empty{padding:18px;text-align:center;border:1px dashed #cbd5e1;border-radius:15px;color:#647188;font-weight:850;background:#f8fafc}
+.king-miyu-dev{background:linear-gradient(145deg,#fff7fb,#eef6ff);border:1px solid #f3c4d7}
+.king-miyu-face{font-size:54px;text-align:center;margin:8px 0}
+.king-miyu-message{background:#fff;border:1px solid #ead7e2;border-radius:15px;padding:13px;font-size:14px;font-weight:800;line-height:1.7}
+.king-miyu-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.king-miyu-actions a,.king-miyu-actions button{border:0;border-radius:12px;min-height:48px;text-decoration:none;display:flex;align-items:center;justify-content:center;font-weight:950;font-size:14px}
+.king-miyu-talk{background:#7c3aed;color:#fff}
+.king-miyu-refresh{background:#0f172a;color:#fff}
+.king-test-box{margin-top:12px;padding-top:12px;border-top:1px solid #e8edf5}
+.king-test-box summary{cursor:pointer;font-weight:900;color:#647188}
+.king-test-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.king-test-buttons button{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:9px;font-weight:850}
+@media(max-width:850px){.king-business-center{grid-template-columns:1fr}}
+@media(max-width:560px){.king-business-card{padding:14px}.king-business-item{grid-template-columns:38px 1fr}.king-business-time{grid-column:2}.king-miyu-actions{grid-template-columns:1fr}}
+`;
+
+  const PANEL = `
+<div class="king-dev-badge">開発版</div>
+<section class="king-business-center" id="kingBusinessCenter">
+  <section class="card king-business-card">
+    <div class="king-business-head">
+      <h2>🔔 業務お知らせ</h2>
+      <span class="king-live" id="kingBusinessStatus">確認中</span>
+    </div>
+    <div class="king-notice-tabs">
+      <button class="king-notice-tab active" data-kind="all">すべて</button>
+      <button class="king-notice-tab" data-kind="order">📦 発注</button>
+      <button class="king-notice-tab" data-kind="construction">🏗️ 建設</button>
+      <button class="king-notice-tab" data-kind="manager">👤 担当者</button>
+    </div>
+    <div class="king-business-list" id="kingBusinessList">
+      <div class="king-empty">材料・資材発注と各アプリ更新を確認しています。</div>
+    </div>
+  </section>
+
+  <section class="card king-business-card king-miyu-dev">
+    <div class="king-business-head">
+      <h2>👩‍💼 MIYU 秘書</h2>
+      <span class="king-live">連携中</span>
+    </div>
+    <div class="king-miyu-face">👩‍💼</div>
+    <div class="king-miyu-message" id="kingMiyuBusinessMessage">
+      相棒、業務のお知らせを確認しています。
+    </div>
+    <div class="king-miyu-actions">
+      <a class="king-miyu-talk" href="miyu.html">💬 MIYUに相談</a>
+      <button class="king-miyu-refresh" onclick="window.kingRefreshBusinessNotices()">🔄 再確認</button>
+    </div>
+    <details class="king-test-box">
+      <summary>開発版の動作確認</summary>
+      <div class="king-test-buttons">
+        <button onclick="window.kingAddTestNotice('order')">発注通知テスト</button>
+        <button onclick="window.kingAddTestNotice('construction')">建設更新テスト</button>
+        <button onclick="window.kingAddTestNotice('manager')">担当者更新テスト</button>
+        <button onclick="window.kingClearTestNotices()">テスト削除</button>
+      </div>
+    </details>
+  </section>
+</section>
+`;
+
+  const EXTRA_JS = `
+<script>
+(function(){
+  const state={items:[],filter:'all',firebaseReady:false};
+  const TEST_KEY='king_dev_business_notices_v1';
+  const paths=[
+    {path:'fujiwara/notifications/king',kind:'all'},
+    {path:'fujiwara/material_orders',kind:'order'},
+    {path:'fujiwara/supply_orders',kind:'order'},
+    {path:'fujiwara/construction_updates',kind:'construction'},
+    {path:'fujiwara/manager_updates',kind:'manager'}
+  ];
+
+  function safe(v){return String(v==null?'':v).replace(/[&<>"']/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]})}
+  function arr(v){if(!v)return[];if(Array.isArray(v))return v;return Object.keys(v).map(function(k){const x=v[k];return typeof x==='object'&&x?Object.assign({id:k},x):{id:k,title:String(x)}})}
+  function timeValue(x){return x.updatedAt||x.createdAt||x.timestamp||x.date||''}
+  function kindOf(x,fallback){
+    const t=String(x.kind||x.type||x.category||fallback||'').toLowerCase();
+    if(t.includes('order')||t.includes('発注')||t.includes('material')||t.includes('supply'))return'order';
+    if(t.includes('construction')||t.includes('建設'))return'construction';
+    if(t.includes('manager')||t.includes('担当'))return'manager';
+    return fallback==='all'?'manager':fallback;
+  }
+  function normalize(x,fallback,source){
+    const kind=kindOf(x,fallback);
+    return {
+      id:String(x.id||x.key||Math.random()),
+      kind:kind,
+      title:String(x.title||x.message||x.name||(kind==='order'?'材料・資材の発注確認':kind==='construction'?'建設アプリが更新されました':'担当者アプリが更新されました')),
+      detail:String(x.detail||x.memo||x.note||x.description||x.updatedBy||x.staff||''),
+      time:String(timeValue(x)),
+      source:source||String(x.source||'')
+    };
+  }
+  function formatTime(v){
+    if(!v)return'';
+    const d=new Date(v);
+    if(isNaN(d))return String(v).slice(0,16);
+    return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+  function dedupe(items){
+    const m={};
+    items.forEach(function(x){const k=x.kind+'|'+x.id+'|'+x.title;m[k]=x});
+    return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return String(b.time).localeCompare(String(a.time))}).slice(0,30);
+  }
+  function loadTests(){
+    try{return JSON.parse(localStorage.getItem(TEST_KEY)||'[]')}catch(e){return[]}
+  }
+  function render(){
+    const box=document.getElementById('kingBusinessList');
+    const status=document.getElementById('kingBusinessStatus');
+    if(!box)return;
+    const list=state.filter==='all'?state.items:state.items.filter(function(x){return x.kind===state.filter});
+    status.textContent=state.firebaseReady?'自動連携':'端末確認';
+    if(!list.length){
+      box.innerHTML='<div class="king-empty">現在、新しい業務通知はありません。</div>';
+    }else{
+      box.innerHTML=list.map(function(x){
+        const icon=x.kind==='order'?'📦':x.kind==='construction'?'🏗️':'👤';
+        const label=x.kind==='order'?'発注':x.kind==='construction'?'建設アプリ':'担当者アプリ';
+        return '<div class="king-business-item '+x.kind+'"><div class="king-business-icon">'+icon+'</div><div><div class="king-business-title">'+safe(x.title)+'</div><div class="king-business-meta">'+safe(label+(x.detail?'｜'+x.detail:'')+(x.source?'｜'+x.source:''))+'</div></div><div class="king-business-time">'+safe(formatTime(x.time))+'</div></div>';
+      }).join('');
+    }
+    const orderCount=state.items.filter(function(x){return x.kind==='order'}).length;
+    const appCount=state.items.filter(function(x){return x.kind==='construction'||x.kind==='manager'}).length;
+    const msg=document.getElementById('kingMiyuBusinessMessage');
+    if(msg){
+      if(orderCount)msg.innerHTML='相棒、<b>材料・資材の発注確認が '+orderCount+'件</b>あります。先に発注内容を確認しましょう。';
+      else if(appCount)msg.innerHTML='相棒、<b>建設・担当者アプリの更新が '+appCount+'件</b>あります。変更内容を確認できます。';
+      else msg.textContent='相棒、現在は急ぎの発注・更新通知はありません。';
+    }
+  }
+  function connect(){
+    state.items=loadTests().map(function(x){return normalize(x,x.kind,'開発テスト')});
+    if(typeof firebase!=='undefined'&&firebase.database){
+      state.firebaseReady=true;
+      paths.forEach(function(p){
+        firebase.database().ref(p.path).on('value',function(s){
+          const remote=arr(s.val()).map(function(x){return normalize(x,p.kind,p.path)});
+          const others=state.items.filter(function(x){return x.source!==p.path});
+          state.items=dedupe(others.concat(remote).concat(loadTests().map(function(x){return normalize(x,x.kind,'開発テスト')})));
+          render();
+        },function(){render()});
+      });
+    }
+    render();
+  }
+  document.querySelectorAll('.king-notice-tab').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.king-notice-tab').forEach(function(b){b.classList.remove('active')});
+      btn.classList.add('active');state.filter=btn.dataset.kind;render();
+    });
+  });
+  window.kingRefreshBusinessNotices=function(){render()};
+  window.kingAddTestNotice=function(kind){
+    const list=loadTests();
+    list.unshift({id:'test-'+Date.now(),kind:kind,title:kind==='order'?'材料・資材の発注期限が近づいています':kind==='construction'?'建設アプリで担当者が日報を更新しました':'担当者アプリで在庫・発注情報が更新されました',detail:'動作確認用通知',updatedAt:new Date().toISOString()});
+    localStorage.setItem(TEST_KEY,JSON.stringify(list.slice(0,10)));
+    state.items=dedupe(state.items.concat(list.map(function(x){return normalize(x,x.kind,'開発テスト')})));render();
+  };
+  window.kingClearTestNotices=function(){
+    localStorage.removeItem(TEST_KEY);
+    state.items=state.items.filter(function(x){return x.source!=='開発テスト'});render();
+  };
+  connect();
+})();
+<\/script>`;
+
+  fetch('king.html?dev=' + Date.now(), {cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');return r.text()})
+    .then(function(source){
+      let patched=source;
+      patched=patched.replace('</style>', EXTRA_CSS + '</style>');
+      const anchor='<section class="king-hub"';
+      if(patched.includes(anchor)){
+        patched=patched.replace(anchor, PANEL + anchor);
+      }else{
+        patched=patched.replace('<main class="wrap">','<main class="wrap">'+PANEL);
+      }
+      patched=patched.replace('</body>', EXTRA_JS + '</body>');
+      document.open();
+      document.write(patched);
+      document.close();
+    })
+    .catch(function(err){
+      document.getElementById('devLoader').innerHTML='<div class="loading-card"><h1>⚠️ 読み込み失敗</h1><p>この開発版は、GitHub上で <b>king.html</b> と同じフォルダにアップロードして確認してください。</p><div class="error">'+String(err.message||err)+'</div></div>';
+    });
+})();
+</script>
+</body>
+</html>
