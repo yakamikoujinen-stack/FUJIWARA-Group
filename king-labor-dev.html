@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>KING APP 開発版｜労務費集計</title>
+<style>
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
+#devLoader{max-width:760px;margin:40px auto;padding:20px}
+.loading-card{background:#fff;border-radius:20px;padding:24px;box-shadow:0 12px 30px rgba(30,60,100,.15)}
+.loading-card h1{font-size:24px;margin:0 0 12px;color:#17324d}
+.loading-card p{line-height:1.7;color:#475569}
+.error{margin-top:12px;padding:12px;border-radius:12px;background:#fff1f2;color:#991b1b;font-weight:800}
+</style>
+</head>
+<body>
+<div id="devLoader">
+  <div class="loading-card">
+    <h1>👷 KING 労務費集計・開発版</h1>
+    <p>本番の king.html を安全に読み込み、労務費集計だけを追加しています。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const EXTRA_CSS = `
+  /* ===== KING 労務費集計 開発版 ===== */
+  #laborKingPanel{
+    display:block !important;
+    margin-top:18px !important;
+    border:2px solid #e0b12c !important;
+    background:linear-gradient(135deg,#fffdf5,#fff8d9) !important;
+  }
+  #laborKingPanel .panel-head{
+    color:#73520a !important;
+  }
+  .labor-dev-badge{
+    display:inline-block;
+    margin-left:8px;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#17324d;
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+  }
+  .labor-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .labor-summary-card{
+    background:#fff;
+    border:1px solid #eadcae;
+    border-radius:15px;
+    padding:13px;
+    box-shadow:0 5px 14px rgba(60,50,10,.06);
+  }
+  .labor-summary-card small{color:#64748b;font-weight:800}
+  .labor-summary-card b{display:block;margin-top:5px;font-size:25px;color:#17324d}
+  .labor-section{
+    background:#fff;
+    border:1px solid #e6eaf0;
+    border-radius:15px;
+    padding:13px;
+    margin-top:12px;
+    overflow-x:auto;
+  }
+  .labor-section h3{margin:0 0 10px;color:#0b5cab;font-size:17px}
+  .labor-table{width:100%;border-collapse:collapse;min-width:460px}
+  .labor-table th,.labor-table td{padding:10px 8px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px}
+  .labor-table th{background:#f4f8fc;color:#475569}
+  .labor-table td.num,.labor-table th.num{text-align:right}
+  .labor-unpaid{color:#b42318;font-weight:900}
+  .labor-paid{color:#16803c;font-weight:900}
+  .labor-empty{padding:20px;text-align:center;border:1px dashed #cbd5e1;border-radius:14px;background:#fff;color:#64748b;font-weight:800}
+  .labor-note{font-size:12px;color:#64748b;line-height:1.7;margin-top:10px}
+  @media(max-width:760px){
+    .labor-summary-grid{grid-template-columns:repeat(2,1fr)}
+    .labor-summary-card b{font-size:21px}
+  }`;
+
+  const EXTRA_JS = `
+  <script>
+  (function(){
+    function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+    function esc(v){
+      return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function pickAmount(p){
+      const candidates=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate];
+      for(const v of candidates){
+        const n=Number(String(v==null?'':v).replace(/,/g,''));
+        if(Number.isFinite(n) && n!==0)return n;
+      }
+      return 0;
+    }
+    function pickStaff(p){
+      return p.staffName||p.staff||p.name||p.workerName||'スタッフ未設定';
+    }
+    function getLaborDb(){
+      const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
+      for(const key of keys){
+        try{
+          const value=localStorage.getItem(key);
+          if(!value)continue;
+          const parsed=JSON.parse(value);
+          if(parsed && (Array.isArray(parsed.events)||Array.isArray(parsed))) {
+            return {key:key,events:Array.isArray(parsed)?parsed:(parsed.events||[])};
+          }
+        }catch(e){}
+      }
+      return {key:'fg_labor_db_v1',events:[]};
+    }
+    window.renderLaborKing=function(){
+      const box=document.getElementById('laborKingBox');
+      if(!box)return;
+      const source=getLaborDb();
+      const events=source.events||[];
+      if(!events.length){
+        box.innerHTML='<div class="labor-empty">労務費データはまだありません。<br><small>メインアプリでスタッフ別労務費を保存後、「更新」を押してください。</small></div>';
+        return;
+      }
+
+      const people={}, eventTotals={}, months={}, unpaid=[];
+      let total=0, paymentCount=0;
+
+      events.forEach(function(ev,index){
+        const eventName=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
+        const eventDate=ev.date||ev.eventDate||ev.startDate||'';
+        const month=String(eventDate).slice(0,7)||'未設定';
+        const payments=Array.isArray(ev.payments)?ev.payments:
+                       Array.isArray(ev.staffPayments)?ev.staffPayments:
+                       Array.isArray(ev.labor)?ev.labor:[];
+
+        let eventTotal=0;
+        payments.forEach(function(p){
+          const amount=pickAmount(p);
+          const staff=pickStaff(p);
+          total+=amount;
+          eventTotal+=amount;
+          paymentCount++;
+          people[staff]=(people[staff]||0)+amount;
+          months[month]=(months[month]||0)+amount;
+          if(p.paid===false || p.paymentStatus==='unpaid' || p.status==='未払い'){
+            unpaid.push({event:eventName,staff:staff,amount:amount});
+          }
+        });
+
+        eventTotals[eventName]=(eventTotals[eventName]||0)+eventTotal;
+      });
+
+      const peopleRows=Object.entries(people).sort((a,b)=>b[1]-a[1]).map(function(r){
+        return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+      }).join('');
+
+      const eventRows=Object.entries(eventTotals).sort((a,b)=>b[1]-a[1]).map(function(r){
+        return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+      }).join('');
+
+      const monthRows=Object.entries(months).sort((a,b)=>String(b[0]).localeCompare(String(a[0]))).map(function(r){
+        return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+      }).join('');
+
+      const unpaidRows=unpaid.length ? unpaid.map(function(r){
+        return '<tr><td>'+esc(r.event)+'</td><td>'+esc(r.staff)+'</td><td class="num labor-unpaid">'+yen(r.amount)+'</td></tr>';
+      }).join('') : '<tr><td colspan="3" class="labor-paid">未払いはありません</td></tr>';
+
+      box.innerHTML=
+        '<div class="labor-summary-grid">'+
+          '<div class="labor-summary-card"><small>総労務費</small><b>'+yen(total)+'</b></div>'+
+          '<div class="labor-summary-card"><small>イベント数</small><b>'+events.length+'件</b></div>'+
+          '<div class="labor-summary-card"><small>スタッフ支払件数</small><b>'+paymentCount+'件</b></div>'+
+          '<div class="labor-summary-card"><small>未払い</small><b>'+unpaid.length+'件</b></div>'+
+        '</div>'+
+        '<div class="labor-section"><h3>👤 スタッフ別 労務費集計</h3><table class="labor-table"><thead><tr><th>スタッフ名</th><th class="num">労務費合計</th></tr></thead><tbody>'+peopleRows+'</tbody></table></div>'+
+        '<div class="labor-section"><h3>🎪 イベント別 労務費集計</h3><table class="labor-table"><thead><tr><th>イベント名</th><th class="num">労務費合計</th></tr></thead><tbody>'+eventRows+'</tbody></table></div>'+
+        '<div class="labor-section"><h3>📅 月別 労務費集計</h3><table class="labor-table"><thead><tr><th>年月</th><th class="num">労務費合計</th></tr></thead><tbody>'+monthRows+'</tbody></table></div>'+
+        '<div class="labor-section"><h3>⚠️ 未払い一覧</h3><table class="labor-table"><thead><tr><th>イベント</th><th>スタッフ</th><th class="num">金額</th></tr></thead><tbody>'+unpaidRows+'</tbody></table></div>'+
+        '<div class="labor-note">参照データ：'+esc(source.key)+' ／ 本番の保存処理は変更していません。</div>';
+    };
+
+    function activate(){
+      const panel=document.getElementById('laborKingPanel');
+      if(panel){
+        const title=panel.querySelector('.panel-head span');
+        if(title && !title.querySelector('.labor-dev-badge')){
+          title.insertAdjacentHTML('beforeend','<span class="labor-dev-badge">開発確認中</span>');
+        }
+      }
+      window.renderLaborKing();
+      window.addEventListener('storage',function(e){
+        if(e.key && e.key.indexOf('labor')>=0)window.renderLaborKing();
+      });
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',activate);
+    else activate();
+  })();
+  <\/script>`;
+
+  fetch('king.html?laborDev=' + Date.now(), {cache:'no-store'})
+    .then(function(r){
+      if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');
+      return r.text();
+    })
+    .then(function(source){
+      let patched=source;
+      patched=patched.replace('</style>', EXTRA_CSS + '</style>');
+      patched=patched.replace('</body>', EXTRA_JS + '</body>');
+      document.open();
+      document.write(patched);
+      document.close();
+    })
+    .catch(function(err){
+      document.getElementById('devLoader').innerHTML=
+        '<div class="loading-card"><h1>⚠️ 読み込み失敗</h1>'+
+        '<p>このファイルを <b>king.html と同じ場所</b> にアップロードしてください。</p>'+
+        '<div class="error">'+String(err.message||err)+'</div></div>';
+    });
+})();
+</script>
+</body>
+</html>
