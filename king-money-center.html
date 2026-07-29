@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>KING｜お金・労務管理</title>
+<style>
+:root{--navy:#17324d;--blue:#1489e8;--gold:#d6a21c;--text:#102043;--sub:#647188;--line:#e6edf4;--shadow:0 12px 30px rgba(45,68,100,.13)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--text);background:radial-gradient(circle at 10% 0%,rgba(123,213,255,.45),transparent 30%),radial-gradient(circle at 95% 0%,rgba(246,189,34,.25),transparent 25%),linear-gradient(180deg,#effaff,#fff 50%,#fff8ed)}
+.wrap{max-width:980px;margin:0 auto;padding:18px 16px calc(35px + env(safe-area-inset-bottom))}
+header{border-radius:24px;padding:20px 18px;color:#fff;background:linear-gradient(135deg,#17324d,#285f8c);box-shadow:var(--shadow);margin-bottom:18px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:clamp(25px,5vw,38px)}.sub{margin:7px 0 0;color:#dcecff;font-weight:750}
+.back{border:0;border-radius:13px;padding:11px 14px;background:rgba(255,255,255,.16);color:#fff;font-weight:900;min-height:46px}
+.notice{background:#fff8df;border:1px solid #f1d77d;border-radius:16px;padding:13px 15px;margin-bottom:16px;color:#6d5411;font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:22px;padding:19px;box-shadow:var(--shadow);text-decoration:none;color:var(--text);display:flex;flex-direction:column;min-height:205px}
+.card.primary{border:2px solid #e1b84f;background:linear-gradient(135deg,#fffdf5,#fff5cf)}
+.card.analysis{border:2px solid #74a9d8;background:linear-gradient(135deg,#f6fbff,#eaf4ff)}
+.icon{width:66px;height:66px;border-radius:19px;display:grid;place-items:center;font-size:37px;background:#eef6ff}
+.primary .icon{background:#17324d;color:#ffd76a}
+h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;font-weight:750;flex:1}
+.open{margin-top:16px;border-radius:14px;padding:13px;text-align:center;color:#fff;background:var(--navy);font-weight:950}
+.analysis .open{background:linear-gradient(90deg,#1489e8,#0a73cf)}
+.section-title{margin:24px 0 12px;font-size:20px;color:#123b66}
+.note{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px;line-height:1.7;color:#425568;font-weight:750}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.card{min-height:175px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="head">
+    <div>
+      <h1>💰 お金・労務管理</h1>
+      <p class="sub">KING専用の経営・労務・主力ネタ分析</p>
+    </div>
+    <button class="back" onclick="goBack()">← KINGへ</button>
+  </div>
+</header>
+
+<div class="notice">主力ネタ一覧は担当者アプリから外し、KINGのお金・労務管理へ移動しました。</div>
+
+<main class="grid">
+  <a class="card primary" href="king-money.html">
+    <div class="icon">💰</div>
+    <h2>お金・労務管理</h2>
+    <p>労務費、個人別給与台帳、月別集計など、これまでのお金・労務画面を開きます。</p>
+    <div class="open">お金・労務を開く ›</div>
+  </a>
+
+  <a class="card analysis" href="main-neta-sales.html">
+    <div class="icon">📈</div>
+    <h2>主力ネタ一覧</h2>
+    <p>イベント別の売上、販売数、販売単価、使用資材、月間集計、ランキングを確認します。</p>
+    <div class="open">主力ネタ一覧を開く ›</div>
+  </a>
+</main>
+
+<h2 class="section-title">現在の役割分け</h2>
+<div class="note">
+  <b>担当者アプリ：</b>準備・在庫・車両・ネタ一覧などの現場業務<br>
+  <b>KINGアプリ：</b>売上・労務費・給与・主力ネタ分析などの経営管理
+</div>
+</div>
+
+<script>
+function goBack(){
+  if(history.length>1) history.back();
+  else location.href='king-production.html';
+}
+</script>
+</body>
+</html>
