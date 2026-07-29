@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>FUJIWARA KING SYSTEM｜本番版</title>
+<title>FUJIWARA KING SYSTEM｜連日イベント集計修正版</title>
 <style>
 html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
 #devLoader{max-width:760px;margin:40px auto;padding:20px}
@@ -228,6 +228,17 @@ body.labor-app-open{overflow:hidden}
       return p.staffName||p.staff||p.name||p.workerName||'スタッフ未設定';
     }
     function getLaborDb(){
+      // Firebaseから取得した日別データを最優先。別端末でも連日分を表示できます。
+      if(Array.isArray(window._fgKingDailyFinance) && window._fgKingDailyFinance.length){
+        return {key:'firebase:fujiwara/kingDailyFinance',events:window._fgKingDailyFinance.map(function(r){
+          return {
+            id:r.id,eventId:r.eventId,name:r.eventName||r.name||'',eventName:r.eventName||r.name||'',
+            date:r.date||r.eventDate||'',eventDate:r.date||r.eventDate||'',place:r.place||'',
+            payments:Array.isArray(r.payments)?r.payments:[],sales:r.sales||0,expense:r.expense||0,
+            staffPay:r.staffPay||0,profit:r.profit||0,deposit:r.deposit||0,cash:r.cash||0,unpaid:r.unpaid||0
+          };
+        })};
+      }
       const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
       for(const key of keys){
         try{
@@ -474,8 +485,30 @@ window.renderLaborKing=function(){
       if(panel)panel.style.display='none';
     }
 
+    function startKingDailyFinanceSync(){
+      function attach(){
+        try{
+          if(!window.firebase || !firebase.database) return false;
+          firebase.database().ref('fujiwara/kingDailyFinance').on('value',function(snapshot){
+            var value=snapshot.val();
+            window._fgKingDailyFinance=(Array.isArray(value)?value:Object.values(value||{})).filter(Boolean);
+            try{ localStorage.setItem('fg_labor_db_v1',JSON.stringify({version:2,updatedAt:Date.now(),events:window._fgKingDailyFinance.map(function(r){
+              return {id:r.id,eventId:r.eventId,name:r.eventName||'',eventName:r.eventName||'',date:r.date||'',eventDate:r.date||'',place:r.place||'',payments:r.payments||[],sales:r.sales||0,expense:r.expense||0,staffPay:r.staffPay||0,profit:r.profit||0,deposit:r.deposit||0,cash:r.cash||0,unpaid:r.unpaid||0};
+            })})); }catch(e){}
+            window.renderLaborKing();
+          });
+          return true;
+        }catch(e){ return false; }
+      }
+      if(attach()) return;
+      var tries=0, timer=setInterval(function(){
+        tries++;
+        if(attach()||tries>20) clearInterval(timer);
+      },500);
+    }
     function startLaborApp(){
       activate();
+      startKingDailyFinanceSync();
       setTimeout(installLaborAppLauncher,100);
       setTimeout(installLaborAppLauncher,800);
     }

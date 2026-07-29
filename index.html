@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.17 連続イベント保存修正版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.19 KING連日イベント連携修正版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3412,16 +3412,51 @@ function transferSimpleCashToSafe(){
   });
 }
 
+// ===== v4.3.19 KING連日イベント連携（既存保存を壊さない追加処理） =====
+function buildKingDailyFinanceRecords(events){
+  var out=[];
+  (events||[]).forEach(function(ev){
+    var days=(ev.sales&&ev.sales.days&&typeof ev.sales.days==='object')?ev.sales.days:{};
+    Object.keys(days).sort().forEach(function(ds){
+      var rec=days[ds]||{};
+      var simple=rec.simple||rec;
+      if(!simple||typeof simple!=='object') return;
+      var summary=calcSimpleMoneySummary(simple);
+      var st=getSettlement(simple);
+      out.push({
+        id:String(ev.id||'')+'__'+ds,
+        eventId:String(ev.id||''),
+        date:ds,
+        eventName:ev.name||'',
+        place:ev.place||'',
+        sales:summary.sales||0,
+        expense:summary.expense||0,
+        staffPay:summary.staffPay||0,
+        profit:summary.profit||0,
+        deposit:summary.deposit||0,
+        cash:summary.cash||0,
+        unpaid:summary.unpaid||0,
+        cashSales:st.cashSales||0,
+        receivableSales:st.receivableSales||0,
+        payments:(st.staffPayments||[]).map(function(p){
+          return Object.assign({},p,{amount:parseInt(p.amount)||0,date:ds});
+        }),
+        note:(simple.money&&simple.money.note)||'',
+        updatedBy:simple.updatedBy||userName||'未入力',
+        updatedAt:simple.updatedAt||new Date().toLocaleString('ja-JP')
+      });
+    });
+  });
+  return out;
+}
 function syncSimpleMoneyToKing(ev){
   try{
-    var list=JSON.parse(localStorage.getItem('fujiwara_king_money_ledger')||'[]');
-    var simple=(ev.sales&&ev.sales.simple)||{};
-    var m=calcSimpleMoneySummary(simple);
-    var rec={id:String(ev.id), date:simple.date||ev.date||'', eventName:ev.name||'', sales:m.sales, expense:m.expense, profit:m.profit, deposit:m.deposit, cash:m.cash, unpaid:m.unpaid, note:(simple.money&&simple.money.note)||'', updatedBy:userName||'未入力', updatedAt:new Date().toLocaleString('ja-JP')};
-    list=list.filter(function(x){ return String(x.id)!==String(rec.id); });
-    list.unshift(rec);
-    localStorage.setItem('fujiwara_king_money_ledger', JSON.stringify(list));
-  }catch(e){}
+    var all=buildKingDailyFinanceRecords(state.events||[]);
+    localStorage.setItem('fujiwara_king_money_ledger',JSON.stringify(all));
+    localStorage.setItem('fg_labor_db_v1',JSON.stringify({version:2,updatedAt:Date.now(),events:all.map(function(r){
+      return {id:r.id,eventId:r.eventId,name:r.eventName,eventName:r.eventName,date:r.date,eventDate:r.date,place:r.place,payments:r.payments||[],sales:r.sales,expense:r.expense,staffPay:r.staffPay,profit:r.profit,deposit:r.deposit,cash:r.cash,unpaid:r.unpaid};
+    })}));
+  }catch(e){ console.warn('KING日別連携保存エラー',e); }
 }
 function renderSalesDetail() {
   if(!canAccessSalesExpense()) return;
@@ -4198,7 +4233,9 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       invItems:state.invItems,
       notices:state.notices,
       staffList:state.staffList,
-      auditLogs:state.auditLogs||[]
+      auditLogs:state.auditLogs||[],
+      // KING側はこの日別データを読み、連日イベントの全開催日を合算します
+      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[])
     }).then(function(){ showSync('✅ 同期完了'); })
       .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
   };
