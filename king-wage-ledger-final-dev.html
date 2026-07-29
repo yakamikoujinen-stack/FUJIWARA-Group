@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>KING APP 開発版｜賃金台帳 内容最終版</title>
+<style>
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
+#devLoader{max-width:760px;margin:40px auto;padding:20px}
+.loading-card{background:#fff;border-radius:20px;padding:24px;box-shadow:0 12px 30px rgba(30,60,100,.15)}
+.loading-card h1{font-size:24px;margin:0 0 12px;color:#17324d}
+.loading-card p{line-height:1.7;color:#475569}
+.error{margin-top:12px;padding:12px;border-radius:12px;background:#fff1f2;color:#991b1b;font-weight:800}
+
+.labor-app-launcher{
+  cursor:pointer;border:1px solid #e7bd45!important;
+  background:linear-gradient(135deg,#fffdf5,#fff2b8)!important;
+}
+.labor-app-launcher .hub-icon{
+  background:linear-gradient(145deg,#17324d,#0f2235)!important;
+  color:#ffd76a!important;
+  font-size:31px!important;
+}
+#laborAppScreen{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(180deg,#eef7ff,#fffaf0);
+  overflow-y:auto;padding-bottom:40px;
+}
+#laborAppScreen.open{display:block}
+.labor-app-topbar{
+  position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;background:rgba(255,255,255,.96);
+  border-bottom:1px solid #e5e7eb;box-shadow:0 4px 14px rgba(20,40,70,.08);
+}
+.labor-app-back{
+  border:0;border-radius:12px;background:#17324d;color:#fff;
+  padding:11px 15px;font-size:15px;font-weight:900;
+}
+.labor-app-title{font-size:20px;font-weight:950;color:#17324d}
+.labor-app-body{max-width:1180px;margin:0 auto;padding:16px}
+body.labor-app-open{overflow:hidden}
+
+.labor-event-list{display:grid;gap:10px}
+.labor-event-item{
+  border:1px solid #dbe3ec;border-radius:15px;background:#fff;overflow:hidden;
+  box-shadow:0 4px 12px rgba(30,50,80,.06)
+}
+.labor-event-toggle{
+  width:100%;border:0;background:#fff;padding:15px 14px;
+  display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  text-align:left;color:#17324d;font-size:14px;font-weight:950;cursor:pointer
+}
+.labor-event-toggle:active{background:#f5f9fd}
+.labor-event-name{font-size:16px}
+.labor-event-total{font-size:16px;color:#8a6400;white-space:nowrap}
+.labor-event-arrow{font-size:18px;transition:transform .2s}
+.labor-event-item.open .labor-event-arrow{transform:rotate(180deg)}
+.labor-event-detail{display:none;border-top:1px solid #e8edf3;background:#fbfdff;padding:12px}
+.labor-event-item.open .labor-event-detail{display:block}
+.labor-event-meta{font-size:12px;color:#64748b;margin-bottom:9px;font-weight:800}
+.labor-event-staff{
+  display:grid;grid-template-columns:1fr auto;gap:8px 12px;
+  padding:10px;border-bottom:1px solid #edf1f5;font-size:14px
+}
+.labor-event-staff:last-child{border-bottom:0}
+.labor-event-staff-name{font-weight:850}
+.labor-event-staff-amount{font-weight:950;text-align:right}
+.labor-event-zero{color:#b42318}
+.labor-event-empty{padding:14px;text-align:center;color:#64748b;font-weight:800}
+@media(max-width:600px){
+  .labor-event-toggle{grid-template-columns:1fr auto}
+  .labor-event-arrow{grid-column:2;grid-row:1}
+  .labor-event-total{grid-column:1 / -1}
+}
+
+
+/* ===== v3 シンプル窓口・日付順 ===== */
+.labor-summary-grid,
+.labor-section:nth-of-type(n+2){display:none!important}
+.labor-section{
+  padding:12px!important;
+  border:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.labor-section h3{
+  margin:0 0 4px!important;
+  font-size:19px!important;
+  color:#17324d!important;
+}
+.labor-note{font-size:12px!important;color:#64748b!important}
+.labor-event-list{gap:8px!important}
+.labor-event-item{
+  border:1px solid #d9e2ec!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.labor-event-toggle{
+  padding:13px 12px!important;
+  grid-template-columns:auto 1fr auto!important;
+  gap:10px!important;
+}
+.labor-event-date{
+  min-width:92px;
+  color:#0b5cab;
+  font-size:13px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.labor-event-name{
+  font-size:15px!important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.labor-event-total{font-size:14px!important}
+.labor-event-arrow{font-size:15px!important}
+.labor-app-body{padding:10px!important}
+#laborKingPanel{
+  border:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  margin-top:8px!important;
+}
+#laborKingPanel .panel-head{display:none!important}
+@media(max-width:600px){
+  .labor-event-toggle{
+    grid-template-columns:82px minmax(0,1fr) auto!important;
+  }
+  .labor-event-total{
+    grid-column:2!important;
+    font-size:13px!important;
+  }
+  .labor-event-arrow{
+    grid-column:3!important;
+    grid-row:1 / span 2!important;
+  }
+}
+
+</style>
+</head>
+<body>
+<div id="devLoader">
+  <div class="loading-card">
+    <h1>👷 KING 労務費集計・開発版</h1>
+    <p>本番の king.html を安全に読み込み、労務費集計だけを追加しています。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const EXTRA_CSS = `
+  /* ===== KING 労務費集計 開発版 ===== */
+  #laborKingPanel{
+    display:block !important;
+    margin-top:18px !important;
+    border:2px solid #e0b12c !important;
+    background:linear-gradient(135deg,#fffdf5,#fff8d9) !important;
+  }
+  #laborKingPanel .panel-head{
+    color:#73520a !important;
+  }
+  .labor-dev-badge{
+    display:inline-block;
+    margin-left:8px;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#17324d;
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+  }
+  .labor-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .labor-summary-card{
+    background:#fff;
+    border:1px solid #eadcae;
+    border-radius:15px;
+    padding:13px;
+    box-shadow:0 5px 14px rgba(60,50,10,.06);
+  }
+  .labor-summary-card small{color:#64748b;font-weight:800}
+  .labor-summary-card b{display:block;margin-top:5px;font-size:25px;color:#17324d}
+  .labor-section{
+    background:#fff;
+    border:1px solid #e6eaf0;
+    border-radius:15px;
+    padding:13px;
+    margin-top:12px;
+    overflow-x:auto;
+  }
+  .labor-section h3{margin:0 0 10px;color:#0b5cab;font-size:17px}
+  .labor-table{width:100%;border-collapse:collapse;min-width:460px}
+  .labor-table th,.labor-table td{padding:10px 8px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px}
+  .labor-table th{background:#f4f8fc;color:#475569}
+  .labor-table td.num,.labor-table th.num{text-align:right}
+  .labor-unpaid{color:#b42318;font-weight:900}
+  .labor-paid{color:#16803c;font-weight:900}
+  .labor-empty{padding:20px;text-align:center;border:1px dashed #cbd5e1;border-radius:14px;background:#fff;color:#64748b;font-weight:800}
+  .labor-note{font-size:12px;color:#64748b;line-height:1.7;margin-top:10px}
+  @media(max-width:760px){
+    .labor-summary-grid{grid-template-columns:repeat(2,1fr)}
+    .labor-summary-card b{font-size:21px}
+  }`;
+
+  const EXTRA_JS = `
+  <script>
+  (function(){
+    function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+    function esc(v){
+      return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function pickAmount(p){
+      const candidates=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate];
+      for(const v of candidates){
+        const n=Number(String(v==null?'':v).replace(/,/g,''));
+        if(Number.isFinite(n) && n!==0)return n;
+      }
+      return 0;
+    }
+    function pickStaff(p){
+      return p.staffName||p.staff||p.name||p.workerName||'スタッフ未設定';
+    }
+    function getLaborDb(){
+      const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
+      for(const key of keys){
+        try{
+          const value=localStorage.getItem(key);
+          if(!value)continue;
+          const parsed=JSON.parse(value);
+          if(parsed && (Array.isArray(parsed.events)||Array.isArray(parsed))) {
+            return {key:key,events:Array.isArray(parsed)?parsed:(parsed.events||[])};
+          }
+        }catch(e){}
+      }
+      return {key:'fg_labor_db_v1',events:[]};
+    }
+    
+    function normalizeDateValue(value){
+      if(!value)return '';
+      const s=String(value).trim();
+      const m=s.match(/(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})/);
+      if(m){
+        return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+      }
+      const m2=s.match(/^(\d{4})(\d{2})(\d{2})$/);
+      if(m2)return m2[1]+'-'+m2[2]+'-'+m2[3];
+      const d=new Date(s);
+      if(!Number.isNaN(d.getTime())){
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+      return '';
+    }
+    function displayDate(value){
+      const n=normalizeDateValue(value);
+      if(!n)return '日付未設定';
+      const p=n.split('-');
+      return p[0]+'/'+Number(p[1])+'/'+Number(p[2]);
+    }
+window.renderLaborKing=function(){
+      const box=document.getElementById('laborKingBox');
+      if(!box)return;
+
+      const source=getLaborDb();
+      const events=source.events||[];
+
+      if(!events.length){
+        box.innerHTML=
+          '<div class="labor-empty">労務費データはまだありません。<br>'+
+          '<small>メインアプリでスタッフ別労務費を保存後、「更新」を押してください。</small></div>';
+        return;
+      }
+
+      const people={};
+      const months={};
+      const unpaid=[];
+      const groupedEvents={};
+      let total=0;
+      let paymentCount=0;
+
+      events.forEach(function(ev,index){
+        const eventName=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
+        const eventDate=ev.date||ev.eventDate||ev.startDate||'';
+        const eventPlace=ev.place||ev.location||ev.venue||'';
+        const month=String(eventDate).slice(0,7)||'未設定';
+
+        const payments=Array.isArray(ev.payments)?ev.payments:
+                       Array.isArray(ev.staffPayments)?ev.staffPayments:
+                       Array.isArray(ev.labor)?ev.labor:[];
+
+        if(!groupedEvents[eventName]){
+          groupedEvents[eventName]={
+            name:eventName,
+            dates:[],
+            places:[],
+            staff:{},
+            total:0
+          };
+        }
+
+        const group=groupedEvents[eventName];
+        if(eventDate && !group.dates.includes(eventDate))group.dates.push(eventDate);
+        if(eventPlace && !group.places.includes(eventPlace))group.places.push(eventPlace);
+
+        payments.forEach(function(p){
+          const amount=pickAmount(p);
+          const staff=pickStaff(p);
+
+          total+=amount;
+          paymentCount++;
+          group.total+=amount;
+          group.staff[staff]=(group.staff[staff]||0)+amount;
+          people[staff]=(people[staff]||0)+amount;
+          months[month]=(months[month]||0)+amount;
+
+          if(p.paid===false || p.paymentStatus==='unpaid' || p.status==='未払い'){
+            unpaid.push({event:eventName,staff:staff,amount:amount});
+          }
+        });
+      });
+
+      const peopleRows=Object.entries(people)
+        .sort(function(a,b){return b[1]-a[1]})
+        .map(function(r){
+          return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+        }).join('');
+
+      const monthRows=Object.entries(months)
+        .sort(function(a,b){return String(b[0]).localeCompare(String(a[0]))})
+        .map(function(r){
+          return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+        }).join('');
+
+      const unpaidRows=unpaid.length
+        ? unpaid.map(function(r){
+            return '<tr><td>'+esc(r.event)+'</td><td>'+esc(r.staff)+'</td>'+
+                   '<td class="num labor-unpaid">'+yen(r.amount)+'</td></tr>';
+          }).join('')
+        : '<tr><td colspan="3" class="labor-paid">未払いはありません</td></tr>';
+
+      const eventCards=Object.values(groupedEvents)
+        .map(function(ev){
+          ev.dates=ev.dates
+            .map(normalizeDateValue)
+            .filter(Boolean)
+            .sort(function(a,b){return b.localeCompare(a)});
+          ev.sortDate=ev.dates.length?ev.dates[0]:'0000-00-00';
+          return ev;
+        })
+        .sort(function(a,b){
+          const dateCompare=String(b.sortDate).localeCompare(String(a.sortDate));
+          if(dateCompare!==0)return dateCompare;
+          return String(a.name).localeCompare(String(b.name),'ja');
+        })
+        .map(function(ev,index){
+          const staffRows=Object.entries(ev.staff)
+            .sort(function(a,b){return b[1]-a[1]})
+            .map(function(r){
+              const zeroClass=Number(r[1])===0?' labor-event-zero':'';
+              return '<div class="labor-event-staff">'+
+                       '<div class="labor-event-staff-name">'+esc(r[0])+'</div>'+
+                       '<div class="labor-event-staff-amount'+zeroClass+'">'+yen(r[1])+'</div>'+
+                     '</div>';
+            }).join('');
+
+          const meta=[
+            ev.dates.length?'日付：'+ev.dates.map(esc).join('・'):'',
+            ev.places.length?'場所：'+ev.places.map(esc).join('・'):''
+          ].filter(Boolean).join('　');
+
+          return '<div class="labor-event-item" data-event-index="'+index+'">'+
+                   '<button type="button" class="labor-event-toggle" aria-expanded="false">'+
+                     '<span class="labor-event-date">'+displayDate(ev.sortDate)+'</span>'+
+                     '<span class="labor-event-name">'+esc(ev.name)+'</span>'+
+                     '<span class="labor-event-total">'+yen(ev.total)+'</span>'+
+                     '<span class="labor-event-arrow">▼</span>'+
+                   '</button>'+
+                   '<div class="labor-event-detail">'+
+                     (meta?'<div class="labor-event-meta">'+meta+'</div>':'')+
+                     (staffRows||'<div class="labor-event-empty">スタッフ労務費の登録がありません</div>')+
+                   '</div>'+
+                 '</div>';
+        }).join('');
+
+      box.innerHTML=
+        '<div class="labor-section">'+
+          '<h3>イベント別 労務費</h3>'+
+          '<div class="labor-note" style="margin:0 0 10px">日付順（新しい順）／イベント名をタップするとスタッフ別の内容が開きます。</div>'+
+          '<div class="labor-event-list">'+eventCards+'</div>'+
+        '</div>';
+
+      box.querySelectorAll('.labor-event-toggle').forEach(function(button){
+        button.addEventListener('click',function(){
+          const item=button.closest('.labor-event-item');
+          const isOpen=item.classList.toggle('open');
+          button.setAttribute('aria-expanded',isOpen?'true':'false');
+        });
+      });
+    };
+    function activate(){
+      const panel=document.getElementById('laborKingPanel');
+      if(panel){
+        const title=panel.querySelector('.panel-head span');
+        if(title && !title.querySelector('.labor-dev-badge')){
+          title.insertAdjacentHTML('beforeend','<span class="labor-dev-badge">開発確認中</span>');
+        }
+      }
+      window.renderLaborKing();
+      window.addEventListener('storage',function(e){
+        if(e.key && e.key.indexOf('labor')>=0)window.renderLaborKing();
+      });
+    }
+    function installLaborAppLauncher(){
+      const panel=document.getElementById('laborKingPanel');
+      if(!panel)return;
+
+      panel.style.display='none';
+
+      let grid=document.querySelector('.king-hub .hub-grid');
+      if(!grid) grid=document.querySelector('.hub-grid');
+      if(grid && !document.getElementById('laborAppLauncher')){
+        const card=document.createElement('button');
+        card.id='laborAppLauncher';
+        card.type='button';
+        card.className='hub-card labor-app-launcher';
+        card.innerHTML=
+          '<div class="hub-top">'+
+            '<div class="hub-icon">👷</div>'+
+            '<div class="hub-title">労務費</div>'+
+          '</div>'+
+          '<div class="hub-open">開く ›</div>';
+        card.addEventListener('click',openLaborApp);
+        grid.appendChild(card);
+      }
+
+      if(!document.getElementById('laborAppScreen')){
+        const screen=document.createElement('section');
+        screen.id='laborAppScreen';
+        screen.innerHTML=
+          '<div class="labor-app-topbar">'+
+            '<button type="button" class="labor-app-back" id="laborAppBack">← KINGへ戻る</button>'+
+            '<div class="labor-app-title">👷 労務費・給与台帳</div>'+
+          '</div>'+
+          '<div class="labor-app-body" id="laborAppBody"></div>';
+        document.body.appendChild(screen);
+        document.getElementById('laborAppBack').addEventListener('click',closeLaborApp);
+      }
+    }
+
+    function openLaborApp(){
+      const panel=document.getElementById('laborKingPanel');
+      const body=document.getElementById('laborAppBody');
+      const screen=document.getElementById('laborAppScreen');
+      if(!panel||!body||!screen)return;
+      body.appendChild(panel);
+      panel.style.display='block';
+      screen.classList.add('open');
+      document.body.classList.add('labor-app-open');
+      window.renderLaborKing();
+      screen.scrollTop=0;
+    }
+
+    function closeLaborApp(){
+      const panel=document.getElementById('laborKingPanel');
+      const screen=document.getElementById('laborAppScreen');
+      if(screen)screen.classList.remove('open');
+      document.body.classList.remove('labor-app-open');
+      if(panel)panel.style.display='none';
+    }
+
+    function startLaborApp(){
+      activate();
+      setTimeout(installLaborAppLauncher,100);
+      setTimeout(installLaborAppLauncher,800);
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startLaborApp);
+    else startLaborApp();
+  })();
+  <\/script>`;
+
+  fetch('king.html?laborDev=' + Date.now(), {cache:'no-store'})
+    .then(function(r){
+      if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');
+      return r.text();
+    })
+    .then(function(source){
+      let patched=source;
+
+      const DIRECT_CSS = `
+/* ===== 賃金台帳 中身最終版 ===== */
+.wage-summary{
+  display:grid!important;
+  grid-template-columns:repeat(4,1fr)!important;
+  gap:12px!important;
+  margin-bottom:16px!important;
+}
+.wage-summary>div{
+  background:#fff!important;
+  border:1px solid #dfe6ef!important;
+  border-radius:16px!important;
+  padding:14px!important;
+}
+.wage-summary small{display:block!important;color:#64748b!important;font-weight:850!important}
+.wage-summary b{display:block!important;margin-top:5px!important;font-size:25px!important;color:#102043!important}
+.wage-section{
+  display:block!important;
+  background:#fff!important;
+  border:1px solid #e2e8f0!important;
+  border-radius:16px!important;
+  padding:14px!important;
+  margin-bottom:14px!important;
+}
+.wage-section h3{margin:0 0 6px!important;color:#0b5cab!important;font-size:19px!important}
+.wage-note{margin:0 0 12px!important;color:#64748b!important;font-size:12px!important;font-weight:750!important}
+.wage-event-list{display:grid!important;gap:9px!important}
+.wage-event-card{
+  border:1px solid #dbe3ec!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+.wage-event-toggle{
+  width:100%!important;
+  border:0!important;
+  background:#fff!important;
+  padding:14px!important;
+  display:grid!important;
+  grid-template-columns:100px minmax(0,1fr) auto auto!important;
+  gap:10px!important;
+  align-items:center!important;
+  text-align:left!important;
+  font-family:inherit!important;
+  color:#102043!important;
+}
+.wage-event-date{color:#0b5cab!important;font-weight:950!important;white-space:nowrap!important}
+.wage-event-name{font-weight:950!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.wage-event-total{font-weight:950!important;color:#8a6400!important;white-space:nowrap!important}
+.wage-event-arrow{font-size:16px!important;transition:transform .2s!important}
+.wage-event-card.open .wage-event-arrow{transform:rotate(180deg)!important}
+.wage-event-detail{display:none!important;border-top:1px solid #e8edf3!important;background:#fbfdff!important;padding:10px 12px!important}
+.wage-event-card.open .wage-event-detail{display:block!important}
+.wage-event-place{font-size:12px!important;color:#64748b!important;font-weight:800!important;margin-bottom:7px!important}
+.wage-staff-row{
+  display:grid!important;
+  grid-template-columns:1fr auto!important;
+  gap:12px!important;
+  padding:10px 4px!important;
+  border-bottom:1px solid #edf1f5!important;
+}
+.wage-staff-row:last-child{border-bottom:0!important}
+.wage-staff-row span,.wage-staff-row b{color:#102043!important}
+.wage-table-wrap{overflow-x:auto!important}
+.wage-table{width:100%!important;border-collapse:collapse!important;min-width:420px!important}
+.wage-table th,.wage-table td{padding:10px 8px!important;border-bottom:1px solid #edf1f5!important;text-align:left!important;color:#102043!important}
+.wage-table th{background:#f5f8fc!important;color:#475569!important}
+.wage-table .num{text-align:right!important}
+.wage-paid{text-align:center!important;color:#16803c!important;font-weight:950!important}
+.wage-empty{text-align:center!important;color:#64748b!important;padding:12px!important}
+@media(max-width:650px){
+  .wage-summary{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .wage-summary b{font-size:21px!important}
+  .wage-event-toggle{grid-template-columns:84px minmax(0,1fr) auto!important}
+  .wage-event-total{grid-column:2!important}
+  .wage-event-arrow{grid-column:3!important;grid-row:1 / span 2!important}
+}
+
+/* ===== 全画面表示修正版 ===== */
+#wageLedgerScreen{
+  display:none!important;
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  z-index:2147483647!important;
+  background:#eef6ff!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  opacity:1!important;
+  transform:none!important;
+}
+#wageLedgerScreen.open{
+  display:block!important;
+}
+#wageLedgerScreen,
+#wageLedgerScreen *{
+  box-sizing:border-box!important;
+}
+.wage-ledger-topbar{
+  position:sticky!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  width:100%!important;
+  min-height:68px!important;
+  z-index:10!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+  padding:12px 16px!important;
+  background:#ffffff!important;
+  border-bottom:1px solid #dfe7ef!important;
+  box-shadow:0 4px 14px rgba(20,40,70,.10)!important;
+}
+.wage-ledger-back{
+  flex:0 0 auto!important;
+  border:0!important;
+  border-radius:12px!important;
+  background:#17324d!important;
+  color:#fff!important;
+  padding:12px 16px!important;
+  font-size:15px!important;
+  font-weight:950!important;
+  line-height:1.3!important;
+}
+.wage-ledger-title{
+  flex:1!important;
+  color:#17324d!important;
+  font-size:22px!important;
+  font-weight:950!important;
+  line-height:1.3!important;
+}
+.wage-ledger-body{
+  width:100%!important;
+  max-width:1180px!important;
+  margin:0 auto!important;
+  padding:18px 16px 60px!important;
+  background:#eef6ff!important;
+}
+body.wage-ledger-open{
+  overflow:hidden!important;
+}
+body.wage-ledger-open > *:not(#wageLedgerScreen){
+  visibility:hidden!important;
+}
+body.wage-ledger-open #wageLedgerScreen,
+body.wage-ledger-open #wageLedgerScreen *{
+  visibility:visible!important;
+}
+#wageLedgerScreen #laborKingPanel{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:18px!important;
+  border:2px solid #d8ad2f!important;
+  border-radius:22px!important;
+  background:#fffaf0!important;
+  box-shadow:0 10px 28px rgba(30,45,70,.10)!important;
+  color:#102043!important;
+}
+#wageLedgerScreen #laborKingPanel,
+#wageLedgerScreen #laborKingPanel *{
+  color:#102043!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+#wageLedgerScreen #laborKingPanel .panel-head{
+  display:none!important;
+}
+#wageLedgerScreen .labor-section{
+  display:block!important;
+  width:100%!important;
+  background:#fff!important;
+  border:1px solid #e3e8ef!important;
+  border-radius:16px!important;
+  padding:14px!important;
+  margin-bottom:14px!important;
+  color:#102043!important;
+}
+#wageLedgerScreen .labor-section h3{
+  color:#0b5cab!important;
+}
+#wageLedgerScreen .labor-event-toggle{
+  width:100%!important;
+  background:#fff!important;
+  color:#102043!important;
+}
+#wageLedgerScreen .labor-event-detail{
+  background:#fbfdff!important;
+}
+@media(max-width:600px){
+  .wage-ledger-body{padding:12px 10px 40px!important}
+  .wage-ledger-title{font-size:18px!important}
+  .wage-ledger-back{padding:10px 12px!important;font-size:14px!important}
+  #wageLedgerScreen #laborKingPanel{padding:12px!important}
+}
+
+      /* ===== 賃金台帳カード：HTMLへ直接追加 ===== */
+      #wageLedgerLauncher{
+        border:2px solid #e0b12c!important;
+        background:linear-gradient(135deg,#fffdf4,#fff0b8)!important;
+        cursor:pointer!important;
+      }
+      #wageLedgerLauncher .hub-icon{
+        background:linear-gradient(145deg,#17324d,#0e2235)!important;
+        color:#ffd76a!important;
+      }
+      #wageLedgerScreen{
+        display:none;position:fixed;inset:0;z-index:9999;
+        background:linear-gradient(180deg,#eef7ff,#fffaf0);overflow-y:auto;
+      }
+      #wageLedgerScreen.open{display:block!important}
+      .wage-ledger-topbar{
+        position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+        padding:12px 16px;background:rgba(255,255,255,.97);
+        border-bottom:1px solid #e5e7eb;box-shadow:0 4px 14px rgba(20,40,70,.08);
+      }
+      .wage-ledger-back{
+        border:0;border-radius:12px;background:#17324d;color:#fff;
+        padding:11px 15px;font-size:15px;font-weight:950;
+      }
+      .wage-ledger-title{font-size:21px;font-weight:950;color:#17324d}
+      .wage-ledger-body{max-width:1180px;margin:0 auto;padding:16px 16px 50px}
+      body.wage-ledger-open{overflow:hidden}
+      body:not(.wage-ledger-open) #laborKingPanel{display:none!important}
+      #wageLedgerScreen #laborKingPanel{
+        display:block!important;margin:0!important;
+        border:2px solid #d8ad2f!important;background:#fffaf0!important;
+        border-radius:24px!important;padding:18px!important;
+      }
+      #wageLedgerScreen #laborKingPanel .panel-head{display:none!important}
+      `;
+
+      const wageCard = `
+      <button type="button" class="hub-card" id="wageLedgerLauncher" onclick="openWageLedgerDirect()">
+        <div>
+          <div class="hub-top">
+            <div class="hub-icon">💴</div>
+            <div class="hub-title">賃金台帳</div>
+          </div>
+          <div class="hub-desc">イベント別・スタッフ別の労務費を確認</div>
+        </div>
+        <div class="hub-open">開く ›</div>
+      </button>`;
+
+      const wageScreen = `
+      <section id="wageLedgerScreen">
+        <div class="wage-ledger-topbar">
+          <button type="button" class="wage-ledger-back" onclick="closeWageLedgerDirect()">← KINGへ戻る</button>
+          <div class="wage-ledger-title">💴 賃金台帳</div>
+        </div>
+        <div class="wage-ledger-body" id="wageLedgerBody"></div>
+      </section>`;
+
+      const DIRECT_JS = `
+      <script>
+
+      function wageYen(n){
+        return '¥'+Number(n||0).toLocaleString('ja-JP');
+      }
+      function wageEsc(v){
+        return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+          return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+        });
+      }
+      function wageAmount(p){
+        const values=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate];
+        for(const v of values){
+          const n=Number(String(v==null?'':v).replace(/,/g,''));
+          if(Number.isFinite(n))return n;
+        }
+        return 0;
+      }
+      function wageStaff(p){
+        return p.staffName||p.staff||p.name||p.workerName||'スタッフ未設定';
+      }
+      function wageDate(v){
+        if(!v)return '';
+        const s=String(v).trim();
+        const m=s.match(/(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})/);
+        if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+        const d=new Date(s);
+        if(!Number.isNaN(d.getTime())){
+          return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        }
+        return '';
+      }
+      function wageDisplayDate(v){
+        const n=wageDate(v);
+        if(!n)return '日付未設定';
+        const p=n.split('-');
+        return p[0]+'/'+Number(p[1])+'/'+Number(p[2]);
+      }
+      function wageGetData(){
+        const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
+        for(const key of keys){
+          try{
+            const raw=localStorage.getItem(key);
+            if(!raw)continue;
+            const parsed=JSON.parse(raw);
+            if(Array.isArray(parsed))return {key:key,events:parsed};
+            if(parsed && Array.isArray(parsed.events))return {key:key,events:parsed.events};
+          }catch(e){}
+        }
+        return {key:'fg_labor_db_v1',events:[]};
+      }
+
+      window.renderWageLedgerFinal=function(){
+        const box=document.getElementById('laborKingBox');
+        if(!box)return;
+
+        const source=wageGetData();
+        const events=source.events||[];
+        if(!events.length){
+          box.innerHTML='<div class="labor-empty">労務費データはまだありません。<br><small>メインアプリで保存後に更新してください。</small></div>';
+          return;
+        }
+
+        const grouped={};
+        const people={};
+        const months={};
+        const unpaid=[];
+        let total=0;
+        let payCount=0;
+
+        events.forEach(function(ev,index){
+          const name=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
+          const date=wageDate(ev.date||ev.eventDate||ev.startDate||'');
+          const place=ev.place||ev.location||ev.venue||'';
+          const month=date ? date.slice(0,7) : '未設定';
+          const payments=Array.isArray(ev.payments)?ev.payments:
+                         Array.isArray(ev.staffPayments)?ev.staffPayments:
+                         Array.isArray(ev.labor)?ev.labor:[];
+
+          const groupKey=name+'__'+date;
+          if(!grouped[groupKey]){
+            grouped[groupKey]={name:name,date:date,place:place,staff:{},total:0};
+          }
+          const g=grouped[groupKey];
+
+          payments.forEach(function(p){
+            const amount=wageAmount(p);
+            const staff=wageStaff(p);
+            total+=amount;
+            payCount++;
+            g.total+=amount;
+            g.staff[staff]=(g.staff[staff]||0)+amount;
+            people[staff]=(people[staff]||0)+amount;
+            months[month]=(months[month]||0)+amount;
+
+            if(p.paid===false || p.paymentStatus==='unpaid' || p.status==='未払い'){
+              unpaid.push({event:name,date:date,staff:staff,amount:amount});
+            }
+          });
+        });
+
+        const groupedList=Object.values(grouped).sort(function(a,b){
+          const dc=String(b.date||'0000-00-00').localeCompare(String(a.date||'0000-00-00'));
+          if(dc!==0)return dc;
+          return String(a.name).localeCompare(String(b.name),'ja');
+        });
+
+        const eventCards=groupedList.map(function(ev,index){
+          const staffRows=Object.entries(ev.staff)
+            .sort(function(a,b){return b[1]-a[1]})
+            .map(function(r){
+              return '<div class="wage-staff-row">'+
+                       '<span>'+wageEsc(r[0])+'</span>'+
+                       '<b>'+wageYen(r[1])+'</b>'+
+                     '</div>';
+            }).join('');
+
+          return '<div class="wage-event-card">'+
+                   '<button type="button" class="wage-event-toggle" aria-expanded="false">'+
+                     '<span class="wage-event-date">'+wageDisplayDate(ev.date)+'</span>'+
+                     '<span class="wage-event-name">'+wageEsc(ev.name)+'</span>'+
+                     '<span class="wage-event-total">'+wageYen(ev.total)+'</span>'+
+                     '<span class="wage-event-arrow">▼</span>'+
+                   '</button>'+
+                   '<div class="wage-event-detail">'+
+                     (ev.place?'<div class="wage-event-place">場所：'+wageEsc(ev.place)+'</div>':'')+
+                     (staffRows||'<div class="wage-empty">スタッフ労務費の登録がありません</div>')+
+                   '</div>'+
+                 '</div>';
+        }).join('');
+
+        const peopleRows=Object.entries(people)
+          .sort(function(a,b){return b[1]-a[1]})
+          .map(function(r){
+            return '<tr><td>'+wageEsc(r[0])+'</td><td class="num">'+wageYen(r[1])+'</td></tr>';
+          }).join('');
+
+        const monthRows=Object.entries(months)
+          .sort(function(a,b){return String(b[0]).localeCompare(String(a[0]))})
+          .map(function(r){
+            return '<tr><td>'+wageEsc(r[0])+'</td><td class="num">'+wageYen(r[1])+'</td></tr>';
+          }).join('');
+
+        const unpaidRows=unpaid.length
+          ? unpaid.sort(function(a,b){return String(b.date).localeCompare(String(a.date));})
+            .map(function(r){
+              return '<tr><td>'+wageDisplayDate(r.date)+'</td><td>'+wageEsc(r.event)+'</td><td>'+wageEsc(r.staff)+'</td><td class="num">'+wageYen(r.amount)+'</td></tr>';
+            }).join('')
+          : '<tr><td colspan="4" class="wage-paid">未払いはありません</td></tr>';
+
+        box.innerHTML=
+          '<div class="wage-summary">'+
+            '<div><small>総労務費</small><b>'+wageYen(total)+'</b></div>'+
+            '<div><small>イベント数</small><b>'+groupedList.length+'件</b></div>'+
+            '<div><small>支払件数</small><b>'+payCount+'件</b></div>'+
+            '<div><small>未払い</small><b>'+unpaid.length+'件</b></div>'+
+          '</div>'+
+          '<section class="wage-section">'+
+            '<h3>🎪 イベント別労務費</h3>'+
+            '<p class="wage-note">日付の新しい順です。イベント名をタップするとスタッフ別の内容が開きます。</p>'+
+            '<div class="wage-event-list">'+eventCards+'</div>'+
+          '</section>'+
+          '<section class="wage-section">'+
+            '<h3>👤 個人別給与台帳</h3>'+
+            '<div class="wage-table-wrap"><table class="wage-table"><thead><tr><th>スタッフ名</th><th class="num">合計</th></tr></thead><tbody>'+peopleRows+'</tbody></table></div>'+
+          '</section>'+
+          '<section class="wage-section">'+
+            '<h3>📅 月別集計</h3>'+
+            '<div class="wage-table-wrap"><table class="wage-table"><thead><tr><th>年月</th><th class="num">合計</th></tr></thead><tbody>'+monthRows+'</tbody></table></div>'+
+          '</section>'+
+          '<section class="wage-section">'+
+            '<h3>⚠️ 未払い一覧</h3>'+
+            '<div class="wage-table-wrap"><table class="wage-table"><thead><tr><th>日付</th><th>イベント</th><th>スタッフ</th><th class="num">金額</th></tr></thead><tbody>'+unpaidRows+'</tbody></table></div>'+
+          '</section>';
+
+        box.querySelectorAll('.wage-event-toggle').forEach(function(btn){
+          btn.addEventListener('click',function(){
+            const card=btn.closest('.wage-event-card');
+            const open=card.classList.toggle('open');
+            btn.setAttribute('aria-expanded',open?'true':'false');
+          });
+        });
+      };
+      function openWageLedgerDirect(){
+        const panel=document.getElementById('laborKingPanel');
+        const body=document.getElementById('wageLedgerBody');
+        const screen=document.getElementById('wageLedgerScreen');
+        if(!panel||!body||!screen)return;
+        body.appendChild(panel);
+        if(window.renderLaborKing)window.renderLaborKing();
+        if(window.renderWageLedgerFinal)window.renderWageLedgerFinal();
+        document.body.classList.add('wage-ledger-open');
+        screen.classList.add('open');
+        panel.style.display='block';
+        screen.scrollTop=0;
+        setTimeout(function(){screen.scrollTop=0;},50);
+      }
+      function closeWageLedgerDirect(){
+        const screen=document.getElementById('wageLedgerScreen');
+        if(screen)screen.classList.remove('open');
+        document.body.classList.remove('wage-ledger-open');
+        window.scrollTo(0,0);
+      }
+      <\/script>`;
+
+      patched=patched.replace('</style>', DIRECT_CSS + EXTRA_CSS + '</style>');
+
+      /* 担当者アプリのカード直後へ、賃金台帳カードをHTMLとして直接挿入 */
+      const managerCardPattern=/(<a\b[^>]*class="[^"]*hub-card[^"]*"[^>]*>[\s\S]*?<div class="hub-title">\s*担当者アプリ\s*<\/div>[\s\S]*?<\/a>)/;
+      if(managerCardPattern.test(patched)){
+        patched=patched.replace(managerCardPattern,'$1'+wageCard);
+      }else{
+        /* aタグ以外でも見つけられる予備処理 */
+        const managerButtonPattern=/(<(?:a|button)\b[^>]*class="[^"]*hub-card[^"]*"[^>]*>[\s\S]*?担当者アプリ[\s\S]*?<\/(?:a|button)>)/;
+        patched=patched.replace(managerButtonPattern,'$1'+wageCard);
+      }
+
+      patched=patched.replace('</body>', wageScreen + EXTRA_JS + DIRECT_JS + '</body>');
+      document.open();
+      document.write(patched);
+      document.close();
+    })
+    .catch(function(err){
+      document.getElementById('devLoader').innerHTML=
+        '<div class="loading-card"><h1>⚠️ 読み込み失敗</h1>'+
+        '<p>このファイルを <b>king.html と同じ場所</b> にアップロードしてください。</p>'+
+        '<div class="error">'+String(err.message||err)+'</div></div>';
+    });
+})();
+</script>
+</body>
+</html>
