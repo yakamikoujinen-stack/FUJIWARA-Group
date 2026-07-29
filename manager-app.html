@@ -1,61 +1,216 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17324d">
-<title>担当者専用アプリ｜統一版・主力ネタ一覧追加</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>担当者専用アプリ｜整理版</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--sky:#eaf4ff;--gold:#f4b942;--green:#2e8b57;--text:#1c2733;--muted:#66788a;--line:#dbe5ee;--white:#fff;--shadow:0 10px 28px rgba(18,46,72,.12)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100vh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#f6fbff,#eef6fb)}
-button,input{font:inherit}.app{max-width:1000px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
-header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-radius:0 0 24px 24px;padding:22px 18px 20px;box-shadow:var(--shadow);margin:0 -14px 18px}.topline{display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:clamp(23px,5vw,34px);margin:0;font-weight:900}.subtitle{margin:8px 0 0;color:#dcecff}.back{border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:10px 13px;font-weight:800}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#f6fbff,#eef6fb)}
+button,input{font:inherit}
+.app{max-width:1000px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
+header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-radius:0 0 24px 24px;padding:22px 18px 20px;box-shadow:var(--shadow);margin:0 -14px 18px}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:clamp(23px,5vw,34px);margin:0;font-weight:900}
+.subtitle{margin:8px 0 0;color:#dcecff}
+.back{border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:10px 13px;font-weight:800}
 .notice{background:#fff8df;border:1px solid #f6dc8c;border-radius:16px;padding:13px 15px;margin-bottom:15px;font-weight:700;color:#6d5411}
-.main-app-card{background:linear-gradient(135deg,#fffdf5,#fff6d7);border:2px solid #e1b84f;border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}.main-app-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--gold)}
-.main-app-icon{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;font-size:39px;background:linear-gradient(135deg,#17324d,#2f6fa7);color:#ffd76a;flex:0 0 auto}.main-app-info{flex:1}.main-app-title{margin:0;font-size:25px;font-weight:900}.main-app-text{margin:6px 0 12px;color:#5a4b23;line-height:1.6}.main-app-btn{border:0;border-radius:14px;padding:13px 18px;font-weight:900;background:linear-gradient(135deg,#d5a62c,#f3c95e);color:#2d2100;cursor:pointer;min-height:48px}
-.grid{display:grid;grid-template-columns:1fr;gap:15px}.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden}.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--blue)}.card:nth-child(2):before{background:var(--green)}.card:nth-child(3):before{background:var(--gold)}.card:nth-child(4):before{background:#d55a32}
-.card-head{display:flex;align-items:center;gap:13px;margin-bottom:10px}.icon{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:31px;background:var(--sky);flex:0 0 auto}.title{margin:0;font-size:23px;font-weight:900}.owner{font-size:16px;color:var(--muted);margin-top:4px}.owner strong{color:var(--text);font-size:18px}.desc{margin:10px 0 15px;line-height:1.7;color:#425568}.actions{display:flex;gap:10px;flex-wrap:wrap}.open-btn,.edit-btn,.save-btn,.cancel-btn{border:0;border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer;min-height:48px}.open-btn{background:var(--navy);color:#fff;flex:1}.edit-btn{background:#eef3f7;color:#294055}.locked-btn{background:#e8e8e8;color:#777;cursor:not-allowed;flex:1}.leader-badge{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:999px;background:#fff0c7;color:#765300;font-size:12px;font-weight:900}
-.settings{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.settings summary{cursor:pointer;font-weight:900;font-size:18px}.setting-row{display:grid;gap:10px;padding:14px 0;border-bottom:1px solid #edf1f5}label{font-weight:800;font-size:14px;color:#425568}input{width:100%;border:1px solid #cfdbe6;border-radius:12px;padding:12px 13px;background:#fff;font-size:17px}.settings-actions{display:flex;gap:10px;margin-top:14px}.save-btn{background:var(--green);color:#fff;flex:1}.cancel-btn{background:#eef3f7;color:#33485c}footer{text-align:center;color:#7b8d9e;font-size:12px;margin-top:20px}
+.main-app-card{background:linear-gradient(135deg,#fffdf5,#fff6d7);border:2px solid #e1b84f;border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}
+.main-app-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--gold)}
+.main-app-icon{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;font-size:39px;background:linear-gradient(135deg,#17324d,#2f6fa7);color:#ffd76a;flex:0 0 auto}
+.main-app-info{flex:1}
+.main-app-title{margin:0;font-size:25px;font-weight:900}
+.main-app-text{margin:6px 0 12px;color:#5a4b23;line-height:1.6}
+.main-app-btn{border:0;border-radius:14px;padding:13px 18px;font-weight:900;background:linear-gradient(135deg,#d5a62c,#f3c95e);color:#2d2100;cursor:pointer;min-height:48px}
+.grid{display:grid;grid-template-columns:1fr;gap:15px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--blue)}
+.card:nth-child(2):before{background:var(--gold)}
+.card:nth-child(3):before{background:#d55a32}
+.card:nth-child(4):before{background:var(--green)}
+.card-head{display:flex;align-items:center;gap:13px;margin-bottom:10px}
+.icon{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:31px;background:var(--sky);flex:0 0 auto}
+.title{margin:0;font-size:23px;font-weight:900}
+.owner{font-size:16px;color:var(--muted);margin-top:4px}
+.owner strong{color:var(--text);font-size:18px}
+.desc{margin:10px 0 15px;line-height:1.7;color:#425568}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.open-btn,.edit-btn,.save-btn,.cancel-btn{border:0;border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer;min-height:48px}
+.open-btn{background:var(--navy);color:#fff;flex:1}
+.edit-btn{background:#eef3f7;color:#294055}
+.locked-btn{border:0;border-radius:14px;padding:13px 16px;min-height:48px;background:#e8e8e8;color:#777;cursor:not-allowed;flex:1;font-weight:900}
+.leader-badge{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:999px;background:#fff0c7;color:#765300;font-size:12px;font-weight:900}
+.settings{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.settings summary{cursor:pointer;font-weight:900;font-size:18px}
+.setting-row{display:grid;gap:10px;padding:14px 0;border-bottom:1px solid #edf1f5}
+label{font-weight:800;font-size:14px;color:#425568}
+input{width:100%;border:1px solid #cfdbe6;border-radius:12px;padding:12px 13px;background:#fff;font-size:17px}
+.settings-actions{display:flex;gap:10px;margin-top:14px}
+.save-btn{background:var(--green);color:#fff;flex:1}
+.cancel-btn{background:#eef3f7;color:#33485c}
+footer{text-align:center;color:#7b8d9e;font-size:12px;margin-top:20px}
 @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}.card{display:flex;flex-direction:column}.desc{flex:1}.actions{flex-direction:column}}
-</style></head>
-<body><div class="app">
-<header><div class="topline"><div><h1>担当者専用アプリ</h1><p class="subtitle">担当業務をここから開きます</p></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="topline">
+    <div>
+      <h1>担当者専用アプリ</h1>
+      <p class="subtitle">担当業務をここから開きます</p>
+    </div>
+    <button class="back" onclick="goBack()">← 戻る</button>
+  </div>
+</header>
+
 <div class="notice">担当者名・各アプリのURLは、下の「担当者・リンク設定」からいつでも変更できます。</div>
-<section class="main-app-card"><div class="main-app-icon">🏠</div><div class="main-app-info"><h2 class="main-app-title">メインアプリ</h2><p class="main-app-text">イベント管理・カレンダー・売上・出勤など、メインアプリへ移動します。</p><button class="main-app-btn" onclick="location.href='index.html'">メインアプリを開く</button></div></section>
-<section class="main-app-card"><div class="main-app-icon">📊</div><div class="main-app-info"><h2 class="main-app-title">月別イベント・出店ネタ一覧表</h2><p class="main-app-text">メインアプリのイベントを月別に表示し、出店ネタを一覧で確認できます。</p><button class="main-app-btn" onclick="location.href='event-neta-matrix.html?role=manager&v=100'">月別ネタ一覧表を開く</button></div></section>
+
+<section class="main-app-card">
+  <div class="main-app-icon">🏠</div>
+  <div class="main-app-info">
+    <h2 class="main-app-title">メインアプリ</h2>
+    <p class="main-app-text">イベント管理・カレンダー・売上・出勤など、メインアプリへ移動します。</p>
+    <button class="main-app-btn" onclick="location.href='index.html'">メインアプリを開く</button>
+  </div>
+</section>
+
 <main class="grid" id="cards"></main>
-<details class="settings" id="settings"><summary>⚙️ 担当者・リンク設定</summary><div id="settingRows"></div><div class="settings-actions"><button class="cancel-btn" onclick="loadSettingsForm()">元に戻す</button><button class="save-btn" onclick="saveSettings()">設定を保存</button></div></details>
-<footer>FUJIWARA Group 担当者専用</footer></div>
+
+<details class="settings" id="settings">
+  <summary>⚙️ 担当者・リンク設定</summary>
+  <div id="settingRows"></div>
+  <div class="settings-actions">
+    <button class="cancel-btn" onclick="loadSettingsForm()">元に戻す</button>
+    <button class="save-btn" onclick="saveSettings()">設定を保存</button>
+  </div>
+</details>
+
+<footer>FUJIWARA Group 担当者専用</footer>
+</div>
+
 <script>
 const DEFAULTS=[
-{key:"inventory",icon:"📦",title:"在庫管理",owner:"担当者",desc:"ストッカー・冷蔵庫の保存場所、在庫数、持出し数を管理",url:"index.html?open=inventory"},
-{key:"purchases",icon:"📷",title:"仕入登録",owner:"担当者",desc:"レシート写真・店舗・金額・購入内容をイベント別に登録",url:"index.html?open=purchases"},
-{key:"neta",icon:"📋",title:"ネタ一覧表アプリ",owner:"文太",desc:"ネタ一覧・必要数量・買い出し・購入済みチェック",url:"neta-shopping-list.html"},
-{key:"mainNetaSales",icon:"📈",title:"主力ネタ一覧",owner:"担当者",desc:"イベント別の主力ネタ売上・販売数・単価・月別ランキング",url:"main-neta-sales.html"},
-{key:"vehicle",icon:"🚚",title:"車両管理アプリ",owner:"将",desc:"車両点検・車検・保険・洗車・修理記録",url:"vehicle-management.html"},
-{key:"prepare",icon:"📦",title:"準備アプリ",owner:"繁充",desc:"積込チェック・準備確認・シート記入・完了報告",url:"preparation-app.html"},
-{key:"lpg",icon:"🔥",title:"松笠商店（LPG）管理",owner:"繁充",desc:"20kg・10kg・8kgの仕入、返却、今回発注数量、在庫累計",url:"lpg-management.html"}];
+  {key:"inventory",icon:"📦",title:"在庫管理",owner:"担当者",desc:"ストッカー・冷蔵庫の保存場所、在庫数、持出し数を管理",url:"index.html?open=inventory"},
+  {key:"neta",icon:"📋",title:"ネタ一覧表アプリ",owner:"文太",desc:"ネタ一覧・必要数量・買い出し・購入済みチェック",url:"neta-shopping-list.html"},
+  {key:"mainNetaSales",icon:"📈",title:"主力ネタ一覧",owner:"リーダー",desc:"イベント別の主力ネタ売上・販売数・単価・使用資材・月別ランキング",url:"main-neta-sales.html",leaderOnly:true},
+  {key:"vehicle",icon:"🚚",title:"車両管理アプリ",owner:"将",desc:"車両点検・車検・保険・洗車・修理記録",url:"vehicle-management.html"},
+  {key:"prepare",icon:"📦",title:"準備アプリ",owner:"繁充",desc:"積込チェック・準備確認・シート記入・完了報告",url:"preparation-app.html"},
+  {key:"lpg",icon:"🔥",title:"松笠商店（LPG）管理",owner:"繁充",desc:"20kg・10kg・8kgの仕入、返却、今回発注数量、在庫累計",url:"lpg-management.html"}
+];
+
 function clone(v){return JSON.parse(JSON.stringify(v))}
-function getData(){try{const saved=JSON.parse(localStorage.getItem("fujiwara_manager_apps_v1"));if(Array.isArray(saved)){const out=clone(DEFAULTS);saved.forEach(s=>{const i=out.findIndex(x=>x.key===s.key);if(i>=0)out[i]={...out[i],...s}});localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(out));return out}}catch(e){}return clone(DEFAULTS)}
+
+function getData(){
+  try{
+    const saved=JSON.parse(localStorage.getItem("fujiwara_manager_apps_v1"));
+    if(Array.isArray(saved)){
+      const out=clone(DEFAULTS);
+      saved.forEach(s=>{
+        const i=out.findIndex(x=>x.key===s.key);
+        if(i>=0) out[i]={...out[i],...s};
+      });
+      // 今回外した項目は復活させず、現行のDEFAULTSだけ保存
+      localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(out));
+      return out;
+    }
+  }catch(e){}
+  return clone(DEFAULTS);
+}
+
 let data=getData();
-function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function esc(s=""){
+  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
 function renderCards(){
- document.getElementById("cards").innerHTML=data.map((x,i)=>{
-  const action=x.leaderOnly
-   ?`<button class="locked-btn" type="button" disabled>🔒 リーダー専用・操作不可</button>`
-   :`<button class="open-btn" onclick="openApp(${i})">アプリを開く</button><button class="edit-btn" onclick="editItem(${i})">担当者を変更</button>`;
-  const badge=x.leaderOnly?'<span class="leader-badge">担当者は閲覧・編集できません</span>':'';
-  return `<section class="card"><div class="card-head"><div class="icon">${x.icon}</div><div><h2 class="title">${esc(x.title)}</h2><div class="owner">担当：<strong>${esc(x.owner||"未設定")}</strong></div>${badge}</div></div><p class="desc">${esc(x.desc)}</p><div class="actions">${action}</div></section>`;
- }).join("");
+  document.getElementById("cards").innerHTML=data.map((x,i)=>{
+    const action=x.leaderOnly
+      ? `<button class="locked-btn" type="button" disabled>🔒 リーダー専用</button>`
+      : `<button class="open-btn" onclick="openApp(${i})">アプリを開く</button>
+         <button class="edit-btn" onclick="editItem(${i})">担当者を変更</button>`;
+    const badge=x.leaderOnly
+      ? '<span class="leader-badge">担当者は閲覧・編集できません</span>'
+      : '';
+    return `<section class="card">
+      <div class="card-head">
+        <div class="icon">${x.icon}</div>
+        <div>
+          <h2 class="title">${esc(x.title)}</h2>
+          <div class="owner">担当：<strong>${esc(x.owner||"未設定")}</strong></div>
+          ${badge}
+        </div>
+      </div>
+      <p class="desc">${esc(x.desc)}</p>
+      <div class="actions">${action}</div>
+    </section>`;
+  }).join("");
 }
+
 function renderSettings(){
- document.getElementById("settingRows").innerHTML=data.map((x,i)=>{
-  if(x.leaderOnly)return `<div class="setting-row"><label>${esc(x.title)}</label><div class="leader-badge">リーダー専用のため担当者側では変更できません</div><input id="owner-${i}" type="hidden" value="${esc(x.owner)}"><input id="url-${i}" type="hidden" value="${esc(x.url)}"></div>`;
-  return `<div class="setting-row"><label>${esc(x.title)}の担当者名</label><input id="owner-${i}" value="${esc(x.owner)}"><label>${esc(x.title)}のURL／ファイル名</label><input id="url-${i}" value="${esc(x.url)}"></div>`;
- }).join("");
+  document.getElementById("settingRows").innerHTML=data.map((x,i)=>{
+    if(x.leaderOnly){
+      return `<div class="setting-row">
+        <label>${esc(x.title)}</label>
+        <div class="leader-badge">リーダー専用のため担当者側では変更できません</div>
+        <input id="owner-${i}" type="hidden" value="${esc(x.owner)}">
+        <input id="url-${i}" type="hidden" value="${esc(x.url)}">
+      </div>`;
+    }
+    return `<div class="setting-row">
+      <label>${esc(x.title)}の担当者名</label>
+      <input id="owner-${i}" value="${esc(x.owner)}">
+      <label>${esc(x.title)}のURL／ファイル名</label>
+      <input id="url-${i}" value="${esc(x.url)}">
+    </div>`;
+  }).join("");
 }
-function saveSettings(){data=data.map((x,i)=>({...x,owner:document.getElementById(`owner-${i}`).value.trim()||"未設定",url:document.getElementById(`url-${i}`).value.trim()}));localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(data));renderCards();alert("設定を保存しました")}
-function loadSettingsForm(){data=getData();renderCards();renderSettings()}
-function editItem(i){document.getElementById("settings").open=true;setTimeout(()=>document.getElementById(`owner-${i}`).focus(),80)}
-function openApp(i){if(data[i]?.leaderOnly)return alert("発注集計アプリはリーダー専用です");const u=(data[i].url||"").trim();if(!u)return alert("URLを設定してください");location.href=u}
-function goBack(){if(history.length>1)history.back();else location.href="index.html"}
-renderCards();renderSettings();
-</script></body></html>
+
+function saveSettings(){
+  data=data.map((x,i)=>({
+    ...x,
+    owner:document.getElementById(`owner-${i}`).value.trim()||"未設定",
+    url:document.getElementById(`url-${i}`).value.trim()
+  }));
+  localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(data));
+  renderCards();
+  alert("設定を保存しました");
+}
+
+function loadSettingsForm(){
+  data=getData();
+  renderCards();
+  renderSettings();
+}
+
+function editItem(i){
+  document.getElementById("settings").open=true;
+  setTimeout(()=>document.getElementById(`owner-${i}`).focus(),80);
+}
+
+function openApp(i){
+  if(data[i]?.leaderOnly){
+    alert("主力ネタ一覧はリーダー専用です");
+    return;
+  }
+  const u=(data[i].url||"").trim();
+  if(!u){
+    alert("URLを設定してください");
+    return;
+  }
+  location.href=u;
+}
+
+function goBack(){
+  if(history.length>1) history.back();
+  else location.href="index.html";
+}
+
+renderCards();
+renderSettings();
+</script>
+</body>
+</html>
