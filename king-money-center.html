@@ -15,18 +15,18 @@ header{border-radius:24px;padding:20px 18px;color:#fff;background:linear-gradien
 h1{margin:0;font-size:clamp(25px,5vw,38px)}.sub{margin:7px 0 0;color:#dcecff;font-weight:750}
 .back{border:0;border-radius:13px;padding:11px 14px;background:rgba(255,255,255,.16);color:#fff;font-weight:900;min-height:46px}
 .notice{background:#fff8df;border:1px solid #f1d77d;border-radius:16px;padding:13px 15px;margin-bottom:16px;color:#6d5411;font-weight:800}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .card{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:22px;padding:19px;box-shadow:var(--shadow);text-decoration:none;color:var(--text);display:flex;flex-direction:column;min-height:205px}
 .card.primary{border:2px solid #e1b84f;background:linear-gradient(135deg,#fffdf5,#fff5cf)}
-.card.analysis{border:2px solid #74a9d8;background:linear-gradient(135deg,#f6fbff,#eaf4ff)}
+.card.analysis{border:2px solid #74a9d8;background:linear-gradient(135deg,#f6fbff,#eaf4ff)}.card.wage{border:2px solid #e0b12c;background:linear-gradient(135deg,#fffdf4,#fff0b8)}
 .icon{width:66px;height:66px;border-radius:19px;display:grid;place-items:center;font-size:37px;background:#eef6ff}
-.primary .icon{background:#17324d;color:#ffd76a}
+.primary .icon,.wage .icon{background:#17324d;color:#ffd76a}
 h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;font-weight:750;flex:1}
 .open{margin-top:16px;border-radius:14px;padding:13px;text-align:center;color:#fff;background:var(--navy);font-weight:950}
 .analysis .open{background:linear-gradient(90deg,#1489e8,#0a73cf)}
 .section-title{margin:24px 0 12px;font-size:20px;color:#123b66}
 .note{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px;line-height:1.7;color:#425568;font-weight:750}
-@media(max-width:650px){.grid{grid-template-columns:1fr}.card{min-height:175px}}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.grid{grid-template-columns:1fr}.card{min-height:175px}}
 </style>
 </head>
 <body>
@@ -41,14 +41,21 @@ h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;
   </div>
 </header>
 
-<div class="notice">主力ネタ一覧は担当者アプリから外し、KINGのお金・労務管理へ移動しました。</div>
+<div class="notice">お金管理・賃金台帳・主力ネタ一覧を、KINGのお金・労務管理にまとめました。</div>
 
 <main class="grid">
   <a class="card primary" href="king-money.html">
     <div class="icon">💰</div>
-    <h2>お金・労務管理</h2>
-    <p>労務費、個人別給与台帳、月別集計など、これまでのお金・労務画面を開きます。</p>
-    <div class="open">お金・労務を開く ›</div>
+    <h2>お金管理</h2>
+    <p>イベントごとの売上、経費、利益、預金、手元残、未精算を確認します。</p>
+    <div class="open">お金管理を開く ›</div>
+  </a>
+
+  <a class="card wage" href="king-wage-ledger.html">
+    <div class="icon">💴</div>
+    <h2>賃金台帳</h2>
+    <p>個人別、月別、イベント別の労務費と、未払い・支払済を確認します。</p>
+    <div class="open">賃金台帳を開く ›</div>
   </a>
 
   <a class="card analysis" href="main-neta-sales.html">
@@ -62,7 +69,7 @@ h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;
 <h2 class="section-title">現在の役割分け</h2>
 <div class="note">
   <b>担当者アプリ：</b>準備・在庫・車両・ネタ一覧などの現場業務<br>
-  <b>KINGアプリ：</b>売上・労務費・給与・主力ネタ分析などの経営管理
+  <b>KINGアプリ：</b>お金管理・賃金台帳・主力ネタ分析などの経営管理
 </div>
 </div>
 
