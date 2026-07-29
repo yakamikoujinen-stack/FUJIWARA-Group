@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.19 KING連日イベント連携修正版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.20 KING連日イベント連携修正版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -2227,7 +2227,9 @@ function renderEventList(dateFilter) {
     var displayDs=dateFilter||ev.date;
     var displayStaff=getEventStaffForDate(ev,displayDs);
     var staffStr=displayStaff.length?displayStaff.join('・'):'未設定';
-    var memoHtml=ev.memo?'<span class="ev-zone" style="background:rgba(119,119,160,.1);color:var(--text2);border-color:var(--border)">📝 '+ev.memo+'</span>':'';
+    var memoText=String(ev.memo||'').trim();
+    var isAutoDayStaffMemo=/^(?:📅|📝)?\s*\d{1,2}\/\d{1,2}\s*[→⇒]/.test(memoText) || /(?:^|\s)\d{1,2}\/\d{1,2}\s*[→⇒].*\d{1,2}\/\d{1,2}\s*[→⇒]/.test(memoText);
+    var memoHtml=(memoText && !isAutoDayStaffMemo)?'<span class="ev-zone" style="background:rgba(119,119,160,.1);color:var(--text2);border-color:var(--border)">📝 '+memoText+'</span>':'';
 
     var actionsHtml='';
     if(canEdit){
