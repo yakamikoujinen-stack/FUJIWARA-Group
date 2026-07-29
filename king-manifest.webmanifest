@@ -1,0 +1,16 @@
+{
+  "name": "FUJIWARA KING SYSTEM",
+  "short_name": "KING",
+  "start_url": "king-app.html",
+  "display": "standalone",
+  "background_color": "#081a33",
+  "theme_color": "#081a33",
+  "icons": [
+    {
+      "src": "king-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
