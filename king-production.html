@@ -1,607 +1,266 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>FUJIWARA KING SYSTEM｜連日イベント集計修正版</title>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>FUJIWARA KING SYSTEM｜整理版</title>
 <style>
-html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
-#devLoader{max-width:760px;margin:40px auto;padding:20px}
-.loading-card{background:#fff;border-radius:20px;padding:24px;box-shadow:0 12px 30px rgba(30,60,100,.15)}
-.loading-card h1{font-size:24px;margin:0 0 12px;color:#17324d}
-.loading-card p{line-height:1.7;color:#475569}
-.error{margin-top:12px;padding:12px;border-radius:12px;background:#fff1f2;color:#991b1b;font-weight:800}
+:root{--gold:#d6a21c;--blue:#1489e8;--green:#42ad2e;--pink:#f65f88;--purple:#8b5cf6;--text:#102043;--sub:#647188;--line:#e8edf5;--card:rgba(255,255,255,.92);--shadow:0 12px 30px rgba(45,68,100,.12)}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--text);min-height:100vh;background:radial-gradient(circle at 10% 0%,rgba(123,213,255,.55),transparent 28%),radial-gradient(circle at 95% 0%,rgba(132,220,95,.38),transparent 25%),linear-gradient(180deg,#effaff 0%,#fff 45%,#fff8ed 100%)}.wrap{max-width:1240px;margin:0 auto;padding:18px 18px 95px}.card{background:var(--card);border:1px solid rgba(255,255,255,.95);border-radius:24px;box-shadow:var(--shadow)}.top{display:grid;grid-template-columns:1.05fr .75fr 1fr;gap:18px}.brand{padding:18px 8px}.crown{text-align:center;color:var(--gold);font-size:62px;line-height:.75}h1{margin:0;text-align:center;font-family:Georgia,"Times New Roman",serif;color:var(--gold);font-size:62px;line-height:.95}.subtitle{text-align:center;color:#a66e00;font-family:Georgia,"Times New Roman",serif;font-size:25px;margin-top:8px}.greeting{margin-top:22px;display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid rgba(214,162,28,.24);border-radius:24px;padding:13px 18px;box-shadow:var(--shadow)}.miyu-photo{width:88px;height:88px;border-radius:22px;background:linear-gradient(145deg,#fff1f5,#fff);border:1px solid #ffd4df;display:grid;place-items:center;font-size:45px;flex:0 0 auto}.clock{text-align:center;padding:20px 10px}.date{font-size:24px;font-weight:900;margin-bottom:8px}.time{font-size:72px;font-weight:950;line-height:1}.weather{margin-top:13px;font-size:28px;font-weight:900}.notice{padding:18px 22px}.notice-head,.panel-head{display:flex;justify-content:space-between;align-items:center;color:#074aa4;font-weight:950;font-size:18px;border-bottom:1px solid var(--line);padding-bottom:10px}.notice ul{margin:0;padding:0;list-style:none}.notice li{border-top:1px solid var(--line);padding:12px 0;display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:700}.app-row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:18px}.app-card{min-height:270px;padding:24px 18px;text-align:center;display:flex;flex-direction:column;justify-content:space-between}.app-card h2{font-size:30px;margin:12px 0 7px}.app-card p{margin:0;font-size:14px;font-weight:800}.icon{font-size:72px}.open,.btn{border:0;text-decoration:none;margin:18px auto 0;width:190px;min-height:54px;border-radius:13px;color:white;font-size:20px;font-weight:950;display:flex;align-items:center;justify-content:center;gap:16px}.gold-btn{background:linear-gradient(90deg,#f6bd22,#eba300)}.green-btn{background:linear-gradient(90deg,#61be3a,#36a927)}.pink-btn{background:#ffdce6;color:#e94e77}.blue-btn{background:linear-gradient(90deg,#1598ef,#0877d9)}.purple-btn{background:linear-gradient(90deg,#8b5cf6,#6d44d7)}.dashboard{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:18px;margin-top:18px}.panel{padding:16px 18px}.schedule{list-style:none;padding:0;margin:12px 0 0}.schedule li{display:grid;grid-template-columns:64px 58px 1fr;gap:10px;align-items:center;padding:7px 0;font-size:14px;font-weight:750}.tag{color:#fff;border-radius:7px;padding:6px 8px;text-align:center;font-size:13px;font-weight:950}.red{background:#ff5364}.orange{background:#ff9f1c}.green-bg{background:#59b957}.blue-bg{background:#36a3ff}.purple-bg{background:#8b5cf6}.staff-number{text-align:center;font-size:18px;font-weight:900;margin:22px 0 12px}.staff-number b{font-size:38px;color:#299646;margin:0 8px}.staff-btn{width:100%;height:52px;border:0;border-radius:13px;background:linear-gradient(90deg,#39c6b4,#22b8aa);color:white;font-weight:950;font-size:17px}.private{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;margin-top:18px}.cal-title{display:flex;justify-content:center;align-items:center;gap:28px;margin-top:12px;font-size:19px;font-weight:950}.cal-title button{border:0;background:#f0f6ff;border-radius:50%;width:38px;height:38px;font-size:25px;color:#0a55aa}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;font-weight:800;margin-top:12px}.day-name{font-size:13px;color:#7c8798}.sun-day{color:#f33545}.sat-day{color:#0b78de}.day{height:38px;border-radius:50%;display:grid;place-items:center;font-size:15px;position:relative}.day.today{background:#1989e8;color:#fff}.day.has::after{content:"";position:absolute;bottom:2px;width:7px;height:7px;border-radius:50%;background:#ff9f1c}.personal-list{list-style:none;margin:10px 0 0;padding:0}.personal-list li{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.dot{width:13px;height:13px;border-radius:50%}.icons button{width:36px;height:36px;border:1px solid #dfe5ee;background:#fff;border-radius:50%;margin-left:6px}.tools{margin-top:18px;padding:16px 18px 18px}.tools h3{text-align:center;margin:0 0 15px;color:#0a51ad;font-size:22px}.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.tool{min-height:94px;border:1px solid #edf0f5;border-radius:15px;background:rgba(255,255,255,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-decoration:none;color:#18233c;font-weight:950;font-size:13px}.tool span{font-size:33px}.bottom{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(1240px,100%);background:rgba(255,255,255,.92);border-top:1px solid #eee2ca;box-shadow:0 -8px 22px rgba(53,60,70,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));z-index:30;backdrop-filter:blur(14px)}.nav{border:0;background:transparent;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:950;color:#1d2435;font-size:15px}.nav-icon{font-size:28px}.leader{color:#b47c00}.logout{color:#9e2a20}.add-btn{border:1px solid #1688e8;color:#1688e8;background:#fff;border-radius:999px;padding:7px 12px;font-weight:950}.more{font-size:13px;color:#1768c8;font-weight:900;text-decoration:none}@media(max-width:980px){.top,.dashboard,.private{grid-template-columns:1fr}.app-row{grid-template-columns:repeat(2,1fr)}.tool-grid{grid-template-columns:repeat(4,1fr)}}@media(max-width:560px){.wrap{padding:14px 12px 92px}h1{font-size:38px}.subtitle{font-size:18px}.time{font-size:58px}.app-row{grid-template-columns:1fr}.tool-grid{grid-template-columns:repeat(3,1fr);gap:10px}.nav{font-size:11px;flex-direction:column;gap:1px}.nav-icon{font-size:23px}}
 
-.labor-app-launcher{
-  cursor:pointer;border:1px solid #e7bd45!important;
-  background:linear-gradient(135deg,#fffdf5,#fff2b8)!important;
-}
-.labor-app-launcher .hub-icon{
-  background:linear-gradient(145deg,#17324d,#0f2235)!important;
-  color:#ffd76a!important;
-  font-size:31px!important;
-}
-#laborAppScreen{
-  display:none;position:fixed;inset:0;z-index:9999;
-  background:linear-gradient(180deg,#eef7ff,#fffaf0);
-  overflow-y:auto;padding-bottom:40px;
-}
-#laborAppScreen.open{display:block}
-.labor-app-topbar{
-  position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;
-  padding:12px 16px;background:rgba(255,255,255,.96);
-  border-bottom:1px solid #e5e7eb;box-shadow:0 4px 14px rgba(20,40,70,.08);
-}
-.labor-app-back{
-  border:0;border-radius:12px;background:#17324d;color:#fff;
-  padding:11px 15px;font-size:15px;font-weight:900;
-}
-.labor-app-title{font-size:20px;font-weight:950;color:#17324d}
-.labor-app-body{max-width:1180px;margin:0 auto;padding:16px}
-body.labor-app-open{overflow:hidden}
-
-.labor-event-list{display:grid;gap:10px}
-.labor-event-item{
-  border:1px solid #dbe3ec;border-radius:15px;background:#fff;overflow:hidden;
-  box-shadow:0 4px 12px rgba(30,50,80,.06)
-}
-.labor-event-toggle{
-  width:100%;border:0;background:#fff;padding:15px 14px;
-  display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
-  text-align:left;color:#17324d;font-size:14px;font-weight:950;cursor:pointer
-}
-.labor-event-toggle:active{background:#f5f9fd}
-.labor-event-name{font-size:16px}
-.labor-event-total{font-size:16px;color:#8a6400;white-space:nowrap}
-.labor-event-arrow{font-size:18px;transition:transform .2s}
-.labor-event-item.open .labor-event-arrow{transform:rotate(180deg)}
-.labor-event-detail{display:none;border-top:1px solid #e8edf3;background:#fbfdff;padding:12px}
-.labor-event-item.open .labor-event-detail{display:block}
-.labor-event-meta{font-size:12px;color:#64748b;margin-bottom:9px;font-weight:800}
-.labor-event-staff{
-  display:grid;grid-template-columns:1fr auto;gap:8px 12px;
-  padding:10px;border-bottom:1px solid #edf1f5;font-size:14px
-}
-.labor-event-staff:last-child{border-bottom:0}
-.labor-event-staff-name{font-weight:850}
-.labor-event-staff-amount{font-weight:950;text-align:right}
-.labor-event-zero{color:#b42318}
-.labor-event-empty{padding:14px;text-align:center;color:#64748b;font-weight:800}
-@media(max-width:600px){
-  .labor-event-toggle{grid-template-columns:1fr auto}
-  .labor-event-arrow{grid-column:2;grid-row:1}
-  .labor-event-total{grid-column:1 / -1}
-}
+.miyu-command{margin-top:18px;padding:18px 20px;background:linear-gradient(135deg,#fff7fb,#eef6ff);border:1px solid #f4c9da}
+.miyu-command-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.miyu-command-head h2{margin:0;font-size:22px;color:#7a2852}
+.miyu-status{font-size:12px;font-weight:950;border-radius:999px;padding:6px 10px;background:#dcfce7;color:#166534}
+.miyu-command-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin-top:12px}
+.miyu-box{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px}
+.miyu-box h3{font-size:15px;margin:0 0 8px;color:#074aa4}
+.miyu-box p{margin:0;color:#334155;font-size:13px;line-height:1.65;font-weight:750}
+.miyu-priority{padding:8px 0;border-bottom:1px solid #edf0f5;font-size:13px;font-weight:850}
+.miyu-priority:last-child{border-bottom:0}
+.miyu-num{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#0f172a;color:#fff;margin-right:7px}
+.miyu-alert{border-radius:10px;padding:9px;margin-bottom:7px;font-size:12px;font-weight:850;line-height:1.5}
+.miyu-alert.red{background:#fff1f2;color:#991b1b}.miyu-alert.yellow{background:#fffbeb;color:#92400e}.miyu-alert.green{background:#ecfdf5;color:#166534}
+.miyu-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.miyu-actions a{flex:1;min-width:120px;text-decoration:none;text-align:center;padding:10px;border-radius:11px;font-weight:950;font-size:13px}
+.miyu-open{background:#7c3aed;color:#fff}.miyu-dev{background:#0f172a;color:#fff}
+@media(max-width:980px){.miyu-command-grid{grid-template-columns:1fr}}
 
 
-/* ===== v3 シンプル窓口・日付順 ===== */
-.labor-summary-grid,
-.labor-section:nth-of-type(n+2){display:none!important}
-.labor-section{
-  padding:12px!important;
-  border:none!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.labor-section h3{
-  margin:0 0 4px!important;
-  font-size:19px!important;
-  color:#17324d!important;
-}
-.labor-note{font-size:12px!important;color:#64748b!important}
-.labor-event-list{gap:8px!important}
-.labor-event-item{
-  border:1px solid #d9e2ec!important;
-  border-radius:14px!important;
-  box-shadow:none!important;
-}
-.labor-event-toggle{
-  padding:13px 12px!important;
-  grid-template-columns:auto 1fr auto!important;
-  gap:10px!important;
-}
-.labor-event-date{
-  min-width:92px;
-  color:#0b5cab;
-  font-size:13px;
-  font-weight:950;
-  white-space:nowrap;
-}
-.labor-event-name{
-  font-size:15px!important;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.labor-event-total{font-size:14px!important}
-.labor-event-arrow{font-size:15px!important}
-.labor-app-body{padding:10px!important}
-#laborKingPanel{
-  border:none!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  margin-top:8px!important;
-}
-#laborKingPanel .panel-head{display:none!important}
-@media(max-width:600px){
-  .labor-event-toggle{
-    grid-template-columns:82px minmax(0,1fr) auto!important;
-  }
-  .labor-event-total{
-    grid-column:2!important;
-    font-size:13px!important;
-  }
-  .labor-event-arrow{
-    grid-column:3!important;
-    grid-row:1 / span 2!important;
-  }
-}
+/* ===== KING APP 整理版ホーム（既存機能を壊さない入口整理） ===== */
+.king-hub{margin-top:18px;display:grid;gap:18px}
+.hub-group{padding:18px}
+.hub-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.hub-head h2{margin:0;font-size:22px;color:#123b66}.hub-note{font-size:12px;color:var(--sub);font-weight:800}
+.hub-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.hub-card{min-height:155px;border:1px solid #e5ebf2;border-radius:18px;background:#fff;padding:16px;text-decoration:none;color:var(--text);display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 7px 18px rgba(45,68,100,.08);transition:.15s transform,.15s box-shadow}
+.hub-card:active{transform:scale(.98)}.hub-top{display:flex;align-items:center;gap:12px}.hub-icon{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:29px;background:#eef6ff}.hub-title{font-size:19px;font-weight:950}.hub-desc{font-size:12px;color:var(--sub);font-weight:750;line-height:1.55;margin-top:8px}.hub-open{margin-top:12px;font-size:13px;font-weight:950;color:#1169bd}.hub-card.primary{border:2px solid #e7bd45;background:linear-gradient(135deg,#fffdf5,#fff5cf)}.hub-card.primary .hub-icon{background:#17324d;color:#ffd76a}.hub-card.manager{border-color:#6da6d7;background:#f3f9ff}.hub-card.office{border-color:#76c58c;background:#f5fff7}.hub-card.build{border-color:#65a6e6;background:#f4f9ff}.hub-card.partner{border-color:#b493e7;background:#faf7ff}.hub-card.personal{border-color:#f2b8ca;background:#fff7fb}
+.hub-wide{grid-column:span 2}
+@media(max-width:980px){.hub-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.hub-group{padding:14px}.hub-grid{grid-template-columns:1fr}.hub-wide{grid-column:span 1}.hub-head{align-items:flex-start;flex-direction:column}.hub-card{min-height:132px}}
 
-</style>
-</head>
-<body>
-<div id="devLoader">
-  <div class="loading-card">
-    <h1>👷 KING 労務費集計・開発版</h1>
-    <p>本番の king.html を安全に読み込み、労務費集計だけを追加しています。</p>
+
+/* ===== KING画面整理 v2：表示だけ安全に整理 ===== */
+/* 機能・Firebase・保存処理は残し、指定された表示のみ非表示 */
+.greeting,
+#miyuCommandPanel,
+.dashboard,
+#partnerProfitPanel,
+#partnerScheduleKingPanel,
+#laborKingPanel,
+.private{display:none !important;}
+
+</style><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script></head><body>
+<main class="wrap"><section class="top"><div class="brand"><div class="crown">♛</div><h1>KING APP</h1><div class="subtitle">－ FUJIWARA Group －</div><div class="greeting"><div class="miyu-photo">👩‍💼</div><div><b id="miyuGreeting">おはようございます、相棒！☀️</b><p id="miyuText">今日も最高の1日にしよう！</p><small>－ MIYU AI統括パートナー －</small></div></div></div><div class="card clock"><div class="date" id="todayDate"></div><div class="time" id="nowTime"></div><div class="weather"><span style="color:#f2aa00">☀</span> 23℃　晴れ</div><div style="margin-top:8px;color:#465774;font-weight:700">最高 28℃ / 最低 18℃</div></div><div class="card notice"><div class="notice-head"><span>🔔 お知らせ</span><span class="more">自動表示</span></div><ul id="noticeList"><li><span>・キングアプリ起動中</span><time>NOW</time></li></ul></div></section>
+<section class="card miyu-command" id="miyuCommandPanel">
+  <div class="miyu-command-head">
+    <h2>🤖 MIYU AI統括パートナー</h2>
+    <span class="miyu-status" id="miyuSystemStatus">確認中</span>
   </div>
-</div>
+  <div class="miyu-command-grid">
+    <div class="miyu-box">
+      <h3>🥇 今日の優先順位</h3>
+      <div id="kingMiyuPriorities"><p>開発室の作業を確認中...</p></div>
+    </div>
+    <div class="miyu-box">
+      <h3>🚨 注意事項</h3>
+      <div id="kingMiyuAlerts"><div class="miyu-alert green">確認中...</div></div>
+    </div>
+    <div class="miyu-box">
+      <h3>▶ 前回の続き</h3>
+      <p id="kingMiyuHandover">引継ぎを確認中...</p>
+      <div class="miyu-actions">
+        <a class="miyu-dev" href="system-management.html">🛠 開発室</a>
+        <a class="miyu-open" href="system-management.html#miyu">MIYUを開く</a>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="king-hub" aria-label="KINGアプリ入口">
+  <section class="card hub-group">
+    <div class="hub-head"><h2>👑 業務の中心</h2><span class="hub-note">まずここから開く</span></div>
+    <div class="hub-grid">
+      <a class="hub-card primary hub-wide" href="index.html"><div><div class="hub-top"><div class="hub-icon">🎪</div><div class="hub-title">メインアプリ</div></div><div class="hub-desc">イベント・売上・人員・在庫をまとめて管理</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card manager" href="manager-app.html"><div><div class="hub-top"><div class="hub-icon">👤</div><div class="hub-title">担当者アプリ</div></div><div class="hub-desc">ネタ一覧・準備・車両・LPG</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card personal" href="miyu.html"><div><div class="hub-top"><div class="hub-icon">👩‍💼</div><div class="hub-title">MIYU</div></div><div class="hub-desc">AI統括パートナーに相談する</div></div><div class="hub-open">話しかける ›</div></a>
+    </div>
+  </section>
+  <section class="card hub-group">
+    <div class="hub-head"><h2>🏢 会社・現場管理</h2><span class="hub-note">事業ごとに整理</span></div>
+    <div class="hub-grid">
+      <a class="hub-card build" href="construction.html"><div><div class="hub-top"><div class="hub-icon">🏗️</div><div class="hub-title">建設アプリ</div></div><div class="hub-desc">日報・現場・請求・写真管理</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card office" href="office-timecard.html"><div><div class="hub-top"><div class="hub-icon">📋</div><div class="hub-title">事務員アプリ</div></div><div class="hub-desc">タイムカード・勤務集計・CSV</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card partner" href="partner.html"><div><div class="hub-top"><div class="hub-icon">🐩</div><div class="hub-title">partner</div></div><div class="hub-desc">下請け共有・損益計算確認</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card build" href="partner-men.html"><div><div class="hub-top"><div class="hub-icon">🦍🐷</div><div class="hub-title">partner MEN</div></div><div class="hub-desc">男版partner・共有確認</div></div><div class="hub-open">開く ›</div></a>
+    </div>
+  </section>
+  <section class="card hub-group">
+    <div class="hub-head"><h2>🧰 管理・個人ツール</h2><span class="hub-note">必要な時だけ使う</span></div>
+    <div class="hub-grid">
+      <a class="hub-card" href="king-moncal.html"><div><div class="hub-top"><div class="hub-icon">📅</div><div class="hub-title">MonCal</div></div><div class="hub-desc">私用予定とカレンダー</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card" href="king-money.html"><div><div class="hub-top"><div class="hub-icon">💰</div><div class="hub-title">お金・労務管理</div></div><div class="hub-desc">お金・労務費・個人別給与台帳を確認</div></div><div class="hub-open">開く ›</div></a>
+      
+      <a class="hub-card" href="main-neta-sales.html"><div><div class="hub-top"><div class="hub-icon">📈</div><div class="hub-title">主力ネタ一覧</div></div><div class="hub-desc">イベント別売上・販売数・単価・使用資材・月間集計・ランキングを確認</div></div><div class="hub-open">主力ネタを見る ›</div></a>
+      <a class="hub-card" href="project-room.html"><div><div class="hub-top"><div class="hub-icon">📂</div><div class="hub-title">プロジェクト管理室</div></div><div class="hub-desc">開発中の案件をまとめて管理</div></div><div class="hub-open">開く ›</div></a>
+      <a class="hub-card" href="system-management.html"><div><div class="hub-top"><div class="hub-icon">🛠️</div><div class="hub-title">開発室</div></div><div class="hub-desc">システム確認・引継ぎ・設定</div></div><div class="hub-open">開く ›</div></a>
+    </div>
+  </section>
+</section>
+<section class="dashboard"><div class="card panel"><div class="panel-head"><span>📅 今日の予定</span><a class="more" href="king-moncal.html">私用カレンダー›</a></div><ul class="schedule" id="todaySchedule"></ul></div><div class="card panel" style="text-align:center"><div class="panel-head"><span>￥ 本日の売上速報</span><span class="more">確認用</span></div><div style="font-size:45px;color:#208c3d;font-weight:950;margin:14px 0">¥258,750</div><div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px"><span>目標 ¥500,000</span><span>51.7%</span></div></div><div class="card panel"><div class="panel-head"><span>👥 事務員タイムカード</span><span class="more">Firebase連動</span></div><div class="staff-number">本日出勤 <b id="officeInCount">0</b> 名</div><div id="officeTimecardList" style="font-size:14px;font-weight:800;line-height:1.8;color:#334155;text-align:left;background:#fff7fb;border:1px solid #ffd6e5;border-radius:14px;padding:12px;margin:12px 0;">まだタイムカード入力がありません</div><button class="staff-btn" onclick="location.href='office-timecard.html'">事務員アプリを開く　›</button></div></section>
+<section class="card panel" id="partnerProfitPanel" style="margin-top:18px;"><div class="panel-head"><span>🐩 partner 損益計算書</span><button class="add-btn" onclick="renderPartnerProfitKing()">更新</button></div><div id="partnerProfitKingBox" style="margin-top:12px;font-weight:800;color:#334155;line-height:1.7;">partnerの入力を確認中...</div></section>
 
+
+<section class="card panel" id="partnerScheduleKingPanel" style="margin-top:18px;">
+<div class="panel-head"><span>🐩 partner予定</span><button class="add-btn" onclick="renderPartnerScheduleKing()">更新</button></div>
+<div id="partnerScheduleKingBox" style="margin-top:12px;font-weight:800;color:#334155;line-height:1.7;">partner予定を確認中...</div>
+</section>
+<section class="card panel" id="laborKingPanel" style="margin-top:18px;">
+<div class="panel-head"><span>👷 労務費・給与台帳</span><button class="add-btn" onclick="renderLaborKing()">更新</button></div>
+<div id="laborKingBox" style="margin-top:12px">読み込み中...</div>
+</section>
+<section class="private"><div class="card panel"><div class="panel-head"><span>📅 私用の予定カレンダー</span><a class="more" href="king-moncal.html">MonCalで開く›</a></div><div class="cal-title"><button onclick="movePrivateMonth(-1)">‹</button><span id="privateMonthTitle"></span><button onclick="movePrivateMonth(1)">›</button></div><div class="calendar" id="privateCalendar"></div></div><div class="card panel"><div class="panel-head"><span id="personalTitle">今日の予定</span><button class="add-btn" onclick="location.href='king-moncal.html'">＋ MonCalで追加</button></div><ul class="personal-list" id="personalList"></ul></div></section>
+<section class="card tools"><h3>✨ 便利なアプリ ✨</h3><div class="tool-grid"><a class="tool" href="#"><span>💬</span>連絡掲示板</a><a class="tool" href="#"><span>🖼️</span>写真管理</a><a class="tool" href="#"><span>🌤️</span>天気予報</a></div></section></main>
+<nav class="bottom"><button class="nav leader" onclick="alert('リーダールームは次に権限付きで作るで')"><span class="nav-icon">♛</span>リーダー</button><button class="nav" onclick="location.href='king-moncal.html'"><span class="nav-icon">📅</span>MonCal</button><button class="nav" onclick="location.href='king-money.html'"><span class="nav-icon">💰</span>お金・労務</button><button class="nav" onclick="alert('ヘルプ画面は次に作るで')"><span class="nav-icon">❔</span>ヘルプ</button><button class="nav logout" onclick="alert('ログアウトしました')"><span class="nav-icon">↪</span>ログアウト</button></nav>
 <script>
-(function(){
-  const EXTRA_CSS = `
-  /* ===== KING 労務費集計 開発版 ===== */
-  #laborKingPanel{
-    display:block !important;
-    margin-top:18px !important;
-    border:2px solid #e0b12c !important;
-    background:linear-gradient(135deg,#fffdf5,#fff8d9) !important;
+const kingFirebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};if(typeof firebase!=="undefined"&&!firebase.apps.length)firebase.initializeApp(kingFirebaseConfig);
+let kingOfficeRows=[],privateEvents=[],privateView=new Date();privateView.setDate(1);const PPATH='fujiwara/king_private_calendar_events';const colors={family:'blue-bg',private:'green-bg',golf:'orange',hospital:'red',anniversary:'purple-bg',other:'blue-bg'};function key(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}function esc(str){return String(str).replace(/[&<>"']/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[s]))}function updateClock(){const n=new Date(),w="日月火水木金土";todayDate.textContent=`${n.getMonth()+1}月${n.getDate()}日（${w[n.getDay()]}）`;nowTime.textContent=`${n.getHours()}:${String(n.getMinutes()).padStart(2,"0")}`}function connectOfficeTimecardFirebase(){if(typeof firebase==="undefined")return;firebase.database().ref("fujiwara/office_timecard").on("value",s=>{const v=s.val()||{};kingOfficeRows=Object.keys(v).map(id=>({id,...v[id]}));localStorage.setItem("office_timecard",JSON.stringify(kingOfficeRows));renderOfficeTimecardKing()})}function renderOfficeTimecardKing(){const box=officeTimecardList,count=officeInCount;const rows=kingOfficeRows.filter(r=>r.date===key(new Date()));const active=rows.filter(r=>r.inTime&&!r.outTime);count.textContent=active.length;if(!rows.length){box.innerHTML="本日の事務員タイムカード入力はまだありません";return}box.innerHTML=rows.map(r=>{const status=r.outTime?"退勤済":r.inTime?"出勤中":"未出勤";const mark=r.outTime?"🌙":r.inTime?"🌞":"⚪";return `<div style="border-bottom:1px solid #ffe0ec;padding:6px 0;">${mark} <b>${esc(r.staff||"名前未入力")}</b>：${status}<br><small>出勤 ${esc(r.inTime||"-")} / 退勤 ${esc(r.outTime||"-")} / 休憩 ${esc(r.breakMin||0)}分</small></div>`}).join("")}
+function connectPrivateCalendar(){if(typeof firebase!=="undefined"){firebase.database().ref(PPATH).on('value',s=>{const v=s.val()||{};privateEvents=Object.keys(v).map(id=>({id,...v[id]}));localStorage.setItem('king_private_calendar_events',JSON.stringify(privateEvents));renderPrivateAll()})}else{try{privateEvents=JSON.parse(localStorage.getItem('king_private_calendar_events')||'[]')}catch(e){privateEvents=[]}renderPrivateAll()}}function movePrivateMonth(n){privateView.setMonth(privateView.getMonth()+n);renderPrivateAll()}function renderPrivateAll(){renderPrivateCalendar();renderPrivateList();renderTodaySchedule();renderNotices();renderMiyu()}function renderPrivateCalendar(){privateMonthTitle.textContent=`${privateView.getFullYear()}年　${privateView.getMonth()+1}月`;privateCalendar.innerHTML='<div class="day-name sun-day">日</div><div class="day-name">月</div><div class="day-name">火</div><div class="day-name">水</div><div class="day-name">木</div><div class="day-name">金</div><div class="day-name sat-day">土</div>';const start=new Date(privateView);start.setDate(1-privateView.getDay());const today=key(new Date());for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=key(d);const div=document.createElement('div');div.className='day '+(d.getDay()==0?'sun-day':d.getDay()==6?'sat-day':'')+(k===today?' today':'')+(privateEvents.some(e=>e.date===k)?' has':'');div.textContent=d.getDate();if(d.getMonth()!==privateView.getMonth())div.style.color='#b8bfca';privateCalendar.appendChild(div)}}function renderPrivateList(){const today=key(new Date());personalTitle.textContent=`${new Date().getMonth()+1}月${new Date().getDate()}日の私用予定`;const list=privateEvents.filter(e=>e.date===today).sort((a,b)=>(a.start||'').localeCompare(b.start||''));if(!list.length){personalList.innerHTML='<li><span class="dot blue-bg"></span><div><b>今日の私用予定はありません</b><small>MonCalで追加できます</small></div><div></div></li>';return}personalList.innerHTML=list.map(e=>`<li><span class="dot ${colors[e.type]||'blue-bg'}"></span><div><b>${esc(e.title||'無題')}${e.start?'（'+esc(e.start)+'〜）':''}</b><small>${esc([e.start&&e.end?e.start+' - '+e.end:e.start||'',e.place].filter(Boolean).join('　'))}</small></div><div class="icons"><button onclick="location.href='king-moncal.html'">✎</button></div></li>`).join('')}function renderTodaySchedule(){const list=privateEvents.filter(e=>e.date===key(new Date())).sort((a,b)=>(a.start||'').localeCompare(b.start||''));const base=['<li><span class="tag red">A会場</span><b>10:00</b><span>イベント予定確認</span></li>'];todaySchedule.innerHTML=base.join('')+list.map(e=>`<li><span class="tag ${colors[e.type]||'blue-bg'}">私用</span><b>${esc(e.start||'--:--')}</b><span>${esc(e.title||'無題')}</span></li>`).join('')}function renderNotices(){const list=privateEvents.filter(e=>e.date===key(new Date())).sort((a,b)=>(a.start||'').localeCompare(b.start||''));noticeList.innerHTML=(list.length?list.slice(0,3).map(e=>`<li><span>・今日 ${esc(e.start||'')} ${esc(e.title||'予定')}</span><time>MonCal</time></li>`).join(''):'<li><span>・MonCalとキング私用カレンダー連動中</span><time>OK</time></li>')}function renderMiyu(){const next=privateEvents.filter(e=>e.date===key(new Date())).sort((a,b)=>(a.start||'').localeCompare(b.start||''))[0];if(next){miyuText.textContent=`今日は${next.start||''} ${next.title}がありますよ😊`}else{miyuText.textContent='今日の私用予定はありません。MonCalで追加できます。'}}
+function partnerYen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+var kingPartnerEvents=[];var kingPartnerMenEvents=[];var kingPartnerPersonalPlans=[];function getPartnerEventsKing(){if(kingPartnerEvents.length)return kingPartnerEvents;try{var a=JSON.parse(localStorage.getItem('partner_events_v4')||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}function mergeKingPartner(target,incoming){var m={};(target||[]).concat(incoming||[]).forEach(function(e){if(!e)return;var k=String(e.mainId||e.id||'');if(k)m[k]=Object.assign({},m[k]||{},e)});return Object.keys(m).map(function(k){return m[k]})}function connectPartnerShareCenterKing(){if(typeof firebase==='undefined')return;var db=firebase.database();function listen(path,isMen){db.ref(path).on('value',function(s){var v=s.val()||{};var a=Object.keys(v).map(function(k){return v[k]}).filter(Boolean);if(isMen){kingPartnerMenEvents=mergeKingPartner(kingPartnerMenEvents,a)}else{kingPartnerEvents=mergeKingPartner(kingPartnerEvents,a);localStorage.setItem('partner_events_v4',JSON.stringify(kingPartnerEvents))}renderPartnerProfitKing();renderPartnerScheduleKing();});}listen('fujiwara/partner_shared_events',false);listen('fujiwara/share_center/partner/events',false);listen('fujiwara/partner_men_shared_events',true);listen('fujiwara/share_center/partner_men/events',true)}
+
+function connectPartnerPersonalPlansKing(){
+ if(typeof firebase==='undefined')return;
+ firebase.database().ref('fujiwara/partner_personal_plans').on('value',function(s){
+  var v=s.val()||{};
+  kingPartnerPersonalPlans=Object.keys(v).map(function(k){
+   var p=v[k]||{};
+   return {id:String(p.id||k),date:String(p.date||'').slice(0,10),title:String(p.title||'予定'),time:String(p.time||''),memo:String(p.memo||'')};
+  }).filter(function(p){return p.date});
+  renderPartnerScheduleKing();
+ });
+}
+function partnerScheduleTimeText(x){return String(x.time||x.startTime||x.start||x.eventTime||'時間未入力')}
+function partnerScheduleMemoText(x){return String(x.memo||x.shareMemo||x.sharedMemo||x.note||x.partnerMemo||'')}
+function renderPartnerScheduleKing(){
+ var box=document.getElementById('partnerScheduleKingBox');if(!box)return;
+ var shared=(kingPartnerEvents||[]).map(function(e){
+  return {type:'shared',date:String(e.date||'').slice(0,10),dateEnd:String(e.dateEnd||'').slice(0,10),title:String(e.title||e.eventName||'共有イベント'),time:partnerScheduleTimeText(e),memo:partnerScheduleMemoText(e)};
+ }).filter(function(e){return e.date});
+ var personal=(kingPartnerPersonalPlans||[]).map(function(p){
+  return {type:'personal',date:p.date,title:p.title,time:p.time||'時間未入力',memo:p.memo||''};
+ });
+ var list=shared.concat(personal).sort(function(a,b){return (String(b.date)+String(b.time)).localeCompare(String(a.date)+String(a.time))});
+ if(!list.length){box.innerHTML='まだpartner予定はありません。';return}
+ box.innerHTML='<div style="display:grid;gap:10px;">'+list.map(function(x){
+  var badge=x.type==='personal'
+   ?'<span style="background:#e0f2fe;color:#075985;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:950;">本人予定</span>'
+   :'<span style="background:#fef3c7;color:#92400e;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:950;">共有イベント</span>';
+  var dateText=x.dateEnd&&x.dateEnd>x.date?x.date+' 〜 '+x.dateEnd:x.date;
+  return '<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:12px;">'
+   +'<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;"><div><b style="font-size:16px;">'+esc(x.title)+'</b><br><small>'+esc(dateText)+'　'+esc(x.time)+'</small></div>'+badge+'</div>'
+   +(x.memo?'<div style="margin-top:8px;background:#f8fafc;border-radius:10px;padding:8px;font-size:13px;">📝 '+esc(x.memo)+'</div>':'')
+   +'</div>';
+ }).join('')+'</div>';
+}
+
+function partnerProfit(e){return Number(e.sales||0)-Number(e.fee||0)-Number(e.cost||0)-Number(e.labor||0)-Number(e.other||0)}
+function renderPartnerProfitKing(){
+  var box=document.getElementById('partnerProfitKingBox'); if(!box)return;
+  var list=getPartnerEventsKing().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+  if(!list.length){box.innerHTML='まだpartnerの損益計算書はありません。メインアプリから partner共有 してください。';return;}
+  var total=list.reduce(function(s,e){s.sales+=Number(e.sales||0);s.exp+=Number(e.fee||0)+Number(e.cost||0)+Number(e.labor||0)+Number(e.other||0);s.profit+=partnerProfit(e);return s},{sales:0,exp:0,profit:0});
+  box.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">'
+    +'<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:12px;"><small>売上</small><br><b style="font-size:24px;color:#208c3d">'+partnerYen(total.sales)+'</b></div>'
+    +'<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:12px;"><small>経費</small><br><b style="font-size:24px;color:#9e2a20">'+partnerYen(total.exp)+'</b></div>'
+    +'<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:12px;"><small>利益</small><br><b style="font-size:24px;color:#074aa4">'+partnerYen(total.profit)+'</b></div></div>'
+    +'<div style="overflow:auto"><table style="width:100%;border-collapse:separate;border-spacing:0 8px;min-width:620px"><tr style="color:#647188;text-align:left"><th>日付</th><th>イベント</th><th>売上</th><th>場所代</th><th>仕入</th><th>人件費</th><th>その他</th><th>利益</th></tr>'
+    +list.map(function(e){return '<tr><td style="background:#fff;padding:10px;border-radius:12px 0 0 12px">'+esc(e.date||'')+'</td><td style="background:#fff;padding:10px">'+esc(e.title||'')+'</td><td style="background:#fff;padding:10px">'+partnerYen(e.sales)+'</td><td style="background:#fff;padding:10px">'+partnerYen(e.fee)+'</td><td style="background:#fff;padding:10px">'+partnerYen(e.cost)+'</td><td style="background:#fff;padding:10px">'+partnerYen(e.labor)+'</td><td style="background:#fff;padding:10px">'+partnerYen(e.other)+'</td><td style="background:#fff;padding:10px;border-radius:0 12px 12px 0;font-weight:950;color:'+(partnerProfit(e)>=0?'#208c3d':'#9e2a20')+'">'+partnerYen(partnerProfit(e))+'</td></tr>'}).join('')+'</table></div>';
+}
+
+function loadKingMiyuCommand(){
+  let d={};
+  try{d=JSON.parse(localStorage.getItem('fujiwara_system_management_v1')||'{}')}catch(e){d={}}
+  const tasks=Array.isArray(d.tasks)?d.tasks.filter(t=>!t.done&&!t.archived):[];
+  const apps=Array.isArray(d.apps)?d.apps:[];
+  const logs=Array.isArray(d.logs)?d.logs:[];
+  const backups=d.backupStates||{};
+  const hand=d.handover||null;
+
+  const score=t=>{
+    let s=t.priority==='高'?100:t.priority==='中'?60:30;
+    const a=apps.find(x=>x.id===t.appId);
+    if(a&&a.risk==='高')s+=20;
+    return s;
+  };
+  const top=tasks.slice().sort((a,b)=>score(b)-score(a)).slice(0,3);
+  const pbox=document.getElementById('kingMiyuPriorities');
+  if(pbox){
+    pbox.innerHTML=top.length?top.map((t,i)=>{
+      const a=apps.find(x=>x.id===t.appId);
+      return `<div class="miyu-priority"><span class="miyu-num">${i+1}</span>${esc(t.title||'未題')}${a?`<br><small style="margin-left:34px;color:#647188">${esc(a.name||'')}</small>`:''}</div>`;
+    }).join(''):'<div class="miyu-alert green">✅ 未完了作業はありません</div>';
   }
-  #laborKingPanel .panel-head{
-    color:#73520a !important;
+
+  const daysSince=v=>{
+    if(!v)return 999;
+    const x=new Date(v);if(isNaN(x))return 999;
+    return Math.floor((new Date()-x)/86400000);
+  };
+  const late=apps.filter(a=>{
+    const b=backups[a.id]||{};
+    const max=a.risk==='高'?7:a.risk==='中'?14:30;
+    return daysSince(b.date)>max;
+  });
+  const bugs=logs.filter(x=>x.type==='bug');
+  const alerts=[];
+  if(late.length)alerts.push(`<div class="miyu-alert red">📦 バックアップ期限超過：${late.map(a=>esc(a.name)).join('、')}</div>`);
+  if(bugs.length)alerts.push(`<div class="miyu-alert yellow">⚠ 不具合記録 ${bugs.length}件</div>`);
+  if(tasks.filter(t=>t.priority==='高').length)alerts.push(`<div class="miyu-alert yellow">📋 高優先作業 ${tasks.filter(t=>t.priority==='高').length}件</div>`);
+  if(!alerts.length)alerts.push('<div class="miyu-alert green">✅ 大きな注意事項はありません</div>');
+  const abox=document.getElementById('kingMiyuAlerts');if(abox)abox.innerHTML=alerts.join('');
+
+  const h=document.getElementById('kingMiyuHandover');
+  if(h)h.innerHTML=hand?`<b>ここまで：</b>${esc(hand.done||'')}<br><b>次：</b>${esc(hand.next||'')}${hand.warn?`<br><b>注意：</b>${esc(hand.warn)}`:''}`:'引継ぎ記録はありません。';
+
+  const totalDanger=late.length+bugs.length+tasks.filter(t=>t.priority==='高').length;
+  const st=document.getElementById('miyuSystemStatus');
+  if(st){
+    st.textContent=totalDanger===0?'🟢 正常':totalDanger<=2?'🟡 注意':'🔴 要対応';
+    st.style.background=totalDanger===0?'#dcfce7':totalDanger<=2?'#fef3c7':'#fee2e2';
+    st.style.color=totalDanger===0?'#166534':totalDanger<=2?'#92400e':'#991b1b';
   }
-  .labor-dev-badge{
-    display:inline-block;
-    margin-left:8px;
-    padding:5px 9px;
-    border-radius:999px;
-    background:#17324d;
-    color:#fff;
-    font-size:11px;
-    font-weight:900;
+
+  if(typeof miyuText!=='undefined'){
+    if(top[0])miyuText.textContent=`今日の最優先は「${top[0].title}」です😊`;
+    else if(late[0])miyuText.textContent=`先に「${late[0].name}」をバックアップしましょう。`;
   }
-  .labor-summary-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
-    margin-bottom:16px;
-  }
-  .labor-summary-card{
-    background:#fff;
-    border:1px solid #eadcae;
-    border-radius:15px;
-    padding:13px;
-    box-shadow:0 5px 14px rgba(60,50,10,.06);
-  }
-  .labor-summary-card small{color:#64748b;font-weight:800}
-  .labor-summary-card b{display:block;margin-top:5px;font-size:25px;color:#17324d}
-  .labor-section{
-    background:#fff;
-    border:1px solid #e6eaf0;
-    border-radius:15px;
-    padding:13px;
-    margin-top:12px;
-    overflow-x:auto;
-  }
-  .labor-section h3{margin:0 0 10px;color:#0b5cab;font-size:17px}
-  .labor-table{width:100%;border-collapse:collapse;min-width:460px}
-  .labor-table th,.labor-table td{padding:10px 8px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px}
-  .labor-table th{background:#f4f8fc;color:#475569}
-  .labor-table td.num,.labor-table th.num{text-align:right}
-  .labor-unpaid{color:#b42318;font-weight:900}
-  .labor-paid{color:#16803c;font-weight:900}
-  .labor-empty{padding:20px;text-align:center;border:1px dashed #cbd5e1;border-radius:14px;background:#fff;color:#64748b;font-weight:800}
-  .labor-note{font-size:12px;color:#64748b;line-height:1.7;margin-top:10px}
-  @media(max-width:760px){
-    .labor-summary-grid{grid-template-columns:repeat(2,1fr)}
-    .labor-summary-card b{font-size:21px}
-  }`;
+}
 
-  const EXTRA_JS = `
-  <script>
-  (function(){
-    function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
-    function esc(v){
-      return String(v==null?'':v).replace(/[&<>"']/g,function(c){
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-      });
-    }
-    function pickAmount(p){
-      const candidates=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate];
-      for(const v of candidates){
-        const n=Number(String(v==null?'':v).replace(/,/g,''));
-        if(Number.isFinite(n) && n!==0)return n;
-      }
-      return 0;
-    }
-    function pickStaff(p){
-      return p.staffName||p.staff||p.name||p.workerName||'スタッフ未設定';
-    }
-    function getLaborDb(){
-      // Firebaseから取得した日別データを最優先。別端末でも連日分を表示できます。
-      if(Array.isArray(window._fgKingDailyFinance) && window._fgKingDailyFinance.length){
-        return {key:'firebase:fujiwara/kingDailyFinance',events:window._fgKingDailyFinance.map(function(r){
-          return {
-            id:r.id,eventId:r.eventId,name:r.eventName||r.name||'',eventName:r.eventName||r.name||'',
-            date:r.date||r.eventDate||'',eventDate:r.date||r.eventDate||'',place:r.place||'',
-            payments:Array.isArray(r.payments)?r.payments:[],sales:r.sales||0,expense:r.expense||0,
-            staffPay:r.staffPay||0,profit:r.profit||0,deposit:r.deposit||0,cash:r.cash||0,unpaid:r.unpaid||0
-          };
-        })};
-      }
-      const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
-      for(const key of keys){
-        try{
-          const value=localStorage.getItem(key);
-          if(!value)continue;
-          const parsed=JSON.parse(value);
-          if(parsed && (Array.isArray(parsed.events)||Array.isArray(parsed))) {
-            return {key:key,events:Array.isArray(parsed)?parsed:(parsed.events||[])};
-          }
-        }catch(e){}
-      }
-      return {key:'fg_labor_db_v1',events:[]};
-    }
-    
-    function normalizeDateValue(value){
-      if(!value)return '';
-      const s=String(value).trim();
-      const m=s.match(/(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})/);
-      if(m){
-        return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
-      }
-      const m2=s.match(/^(\d{4})(\d{2})(\d{2})$/);
-      if(m2)return m2[1]+'-'+m2[2]+'-'+m2[3];
-      const d=new Date(s);
-      if(!Number.isNaN(d.getTime())){
-        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      }
-      return '';
-    }
-    function displayDate(value){
-      const n=normalizeDateValue(value);
-      if(!n)return '日付未設定';
-      const p=n.split('-');
-      return p[0]+'/'+Number(p[1])+'/'+Number(p[2]);
-    }
-window.renderLaborKing=function(){
-      const box=document.getElementById('laborKingBox');
-      if(!box)return;
 
-      const source=getLaborDb();
-      const events=source.events||[];
+function laborYen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function renderLaborKing(){
+ const box=document.getElementById('laborKingBox');
+ if(!box)return;
+ let db={events:[]};
+ try{db=JSON.parse(localStorage.getItem('fg_labor_db_v1')||'{}')}catch(e){}
+ const ev=db.events||[];
+ if(!ev.length){box.innerHTML='労務費データはまだありません。';return;}
+ const people={}, months={}, unpaid=[];
+ let total=0;
+ ev.forEach(x=>{
+   (x.payments||[]).forEach(p=>{
+      const v=Number(p.rate||0);
+      total+=v;
+      people[p.staffName]=(people[p.staffName]||0)+v;
+      const m=(x.date||'').slice(0,7)||'未設定';
+      months[m]=(months[m]||0)+v;
+      if(!p.paid) unpaid.push({event:x.name||'',staff:p.staffName||'',amt:v});
+   });
+ });
+ const prow=Object.entries(people).sort((a,b)=>b[1]-a[1]).map(r=>`<tr><td>${r[0]}</td><td align="right">${laborYen(r[1])}</td></tr>`).join('');
+ const mrow=Object.entries(months).map(r=>`<tr><td>${r[0]}</td><td align="right">${laborYen(r[1])}</td></tr>`).join('');
+ box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+ <div class="miyu-box"><small>総労務費</small><br><b style="font-size:28px">${laborYen(total)}</b></div>
+ <div class="miyu-box"><small>イベント数</small><br><b style="font-size:28px">${ev.length}</b></div>
+ <div class="miyu-box"><small>未払い</small><br><b style="font-size:28px">${unpaid.length}件</b></div></div>
+ <h3>個人別給与台帳</h3><table style="width:100%">${prow}</table>
+ <h3>月別集計</h3><table style="width:100%">${mrow}</table>`;
+}
 
-      if(!events.length){
-        box.innerHTML=
-          '<div class="labor-empty">労務費データはまだありません。<br>'+
-          '<small>メインアプリでスタッフ別労務費を保存後、「更新」を押してください。</small></div>';
-        return;
-      }
-
-      const people={};
-      const months={};
-      const unpaid=[];
-      const groupedEvents={};
-      let total=0;
-      let paymentCount=0;
-
-      events.forEach(function(ev,index){
-        const eventName=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
-        const eventDate=ev.date||ev.eventDate||ev.startDate||'';
-        const eventPlace=ev.place||ev.location||ev.venue||'';
-        const month=String(eventDate).slice(0,7)||'未設定';
-
-        const payments=Array.isArray(ev.payments)?ev.payments:
-                       Array.isArray(ev.staffPayments)?ev.staffPayments:
-                       Array.isArray(ev.labor)?ev.labor:[];
-
-        if(!groupedEvents[eventName]){
-          groupedEvents[eventName]={
-            name:eventName,
-            dates:[],
-            places:[],
-            staff:{},
-            total:0
-          };
-        }
-
-        const group=groupedEvents[eventName];
-        if(eventDate && !group.dates.includes(eventDate))group.dates.push(eventDate);
-        if(eventPlace && !group.places.includes(eventPlace))group.places.push(eventPlace);
-
-        payments.forEach(function(p){
-          const amount=pickAmount(p);
-          const staff=pickStaff(p);
-
-          total+=amount;
-          paymentCount++;
-          group.total+=amount;
-          group.staff[staff]=(group.staff[staff]||0)+amount;
-          people[staff]=(people[staff]||0)+amount;
-          months[month]=(months[month]||0)+amount;
-
-          if(p.paid===false || p.paymentStatus==='unpaid' || p.status==='未払い'){
-            unpaid.push({event:eventName,staff:staff,amount:amount});
-          }
-        });
-      });
-
-      const peopleRows=Object.entries(people)
-        .sort(function(a,b){return b[1]-a[1]})
-        .map(function(r){
-          return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
-        }).join('');
-
-      const monthRows=Object.entries(months)
-        .sort(function(a,b){return String(b[0]).localeCompare(String(a[0]))})
-        .map(function(r){
-          return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
-        }).join('');
-
-      const unpaidRows=unpaid.length
-        ? unpaid.map(function(r){
-            return '<tr><td>'+esc(r.event)+'</td><td>'+esc(r.staff)+'</td>'+
-                   '<td class="num labor-unpaid">'+yen(r.amount)+'</td></tr>';
-          }).join('')
-        : '<tr><td colspan="3" class="labor-paid">未払いはありません</td></tr>';
-
-      const eventCards=Object.values(groupedEvents)
-        .map(function(ev){
-          ev.dates=ev.dates
-            .map(normalizeDateValue)
-            .filter(Boolean)
-            .sort(function(a,b){return b.localeCompare(a)});
-          ev.sortDate=ev.dates.length?ev.dates[0]:'0000-00-00';
-          return ev;
-        })
-        .sort(function(a,b){
-          const dateCompare=String(b.sortDate).localeCompare(String(a.sortDate));
-          if(dateCompare!==0)return dateCompare;
-          return String(a.name).localeCompare(String(b.name),'ja');
-        })
-        .map(function(ev,index){
-          const staffRows=Object.entries(ev.staff)
-            .sort(function(a,b){return b[1]-a[1]})
-            .map(function(r){
-              const zeroClass=Number(r[1])===0?' labor-event-zero':'';
-              return '<div class="labor-event-staff">'+
-                       '<div class="labor-event-staff-name">'+esc(r[0])+'</div>'+
-                       '<div class="labor-event-staff-amount'+zeroClass+'">'+yen(r[1])+'</div>'+
-                     '</div>';
-            }).join('');
-
-          const meta=[
-            ev.dates.length?'日付：'+ev.dates.map(esc).join('・'):'',
-            ev.places.length?'場所：'+ev.places.map(esc).join('・'):''
-          ].filter(Boolean).join('　');
-
-          return '<div class="labor-event-item" data-event-index="'+index+'">'+
-                   '<button type="button" class="labor-event-toggle" aria-expanded="false">'+
-                     '<span class="labor-event-date">'+displayDate(ev.sortDate)+'</span>'+
-                     '<span class="labor-event-name">'+esc(ev.name)+'</span>'+
-                     '<span class="labor-event-total">'+yen(ev.total)+'</span>'+
-                     '<span class="labor-event-arrow">▼</span>'+
-                   '</button>'+
-                   '<div class="labor-event-detail">'+
-                     (meta?'<div class="labor-event-meta">'+meta+'</div>':'')+
-                     (staffRows||'<div class="labor-event-empty">スタッフ労務費の登録がありません</div>')+
-                   '</div>'+
-                 '</div>';
-        }).join('');
-
-      box.innerHTML=
-        '<div class="labor-section">'+
-          '<h3>イベント別 労務費</h3>'+
-          '<div class="labor-note" style="margin:0 0 10px">日付順（新しい順）／イベント名をタップするとスタッフ別の内容が開きます。</div>'+
-          '<div class="labor-event-list">'+eventCards+'</div>'+
-        '</div>';
-
-      box.querySelectorAll('.labor-event-toggle').forEach(function(button){
-        button.addEventListener('click',function(){
-          const item=button.closest('.labor-event-item');
-          const isOpen=item.classList.toggle('open');
-          button.setAttribute('aria-expanded',isOpen?'true':'false');
-        });
-      });
-    };
-    function activate(){
-      const panel=document.getElementById('laborKingPanel');
-      if(panel){
-        const title=panel.querySelector('.panel-head span');
-        if(title && !title.querySelector('.labor-dev-badge')){
-          title.insertAdjacentHTML('beforeend','<span class="labor-dev-badge">開発確認中</span>');
-        }
-      }
-      window.renderLaborKing();
-      window.addEventListener('storage',function(e){
-        if(e.key && e.key.indexOf('labor')>=0)window.renderLaborKing();
-      });
-    }
-    function installLaborAppLauncher(){
-      const panel=document.getElementById('laborKingPanel');
-      if(!panel)return;
-
-      panel.style.display='none';
-
-      let grid=document.querySelector('.king-hub .hub-grid');
-      if(!grid) grid=document.querySelector('.hub-grid');
-      if(grid && !document.getElementById('laborAppLauncher')){
-        const card=document.createElement('button');
-        card.id='laborAppLauncher';
-        card.type='button';
-        card.className='hub-card labor-app-launcher';
-        card.innerHTML=
-          '<div class="hub-top">'+
-            '<div class="hub-icon">👷</div>'+
-            '<div class="hub-title">労務費</div>'+
-          '</div>'+
-          '<div class="hub-open">開く ›</div>';
-        card.addEventListener('click',openLaborApp);
-        grid.appendChild(card);
-      }
-
-      if(!document.getElementById('laborAppScreen')){
-        const screen=document.createElement('section');
-        screen.id='laborAppScreen';
-        screen.innerHTML=
-          '<div class="labor-app-topbar">'+
-            '<button type="button" class="labor-app-back" id="laborAppBack">← KINGへ戻る</button>'+
-            '<div class="labor-app-title">👷 労務費・給与台帳</div>'+
-          '</div>'+
-          '<div class="labor-app-body" id="laborAppBody"></div>';
-        document.body.appendChild(screen);
-        document.getElementById('laborAppBack').addEventListener('click',closeLaborApp);
-      }
-    }
-
-    function openLaborApp(){
-      const panel=document.getElementById('laborKingPanel');
-      const body=document.getElementById('laborAppBody');
-      const screen=document.getElementById('laborAppScreen');
-      if(!panel||!body||!screen)return;
-      body.appendChild(panel);
-      panel.style.display='block';
-      screen.classList.add('open');
-      document.body.classList.add('labor-app-open');
-      window.renderLaborKing();
-      screen.scrollTop=0;
-    }
-
-    function closeLaborApp(){
-      const panel=document.getElementById('laborKingPanel');
-      const screen=document.getElementById('laborAppScreen');
-      if(screen)screen.classList.remove('open');
-      document.body.classList.remove('labor-app-open');
-      if(panel)panel.style.display='none';
-    }
-
-    function startKingDailyFinanceSync(){
-      function attach(){
-        try{
-          if(!window.firebase || !firebase.database) return false;
-          firebase.database().ref('fujiwara/kingDailyFinance').on('value',function(snapshot){
-            var value=snapshot.val();
-            window._fgKingDailyFinance=(Array.isArray(value)?value:Object.values(value||{})).filter(Boolean);
-            try{ localStorage.setItem('fg_labor_db_v1',JSON.stringify({version:2,updatedAt:Date.now(),events:window._fgKingDailyFinance.map(function(r){
-              return {id:r.id,eventId:r.eventId,name:r.eventName||'',eventName:r.eventName||'',date:r.date||'',eventDate:r.date||'',place:r.place||'',payments:r.payments||[],sales:r.sales||0,expense:r.expense||0,staffPay:r.staffPay||0,profit:r.profit||0,deposit:r.deposit||0,cash:r.cash||0,unpaid:r.unpaid||0};
-            })})); }catch(e){}
-            window.renderLaborKing();
-          });
-          return true;
-        }catch(e){ return false; }
-      }
-      if(attach()) return;
-      var tries=0, timer=setInterval(function(){
-        tries++;
-        if(attach()||tries>20) clearInterval(timer);
-      },500);
-    }
-    function startLaborApp(){
-      activate();
-      startKingDailyFinanceSync();
-      setTimeout(installLaborAppLauncher,100);
-      setTimeout(installLaborAppLauncher,800);
-    }
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startLaborApp);
-    else startLaborApp();
-  })();
-  <\/script>`;
-
-  fetch('king.html?laborDev=' + Date.now(), {cache:'no-store'})
-    .then(function(r){
-      if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');
-      return r.text();
-    })
-    .then(function(source){
-      let patched=source;
-
-      const DIRECT_CSS = `
-      /* ===== 賃金台帳カード：HTMLへ直接追加 ===== */
-      #wageLedgerLauncher{
-        border:2px solid #e0b12c!important;
-        background:linear-gradient(135deg,#fffdf4,#fff0b8)!important;
-        cursor:pointer!important;
-      }
-      #wageLedgerLauncher .hub-icon{
-        background:linear-gradient(145deg,#17324d,#0e2235)!important;
-        color:#ffd76a!important;
-      }
-      #wageLedgerScreen{
-        display:none;position:fixed;inset:0;z-index:9999;
-        background:linear-gradient(180deg,#eef7ff,#fffaf0);overflow-y:auto;
-      }
-      #wageLedgerScreen.open{display:block!important}
-      .wage-ledger-topbar{
-        position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
-        padding:12px 16px;background:rgba(255,255,255,.97);
-        border-bottom:1px solid #e5e7eb;box-shadow:0 4px 14px rgba(20,40,70,.08);
-      }
-      .wage-ledger-back{
-        border:0;border-radius:12px;background:#17324d;color:#fff;
-        padding:11px 15px;font-size:15px;font-weight:950;
-      }
-      .wage-ledger-title{font-size:21px;font-weight:950;color:#17324d}
-      .wage-ledger-body{max-width:1180px;margin:0 auto;padding:16px 16px 50px}
-      body.wage-ledger-open{overflow:hidden}
-      body:not(.wage-ledger-open) #laborKingPanel{display:none!important}
-      #wageLedgerScreen #laborKingPanel{
-        display:block!important;margin:0!important;
-        border:2px solid #d8ad2f!important;background:#fffaf0!important;
-        border-radius:24px!important;padding:18px!important;
-      }
-      #wageLedgerScreen #laborKingPanel .panel-head{display:none!important}
-      `;
-
-      const wageCard = `
-      <a class="hub-card" id="wageLedgerLauncher" href="wage-ledger.html">
-        <div>
-          <div class="hub-top">
-            <div class="hub-icon">💴</div>
-            <div class="hub-title">賃金台帳</div>
-          </div>
-          <div class="hub-desc">イベント別・スタッフ別の労務費を確認</div>
-        </div>
-        <div class="hub-open">開く ›</div>
-      </a>`;
-
-      const wageScreen = '';
-
-      const DIRECT_JS = '';
-
-      patched=patched.replace('</style>', DIRECT_CSS + EXTRA_CSS + '</style>');
-
-      /* 担当者アプリのカード直後へ、賃金台帳カードをHTMLとして直接挿入 */
-      const managerCardPattern=/(<a\b[^>]*class="[^"]*hub-card[^"]*"[^>]*>[\s\S]*?<div class="hub-title">\s*担当者アプリ\s*<\/div>[\s\S]*?<\/a>)/;
-      if(managerCardPattern.test(patched)){
-        patched=patched.replace(managerCardPattern,'$1'+wageCard);
-      }else{
-        /* aタグ以外でも見つけられる予備処理 */
-        const managerButtonPattern=/(<(?:a|button)\b[^>]*class="[^"]*hub-card[^"]*"[^>]*>[\s\S]*?担当者アプリ[\s\S]*?<\/(?:a|button)>)/;
-        patched=patched.replace(managerButtonPattern,'$1'+wageCard);
-      }
-
-      patched=patched.replace('</body>', wageScreen + EXTRA_JS + DIRECT_JS + '</body>');
-      document.open();
-      document.write(patched);
-      document.close();
-    })
-    .catch(function(err){
-      document.getElementById('devLoader').innerHTML=
-        '<div class="loading-card"><h1>⚠️ 読み込み失敗</h1>'+
-        '<p>このファイルを <b>king.html と同じ場所</b> にアップロードしてください。</p>'+
-        '<div class="error">'+String(err.message||err)+'</div></div>';
-    });
-})();
-</script>
-</body>
-</html>
+updateClock();renderLaborKing();loadKingMiyuCommand();connectOfficeTimecardFirebase();connectPrivateCalendar();connectPartnerShareCenterKing();renderPartnerProfitKing();setInterval(updateClock,30000);
+</script></body></html>

@@ -29,7 +29,6 @@ header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-
 const DEFAULTS=[
 {key:"inventory",icon:"📦",title:"在庫管理",owner:"担当者",desc:"ストッカー・冷蔵庫の保存場所、在庫数、持出し数を管理",url:"index.html?open=inventory"},
 {key:"neta",icon:"📋",title:"ネタ一覧表アプリ",owner:"文太",desc:"ネタ一覧・必要数量・買い出し・購入済みチェック",url:"neta-shopping-list.html"},
-{key:"mainNetaSales",icon:"📈",title:"主力ネタ一覧",owner:"リーダー",desc:"イベント別の主力ネタ売上・販売数・単価・使用資材・月別ランキング",url:"main-neta-sales.html",leaderOnly:true},
 {key:"vehicle",icon:"🚚",title:"車両管理アプリ",owner:"将",desc:"車両点検・車検・保険・洗車・修理記録",url:"vehicle-management.html"},
 {key:"prepare",icon:"📦",title:"準備アプリ",owner:"繁充",desc:"積込チェック・準備確認・シート記入・完了報告",url:"preparation-app.html"},
 {key:"lpg",icon:"🔥",title:"松笠商店（LPG）管理",owner:"繁充",desc:"20kg・10kg・8kgの仕入、返却、今回発注数量、在庫累計",url:"lpg-management.html"}];
@@ -45,14 +44,6 @@ function getData(){
         const i=out.findIndex(x=>x.key===s.key);
         if(i>=0) out[i]={...out[i],...s};
       });
-
-      // 主力ネタ一覧は保存済み設定に関係なく、必ずリーダー専用に固定
-      const mainNeta=out.find(x=>x.key==="mainNetaSales");
-      if(mainNeta){
-        mainNeta.owner="リーダー";
-        mainNeta.leaderOnly=true;
-        mainNeta.url="main-neta-sales.html";
-      }
 
       // 現在のDEFAULTSだけを保存するため、削除した仕入登録は復活しない
       localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(out));
@@ -70,24 +61,20 @@ function esc(s=""){
 
 function renderCards(){
  document.getElementById("cards").innerHTML=data.map((x,i)=>{
-  const action=x.leaderOnly
-   ?`<button class="locked-btn" type="button" disabled>🔒 リーダー専用・操作不可</button>`
-   :`<button class="open-btn" onclick="openApp(${i})">アプリを開く</button><button class="edit-btn" onclick="editItem(${i})">担当者を変更</button>`;
-  const badge=x.leaderOnly?'<span class="leader-badge">担当者は閲覧・編集できません</span>':'';
+  const action=`<button class="open-btn" onclick="openApp(${i})">アプリを開く</button><button class="edit-btn" onclick="editItem(${i})">担当者を変更</button>`;
+  const badge='';
   return `<section class="card"><div class="card-head"><div class="icon">${x.icon}</div><div><h2 class="title">${esc(x.title)}</h2><div class="owner">担当：<strong>${esc(x.owner||"未設定")}</strong></div>${badge}</div></div><p class="desc">${esc(x.desc)}</p><div class="actions">${action}</div></section>`;
  }).join("");
 }
 
 function renderSettings(){
  document.getElementById("settingRows").innerHTML=data.map((x,i)=>{
-  if(x.leaderOnly)return `<div class="setting-row"><label>${esc(x.title)}</label><div class="leader-badge">リーダー専用のため担当者側では変更できません</div><input id="owner-${i}" type="hidden" value="${esc(x.owner)}"><input id="url-${i}" type="hidden" value="${esc(x.url)}"></div>`;
   return `<div class="setting-row"><label>${esc(x.title)}の担当者名</label><input id="owner-${i}" value="${esc(x.owner)}"><label>${esc(x.title)}のURL／ファイル名</label><input id="url-${i}" value="${esc(x.url)}"></div>`;
  }).join("");
 }
 
 function saveSettings(){
   data=data.map((x,i)=>{
-    if(x.leaderOnly) return {...x,owner:"リーダー",url:"main-neta-sales.html",leaderOnly:true};
     return {...x,owner:document.getElementById(`owner-${i}`).value.trim()||"未設定",url:document.getElementById(`url-${i}`).value.trim()};
   });
   localStorage.setItem("fujiwara_manager_apps_v1",JSON.stringify(data));
@@ -98,7 +85,6 @@ function saveSettings(){
 function loadSettingsForm(){data=getData();renderCards();renderSettings()}
 function editItem(i){document.getElementById("settings").open=true;setTimeout(()=>document.getElementById(`owner-${i}`).focus(),80)}
 function openApp(i){
-  if(data[i]?.leaderOnly) return alert("主力ネタ一覧はリーダー専用です");
   const u=(data[i].url||"").trim();
   if(!u) return alert("URLを設定してください");
   location.href=u;
