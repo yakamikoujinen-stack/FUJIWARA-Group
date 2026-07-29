@@ -2,214 +2,571 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>KING APP 開発版 v2｜業務通知・MIYU連携</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>FUJIWARA KING SYSTEM｜本番版</title>
 <style>
-html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff;color:#102043}
-.loading{min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px}
-.loading-card{background:white;border-radius:24px;padding:28px;box-shadow:0 12px 30px rgba(45,68,100,.15);max-width:520px}
-.loading-card h1{margin:0 0 12px;color:#b47c00}
-.error{color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;border-radius:14px;padding:14px;margin-top:14px;text-align:left}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
+#devLoader{max-width:760px;margin:40px auto;padding:20px}
+.loading-card{background:#fff;border-radius:20px;padding:24px;box-shadow:0 12px 30px rgba(30,60,100,.15)}
+.loading-card h1{font-size:24px;margin:0 0 12px;color:#17324d}
+.loading-card p{line-height:1.7;color:#475569}
+.error{margin-top:12px;padding:12px;border-radius:12px;background:#fff1f2;color:#991b1b;font-weight:800}
+
+.labor-app-launcher{
+  cursor:pointer;border:1px solid #e7bd45!important;
+  background:linear-gradient(135deg,#fffdf5,#fff2b8)!important;
+}
+.labor-app-launcher .hub-icon{
+  background:linear-gradient(145deg,#17324d,#0f2235)!important;
+  color:#ffd76a!important;
+  font-size:31px!important;
+}
+#laborAppScreen{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(180deg,#eef7ff,#fffaf0);
+  overflow-y:auto;padding-bottom:40px;
+}
+#laborAppScreen.open{display:block}
+.labor-app-topbar{
+  position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;background:rgba(255,255,255,.96);
+  border-bottom:1px solid #e5e7eb;box-shadow:0 4px 14px rgba(20,40,70,.08);
+}
+.labor-app-back{
+  border:0;border-radius:12px;background:#17324d;color:#fff;
+  padding:11px 15px;font-size:15px;font-weight:900;
+}
+.labor-app-title{font-size:20px;font-weight:950;color:#17324d}
+.labor-app-body{max-width:1180px;margin:0 auto;padding:16px}
+body.labor-app-open{overflow:hidden}
+
+.labor-event-list{display:grid;gap:10px}
+.labor-event-item{
+  border:1px solid #dbe3ec;border-radius:15px;background:#fff;overflow:hidden;
+  box-shadow:0 4px 12px rgba(30,50,80,.06)
+}
+.labor-event-toggle{
+  width:100%;border:0;background:#fff;padding:15px 14px;
+  display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  text-align:left;color:#17324d;font-size:14px;font-weight:950;cursor:pointer
+}
+.labor-event-toggle:active{background:#f5f9fd}
+.labor-event-name{font-size:16px}
+.labor-event-total{font-size:16px;color:#8a6400;white-space:nowrap}
+.labor-event-arrow{font-size:18px;transition:transform .2s}
+.labor-event-item.open .labor-event-arrow{transform:rotate(180deg)}
+.labor-event-detail{display:none;border-top:1px solid #e8edf3;background:#fbfdff;padding:12px}
+.labor-event-item.open .labor-event-detail{display:block}
+.labor-event-meta{font-size:12px;color:#64748b;margin-bottom:9px;font-weight:800}
+.labor-event-staff{
+  display:grid;grid-template-columns:1fr auto;gap:8px 12px;
+  padding:10px;border-bottom:1px solid #edf1f5;font-size:14px
+}
+.labor-event-staff:last-child{border-bottom:0}
+.labor-event-staff-name{font-weight:850}
+.labor-event-staff-amount{font-weight:950;text-align:right}
+.labor-event-zero{color:#b42318}
+.labor-event-empty{padding:14px;text-align:center;color:#64748b;font-weight:800}
+@media(max-width:600px){
+  .labor-event-toggle{grid-template-columns:1fr auto}
+  .labor-event-arrow{grid-column:2;grid-row:1}
+  .labor-event-total{grid-column:1 / -1}
+}
+
+
+/* ===== v3 シンプル窓口・日付順 ===== */
+.labor-summary-grid,
+.labor-section:nth-of-type(n+2){display:none!important}
+.labor-section{
+  padding:12px!important;
+  border:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.labor-section h3{
+  margin:0 0 4px!important;
+  font-size:19px!important;
+  color:#17324d!important;
+}
+.labor-note{font-size:12px!important;color:#64748b!important}
+.labor-event-list{gap:8px!important}
+.labor-event-item{
+  border:1px solid #d9e2ec!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.labor-event-toggle{
+  padding:13px 12px!important;
+  grid-template-columns:auto 1fr auto!important;
+  gap:10px!important;
+}
+.labor-event-date{
+  min-width:92px;
+  color:#0b5cab;
+  font-size:13px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.labor-event-name{
+  font-size:15px!important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.labor-event-total{font-size:14px!important}
+.labor-event-arrow{font-size:15px!important}
+.labor-app-body{padding:10px!important}
+#laborKingPanel{
+  border:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  margin-top:8px!important;
+}
+#laborKingPanel .panel-head{display:none!important}
+@media(max-width:600px){
+  .labor-event-toggle{
+    grid-template-columns:82px minmax(0,1fr) auto!important;
+  }
+  .labor-event-total{
+    grid-column:2!important;
+    font-size:13px!important;
+  }
+  .labor-event-arrow{
+    grid-column:3!important;
+    grid-row:1 / span 2!important;
+  }
+}
+
 </style>
 </head>
 <body>
-<div class="loading" id="devLoader">
+<div id="devLoader">
   <div class="loading-card">
-    <h1>👑 KING APP 開発版 v2</h1>
-    <p>本番の機能を保護したまま、通知・MIYU連携を読み込んでいます。</p>
+    <h1>👷 KING 労務費集計・開発版</h1>
+    <p>本番の king.html を安全に読み込み、労務費集計だけを追加しています。</p>
   </div>
 </div>
 
 <script>
 (function(){
   const EXTRA_CSS = `
-/* ===== KING DEV v2：業務通知・MIYU連携（本番機能を壊さない追加） ===== */
-.top > .notice{display:none !important;}
-.top{grid-template-columns:1.05fr .95fr !important;}
-@media(max-width:980px){.top{grid-template-columns:1fr !important;}}
-.king-hub a.hub-card[href="miyu.html"]{display:none !important;}
-
-.king-business-center{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-top:18px}
-.king-business-card{padding:18px}
-.king-business-head{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #e8edf5;padding-bottom:11px}
-.king-business-head h2{margin:0;font-size:22px;color:#123b66}
-.king-live{background:#dcfce7;color:#166534;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950}
-.king-notice-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-.king-notice-tab{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:8px 12px;font-weight:900;color:#334155}
-.king-notice-tab.active{background:#123b66;color:#fff;border-color:#123b66}
-.king-business-list{display:grid;gap:9px}
-.king-business-item{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:start;border:1px solid #e5ebf2;border-radius:15px;padding:12px;background:#fff}
-.king-business-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:#eef6ff}
-.king-business-item.order .king-business-icon{background:#fff7d6}
-.king-business-item.construction .king-business-icon{background:#e8f4ff}
-.king-business-item.manager .king-business-icon{background:#eefbea}
-.king-business-title{font-weight:950;font-size:14px}
-.king-business-meta{font-size:12px;color:#647188;font-weight:750;line-height:1.55;margin-top:3px}
-.king-business-time{font-size:11px;color:#647188;white-space:nowrap}
-.king-empty{padding:18px;text-align:center;border:1px dashed #cbd5e1;border-radius:15px;color:#647188;font-weight:850;background:#f8fafc}
-.king-miyu-dev{background:linear-gradient(145deg,#fff7fb,#eef6ff);border:1px solid #f3c4d7}
-.king-miyu-face{font-size:54px;text-align:center;margin:8px 0}
-.king-miyu-message{background:#fff;border:1px solid #ead7e2;border-radius:15px;padding:13px;font-size:14px;font-weight:800;line-height:1.7}
-.king-miyu-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
-.king-miyu-actions a,.king-miyu-actions button{border:0;border-radius:12px;min-height:48px;text-decoration:none;display:flex;align-items:center;justify-content:center;font-weight:950;font-size:14px}
-.king-miyu-talk{background:#7c3aed;color:#fff}
-.king-miyu-refresh{background:#0f172a;color:#fff}
-
-
-
-
-@media(max-width:850px){.king-business-center{grid-template-columns:1fr}}
-@media(max-width:560px){.king-business-card{padding:14px}.king-business-item{grid-template-columns:38px 1fr}.king-business-time{grid-column:2}.king-miyu-actions{grid-template-columns:1fr}}
-`;
-
-  const PANEL = `
-
-<section class="king-business-center" id="kingBusinessCenter">
-  <section class="card king-business-card">
-    <div class="king-business-head">
-      <h2>🔔 業務お知らせ</h2>
-      <span class="king-live" id="kingBusinessStatus">確認中</span>
-    </div>
-    <div class="king-notice-tabs">
-      <button class="king-notice-tab active" data-kind="all">すべて</button>
-      <button class="king-notice-tab" data-kind="order">📦 発注</button>
-      <button class="king-notice-tab" data-kind="construction">🏗️ 建設</button>
-      <button class="king-notice-tab" data-kind="manager">👤 担当者</button>
-    </div>
-    <div class="king-business-list" id="kingBusinessList">
-      <div class="king-empty">材料・資材発注と各アプリ更新を確認しています。</div>
-    </div>
-  </section>
-
-  <section class="card king-business-card king-miyu-dev">
-    <div class="king-business-head">
-      <h2>👩‍💼 MIYU 秘書</h2>
-      <span class="king-live">連携中</span>
-    </div>
-    <div class="king-miyu-face">👩‍💼</div>
-    <div class="king-miyu-message" id="kingMiyuBusinessMessage">
-      相棒、業務のお知らせを確認しています。
-    </div>
-    <div class="king-miyu-actions">
-      <a class="king-miyu-talk" href="miyu.html">💬 MIYUに相談</a>
-      <button class="king-miyu-refresh" onclick="window.kingRefreshBusinessNotices()">🔄 再確認</button>
-    </div>
-  </section>
-</section>
-`;
+  /* ===== KING 労務費集計 開発版 ===== */
+  #laborKingPanel{
+    display:block !important;
+    margin-top:18px !important;
+    border:2px solid #e0b12c !important;
+    background:linear-gradient(135deg,#fffdf5,#fff8d9) !important;
+  }
+  #laborKingPanel .panel-head{
+    color:#73520a !important;
+  }
+  .labor-dev-badge{
+    display:inline-block;
+    margin-left:8px;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#17324d;
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+  }
+  .labor-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .labor-summary-card{
+    background:#fff;
+    border:1px solid #eadcae;
+    border-radius:15px;
+    padding:13px;
+    box-shadow:0 5px 14px rgba(60,50,10,.06);
+  }
+  .labor-summary-card small{color:#64748b;font-weight:800}
+  .labor-summary-card b{display:block;margin-top:5px;font-size:25px;color:#17324d}
+  .labor-section{
+    background:#fff;
+    border:1px solid #e6eaf0;
+    border-radius:15px;
+    padding:13px;
+    margin-top:12px;
+    overflow-x:auto;
+  }
+  .labor-section h3{margin:0 0 10px;color:#0b5cab;font-size:17px}
+  .labor-table{width:100%;border-collapse:collapse;min-width:460px}
+  .labor-table th,.labor-table td{padding:10px 8px;border-bottom:1px solid #edf0f4;text-align:left;font-size:13px}
+  .labor-table th{background:#f4f8fc;color:#475569}
+  .labor-table td.num,.labor-table th.num{text-align:right}
+  .labor-unpaid{color:#b42318;font-weight:900}
+  .labor-paid{color:#16803c;font-weight:900}
+  .labor-empty{padding:20px;text-align:center;border:1px dashed #cbd5e1;border-radius:14px;background:#fff;color:#64748b;font-weight:800}
+  .labor-note{font-size:12px;color:#64748b;line-height:1.7;margin-top:10px}
+  @media(max-width:760px){
+    .labor-summary-grid{grid-template-columns:repeat(2,1fr)}
+    .labor-summary-card b{font-size:21px}
+  }`;
 
   const EXTRA_JS = `
-<script>
-(function(){
-  const state={items:[],filter:'all',firebaseReady:false};
-  const paths=[
-    {path:'fujiwara/notifications/king',kind:'all'},
-    {path:'fujiwara/material_orders',kind:'order'},
-    {path:'fujiwara/supply_orders',kind:'order'},
-    {path:'fujiwara/construction_updates',kind:'construction'},
-    {path:'fujiwara/manager_updates',kind:'manager'}
-  ];
-
-  function safe(v){return String(v==null?'':v).replace(/[&<>"']/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]})}
-  function arr(v){if(!v)return[];if(Array.isArray(v))return v;return Object.keys(v).map(function(k){const x=v[k];return typeof x==='object'&&x?Object.assign({id:k},x):{id:k,title:String(x)}})}
-  function timeValue(x){return x.updatedAt||x.createdAt||x.timestamp||x.date||''}
-  function kindOf(x,fallback){
-    const t=String(x.kind||x.type||x.category||fallback||'').toLowerCase();
-    if(t.includes('order')||t.includes('発注')||t.includes('material')||t.includes('supply'))return'order';
-    if(t.includes('construction')||t.includes('建設'))return'construction';
-    if(t.includes('manager')||t.includes('担当'))return'manager';
-    return fallback==='all'?'manager':fallback;
-  }
-  function normalize(x,fallback,source){
-    const kind=kindOf(x,fallback);
-    return {
-      id:String(x.id||x.key||Math.random()),
-      kind:kind,
-      title:String(x.title||x.message||x.name||(kind==='order'?'材料・資材の発注確認':kind==='construction'?'建設アプリが更新されました':'担当者アプリが更新されました')),
-      detail:String(x.detail||x.memo||x.note||x.description||x.updatedBy||x.staff||''),
-      time:String(timeValue(x)),
-      source:source||String(x.source||'')
-    };
-  }
-  function formatTime(v){
-    if(!v)return'';
-    const d=new Date(v);
-    if(isNaN(d))return String(v).slice(0,16);
-    return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-  }
-  function dedupe(items){
-    const m={};
-    items.forEach(function(x){const k=x.kind+'|'+x.id+'|'+x.title;m[k]=x});
-    return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return String(b.time).localeCompare(String(a.time))}).slice(0,30);
-  }
-  function render(){
-    const box=document.getElementById('kingBusinessList');
-    const status=document.getElementById('kingBusinessStatus');
-    if(!box)return;
-    const list=state.filter==='all'?state.items:state.items.filter(function(x){return x.kind===state.filter});
-    status.textContent=state.firebaseReady?'自動連携':'端末確認';
-    if(!list.length){
-      box.innerHTML='<div class="king-empty">現在、新しい業務通知はありません。</div>';
-    }else{
-      box.innerHTML=list.map(function(x){
-        const icon=x.kind==='order'?'📦':x.kind==='construction'?'🏗️':'👤';
-        const label=x.kind==='order'?'発注':x.kind==='construction'?'建設アプリ':'担当者アプリ';
-        return '<div class="king-business-item '+x.kind+'"><div class="king-business-icon">'+icon+'</div><div><div class="king-business-title">'+safe(x.title)+'</div><div class="king-business-meta">'+safe(label+(x.detail?'｜'+x.detail:'')+(x.source?'｜'+x.source:''))+'</div></div><div class="king-business-time">'+safe(formatTime(x.time))+'</div></div>';
-      }).join('');
-    }
-    const orderCount=state.items.filter(function(x){return x.kind==='order'}).length;
-    const appCount=state.items.filter(function(x){return x.kind==='construction'||x.kind==='manager'}).length;
-    const msg=document.getElementById('kingMiyuBusinessMessage');
-    if(msg){
-      if(orderCount)msg.innerHTML='相棒、<b>材料・資材の発注確認が '+orderCount+'件</b>あります。先に発注内容を確認しましょう。';
-      else if(appCount)msg.innerHTML='相棒、<b>建設・担当者アプリの更新が '+appCount+'件</b>あります。変更内容を確認できます。';
-      else msg.textContent='相棒、現在は急ぎの発注・更新通知はありません。';
-    }
-  }
-  function connect(){
-    state.items=[];
-    if(typeof firebase!=='undefined'&&firebase.database){
-      state.firebaseReady=true;
-      paths.forEach(function(p){
-        firebase.database().ref(p.path).on('value',function(s){
-          const remote=arr(s.val()).map(function(x){return normalize(x,p.kind,p.path)});
-          const others=state.items.filter(function(x){return x.source!==p.path});
-          state.items=dedupe(others.concat(remote));
-          render();
-        },function(){render()});
+  <script>
+  (function(){
+    function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+    function esc(v){
+      return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
       });
     }
-    render();
-  }
-  document.querySelectorAll('.king-notice-tab').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      document.querySelectorAll('.king-notice-tab').forEach(function(b){b.classList.remove('active')});
-      btn.classList.add('active');state.filter=btn.dataset.kind;render();
-    });
-  });
-  window.kingRefreshBusinessNotices=function(){render()};
-  connect();
-})();
-<\/script>`;
+    function pickAmount(p){
+      const candidates=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate];
+      for(const v of candidates){
+        const n=Number(String(v==null?'':v).replace(/,/g,''));
+        if(Number.isFinite(n) && n!==0)return n;
+      }
+      return 0;
+    }
+    function pickStaff(p){
+      return p.staffName||p.staff||p.name||p.workerName||'スタッフ未設定';
+    }
+    function getLaborDb(){
+      const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
+      for(const key of keys){
+        try{
+          const value=localStorage.getItem(key);
+          if(!value)continue;
+          const parsed=JSON.parse(value);
+          if(parsed && (Array.isArray(parsed.events)||Array.isArray(parsed))) {
+            return {key:key,events:Array.isArray(parsed)?parsed:(parsed.events||[])};
+          }
+        }catch(e){}
+      }
+      return {key:'fg_labor_db_v1',events:[]};
+    }
+    
+    function normalizeDateValue(value){
+      if(!value)return '';
+      const s=String(value).trim();
+      const m=s.match(/(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})/);
+      if(m){
+        return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+      }
+      const m2=s.match(/^(\d{4})(\d{2})(\d{2})$/);
+      if(m2)return m2[1]+'-'+m2[2]+'-'+m2[3];
+      const d=new Date(s);
+      if(!Number.isNaN(d.getTime())){
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+      return '';
+    }
+    function displayDate(value){
+      const n=normalizeDateValue(value);
+      if(!n)return '日付未設定';
+      const p=n.split('-');
+      return p[0]+'/'+Number(p[1])+'/'+Number(p[2]);
+    }
+window.renderLaborKing=function(){
+      const box=document.getElementById('laborKingBox');
+      if(!box)return;
 
-  fetch('king.html?dev=' + Date.now(), {cache:'no-store'})
-    .then(function(r){if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');return r.text()})
+      const source=getLaborDb();
+      const events=source.events||[];
+
+      if(!events.length){
+        box.innerHTML=
+          '<div class="labor-empty">労務費データはまだありません。<br>'+
+          '<small>メインアプリでスタッフ別労務費を保存後、「更新」を押してください。</small></div>';
+        return;
+      }
+
+      const people={};
+      const months={};
+      const unpaid=[];
+      const groupedEvents={};
+      let total=0;
+      let paymentCount=0;
+
+      events.forEach(function(ev,index){
+        const eventName=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
+        const eventDate=ev.date||ev.eventDate||ev.startDate||'';
+        const eventPlace=ev.place||ev.location||ev.venue||'';
+        const month=String(eventDate).slice(0,7)||'未設定';
+
+        const payments=Array.isArray(ev.payments)?ev.payments:
+                       Array.isArray(ev.staffPayments)?ev.staffPayments:
+                       Array.isArray(ev.labor)?ev.labor:[];
+
+        if(!groupedEvents[eventName]){
+          groupedEvents[eventName]={
+            name:eventName,
+            dates:[],
+            places:[],
+            staff:{},
+            total:0
+          };
+        }
+
+        const group=groupedEvents[eventName];
+        if(eventDate && !group.dates.includes(eventDate))group.dates.push(eventDate);
+        if(eventPlace && !group.places.includes(eventPlace))group.places.push(eventPlace);
+
+        payments.forEach(function(p){
+          const amount=pickAmount(p);
+          const staff=pickStaff(p);
+
+          total+=amount;
+          paymentCount++;
+          group.total+=amount;
+          group.staff[staff]=(group.staff[staff]||0)+amount;
+          people[staff]=(people[staff]||0)+amount;
+          months[month]=(months[month]||0)+amount;
+
+          if(p.paid===false || p.paymentStatus==='unpaid' || p.status==='未払い'){
+            unpaid.push({event:eventName,staff:staff,amount:amount});
+          }
+        });
+      });
+
+      const peopleRows=Object.entries(people)
+        .sort(function(a,b){return b[1]-a[1]})
+        .map(function(r){
+          return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+        }).join('');
+
+      const monthRows=Object.entries(months)
+        .sort(function(a,b){return String(b[0]).localeCompare(String(a[0]))})
+        .map(function(r){
+          return '<tr><td>'+esc(r[0])+'</td><td class="num">'+yen(r[1])+'</td></tr>';
+        }).join('');
+
+      const unpaidRows=unpaid.length
+        ? unpaid.map(function(r){
+            return '<tr><td>'+esc(r.event)+'</td><td>'+esc(r.staff)+'</td>'+
+                   '<td class="num labor-unpaid">'+yen(r.amount)+'</td></tr>';
+          }).join('')
+        : '<tr><td colspan="3" class="labor-paid">未払いはありません</td></tr>';
+
+      const eventCards=Object.values(groupedEvents)
+        .map(function(ev){
+          ev.dates=ev.dates
+            .map(normalizeDateValue)
+            .filter(Boolean)
+            .sort(function(a,b){return b.localeCompare(a)});
+          ev.sortDate=ev.dates.length?ev.dates[0]:'0000-00-00';
+          return ev;
+        })
+        .sort(function(a,b){
+          const dateCompare=String(b.sortDate).localeCompare(String(a.sortDate));
+          if(dateCompare!==0)return dateCompare;
+          return String(a.name).localeCompare(String(b.name),'ja');
+        })
+        .map(function(ev,index){
+          const staffRows=Object.entries(ev.staff)
+            .sort(function(a,b){return b[1]-a[1]})
+            .map(function(r){
+              const zeroClass=Number(r[1])===0?' labor-event-zero':'';
+              return '<div class="labor-event-staff">'+
+                       '<div class="labor-event-staff-name">'+esc(r[0])+'</div>'+
+                       '<div class="labor-event-staff-amount'+zeroClass+'">'+yen(r[1])+'</div>'+
+                     '</div>';
+            }).join('');
+
+          const meta=[
+            ev.dates.length?'日付：'+ev.dates.map(esc).join('・'):'',
+            ev.places.length?'場所：'+ev.places.map(esc).join('・'):''
+          ].filter(Boolean).join('　');
+
+          return '<div class="labor-event-item" data-event-index="'+index+'">'+
+                   '<button type="button" class="labor-event-toggle" aria-expanded="false">'+
+                     '<span class="labor-event-date">'+displayDate(ev.sortDate)+'</span>'+
+                     '<span class="labor-event-name">'+esc(ev.name)+'</span>'+
+                     '<span class="labor-event-total">'+yen(ev.total)+'</span>'+
+                     '<span class="labor-event-arrow">▼</span>'+
+                   '</button>'+
+                   '<div class="labor-event-detail">'+
+                     (meta?'<div class="labor-event-meta">'+meta+'</div>':'')+
+                     (staffRows||'<div class="labor-event-empty">スタッフ労務費の登録がありません</div>')+
+                   '</div>'+
+                 '</div>';
+        }).join('');
+
+      box.innerHTML=
+        '<div class="labor-section">'+
+          '<h3>イベント別 労務費</h3>'+
+          '<div class="labor-note" style="margin:0 0 10px">日付順（新しい順）／イベント名をタップするとスタッフ別の内容が開きます。</div>'+
+          '<div class="labor-event-list">'+eventCards+'</div>'+
+        '</div>';
+
+      box.querySelectorAll('.labor-event-toggle').forEach(function(button){
+        button.addEventListener('click',function(){
+          const item=button.closest('.labor-event-item');
+          const isOpen=item.classList.toggle('open');
+          button.setAttribute('aria-expanded',isOpen?'true':'false');
+        });
+      });
+    };
+    function activate(){
+      const panel=document.getElementById('laborKingPanel');
+      if(panel){
+        const title=panel.querySelector('.panel-head span');
+        if(title && !title.querySelector('.labor-dev-badge')){
+          title.insertAdjacentHTML('beforeend','<span class="labor-dev-badge">開発確認中</span>');
+        }
+      }
+      window.renderLaborKing();
+      window.addEventListener('storage',function(e){
+        if(e.key && e.key.indexOf('labor')>=0)window.renderLaborKing();
+      });
+    }
+    function installLaborAppLauncher(){
+      const panel=document.getElementById('laborKingPanel');
+      if(!panel)return;
+
+      panel.style.display='none';
+
+      let grid=document.querySelector('.king-hub .hub-grid');
+      if(!grid) grid=document.querySelector('.hub-grid');
+      if(grid && !document.getElementById('laborAppLauncher')){
+        const card=document.createElement('button');
+        card.id='laborAppLauncher';
+        card.type='button';
+        card.className='hub-card labor-app-launcher';
+        card.innerHTML=
+          '<div class="hub-top">'+
+            '<div class="hub-icon">👷</div>'+
+            '<div class="hub-title">労務費</div>'+
+          '</div>'+
+          '<div class="hub-open">開く ›</div>';
+        card.addEventListener('click',openLaborApp);
+        grid.appendChild(card);
+      }
+
+      if(!document.getElementById('laborAppScreen')){
+        const screen=document.createElement('section');
+        screen.id='laborAppScreen';
+        screen.innerHTML=
+          '<div class="labor-app-topbar">'+
+            '<button type="button" class="labor-app-back" id="laborAppBack">← KINGへ戻る</button>'+
+            '<div class="labor-app-title">👷 労務費・給与台帳</div>'+
+          '</div>'+
+          '<div class="labor-app-body" id="laborAppBody"></div>';
+        document.body.appendChild(screen);
+        document.getElementById('laborAppBack').addEventListener('click',closeLaborApp);
+      }
+    }
+
+    function openLaborApp(){
+      const panel=document.getElementById('laborKingPanel');
+      const body=document.getElementById('laborAppBody');
+      const screen=document.getElementById('laborAppScreen');
+      if(!panel||!body||!screen)return;
+      body.appendChild(panel);
+      panel.style.display='block';
+      screen.classList.add('open');
+      document.body.classList.add('labor-app-open');
+      window.renderLaborKing();
+      screen.scrollTop=0;
+    }
+
+    function closeLaborApp(){
+      const panel=document.getElementById('laborKingPanel');
+      const screen=document.getElementById('laborAppScreen');
+      if(screen)screen.classList.remove('open');
+      document.body.classList.remove('labor-app-open');
+      if(panel)panel.style.display='none';
+    }
+
+    function startLaborApp(){
+      activate();
+      setTimeout(installLaborAppLauncher,100);
+      setTimeout(installLaborAppLauncher,800);
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startLaborApp);
+    else startLaborApp();
+  })();
+  <\/script>`;
+
+  fetch('king.html?laborDev=' + Date.now(), {cache:'no-store'})
+    .then(function(r){
+      if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');
+      return r.text();
+    })
     .then(function(source){
       let patched=source;
-      patched=patched.replace('</style>', EXTRA_CSS + '</style>');
-      const anchor='<section class="king-hub"';
-      if(patched.includes(anchor)){
-        patched=patched.replace(anchor, PANEL + anchor);
-      }else{
-        patched=patched.replace('<main class="wrap">','<main class="wrap">'+PANEL);
+
+      const DIRECT_CSS = `
+      /* ===== 賃金台帳カード：HTMLへ直接追加 ===== */
+      #wageLedgerLauncher{
+        border:2px solid #e0b12c!important;
+        background:linear-gradient(135deg,#fffdf4,#fff0b8)!important;
+        cursor:pointer!important;
       }
-      patched=patched.replace('</body>', EXTRA_JS + '</body>');
+      #wageLedgerLauncher .hub-icon{
+        background:linear-gradient(145deg,#17324d,#0e2235)!important;
+        color:#ffd76a!important;
+      }
+      #wageLedgerScreen{
+        display:none;position:fixed;inset:0;z-index:9999;
+        background:linear-gradient(180deg,#eef7ff,#fffaf0);overflow-y:auto;
+      }
+      #wageLedgerScreen.open{display:block!important}
+      .wage-ledger-topbar{
+        position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+        padding:12px 16px;background:rgba(255,255,255,.97);
+        border-bottom:1px solid #e5e7eb;box-shadow:0 4px 14px rgba(20,40,70,.08);
+      }
+      .wage-ledger-back{
+        border:0;border-radius:12px;background:#17324d;color:#fff;
+        padding:11px 15px;font-size:15px;font-weight:950;
+      }
+      .wage-ledger-title{font-size:21px;font-weight:950;color:#17324d}
+      .wage-ledger-body{max-width:1180px;margin:0 auto;padding:16px 16px 50px}
+      body.wage-ledger-open{overflow:hidden}
+      body:not(.wage-ledger-open) #laborKingPanel{display:none!important}
+      #wageLedgerScreen #laborKingPanel{
+        display:block!important;margin:0!important;
+        border:2px solid #d8ad2f!important;background:#fffaf0!important;
+        border-radius:24px!important;padding:18px!important;
+      }
+      #wageLedgerScreen #laborKingPanel .panel-head{display:none!important}
+      `;
+
+      const wageCard = `
+      <a class="hub-card" id="wageLedgerLauncher" href="wage-ledger.html">
+        <div>
+          <div class="hub-top">
+            <div class="hub-icon">💴</div>
+            <div class="hub-title">賃金台帳</div>
+          </div>
+          <div class="hub-desc">イベント別・スタッフ別の労務費を確認</div>
+        </div>
+        <div class="hub-open">開く ›</div>
+      </a>`;
+
+      const wageScreen = '';
+
+      const DIRECT_JS = '';
+
+      patched=patched.replace('</style>', DIRECT_CSS + EXTRA_CSS + '</style>');
+
+      /* 担当者アプリのカード直後へ、賃金台帳カードをHTMLとして直接挿入 */
+      const managerCardPattern=/(<a\b[^>]*class="[^"]*hub-card[^"]*"[^>]*>[\s\S]*?<div class="hub-title">\s*担当者アプリ\s*<\/div>[\s\S]*?<\/a>)/;
+      if(managerCardPattern.test(patched)){
+        patched=patched.replace(managerCardPattern,'$1'+wageCard);
+      }else{
+        /* aタグ以外でも見つけられる予備処理 */
+        const managerButtonPattern=/(<(?:a|button)\b[^>]*class="[^"]*hub-card[^"]*"[^>]*>[\s\S]*?担当者アプリ[\s\S]*?<\/(?:a|button)>)/;
+        patched=patched.replace(managerButtonPattern,'$1'+wageCard);
+      }
+
+      patched=patched.replace('</body>', wageScreen + EXTRA_JS + DIRECT_JS + '</body>');
       document.open();
       document.write(patched);
       document.close();
     })
     .catch(function(err){
-      document.getElementById('devLoader').innerHTML='<div class="loading-card"><h1>⚠️ 読み込み失敗</h1><p>この開発版は、GitHub上で <b>king.html</b> と同じフォルダにアップロードして確認してください。</p><div class="error">'+String(err.message||err)+'</div></div>';
+      document.getElementById('devLoader').innerHTML=
+        '<div class="loading-card"><h1>⚠️ 読み込み失敗</h1>'+
+        '<p>このファイルを <b>king.html と同じ場所</b> にアップロードしてください。</p>'+
+        '<div class="error">'+String(err.message||err)+'</div></div>';
     });
 })();
 </script>
