@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>KING APP 開発版｜労務費集計</title>
+<title>KING APP｜賃金台帳・お金労務統合版</title>
 <style>
 html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
 #devLoader{max-width:760px;margin:40px auto;padding:20px}
@@ -231,7 +231,7 @@ body.wage-ledger-open{overflow:hidden}
 <div id="devLoader">
   <div class="loading-card">
     <h1>👷 KING 労務費集計・開発版</h1>
-    <p>本番の king.html を安全に読み込み、労務費集計だけを追加しています。</p>
+    <p>本番の king.html を安全に読み込み、賃金台帳とお金・労務の入口を統合しています。</p>
   </div>
 </div>
 
@@ -542,6 +542,48 @@ window.renderLaborKing=function(){
       let patched=source;
       patched=patched.replace('</style>', EXTRA_CSS + '</style>');
       patched=patched.replace('</body>', EXTRA_JS + '</body>');
+      /* ===== お金・労務リンクを統合入口へ固定 ===== */
+      const MONEY_LINK_PATCH = `
+      <script>
+      (function(){
+        function fixMoneyLinks(){
+          document.querySelectorAll('a,button').forEach(function(el){
+            const text=(el.textContent||'').replace(/\s+/g,'').trim();
+            const href=el.getAttribute('href')||'';
+            const onclick=el.getAttribute('onclick')||'';
+
+            const isMoneyLabel =
+              text.includes('お金・労務') ||
+              text.includes('お金・労務管理');
+
+            const isOldMoneyLink =
+              href==='king-money.html' ||
+              onclick.includes("king-money.html");
+
+            if(isMoneyLabel || isOldMoneyLink){
+              if(el.tagName==='A'){
+                el.setAttribute('href','king-money-center.html');
+              }else{
+                el.setAttribute('onclick',"location.href='king-money-center.html'");
+              }
+            }
+          });
+        }
+
+        if(document.readyState==='loading'){
+          document.addEventListener('DOMContentLoaded',fixMoneyLinks);
+        }else{
+          fixMoneyLinks();
+        }
+
+        setTimeout(fixMoneyLinks,300);
+        setTimeout(fixMoneyLinks,1000);
+        setTimeout(fixMoneyLinks,2000);
+      })();
+      <\/script>`;
+
+      patched=patched.replace('</body>', MONEY_LINK_PATCH + '</body>');
+
       document.open();
       document.write(patched);
       document.close();
