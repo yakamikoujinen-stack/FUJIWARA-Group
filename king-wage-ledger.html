@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>KING｜賃金台帳</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>KING｜賃金台帳 Firebase共有版</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eef8ff,#fffaf0);color:#102043}
@@ -25,16 +26,24 @@ th,td{padding:12px 10px;border-bottom:1px solid #edf0f5;text-align:left}
 th{color:#647188;font-size:13px}.num{text-align:right}
 .paid{color:#168a58;font-weight:950}.unpaid{color:#b45309;font-weight:950}
 .empty{text-align:center;padding:34px;color:#647188;font-weight:850;line-height:1.8}
-.note{background:#eff8ff;color:#27506f;border-radius:14px;padding:12px 14px;font-size:12px;font-weight:850;line-height:1.65;margin-top:12px}
+.status{margin-top:12px;padding:13px 14px;border-radius:14px;font-size:13px;font-weight:900;line-height:1.65}
+.status.ok{background:#ecfdf5;color:#166534}
+.status.wait{background:#eff8ff;color:#27506f}
+.status.warn{background:#fff7ed;color:#9a3412}
+.sync-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.sync{border:0;border-radius:13px;padding:12px 15px;font-weight:950;background:#17324d;color:#fff}
+.sync.secondary{background:#1768c8}
 @media(max-width:700px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 12px 70px}h1{font-size:24px}}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <button class="btn" onclick="location.href='king.html'">‹ KINGへ戻る</button>
     <h1>💴 賃金台帳</h1>
-    <button class="btn" onclick="renderAll()">更新</button>
+    <button class="btn" onclick="manualRefresh()">更新</button>
   </div>
 
   <div class="card">
@@ -43,7 +52,11 @@ th{color:#647188;font-size:13px}.num{text-align:right}
       <div class="kpi"><small>イベント数</small><b id="eventCount">0</b></div>
       <div class="kpi"><small>未払い</small><b id="unpaidCount">0件</b></div>
     </div>
-    <div class="note" id="sourceInfo">賃金データを確認中...</div>
+    <div class="status wait" id="syncStatus">Firebaseへ接続しています...</div>
+    <div class="sync-row">
+      <button class="sync" onclick="uploadLocalToFirebase()">この端末の賃金データを共有</button>
+      <button class="sync secondary" onclick="downloadFirebase()">共有データを再読込</button>
+    </div>
   </div>
 
   <div class="tabs">
@@ -62,6 +75,20 @@ th{color:#647188;font-size:13px}.num{text-align:right}
 </div>
 
 <script>
+const firebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94"
+};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+
+const REMOTE_PATH='fujiwara/labor_ledger_shared_v1';
+let currentEvents=[];
+
 function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function numberOf(v){const n=Number(String(v==null?'':v).replace(/,/g,''));return Number.isFinite(n)?n:0}
@@ -85,6 +112,10 @@ function eventArray(v){
   if(Array.isArray(v.events))return v.events;
   if(Array.isArray(v.items))return v.items;
   if(Array.isArray(v.records))return v.records;
+  if(typeof v==='object'){
+    const arr=Object.keys(v).map(k=>v[k]).filter(x=>x&&typeof x==='object');
+    if(arr.some(x=>Array.isArray(x.payments)||Array.isArray(x.staffPayments)||Array.isArray(x.labor)))return arr;
+  }
   return[];
 }
 function paymentsOf(ev){
@@ -94,24 +125,37 @@ function paymentsOf(ev){
   if(Array.isArray(ev.wages))return ev.wages;
   return[];
 }
-function readDb(){
-  const keys=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db'];
-  for(const key of keys){
+function findLocalEvents(){
+  const preferred=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db','fujiwara_labor_db','king_labor_db'];
+  const checked=new Set();
+  const found=[];
+  function inspect(key){
+    if(checked.has(key))return; checked.add(key);
     try{
-      const raw=localStorage.getItem(key);
-      if(!raw)continue;
+      const raw=localStorage.getItem(key); if(!raw)return;
       const events=eventArray(JSON.parse(raw));
-      if(events.length)return {key,events};
+      if(events.length)found.push({key,events});
     }catch(e){}
   }
-  return {key:'fg_labor_db_v1',events:[]};
+  preferred.forEach(inspect);
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i)||'';
+    if(/labor|wage|salary|給与|労務|payment/i.test(key))inspect(key);
+  }
+  found.sort((a,b)=>b.events.length-a.events.length);
+  return found[0]||{key:'',events:[]};
 }
-function renderAll(){
-  const source=readDb(),events=source.events||[];
-  const people={},months={},unpaid=[],paid=[];
+function setStatus(text,type='wait'){
+  const el=document.getElementById('syncStatus');
+  el.className='status '+type;
+  el.innerHTML=text;
+}
+function renderAll(events){
+  currentEvents=Array.isArray(events)?events:[];
+  const people={},months={},unpaidRows=[],paidRows=[];
   let total=0;
 
-  events.forEach((ev,index)=>{
+  currentEvents.forEach((ev,index)=>{
     const date=ev.date||ev.eventDate||ev.startDate||'';
     const name=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
     const place=ev.place||ev.location||'';
@@ -123,16 +167,13 @@ function renderAll(){
       people[staff]=(people[staff]||0)+amount;
       months[month]=(months[month]||0)+amount;
       const row={date,event:name,place,staff,amount,paid:isPaid,paidDate:p.paidDate||p.paymentDate||''};
-      (isPaid?paid:unpaid).push(row);
+      (isPaid?paidRows:unpaidRows).push(row);
     });
   });
 
   totalLabor.textContent=yen(total);
-  eventCount.textContent=events.length;
-  unpaidCount.textContent=unpaid.length+'件';
-  sourceInfo.innerHTML=events.length
-    ?'読込元：<b>'+esc(source.key)+'</b> ／ 保存済みイベント '+events.length+'件'
-    :'このURLの保存領域には賃金データがありません。画面は正常に開いています。';
+  eventCount.textContent=currentEvents.length;
+  unpaidCount.textContent=unpaidRows.length+'件';
 
   const pr=Object.entries(people).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${esc(n)}</td><td class="num">${yen(v)}</td></tr>`).join('');
   person.innerHTML=pr?`<h2>個人別給与台帳</h2><div style="overflow:auto"><table><tr><th>スタッフ</th><th class="num">累計</th></tr>${pr}</table></div>`:'<div class="empty">個人別データはありません。</div>';
@@ -140,7 +181,7 @@ function renderAll(){
   const mr=Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,v])=>`<tr><td>${esc(m)}</td><td class="num">${yen(v)}</td></tr>`).join('');
   month.innerHTML=mr?`<h2>月別集計</h2><div style="overflow:auto"><table><tr><th>月</th><th class="num">労務費</th></tr>${mr}</table></div>`:'<div class="empty">月別データはありません。</div>';
 
-  const er=events.slice().sort((a,b)=>String(b.date||b.eventDate||'').localeCompare(String(a.date||a.eventDate||''))).map((ev,i)=>{
+  const er=currentEvents.slice().sort((a,b)=>String(b.date||b.eventDate||'').localeCompare(String(a.date||a.eventDate||''))).map((ev,i)=>{
     const v=paymentsOf(ev).reduce((s,p)=>s+amountOf(p),0);
     return `<tr><td>${esc(ev.date||ev.eventDate||'')}</td><td>${esc(ev.name||ev.eventName||ev.title||('イベント '+(i+1)))}</td><td>${esc(ev.place||ev.location||'')}</td><td class="num">${yen(v)}</td></tr>`;
   }).join('');
@@ -150,12 +191,56 @@ function renderAll(){
     if(!rows.length)return `<div class="empty">${title}はありません。</div>`;
     return `<h2>${title}</h2><div style="overflow:auto"><table><tr><th>日付</th><th>イベント</th><th>スタッフ</th><th class="num">金額</th><th>状況</th></tr>${rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.event)}</td><td>${esc(r.staff)}</td><td class="num">${yen(r.amount)}</td><td class="${isPaid?'paid':'unpaid'}">${isPaid?'支払済 '+esc(r.paidDate):'未払い'}</td></tr>`).join('')}</table></div>`;
   }
-  document.getElementById('unpaid').innerHTML=paymentTable('未払い一覧',unpaid,false);
-  document.getElementById('paid').innerHTML=paymentTable('支払済一覧',paid,true);
+  document.getElementById('unpaid').innerHTML=paymentTable('未払い一覧',unpaidRows,false);
+  document.getElementById('paid').innerHTML=paymentTable('支払済一覧',paidRows,true);
 }
-renderAll();
-window.addEventListener('pageshow',renderAll);
-window.addEventListener('storage',renderAll);
+async function uploadLocalToFirebase(){
+  const local=findLocalEvents();
+  if(!local.events.length){
+    setStatus('この端末には共有できる賃金データがありません。Safariで以前の賃金台帳が表示される画面を開いてから、このボタンを押してください。','warn');
+    return;
+  }
+  try{
+    setStatus('この端末の賃金データをFirebaseへ共有しています...','wait');
+    await firebase.database().ref(REMOTE_PATH).set({
+      events:local.events,
+      sourceKey:local.key,
+      updatedAt:Date.now(),
+      version:1
+    });
+    setStatus('共有完了：'+local.events.length+'件のイベントをFirebaseへ保存しました。ホーム画面版でも同じデータを表示します。','ok');
+  }catch(e){
+    setStatus('共有に失敗しました：'+esc(e.message||e),'warn');
+  }
+}
+function downloadFirebase(){
+  setStatus('Firebaseの共有データを再読込しています...','wait');
+  firebase.database().ref(REMOTE_PATH).once('value').then(s=>{
+    const v=s.val()||{};
+    const events=eventArray(v.events||v);
+    renderAll(events);
+    if(events.length)setStatus('Firebase共有データを読込済み：'+events.length+'件','ok');
+    else setStatus('Firebaseにはまだ賃金データがありません。Safari側で「この端末の賃金データを共有」を押してください。','warn');
+  }).catch(e=>setStatus('読込に失敗しました：'+esc(e.message||e),'warn'));
+}
+function manualRefresh(){downloadFirebase()}
+firebase.database().ref(REMOTE_PATH).on('value',s=>{
+  const v=s.val()||{};
+  const events=eventArray(v.events||v);
+  if(events.length){
+    renderAll(events);
+    setStatus('Firebase共有中：'+events.length+'件のイベントを表示しています。','ok');
+  }else{
+    const local=findLocalEvents();
+    if(local.events.length){
+      renderAll(local.events);
+      setStatus('この端末に賃金データが見つかりました。下の「この端末の賃金データを共有」を一度押してください。','warn');
+    }else{
+      renderAll([]);
+      setStatus('Firebaseに共有データがありません。Safariで賃金データが表示される状態から共有してください。','warn');
+    }
+  }
+},e=>setStatus('Firebase接続エラー：'+esc(e.message||e),'warn'));
 </script>
 </body>
 </html>
