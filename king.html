@@ -7,145 +7,64 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="KING APP">
 <meta name="theme-color" content="#17324d">
-<title>FUJIWARA KING APP｜現場優先安定版</title>
+<title>FUJIWARA KING APP｜現場安定版</title>
 <style>
-:root{
-  --navy:#17324d;--gold:#d6a21c;--blue:#1489e8;--green:#42ad2e;
-  --text:#102043;--sub:#647188;--line:#e5ebf2;--shadow:0 12px 30px rgba(45,68,100,.12)
-}
+:root{--navy:#17324d;--gold:#d6a21c;--text:#102043;--sub:#647188;--line:#e5ebf2;--shadow:0 12px 30px rgba(45,68,100,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{
-  margin:0;min-height:100vh;
-  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(circle at 10% 0%,rgba(123,213,255,.45),transparent 28%),
-    radial-gradient(circle at 95% 0%,rgba(132,220,95,.3),transparent 25%),
-    linear-gradient(180deg,#effaff,#fff 46%,#fff8ed);
-}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--text);background:radial-gradient(circle at 10% 0%,rgba(123,213,255,.45),transparent 28%),radial-gradient(circle at 95% 0%,rgba(132,220,95,.3),transparent 25%),linear-gradient(180deg,#effaff,#fff 46%,#fff8ed)}
 .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 100px}
-.hero{
-  background:linear-gradient(135deg,#17324d,#295f8d);
-  color:#fff;border-radius:25px;padding:20px;
-  box-shadow:var(--shadow);margin-bottom:18px
-}
-.hero-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.brand{display:flex;align-items:center;gap:13px}
-.crown{font-size:45px;color:#ffd76a}
-h1{margin:0;font-size:clamp(28px,5vw,44px)}
-.hero p{margin:7px 0 0;color:#dcecff;font-weight:800}
+.hero{background:linear-gradient(135deg,#17324d,#295f8d);color:#fff;border-radius:25px;padding:20px;box-shadow:var(--shadow);margin-bottom:18px}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{display:flex;align-items:center;gap:13px}.crown{font-size:45px;color:#ffd76a}
+h1{margin:0;font-size:clamp(28px,5vw,44px)}.hero p{margin:7px 0 0;color:#dcecff;font-weight:800}
 .status{background:#dcfce7;color:#166534;border-radius:999px;padding:8px 12px;font-weight:950;font-size:13px}
-.notice{
-  margin-top:15px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
-  border-radius:15px;padding:12px 14px;font-weight:850
-}
-.group{
-  background:rgba(255,255,255,.94);border:1px solid #fff;border-radius:24px;
-  padding:18px;box-shadow:var(--shadow);margin-bottom:18px
-}
+.notice{margin-top:15px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:15px;padding:12px 14px;font-weight:850}
+.group{background:rgba(255,255,255,.94);border:1px solid #fff;border-radius:24px;padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
 .group-head{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:14px}
-.group-head h2{margin:0;font-size:23px;color:#123b66}
-.group-head span{font-size:12px;color:var(--sub);font-weight:850}
+.group-head h2{margin:0;font-size:23px;color:#123b66}.group-head span{font-size:12px;color:var(--sub);font-weight:850}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.card{
-  min-height:180px;border:1px solid var(--line);border-radius:19px;padding:17px;
-  text-decoration:none;color:var(--text);background:#fff;
-  display:flex;flex-direction:column;justify-content:space-between;
-  box-shadow:0 7px 18px rgba(45,68,100,.07)
-}
-.card:active{transform:scale(.985)}
-.top{display:flex;align-items:center;gap:13px}
-.icon{width:59px;height:59px;border-radius:17px;display:grid;place-items:center;font-size:32px;background:#eef6ff}
-.title{font-size:22px;font-weight:950}
-.desc{margin-top:10px;font-size:13px;color:var(--sub);line-height:1.65;font-weight:800}
-.open{margin-top:14px;color:#1169bd;font-weight:950}
-.main{border:2px solid #e0b12c;background:linear-gradient(135deg,#fffdf5,#fff4c7)}
-.main .icon,.wage .icon{background:var(--navy);color:#ffd76a}
-.safe{border-color:#7acb83;background:#f4fff5}
-.manager{border-color:#6da6d7;background:#f3f9ff}
+.card{min-height:180px;border:1px solid var(--line);border-radius:19px;padding:17px;text-decoration:none;color:var(--text);background:#fff;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 7px 18px rgba(45,68,100,.07)}
+.card:active{transform:scale(.985)}.top{display:flex;align-items:center;gap:13px}.icon{width:59px;height:59px;border-radius:17px;display:grid;place-items:center;font-size:32px;background:#eef6ff}
+.title{font-size:22px;font-weight:950}.desc{margin-top:10px;font-size:13px;color:var(--sub);line-height:1.65;font-weight:800}.open{margin-top:14px;color:#1169bd;font-weight:950}
+.main{border:2px solid #e0b12c;background:linear-gradient(135deg,#fffdf5,#fff4c7)}.main .icon,.wage .icon{background:var(--navy);color:#ffd76a}
+.safe{border:2px solid #75c67c;background:linear-gradient(135deg,#f8fff8,#ecfbea)}.safe .icon{background:#e5f6e1}
+.manager{border:2px solid #6da6d7;background:#f3f9ff}
 .wage{border:2px solid #d9a918;background:linear-gradient(135deg,#fffdf3,#fff0a7)}
-.neta{border:2px solid #54a2df;background:linear-gradient(135deg,#f5fbff,#e9f4ff)}
-.neta .icon{background:#0e70bd;color:#fff}
-.office{border-color:#76c58c;background:#f5fff7}
-.partner{border-color:#b493e7;background:#faf7ff}
-.money{border-color:#e0b12c;background:#fffaf0}
-.bottom{
-  position:fixed;left:50%;bottom:0;transform:translateX(-50%);
-  width:min(1180px,100%);display:grid;grid-template-columns:repeat(4,1fr);
-  background:rgba(255,255,255,.95);border-top:1px solid #eee2ca;
-  box-shadow:0 -8px 22px rgba(53,60,70,.08);
-  padding:9px 10px calc(9px + env(safe-area-inset-bottom));z-index:10
-}
-.bottom a{
-  min-height:52px;text-decoration:none;color:#172036;font-weight:950;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px
-}
-.bottom b{font-size:23px}
-@media(max-width:650px){
-  .wrap{padding:12px 11px 92px}.group{padding:13px}.grid{grid-template-columns:1fr}
-  .card{min-height:150px}.hero-top{align-items:flex-start}.status{font-size:11px}
-}
+.miyu{border:2px solid #e7b5ca;background:linear-gradient(135deg,#fff9fc,#fff0f6)}
+.office{border-color:#76c58c;background:#f5fff7}.partner{border-color:#b493e7;background:#faf7ff}.money{border-color:#e0b12c;background:#fffaf0}
+.bottom{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(1180px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,.95);border-top:1px solid #eee2ca;box-shadow:0 -8px 22px rgba(53,60,70,.08);padding:9px 10px calc(9px + env(safe-area-inset-bottom));z-index:10}
+.bottom a{min-height:52px;text-decoration:none;color:#172036;font-weight:950;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px}.bottom b{font-size:23px}
+@media(max-width:650px){.wrap{padding:12px 11px 92px}.group{padding:13px}.grid{grid-template-columns:1fr}.card{min-height:150px}.hero-top{align-items:flex-start}.status{font-size:11px}}
 </style>
 </head>
 <body>
 <main class="wrap">
   <section class="hero">
     <div class="hero-top">
-      <div class="brand"><div class="crown">♛</div><div><h1>KING APP</h1><p>FUJIWARA Group｜現場優先安定版</p></div></div>
+      <div class="brand"><div class="crown">♛</div><div><h1>KING APP</h1><p>FUJIWARA Group｜現場安定版</p></div></div>
       <div class="status">🟢 使用可能</div>
     </div>
-    <div class="notice">相棒、主要アプリの入口を固定しました。賃金台帳と主力ネタ一覧はこの画面から消えません。</div>
+    <div class="notice">主要アプリの入口を固定しています。主力ネタ一覧は「お金・労務管理」の中にまとめました。</div>
   </section>
 
   <section class="group">
     <div class="group-head"><h2>👑 業務の中心</h2><span>まずここから開く</span></div>
     <div class="grid">
-      <a class="card main" href="index.html">
-        <div><div class="top"><div class="icon">🎪</div><div class="title">メインアプリ</div></div>
-        <div class="desc">イベント・売上・人員・在庫をまとめて管理</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card safe" href="king-safe.html">
-        <div><div class="top"><div class="icon">🔐</div><div class="title">金庫番</div></div>
-        <div class="desc">入金・出金・残金を記録して確認</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card manager" href="manager-app.html">
-        <div><div class="top"><div class="icon">👤</div><div class="title">担当者アプリ</div></div>
-        <div class="desc">在庫・仕入・発注先・ネタ・準備・車両・LPGを管理</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card wage" href="king-wage-ledger.html">
-        <div><div class="top"><div class="icon">💴</div><div class="title">賃金台帳</div></div>
-        <div class="desc">イベント別・スタッフ別の労務費、未払い、支払済を確認</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card neta" href="main-neta-sales.html">
-        <div><div class="top"><div class="icon">📈</div><div class="title">主力ネタ一覧</div></div>
-        <div class="desc">イベント別売上・販売数・単価・使用資材・月間集計を確認</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card money" href="king-money-center.html">
-        <div><div class="top"><div class="icon">💰</div><div class="title">お金・労務管理</div></div>
-        <div class="desc">お金管理・賃金台帳・主力ネタ分析をまとめて確認</div></div><div class="open">開く ›</div>
-      </a>
+      <a class="card main" href="index.html"><div><div class="top"><div class="icon">🎪</div><div class="title">メインアプリ</div></div><div class="desc">イベント・売上・人員・在庫をまとめて管理</div></div><div class="open">開く ›</div></a>
+      <a class="card safe" href="king-safe.html"><div><div class="top"><div class="icon">🔐</div><div class="title">金庫番</div></div><div class="desc">入金・出金・残金を記録して確認</div></div><div class="open">開く ›</div></a>
+      <a class="card manager" href="manager-app.html"><div><div class="top"><div class="icon">👤</div><div class="title">担当者アプリ</div></div><div class="desc">在庫・仕入・発注先・ネタ・準備・車両・LPGを管理</div></div><div class="open">開く ›</div></a>
+      <a class="card wage" href="king-wage-ledger.html"><div><div class="top"><div class="icon">💴</div><div class="title">賃金台帳</div></div><div class="desc">イベント別・スタッフ別の労務費、未払い、支払済を確認</div></div><div class="open">開く ›</div></a>
+      <a class="card miyu" href="miyu.html"><div><div class="top"><div class="icon">👩‍💼</div><div class="title">MIYU</div></div><div class="desc">AI統括パートナーに相談する</div></div><div class="open">話しかける ›</div></a>
+      <a class="card money" href="king-money-center.html"><div><div class="top"><div class="icon">💰</div><div class="title">お金・労務管理</div></div><div class="desc">お金管理・賃金台帳・主力ネタ分析をまとめて確認</div></div><div class="open">開く ›</div></a>
     </div>
   </section>
 
   <section class="group">
     <div class="group-head"><h2>🏢 会社・現場管理</h2><span>現場別アプリ</span></div>
     <div class="grid">
-      <a class="card" href="construction-main.html">
-        <div><div class="top"><div class="icon">🏗️</div><div class="title">建設アプリ</div></div>
-        <div class="desc">予定・日報・管理者集計・取引先別・CSV</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card office" href="office-timecard.html">
-        <div><div class="top"><div class="icon">📋</div><div class="title">事務員アプリ</div></div>
-        <div class="desc">タイムカード・勤務集計・CSV</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card partner" href="partner.html">
-        <div><div class="top"><div class="icon">🐩</div><div class="title">partner</div></div>
-        <div class="desc">下請け共有・損益計算確認</div></div><div class="open">開く ›</div>
-      </a>
-      <a class="card" href="partner-men.html">
-        <div><div class="top"><div class="icon">🦍🐷</div><div class="title">partner MEN</div></div>
-        <div class="desc">男版partner・共有確認</div></div><div class="open">開く ›</div>
-      </a>
+      <a class="card" href="construction-main.html"><div><div class="top"><div class="icon">🏗️</div><div class="title">建設アプリ</div></div><div class="desc">予定・日報・管理者集計・取引先別・CSV</div></div><div class="open">開く ›</div></a>
+      <a class="card office" href="office-timecard.html"><div><div class="top"><div class="icon">📋</div><div class="title">事務員アプリ</div></div><div class="desc">タイムカード・勤務集計・CSV</div></div><div class="open">開く ›</div></a>
+      <a class="card partner" href="partner.html"><div><div class="top"><div class="icon">🐩</div><div class="title">partner</div></div><div class="desc">下請け共有・損益計算確認</div></div><div class="open">開く ›</div></a>
+      <a class="card" href="partner-men.html"><div><div class="top"><div class="icon">🦍🐷</div><div class="title">partner MEN</div></div><div class="desc">男版partner・共有確認</div></div><div class="open">開く ›</div></a>
     </div>
   </section>
 
@@ -155,7 +74,7 @@ h1{margin:0;font-size:clamp(28px,5vw,44px)}
       <a class="card" href="king-moncal.html"><div><div class="top"><div class="icon">📅</div><div class="title">MonCal</div></div><div class="desc">私用予定とカレンダー</div></div><div class="open">開く ›</div></a>
       <a class="card" href="king-supplier-summary.html"><div><div class="top"><div class="icon">📦</div><div class="title">発注先別集計</div></div><div class="desc">発注先ごとの売上・経費・利益を確認</div></div><div class="open">開く ›</div></a>
       <a class="card" href="app-management-center.html"><div><div class="top"><div class="icon">📱</div><div class="title">アプリ管理センター</div></div><div class="desc">本番・開発・更新履歴を管理</div></div><div class="open">開く ›</div></a>
-      <a class="card" href="miyu.html"><div><div class="top"><div class="icon">👩‍💼</div><div class="title">MIYU秘書</div></div><div class="desc">相棒の相談と業務確認</div></div><div class="open">相談する ›</div></a>
+      <a class="card" href="system-management.html"><div><div class="top"><div class="icon">🛠️</div><div class="title">開発室</div></div><div class="desc">システム確認・引継ぎ・設定</div></div><div class="open">開く ›</div></a>
     </div>
   </section>
 </main>
