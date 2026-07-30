@@ -2,43 +2,39 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>賃金台帳 - KING APP</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>賃金台帳｜データ復旧対応版</title>
 <style>
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eef8ff,#fffaf0);color:#102043}
-.wrap{max-width:1100px;margin:0 auto;padding:18px 18px 90px}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 18px 80px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
-.back{border:0;border-radius:999px;padding:11px 16px;background:#fff;box-shadow:0 8px 22px rgba(45,68,100,.12);font-weight:900;color:#074aa4}
-h1{font-size:30px;margin:0;color:#074aa4}
-.card{background:rgba(255,255,255,.95);border-radius:22px;box-shadow:0 12px 30px rgba(45,68,100,.12);padding:18px;margin-bottom:16px}
+.back,.refresh{border:0;border-radius:999px;padding:12px 17px;background:#fff;box-shadow:0 8px 22px rgba(45,68,100,.12);font-weight:950;color:#074aa4}
+h1{font-size:32px;margin:0;color:#074aa4}
+.card{background:rgba(255,255,255,.96);border-radius:22px;box-shadow:0 12px 30px rgba(45,68,100,.12);padding:18px;margin-bottom:16px}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.kpi{background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:14px}
-.kpi small{color:#647188;font-weight:800}.kpi b{display:block;font-size:30px;margin-top:5px}
+.kpi{background:#fff;border:1px solid #e1e9f2;border-radius:16px;padding:15px}
+.kpi small{color:#647188;font-weight:850}.kpi b{display:block;font-size:31px;margin-top:6px}
+.source{margin-top:12px;padding:11px 13px;border-radius:13px;background:#eff8ff;color:#27506f;font-size:12px;font-weight:850;line-height:1.6}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-.tab{border:1px solid #dbe5f3;border-radius:999px;background:#fff;padding:10px 16px;font-weight:900;color:#1768c8}
+.tab{border:1px solid #cddbea;border-radius:999px;background:#fff;padding:11px 17px;font-weight:950;color:#1768c8}
 .tab.active{background:#1768c8;color:#fff}
 .section{display:none}.section.active{display:block}
-table{width:100%;border-collapse:collapse;min-width:600px}
-th,td{padding:11px 10px;border-bottom:1px solid #edf0f5;text-align:left}
-th{color:#647188;font-size:13px}
-.num{text-align:right}.paid{color:#168a58;font-weight:900}.unpaid{color:#b45309;font-weight:900}
-.empty{text-align:center;padding:30px;color:#647188;font-weight:800}
-@media(max-width:700px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 12px 80px}h1{font-size:23px}}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{padding:12px 10px;border-bottom:1px solid #edf0f5;text-align:left}
+th{color:#647188;font-size:13px}.num{text-align:right}
+.paid{color:#168a58;font-weight:950}.unpaid{color:#b45309;font-weight:950}
+.empty{text-align:center;padding:34px;color:#647188;font-weight:850;line-height:1.8}
+@media(max-width:700px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 12px 70px}h1{font-size:24px}}
 </style>
-
-
-
 </head>
 <body>
-
-
-
 <div class="wrap">
   <div class="top">
-    <button class="back" onclick="location.href='king.html'">‹ キングへ戻る</button>
+    <button class="back" onclick="location.href='king.html'">‹ KINGへ戻る</button>
     <h1>💴 賃金台帳</h1>
-    <button class="back" onclick="renderAll()">更新</button>
+    <button class="refresh" onclick="renderAll()">更新</button>
   </div>
 
   <div class="card">
@@ -47,6 +43,7 @@ th{color:#647188;font-size:13px}
       <div class="kpi"><small>イベント数</small><b id="eventCount">0</b></div>
       <div class="kpi"><small>未払い</small><b id="unpaidCount">0件</b></div>
     </div>
+    <div class="source" id="sourceInfo">保存データを確認中...</div>
   </div>
 
   <div class="tabs">
@@ -65,31 +62,89 @@ th{color:#647188;font-size:13px}
 </div>
 
 <script>
-const LABOR_DB_KEY='fg_labor_db_v1';
 function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-function readDb(){try{return JSON.parse(localStorage.getItem(LABOR_DB_KEY)||'{}')}catch(e){return {events:[]}}}
+function num(v){const n=Number(String(v==null?'':v).replace(/,/g,''));return Number.isFinite(n)?n:0}
 function showTab(id,btn){
  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
- document.getElementById(id).classList.add('active'); btn.classList.add('active');
+ document.getElementById(id).classList.add('active');btn.classList.add('active');
+}
+function pickAmount(p){
+ const vals=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate,p.wage,p.salary,p.price,p.payment];
+ for(const v of vals){const n=num(v);if(n!==0)return n}
+ return 0;
+}
+function pickStaff(p){return p.staffName||p.staff||p.name||p.workerName||p.person||p.employeeName||'名前未設定'}
+function pickPaid(p){return p.paid===true||p.paymentStatus==='paid'||p.status==='支払済'||p.status==='paid'}
+function normalizeEvents(data){
+ if(!data)return[];
+ if(Array.isArray(data))return data;
+ if(Array.isArray(data.events))return data.events;
+ if(Array.isArray(data.items))return data.items;
+ if(Array.isArray(data.records))return data.records;
+ if(typeof data==='object'){
+   const vals=Object.keys(data).map(k=>data[k]).filter(v=>v&&typeof v==='object');
+   if(vals.some(v=>Array.isArray(v.payments)||Array.isArray(v.staffPayments)||Array.isArray(v.labor)))return vals;
+ }
+ return[];
+}
+function readAllSources(){
+ const preferred=['fg_labor_db_v1','fg_labor_db','labor_db','event_labor_db','fujiwara_labor_db','king_labor_db'];
+ const found=[];
+ const used=new Set();
+ function inspect(key){
+   if(used.has(key))return;used.add(key);
+   try{
+     const raw=localStorage.getItem(key);if(!raw)return;
+     const parsed=JSON.parse(raw);
+     const events=normalizeEvents(parsed);
+     if(events.length)found.push({key,events});
+   }catch(e){}
+ }
+ preferred.forEach(inspect);
+ for(let i=0;i<localStorage.length;i++){
+   const key=localStorage.key(i)||'';
+   if(/labor|wage|salary|給与|労務|payment/i.test(key))inspect(key);
+ }
+ if(!found.length)return {key:'見つかりません',events:[]};
+ found.sort((a,b)=>b.events.length-a.events.length);
+ return found[0];
+}
+function paymentsOf(ev){
+ if(Array.isArray(ev.payments))return ev.payments;
+ if(Array.isArray(ev.staffPayments))return ev.staffPayments;
+ if(Array.isArray(ev.labor))return ev.labor;
+ if(Array.isArray(ev.wages))return ev.wages;
+ if(Array.isArray(ev.staff))return ev.staff;
+ return[];
 }
 function renderAll(){
- const db=readDb(); const events=Array.isArray(db.events)?db.events:[];
- const people={}, months={}, unpaid=[], paid=[];
- let total=0;
- events.forEach(ev=>{
-   (Array.isArray(ev.payments)?ev.payments:[]).forEach(p=>{
-     const v=Number(p.rate||0); total+=v;
-     const name=p.staffName||'名前未設定';
-     people[name]=(people[name]||0)+v;
-     const m=(ev.date||'').slice(0,7)||'未設定';
-     months[m]=(months[m]||0)+v;
-     const row={date:ev.date||'',event:ev.name||'',staff:name,amount:v,paid:!!p.paid,paidDate:p.paidDate||''};
-     (p.paid?paid:unpaid).push(row);
+ const src=readAllSources(),events=src.events||[];
+ const people={},months={},unpaidRows=[],paidRows=[];
+ let total=0,paymentCount=0;
+
+ events.forEach((ev,index)=>{
+   const date=ev.date||ev.eventDate||ev.startDate||'';
+   const eventName=ev.name||ev.eventName||ev.title||('イベント '+(index+1));
+   const place=ev.place||ev.location||'';
+   const month=String(date).slice(0,7)||'未設定';
+   paymentsOf(ev).forEach(p=>{
+     const amount=pickAmount(p),staff=pickStaff(p),isPaid=pickPaid(p);
+     total+=amount;paymentCount++;
+     people[staff]=(people[staff]||0)+amount;
+     months[month]=(months[month]||0)+amount;
+     const row={date,event:eventName,place,staff,amount,paid:isPaid,paidDate:p.paidDate||p.paymentDate||''};
+     (isPaid?paidRows:unpaidRows).push(row);
    });
  });
- totalLabor.textContent=yen(total); eventCount.textContent=events.length; unpaidCount.textContent=unpaid.length+'件';
+
+ totalLabor.textContent=yen(total);
+ eventCount.textContent=events.length;
+ unpaidCount.textContent=unpaidRows.length+'件';
+ sourceInfo.innerHTML=events.length
+   ?'読込元：<b>'+esc(src.key)+'</b> ／ イベント '+events.length+'件 ／ 支払明細 '+paymentCount+'件'
+   :'保存済みの賃金データを確認できませんでした。以前の賃金台帳を開いた同じ端末・同じURLで、もう一度「更新」を押してください。';
 
  const pRows=Object.entries(people).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${esc(n)}</td><td class="num">${yen(v)}</td></tr>`).join('');
  person.innerHTML=pRows?`<h2>個人別給与台帳</h2><div style="overflow:auto"><table><tr><th>スタッフ</th><th class="num">累計</th></tr>${pRows}</table></div>`:'<div class="empty">個人別データはありません。</div>';
@@ -97,9 +152,9 @@ function renderAll(){
  const mRows=Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,v])=>`<tr><td>${esc(m)}</td><td class="num">${yen(v)}</td></tr>`).join('');
  month.innerHTML=mRows?`<h2>月別集計</h2><div style="overflow:auto"><table><tr><th>月</th><th class="num">労務費</th></tr>${mRows}</table></div>`:'<div class="empty">月別データはありません。</div>';
 
- const eRows=events.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(ev=>{
-   const v=(ev.payments||[]).reduce((s,p)=>s+Number(p.rate||0),0);
-   return `<tr><td>${esc(ev.date||'')}</td><td>${esc(ev.name||'')}</td><td>${esc(ev.place||'')}</td><td class="num">${yen(v)}</td></tr>`;
+ const eRows=events.slice().sort((a,b)=>String(b.date||b.eventDate||'').localeCompare(String(a.date||a.eventDate||''))).map((ev,i)=>{
+   const v=paymentsOf(ev).reduce((s,p)=>s+pickAmount(p),0);
+   return `<tr><td>${esc(ev.date||ev.eventDate||'')}</td><td>${esc(ev.name||ev.eventName||ev.title||('イベント '+(i+1)))}</td><td>${esc(ev.place||ev.location||'')}</td><td class="num">${yen(v)}</td></tr>`;
  }).join('');
  event.innerHTML=eRows?`<h2>イベント別労務費</h2><div style="overflow:auto"><table><tr><th>日付</th><th>イベント</th><th>場所</th><th class="num">労務費</th></tr>${eRows}</table></div>`:'<div class="empty">イベント別データはありません。</div>';
 
@@ -109,10 +164,11 @@ function renderAll(){
      rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.event)}</td><td>${esc(r.staff)}</td><td class="num">${yen(r.amount)}</td><td class="${isPaid?'paid':'unpaid'}">${isPaid?'支払済 '+esc(r.paidDate):'未払い'}</td></tr>`).join('')
    }</table></div>`;
  }
- unpaid.innerHTML=paymentTable('未払い一覧',unpaid,false);
- paid.innerHTML=paymentTable('支払済一覧',paid,true);
+ unpaid.innerHTML=paymentTable('未払い一覧',unpaidRows,false);
+ paid.innerHTML=paymentTable('支払済一覧',paidRows,true);
 }
 renderAll();
+window.addEventListener('storage',renderAll);
 </script>
 </body>
 </html>
