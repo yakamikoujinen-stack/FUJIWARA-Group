@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>KING APP｜賃金台帳・お金労務統合版</title>
+<title>KING APP｜賃金台帳・主力ネタ固定統合版</title>
 <style>
 html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#eef6ff}
 #devLoader{max-width:760px;margin:40px auto;padding:20px}
@@ -584,6 +584,66 @@ window.renderLaborKing=function(){
 
       patched=patched.replace('</body>', MONEY_LINK_PATCH + '</body>');
 
+      const FIXED_UI = `
+      <style>
+      #fixedWageLedgerCard{border:2px solid #d9a918!important;background:linear-gradient(135deg,#fffdf3,#fff0a7)!important}
+      #fixedWageLedgerCard .hub-icon{background:linear-gradient(145deg,#17324d,#0d2032)!important;color:#ffd76a!important}
+      #fixedMainNetaCard{border:2px solid #54a2df!important;background:linear-gradient(135deg,#f5fbff,#e9f4ff)!important}
+      #fixedMainNetaCard .hub-icon{background:linear-gradient(145deg,#0e70bd,#08599a)!important;color:#fff!important}
+      </style>
+      <script>
+      (function(){
+        function card(id,icon,title,desc,href){
+          var a=document.createElement('a');
+          a.id=id;a.className='hub-card';a.href=href;
+          a.innerHTML='<div><div class="hub-top"><div class="hub-icon">'+icon+'</div><div class="hub-title">'+title+'</div></div><div class="hub-desc">'+desc+'</div></div><div class="hub-open">開く ›</div>';
+          return a;
+        }
+        function grid(){
+          var groups=document.querySelectorAll('.hub-group');
+          for(var i=0;i<groups.length;i++){
+            var h=groups[i].querySelector('.hub-head h2');
+            if(h && h.textContent.indexOf('業務の中心')>=0)return groups[i].querySelector('.hub-grid');
+          }
+          return document.querySelector('.hub-grid');
+        }
+        function fix(){
+          document.querySelectorAll('a,button').forEach(function(el){
+            var t=(el.textContent||'').replace(/\s+/g,'');
+            var href=el.getAttribute('href')||'';
+            var oc=el.getAttribute('onclick')||'';
+            if(t.indexOf('お金・労務')>=0 || href==='king-money.html' || oc.indexOf('king-money.html')>=0){
+              if(el.tagName==='A')el.href='king-money-center.html';
+              else el.setAttribute('onclick',"location.href='king-money-center.html'");
+            }
+          });
+          var g=grid(); if(!g)return;
+          ['fixedWageLedgerCard','fixedMainNetaCard','wageLedgerLauncher','laborAppLauncher'].forEach(function(id){
+            var e=document.getElementById(id); if(e)e.remove();
+          });
+          document.querySelectorAll('.hub-card').forEach(function(c){
+            var h=c.querySelector('.hub-title');
+            var x=h?h.textContent.trim():'';
+            if(x==='賃金台帳'||x==='労務費・給与台帳'||x==='主力ネタ一覧')c.remove();
+          });
+          var manager=null;
+          g.querySelectorAll('.hub-card').forEach(function(c){
+            var h=c.querySelector('.hub-title');
+            if(h&&h.textContent.trim()==='担当者アプリ')manager=c;
+          });
+          var wage=card('fixedWageLedgerCard','💴','賃金台帳','イベント別・スタッフ別の労務費、未払い、支払済を確認','king-wage-ledger.html');
+          var neta=card('fixedMainNetaCard','📈','主力ネタ一覧','イベント別売上・販売数・単価・使用資材・月間集計を確認','main-neta-sales.html');
+          if(manager&&manager.nextSibling){
+            g.insertBefore(wage,manager.nextSibling);
+            g.insertBefore(neta,wage.nextSibling);
+          }else{g.appendChild(wage);g.appendChild(neta);}
+        }
+        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix();
+        [150,500,1000,1800,2800].forEach(function(ms){setTimeout(fix,ms)});
+        window.addEventListener('pageshow',fix);
+      })();
+      <\/script>`;
+      patched=patched.replace('</head>', FIXED_UI + '</head>');
       document.open();
       document.write(patched);
       document.close();
