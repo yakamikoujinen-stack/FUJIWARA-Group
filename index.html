@@ -3394,6 +3394,50 @@ function refreshSimpleSafeTransferStatus(currentCash){
 function safeFirebaseKey(value){
   return String(value||'').replace(/[.#$\[\]\/]/g,'_');
 }
+function buildSimpleSafeDetail(summary){
+  return 'メインアプリ精算｜売上 ¥'+Number(summary.sales||0).toLocaleString('ja-JP')
+    +'／経費 ¥'+Number(summary.expense||0).toLocaleString('ja-JP')
+    +'／スタッフ支払 ¥'+Number(summary.staffPay||0).toLocaleString('ja-JP')
+    +'／預金 ¥'+Number(summary.deposit||0).toLocaleString('ja-JP')
+    +'／未精算 ¥'+Number(summary.unpaid||0).toLocaleString('ja-JP');
+}
+async function syncTransferredSimpleCashToSafe(ev,ds,simple,summary){
+  var transfer=simple&&simple.safeTransfer;
+  if(!transfer||!transfer.completed) return {synced:false,reason:'not_transferred'};
+  if(typeof firebase==='undefined'||!firebase.database){
+    transfer.syncPending=true;
+    transfer.lastSyncError='Firebase未接続';
+    return {synced:false,reason:'offline'};
+  }
+  var transferId=transfer.transferId||('event_'+safeFirebaseKey(ev.id)+'_'+safeFirebaseKey(ds));
+  var ref=firebase.database().ref('fujiwara/king_safe_book/'+transferId);
+  var snap=await ref.once('value');
+  var old=snap.val()||{};
+  var amount=Number(summary.cash||0);
+  var now=Date.now();
+  var record={
+    id:transferId,
+    date:ds,
+    item:(ev.name||'イベント')+' 精算手元残',
+    income:amount,
+    expense:0,
+    detail:buildSimpleSafeDetail(summary),
+    source:'main_app_settlement',
+    sourceEventId:String(ev.id||''),
+    sourceDate:ds,
+    createdAt:Number(old.createdAt||transfer.createdAt||now),
+    updatedAt:now
+  };
+  await ref.set(record);
+  transfer.completed=true;
+  transfer.amount=amount;
+  transfer.transferId=transferId;
+  transfer.transferredAt=transfer.transferredAt||new Date().toLocaleString('ja-JP');
+  transfer.lastSyncedAt=new Date().toLocaleString('ja-JP');
+  transfer.syncPending=false;
+  delete transfer.lastSyncError;
+  return {synced:true,amount:amount};
+}
 function transferSimpleCashToSafe(){
   var ev=currentSalesEditEvent();
   if(!ev){ toast('⚠️ イベントが見つかりません'); return; }
@@ -3423,11 +3467,7 @@ function transferSimpleCashToSafe(){
       aggregateDailySimpleSales(ev); fbSave(); refreshSimpleSafeTransferStatus(amount);
       return null;
     }
-    var detail='メインアプリ精算｜売上 ¥'+Number(summary.sales||0).toLocaleString('ja-JP')
-      +'／経費 ¥'+Number(summary.expense||0).toLocaleString('ja-JP')
-      +'／スタッフ支払 ¥'+Number(summary.staffPay||0).toLocaleString('ja-JP')
-      +'／預金 ¥'+Number(summary.deposit||0).toLocaleString('ja-JP')
-      +'／未精算 ¥'+Number(summary.unpaid||0).toLocaleString('ja-JP');
+    var detail=buildSimpleSafeDetail(summary);
     var record={
       id:transferId,
       date:ds,
@@ -3738,7 +3778,7 @@ function openSalesEdit(id, selectedDate) {
   var totalInput=document.getElementById('se-total'); if(totalInput){totalInput.readOnly=true;totalInput.style.background='#fff7df';}
   updateSimpleSalesEditTotals(); openModal('modal-sales-edit'); showPage('sales'); var sel=document.getElementById('sales-ev-select'); if(sel){sel.value=id;renderSalesDetail();}
 }
-function saveSalesEdit() {
+async function saveSalesEdit() {
   if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
   var id=document.getElementById('se-ev-id').value, ev=null;
   for(var i=0;i<state.events.length;i++){if(String(state.events[i].id)===String(id)){ev=state.events[i];break;}}
@@ -3746,10 +3786,38 @@ function saveSalesEdit() {
   var ds=(document.getElementById('simple-sales-date')||{}).value||ev.date, items={},labels={};
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
-  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:collectStaffPayments()},memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(getDaySimpleSales(ev,ds).safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
-  ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple}; aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
+  var previous=getDaySimpleSales(ev,ds);
+  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:collectStaffPayments()},memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
+  ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple};
+  aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
+
+  var safeSyncResult=null;
+  if(simple.safeTransfer&&simple.safeTransfer.completed){
+    try{
+      var summary=calcSimpleMoneySummary(simple);
+      safeSyncResult=await syncTransferredSimpleCashToSafe(ev,ds,simple,summary);
+      ev.sales.days[ds]={simple:simple};
+      aggregateDailySimpleSales(ev);
+      addAudit('金庫番入金額を自動更新',ev.name+'｜'+ds+'｜¥'+Number(summary.cash||0).toLocaleString('ja-JP'));
+    }catch(error){
+      console.error(error);
+      simple.safeTransfer.syncPending=true;
+      simple.safeTransfer.lastSyncError=String(error&&error.message||error||'同期失敗');
+      ev.sales.days[ds]={simple:simple};
+      safeSyncResult={synced:false,reason:'error'};
+    }
+  }
+
   addAudit('日別売上表入力/修正',ev.name+'｜'+ds+'｜入力者 '+(userName||'未入力'));
-  closeModal('modal-sales-edit'); renderSalesPage(); toast('✅ '+ds+' の売上・スタッフ支払を保存しました'); fbSave();
+  fbSave();
+  closeModal('modal-sales-edit'); renderSalesPage();
+  if(safeSyncResult&&safeSyncResult.synced){
+    toast('✅ '+ds+' を保存し、金庫番も ¥'+Number(safeSyncResult.amount||0).toLocaleString('ja-JP')+' に更新しました');
+  }else if(safeSyncResult){
+    toast('⚠️ 売上は保存しました。金庫番は通信回復後に再保存してください');
+  }else{
+    toast('✅ '+ds+' の売上・スタッフ支払を保存しました');
+  }
 }
 
 // ════ HOME ════

@@ -55,6 +55,7 @@ th,td{padding:12px 10px;border-bottom:1px solid #edf1ed;text-align:left;font-siz
 th{background:var(--green2);color:#17652f;font-weight:950;position:sticky;top:0}
 td.money{text-align:right;font-weight:900}
 .detail-btn{border:1px solid #6cc17c;background:#fff;color:#18733a;border-radius:999px;padding:7px 14px;font-weight:950}
+.source-badge{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:999px;background:#e8f5e9;color:#17652f;font-size:10px;font-weight:950}
 .empty{text-align:center;padding:32px;color:var(--sub);font-weight:850}
 .note{margin-top:12px;padding:12px 14px;background:#fffbe8;border:1px solid #f1dd95;border-radius:12px;color:#765b00;font-size:13px;font-weight:800}
 
@@ -218,7 +219,7 @@ function render(){
   rows.innerHTML=calculated.map(entry=>`
     <tr>
       <td>${escapeHtml(entry.date)}</td>
-      <td><b>${escapeHtml(entry.item)}</b></td>
+      <td><b>${escapeHtml(entry.item)}</b>${entry.source==='main_app_settlement'?'<br><span class="source-badge">メイン連動</span>':''}</td>
       <td class="money" style="color:#168a43">${Number(entry.income||0)?yen(entry.income):"-"}</td>
       <td class="money" style="color:#b33232">${Number(entry.expense||0)?yen(entry.expense):"-"}</td>
       <td class="money">${yen(entry.runningBalance)}</td>
@@ -260,7 +261,7 @@ async function saveEntry(){
 
   const id=editingId||("safe_"+Date.now());
   const old=entries.find(x=>String(x.id)===String(id));
-  const record={id,date,item,income:incoming,expense:outgoing,detail,createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
+  const record={id,date,item,income:incoming,expense:outgoing,detail,source:old?.source||'',sourceEventId:old?.sourceEventId||'',sourceDate:old?.sourceDate||'',createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
 
   try{
     saveStatus.textContent="保存中…";
