@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.24 入国承認セキュリティ版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.25 金庫番表示同期版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3383,7 +3383,11 @@ function refreshSimpleSafeTransferStatus(currentCash){
     btn.textContent='✅ 金庫番へ入金済み';
     btn.disabled=true;
     btn.style.opacity='.65';
-    status.textContent='入金済み：¥'+Number(transfer.amount||0).toLocaleString('ja-JP')+'（'+String(transfer.transferredAt||'')+'）';
+    var firstAt=String(transfer.transferredAt||'');
+    var latestAt=String(transfer.lastSyncedAt||transfer.transferredAt||'');
+    status.innerHTML='入金済み：¥'+Number(transfer.amount||0).toLocaleString('ja-JP')
+      +(firstAt?'<br>初回登録：'+escapeHtml(firstAt):'')
+      +(latestAt?'<br>最終更新：'+escapeHtml(latestAt):'');
   }else{
     btn.textContent='🔐 手元残 ¥'+Number(currentCash||0).toLocaleString('ja-JP')+' を金庫番へ入金';
     btn.disabled=Number(currentCash||0)<=0;
@@ -3462,7 +3466,8 @@ function transferSimpleCashToSafe(){
   ref.once('value').then(function(snapshot){
     if(snapshot.exists()){
       toast('✅ この日の手元残はすでに金庫番へ入金済みです');
-      existing.safeTransfer={completed:true,amount:amount,transferId:transferId,transferredAt:new Date().toLocaleString('ja-JP')};
+      var stamp=new Date().toLocaleString('ja-JP');
+      existing.safeTransfer={completed:true,amount:amount,transferId:transferId,transferredAt:stamp,lastSyncedAt:stamp};
       ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:existing};
       aggregateDailySimpleSales(ev); fbSave(); refreshSimpleSafeTransferStatus(amount);
       return null;
@@ -3482,7 +3487,8 @@ function transferSimpleCashToSafe(){
       updatedAt:Date.now()
     };
     return ref.set(record).then(function(){
-      existing.safeTransfer={completed:true,amount:amount,transferId:transferId,transferredAt:new Date().toLocaleString('ja-JP')};
+      var stamp=new Date().toLocaleString('ja-JP');
+      existing.safeTransfer={completed:true,amount:amount,transferId:transferId,transferredAt:stamp,lastSyncedAt:stamp};
       ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:existing};
       aggregateDailySimpleSales(ev);
       addAudit('金庫番へ入金',ev.name+'｜'+ds+'｜¥'+amount.toLocaleString('ja-JP'));
