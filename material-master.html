@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>材料マスター管理｜FUJIWARA KING</title>
+<style>
+:root{
+ --navy:#17324d;--blue:#2f6fa7;--gold:#d8a62a;--green:#23845a;--red:#c84545;
+ --bg:#f3f8fc;--card:#fff;--text:#172432;--muted:#687b8e;--line:#d9e4ed;
+ --shadow:0 10px 28px rgba(23,50,77,.12)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+button,input,select{font:inherit}
+.wrap{max-width:1180px;margin:auto;padding:0 12px 100px}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--navy),#2c6799);color:#fff;padding:15px 14px;box-shadow:0 5px 18px rgba(23,50,77,.23)}
+.top{max-width:1180px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:24px;margin:0}.sub{font-size:12px;color:#d9ebfa;margin-top:4px}
+.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:14px 0;box-shadow:var(--shadow)}
+.notice{background:#eaf4ff;border:1px solid #b9d4ea;border-radius:14px;padding:12px 14px;color:#244b6c;font-size:13px;line-height:1.7;font-weight:800}
+.status{margin-top:10px;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900}
+.status.ok{background:#e8f7ef;color:#176541}.status.wait{background:#eef5fa;color:#466176}.status.err{background:#fdeaea;color:#a73333}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.grow{flex:1 1 220px}
+label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:5px}
+input,select{width:100%;border:1px solid #c8d6e1;border-radius:11px;padding:11px 12px;background:#fff;color:var(--text);font-size:16px}
+.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:900;cursor:pointer}
+.primary{background:var(--navy);color:#fff}.gold{background:var(--gold);color:#241800}.green{background:var(--green);color:#fff}.ghost{background:#edf3f7;color:#32495c}.danger{background:#fdeaea;color:#b33d3d}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:14px}
+.cat-list{display:flex;flex-direction:column;gap:8px;max-height:68vh;overflow:auto}
+.cat{border:1.5px solid #c9d8e3;background:#fff;border-radius:13px;padding:11px 12px;text-align:left;font-weight:900;color:var(--text)}
+.cat.active{background:#eaf4ff;border-color:var(--navy);box-shadow:0 0 0 2px rgba(23,50,77,.08)}
+.cat small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.master-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.master-title{font-size:22px;font-weight:950;color:var(--navy)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin-top:12px}
+table{width:100%;border-collapse:collapse;min-width:1050px;background:#fff}
+th,td{padding:9px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;vertical-align:middle}
+th{background:#eef5fa;color:#27445e;font-size:12px;position:sticky;top:0;z-index:1}
+td input,td select{font-size:14px;padding:8px 9px}
+.type-sale{background:#e8f7ef;color:#176541}.type-material{background:#fff2cf;color:#755400}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}
+.empty{text-align:center;color:var(--muted);padding:32px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+.sum{background:#f7fbfe;border:1px solid var(--line);border-radius:14px;padding:12px}.sum .k{font-size:11px;color:var(--muted);font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}
+.footer{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center}
+.footer .btn{min-width:160px}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.cat-list{max-height:260px}.summary{grid-template-columns:1fr 1fr}.footer .btn{min-width:0;flex:1}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<header>
+ <div class="top">
+  <div><h1>📚 材料マスター管理</h1><div class="sub">KING専用・売上商品／使用資材／必要数計算データベース</div></div>
+  <button class="back" onclick="location.href='king.html'">← KINGへ戻る</button>
+ </div>
+</header>
+
+<div class="wrap">
+ <div class="card">
+  <div class="notice">
+   各ネタの売上商品・使用資材を登録します。使用資材には「1単位で何食・何本分作れるか」を設定してください。
+   保存した内容はFirebaseで共有され、主力ネタ一覧と買い物表から利用できます。
+  </div>
+  <div id="syncStatus" class="status wait">Firebaseへ接続しています…</div>
+ </div>
+
+ <div class="card">
+  <div class="toolbar">
+   <div class="grow"><label>ネタを検索</label><input id="search" placeholder="例：チーズハットグ" oninput="renderCategories()"></div>
+   <div style="min-width:220px"><label>新しいネタ名</label><input id="newCategory" placeholder="例：焼きそば"></div>
+   <button class="btn gold" onclick="addCategory()">＋ ネタ追加</button>
+   <button class="btn ghost" onclick="exportBackup()">バックアップ出力</button>
+   <label class="btn ghost" style="cursor:pointer">バックアップ読込<input type="file" accept=".json" hidden onchange="importBackup(this)"></label>
+  </div>
+ </div>
+
+ <div class="layout">
+  <div class="card">
+   <h2 style="margin-top:0">ネタ一覧</h2>
+   <div id="categoryList" class="cat-list"></div>
+  </div>
+
+  <div class="card">
+   <div class="master-head">
+    <div>
+     <div id="currentTitle" class="master-title">ネタを選択してください</div>
+     <div id="currentSub" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+    </div>
+    <div class="toolbar">
+     <button class="btn green" onclick="addRow('sale')">＋ 売上商品</button>
+     <button class="btn gold" onclick="addRow('material')">＋ 使用資材</button>
+     <button class="btn danger" onclick="deleteCategory()">ネタ削除</button>
+    </div>
+   </div>
+
+   <div class="summary">
+    <div class="sum"><div class="k">売上商品</div><div class="v" id="saleCount">0</div></div>
+    <div class="sum"><div class="k">使用資材</div><div class="v" id="materialCount">0</div></div>
+    <div class="sum"><div class="k">発注先登録</div><div class="v" id="supplierCount">0</div></div>
+    <div class="sum"><div class="k">最低在庫設定</div><div class="v" id="stockCount">0</div></div>
+   </div>
+
+   <div class="table-wrap">
+    <table>
+     <thead>
+      <tr>
+       <th>区分</th><th>品目名</th><th>単位</th><th>1単位で作れる数</th><th>標準使用量</th>
+       <th>発注先</th><th>単価</th><th>最低在庫</th><th>並び順</th><th>操作</th>
+      </tr>
+     </thead>
+     <tbody id="tbody"></tbody>
+    </table>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="footer">
+ <button class="btn primary" onclick="saveAll()">💾 Firebaseへ保存</button>
+ <button class="btn ghost" onclick="reloadRemote()">🔄 再読込</button>
+</div>
+
+<script>
+const firebaseConfig={
+ apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+ authDomain:"fujiwara-group-3a600.firebaseapp.com",
+ databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+ projectId:"fujiwara-group-3a600",
+ storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+ messagingSenderId:"709887362301",
+ appId:"1:709887362301:web:5ec6b7e2a2165066956a94"
+};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const PATH='fujiwara/mainNetaSalesSharedV1';
+const LOCAL='fujiwara_material_master_admin_v1';
+
+let root={version:4,updatedAt:0,records:[],customMaster:{},deletedMaster:{},priceMaster:{}};
+let currentCategory='';
+
+const BASE_CATEGORIES=['チーズハットグ','いか焼き','牛串','電球ジュース','ポテト','からあげ','かき氷','カステラ','りんご飴','チョコバナナ','肉巻きおにぎり'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').trim().replace(/\s+/g,'').toLowerCase();
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+function rowsFor(cat){
+ const rows=Array.isArray(root.customMaster[cat])?root.customMaster[cat]:[];
+ return rows.slice().sort((a,b)=>(Number(a.order)||999)-(Number(b.order)||999));
+}
+function allCategories(){
+ const set=new Set(BASE_CATEGORIES);
+ Object.keys(root.customMaster||{}).forEach(x=>set.add(x));
+ (root.records||[]).forEach(r=>r.category&&set.add(r.category));
+ return [...set].filter(Boolean).sort((a,b)=>a.localeCompare(b,'ja'));
+}
+function setStatus(msg,type='wait'){
+ const e=document.getElementById('syncStatus');
+ e.className='status '+type;e.textContent=msg;
+}
+function renderCategories(){
+ const q=norm(document.getElementById('search').value);
+ const cats=allCategories().filter(c=>!q||norm(c).includes(q));
+ document.getElementById('categoryList').innerHTML=cats.map(c=>{
+  const rows=rowsFor(c),sale=rows.filter(x=>(x.type||'sale')==='sale').length,mat=rows.filter(x=>x.type==='material').length;
+  return `<button class="cat ${c===currentCategory?'active':''}" onclick="selectCategory('${esc(c).replace(/'/g,"&#39;")}')">${esc(c)}<small>売上商品 ${sale}・使用資材 ${mat}</small></button>`;
+ }).join('')||'<div class="empty">該当するネタがありません</div>';
+}
+function selectCategory(cat){
+ currentCategory=cat;
+ if(!Array.isArray(root.customMaster[cat]))root.customMaster[cat]=[];
+ renderCategories();renderTable();
+}
+function renderTable(){
+ const title=document.getElementById('currentTitle'),sub=document.getElementById('currentSub');
+ if(!currentCategory){
+  title.textContent='ネタを選択してください';sub.textContent='';
+  document.getElementById('tbody').innerHTML='<tr><td colspan="10" class="empty">左のネタ一覧から選択してください</td></tr>';
+  updateSummary();return;
+ }
+ title.textContent=currentCategory;
+ sub.textContent='このネタの売上商品・使用資材を管理';
+ const rows=rowsFor(currentCategory);
+ document.getElementById('tbody').innerHTML=rows.map(r=>{
+  const type=r.type==='material'?'material':'sale';
+  return `<tr data-id="${esc(r.id)}">
+   <td><select onchange="editRow('${esc(r.id)}','type',this.value)"><option value="sale" ${type==='sale'?'selected':''}>売上商品</option><option value="material" ${type==='material'?'selected':''}>使用資材</option></select></td>
+   <td><input value="${esc(r.name)}" onchange="editRow('${esc(r.id)}','name',this.value)"></td>
+   <td><input value="${esc(r.unit||'個')}" onchange="editRow('${esc(r.id)}','unit',this.value)"></td>
+   <td><input type="number" min="0" step="0.01" value="${Number(r.yieldQty)||''}" ${type==='sale'?'disabled':''} onchange="editRow('${esc(r.id)}','yieldQty',this.value)"></td>
+   <td><input type="number" min="0" step="0.01" value="${Number(r.standardUsage)||''}" onchange="editRow('${esc(r.id)}','standardUsage',this.value)"></td>
+   <td><input value="${esc(r.supplier||'')}" onchange="editRow('${esc(r.id)}','supplier',this.value)"></td>
+   <td><input type="number" min="0" value="${Number(r.unitPrice)||''}" onchange="editRow('${esc(r.id)}','unitPrice',this.value)"></td>
+   <td><input type="number" min="0" value="${Number(r.minStock)||''}" onchange="editRow('${esc(r.id)}','minStock',this.value)"></td>
+   <td><input type="number" min="1" value="${Number(r.order)||1}" onchange="editRow('${esc(r.id)}','order',this.value)"></td>
+   <td><button class="btn danger" onclick="deleteRow('${esc(r.id)}')">削除</button></td>
+  </tr>`;
+ }).join('')||'<tr><td colspan="10" class="empty">まだ登録がありません。「＋売上商品」または「＋使用資材」から追加してください。</td></tr>';
+ updateSummary();
+}
+function updateSummary(){
+ const rows=currentCategory?rowsFor(currentCategory):[];
+ document.getElementById('saleCount').textContent=rows.filter(x=>(x.type||'sale')==='sale').length;
+ document.getElementById('materialCount').textContent=rows.filter(x=>x.type==='material').length;
+ document.getElementById('supplierCount').textContent=rows.filter(x=>String(x.supplier||'').trim()).length;
+ document.getElementById('stockCount').textContent=rows.filter(x=>Number(x.minStock)>0).length;
+}
+function addCategory(){
+ const v=document.getElementById('newCategory').value.trim();
+ if(!v)return alert('ネタ名を入力してください');
+ if(!Array.isArray(root.customMaster[v]))root.customMaster[v]=[];
+ currentCategory=v;document.getElementById('newCategory').value='';
+ renderCategories();renderTable();saveLocal();
+}
+function deleteCategory(){
+ if(!currentCategory)return;
+ if(!confirm('「'+currentCategory+'」の材料マスターを削除しますか？'))return;
+ delete root.customMaster[currentCategory];
+ currentCategory='';renderCategories();renderTable();saveLocal();
+}
+function addRow(type){
+ if(!currentCategory)return alert('先にネタを選択してください');
+ const name=prompt(type==='material'?'使用資材名を入力してください':'売上商品名を入力してください');
+ if(!name||!name.trim())return;
+ const unit=(prompt('単位を入力してください','個')||'個').trim()||'個';
+ let yieldQty=0;
+ if(type==='material')yieldQty=Number(prompt('この資材1単位で何食・何本分作れますか？','1')||1)||1;
+ const rows=root.customMaster[currentCategory]||(root.customMaster[currentCategory]=[]);
+ if(rows.some(x=>norm(x.name)===norm(name)))return alert('同じ品目が既にあります');
+ rows.push({id:uid(),name:name.trim(),unit,type,yieldQty,standardUsage:0,supplier:'',unitPrice:0,minStock:0,order:rows.length+1});
+ renderCategories();renderTable();saveLocal();
+}
+function editRow(id,key,val){
+ const row=(root.customMaster[currentCategory]||[]).find(x=>x.id===id);if(!row)return;
+ if(['yieldQty','standardUsage','unitPrice','minStock','order'].includes(key))row[key]=Number(val)||0;
+ else row[key]=String(val||'').trim();
+ if(key==='type'&&row.type==='sale')row.yieldQty=0;
+ renderCategories();renderTable();saveLocal();
+}
+function deleteRow(id){
+ const row=(root.customMaster[currentCategory]||[]).find(x=>x.id===id);
+ if(!row||!confirm('「'+row.name+'」を削除しますか？'))return;
+ root.customMaster[currentCategory]=root.customMaster[currentCategory].filter(x=>x.id!==id);
+ renderCategories();renderTable();saveLocal();
+}
+function saveLocal(){
+ localStorage.setItem(LOCAL,JSON.stringify(root));
+}
+async function saveAll(){
+ try{
+  setStatus('Firebaseへ保存しています…','wait');
+  root.version=4;root.updatedAt=Date.now();
+  await db.ref(PATH).set(root);
+  saveLocal();
+  setStatus('✅ 保存完了。主力ネタ一覧・買い物表と共有されています。','ok');
+ }catch(e){setStatus('保存失敗：'+(e.message||e),'err')}
+}
+function reloadRemote(){
+ setStatus('Firebaseから再読込しています…','wait');
+ db.ref(PATH).once('value').then(s=>{
+  const v=s.val()||{};
+  root={
+   version:Number(v.version)||4,
+   updatedAt:Number(v.updatedAt)||0,
+   records:Array.isArray(v.records)?v.records:Object.values(v.records||{}),
+   customMaster:v.customMaster&&typeof v.customMaster==='object'?v.customMaster:{},
+   deletedMaster:v.deletedMaster&&typeof v.deletedMaster==='object'?v.deletedMaster:{},
+   priceMaster:v.priceMaster&&typeof v.priceMaster==='object'?v.priceMaster:{}
+  };
+  // 既存データのid補完
+  Object.keys(root.customMaster).forEach(cat=>{
+   const rows=Array.isArray(root.customMaster[cat])?root.customMaster[cat]:[];
+   root.customMaster[cat]=rows.map((r,i)=>({...r,id:r.id||uid(),order:Number(r.order)||i+1,type:r.type||'sale'}));
+  });
+  saveLocal();
+  if(!currentCategory)currentCategory=allCategories()[0]||'';
+  renderCategories();renderTable();
+  setStatus('✅ Firebaseから最新マスターを読込しました。','ok');
+ }).catch(e=>setStatus('読込失敗：'+(e.message||e),'err'));
+}
+function exportBackup(){
+ const blob=new Blob([JSON.stringify(root,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+ a.download='fujiwara-material-master-'+new Date().toISOString().slice(0,10)+'.json';
+ a.click();URL.revokeObjectURL(a.href);
+}
+function importBackup(input){
+ const file=input.files&&input.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const v=JSON.parse(reader.result);
+   if(!v||typeof v!=='object')throw new Error('形式不正');
+   root={...root,...v,customMaster:v.customMaster||{}};
+   saveLocal();currentCategory=allCategories()[0]||'';
+   renderCategories();renderTable();setStatus('バックアップを読込みました。Firebaseへ保存してください。','wait');
+  }catch(e){alert('バックアップを読込できませんでした')}
+ };
+ reader.readAsText(file);
+}
+db.ref(PATH).on('value',snap=>{
+ const v=snap.val();
+ if(!v){
+  try{const l=JSON.parse(localStorage.getItem(LOCAL)||'null');if(l)root=l}catch(e){}
+ }else{
+  root={
+   version:Number(v.version)||4,
+   updatedAt:Number(v.updatedAt)||0,
+   records:Array.isArray(v.records)?v.records:Object.values(v.records||{}),
+   customMaster:v.customMaster&&typeof v.customMaster==='object'?v.customMaster:{},
+   deletedMaster:v.deletedMaster&&typeof v.deletedMaster==='object'?v.deletedMaster:{},
+   priceMaster:v.priceMaster&&typeof v.priceMaster==='object'?v.priceMaster:{}
+  };
+ }
+ Object.keys(root.customMaster).forEach(cat=>{
+  const rows=Array.isArray(root.customMaster[cat])?root.customMaster[cat]:[];
+  root.customMaster[cat]=rows.map((r,i)=>({...r,id:r.id||uid(),order:Number(r.order)||i+1,type:r.type||'sale'}));
+ });
+ if(!currentCategory)currentCategory=allCategories()[0]||'';
+ renderCategories();renderTable();saveLocal();
+ setStatus('✅ Firebase共有中。変更後は「Firebaseへ保存」を押してください。','ok');
+},e=>setStatus('Firebase接続エラー：'+(e.message||e),'err'));
+</script>
+</body>
+</html>
