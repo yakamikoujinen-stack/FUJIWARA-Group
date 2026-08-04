@@ -15,7 +15,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
 button,input,select{font:inherit}
-.wrap{max-width:1180px;margin:auto;padding:0 12px 100px}
+.wrap{max-width:1180px;margin:auto;padding:0 12px 150px}
 header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--navy),#2c6799);color:#fff;padding:15px 14px;box-shadow:0 5px 18px rgba(23,50,77,.23)}
 .top{max-width:1180px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
 h1{font-size:24px;margin:0}.sub{font-size:12px;color:#d9ebfa;margin-top:4px}
@@ -46,9 +46,41 @@ td input,td select{font-size:14px;padding:8px 9px}
 .empty{text-align:center;color:var(--muted);padding:32px}
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
 .sum{background:#f7fbfe;border:1px solid var(--line);border-radius:14px;padding:12px}.sum .k{font-size:11px;color:var(--muted);font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}
-.footer{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center}
-.footer .btn{min-width:160px}
-@media(max-width:820px){.layout{grid-template-columns:1fr}.cat-list{max-height:260px}.summary{grid-template-columns:1fr 1fr}.footer .btn{min-width:0;flex:1}}
+.footer{
+ position:fixed;
+ left:0;right:0;
+ bottom:calc(14px + env(safe-area-inset-bottom));
+ z-index:9999;
+ background:rgba(255,255,255,.98);
+ border:1px solid var(--line);
+ border-radius:16px;
+ margin:0 10px;
+ padding:10px;
+ display:flex;
+ gap:8px;
+ justify-content:center;
+ box-shadow:0 8px 28px rgba(23,50,77,.22);
+ pointer-events:none;
+ transform:translateZ(0);
+ -webkit-transform:translateZ(0);
+}
+.footer .btn{
+ min-width:160px;
+ min-height:48px;
+ pointer-events:auto;
+ touch-action:manipulation;
+ position:relative;
+ z-index:10000;
+ -webkit-user-select:none;
+ user-select:none;
+}
+@media(max-width:820px){
+ .layout{grid-template-columns:1fr}
+ .cat-list{max-height:260px}
+ .summary{grid-template-columns:1fr 1fr}
+ .footer{bottom:calc(18px + env(safe-area-inset-bottom))}
+ .footer .btn{min-width:0;flex:1}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -121,9 +153,9 @@ td input,td select{font-size:14px;padding:8px 9px}
  </div>
 </div>
 
-<div class="footer">
- <button class="btn primary" onclick="saveAll()">💾 Firebaseへ保存</button>
- <button class="btn ghost" onclick="reloadRemote()">🔄 再読込</button>
+<div class="footer" role="toolbar" aria-label="保存操作">
+ <button id="saveFirebaseBtn" type="button" class="btn primary">💾 Firebaseへ保存</button>
+ <button id="reloadFirebaseBtn" type="button" class="btn ghost">🔄 再読込</button>
 </div>
 
 <script>
@@ -303,6 +335,41 @@ function importBackup(input){
  };
  reader.readAsText(file);
 }
+
+function bindFooterButtons(){
+ const saveBtn=document.getElementById('saveFirebaseBtn');
+ const reloadBtn=document.getElementById('reloadFirebaseBtn');
+ if(saveBtn){
+  let saving=false;
+  const runSave=async ev=>{
+   if(ev){ev.preventDefault();ev.stopPropagation();}
+   if(saving)return;
+   saving=true;
+   document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+   saveBtn.disabled=true;
+   saveBtn.textContent='保存中…';
+   try{await saveAll();}
+   finally{
+    saving=false;
+    saveBtn.disabled=false;
+    saveBtn.textContent='💾 Firebaseへ保存';
+   }
+  };
+  saveBtn.addEventListener('click',runSave,{passive:false});
+  saveBtn.addEventListener('touchend',runSave,{passive:false});
+ }
+ if(reloadBtn){
+  const runReload=ev=>{
+   if(ev){ev.preventDefault();ev.stopPropagation();}
+   document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+   reloadRemote();
+  };
+  reloadBtn.addEventListener('click',runReload,{passive:false});
+  reloadBtn.addEventListener('touchend',runReload,{passive:false});
+ }
+}
+document.addEventListener('DOMContentLoaded',bindFooterButtons);
+
 db.ref(PATH).on('value',snap=>{
  const v=snap.val();
  if(!v){
