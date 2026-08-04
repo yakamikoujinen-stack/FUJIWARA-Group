@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>主力ネタ一覧｜担当者閲覧版</title>
+<title>主力ネタ一覧｜担当者Firebase閲覧版</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",Meiryo,sans-serif;background:linear-gradient(#f8fcff,#edf5fa);color:#172432}
 .wrap{max-width:1100px;margin:auto;padding:0 12px 80px}header{position:sticky;top:0;background:linear-gradient(135deg,#17324d,#2c6799);color:#fff;padding:15px;z-index:10}
@@ -18,6 +18,8 @@
 .hidden-note{font-size:12px;color:#8a5b00;background:#fff8dc;border:1px solid #efd67f;border-radius:12px;padding:10px 12px;margin-top:10px}
 @media(max-width:700px){.filters{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <header><div class="top"><div><h1>📈 主力ネタ一覧</h1><div class="sub">担当者閲覧版・金額非表示</div></div><button class="back" onclick="location.href='manager-app.html'">← 担当者アプリ</button></div></header>
@@ -29,16 +31,103 @@
 </div>
 <script>
 const KEY='fujiwara_main_neta_sales_v1';
+const SHARED_PATH='fujiwara/mainNetaSalesSharedV1';
+const firebaseConfig={
+ apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+ authDomain:"fujiwara-group-3a600.firebaseapp.com",
+ databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+ projectId:"fujiwara-group-3a600",
+ storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+ messagingSenderId:"709887362301",
+ appId:"1:709887362301:web:5ec6b7e2a2165066956a94"
+};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=n=>new Intl.NumberFormat('ja-JP').format(Number(n)||0);
 let records=[];
-function load(){try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');records=Array.isArray(v)?v:[]}catch(e){records=[]}const now=new Date();$('month').value=now.toISOString().slice(0,7);refreshItems();render()}
-function refreshItems(){const cur=$('item').value;const items=[...new Set(records.flatMap(r=>[r.category,r.subItem]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ja'));$('item').innerHTML='<option value="">すべて</option>'+items.map(x=>`<option ${x===cur?'selected':''}>${esc(x)}</option>`).join('')}
-function filtered(){const m=$('month').value,it=$('item').value,q=$('search').value.trim().toLowerCase();return records.filter(r=>(!m||String(r.date||'').startsWith(m))&&(!it||r.category===it||r.subItem===it)&&(!q||String(r.eventName||'').toLowerCase().includes(q))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))}
-function render(){const list=filtered();const groups={};list.forEach(r=>{const k=(r.date||'')+'||'+(r.eventName||'');(groups[k]??=[]).push(r)});$('eventCount').textContent=Object.keys(groups).length;$('rowCount').textContent=list.length;$('qtyTotal').textContent=num(list.reduce((s,r)=>s+Number(r.qty||0),0));$('events').innerHTML=Object.entries(groups).map(([k,rows])=>{const [date,name]=k.split('||');const place=rows[0]?.place||'';return `<div class="event-card"><div class="event-head">${esc(date)}　${esc(name)}<div class="event-meta">${esc(place)}｜${rows.length}品目</div></div><div class="table-wrap"><table><thead><tr><th>出店ネタ</th><th>主力品目・資材</th><th>区分</th><th>単位</th><th>数量・必要数</th><th>使用基準</th><th>備考</th></tr></thead><tbody>${rows.map(r=>{const material=(r.rowType||'sale')==='material';return `<tr><td>${esc(r.category)}</td><td><strong>${esc(r.subItem)}</strong></td><td><span class="pill ${material?'material':'sale'}">${material?'使用資材':'売上商品'}</span></td><td>${esc(r.unit||'')}</td><td class="qty">${num(r.qty||0)}</td><td>${material&&r.yieldQty?`1${esc(r.unit||'')}で${num(r.yieldQty)}個分`:'—'}</td><td>${esc(r.memo||'')}</td></tr>`}).join('')}</tbody></table></div></div>`}).join('')||'<div class="empty">表示する記録がありません。</div>'}
-load();
-window.addEventListener('storage',load);
+
+function normalize(v){
+ const list=Array.isArray(v)?v:Object.values(v||{});
+ return list.filter(Boolean);
+}
+function setMonth(){
+ if(!$('month').value){
+  const d=new Date();
+  $('month').value=d.toISOString().slice(0,7);
+ }
+}
+function refreshItems(){
+ const cur=$('item').value;
+ const items=[...new Set(records.flatMap(r=>[r.category,r.subItem]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ja'));
+ $('item').innerHTML='<option value="">すべて</option>'+items.map(x=>`<option ${x===cur?'selected':''}>${esc(x)}</option>`).join('');
+}
+function filtered(){
+ const m=$('month').value,it=$('item').value,q=$('search').value.trim().toLowerCase();
+ return records.filter(r=>
+  (!m||String(r.date||'').startsWith(m)) &&
+  (!it||r.category===it||r.subItem===it) &&
+  (!q||String(r.eventName||'').toLowerCase().includes(q))
+ ).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+}
+function render(){
+ const list=filtered(),groups={};
+ list.forEach(r=>{
+  const k=(r.date||'')+'||'+(r.eventName||'');
+  (groups[k]??=[]).push(r);
+ });
+ $('eventCount').textContent=Object.keys(groups).length;
+ $('rowCount').textContent=list.length;
+ $('qtyTotal').textContent=num(list.reduce((s,r)=>s+Number(r.qty||0),0));
+
+ $('events').innerHTML=Object.entries(groups).map(([k,rows])=>{
+  const [date,name]=k.split('||');
+  const place=rows[0]?.place||'';
+  return `<div class="event-card">
+   <div class="event-head">${esc(date)}　${esc(name)}
+    <div class="event-meta">${esc(place)}｜${rows.length}品目</div>
+   </div>
+   <div class="table-wrap"><table>
+    <thead><tr><th>出店ネタ</th><th>主力品目・資材</th><th>区分</th><th>単位</th><th>数量・必要数</th><th>使用基準</th><th>備考</th></tr></thead>
+    <tbody>${rows.map(r=>{
+     const material=(r.rowType||'sale')==='material';
+     return `<tr>
+      <td>${esc(r.category)}</td>
+      <td><strong>${esc(r.subItem)}</strong></td>
+      <td><span class="pill ${material?'material':'sale'}">${material?'使用資材':'売上商品'}</span></td>
+      <td>${esc(r.unit||'')}</td>
+      <td class="qty">${num(r.qty||0)}</td>
+      <td>${material&&r.yieldQty?`1${esc(r.unit||'')}で${num(r.yieldQty)}個分`:'—'}</td>
+      <td>${esc(r.memo||'')}</td>
+     </tr>`;
+    }).join('')}</tbody>
+   </table></div>
+  </div>`;
+ }).join('')||'<div class="empty">表示する記録がありません。</div>';
+}
+
+function loadLocalFallback(){
+ try{
+  const v=JSON.parse(localStorage.getItem(KEY)||'[]');
+  records=Array.isArray(v)?v:[];
+ }catch(e){records=[]}
+ setMonth();refreshItems();render();
+}
+
+db.ref(SHARED_PATH).on('value',snap=>{
+ const v=snap.val()||{};
+ const remote=normalize(v.records||v);
+ if(remote.length){
+  records=remote;
+  localStorage.setItem(KEY,JSON.stringify(records));
+  setMonth();refreshItems();render();
+ }else{
+  loadLocalFallback();
+ }
+},()=>loadLocalFallback());
+
+window.addEventListener('pageshow',render);
 </script>
 </body>
 </html>
