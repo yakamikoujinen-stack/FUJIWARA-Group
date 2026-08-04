@@ -24,6 +24,12 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 .publish-status.error{background:#ffe6e6;border-color:#e9aaaa;color:var(--red)}
 .publish-dot{width:9px;height:9px;border-radius:50%;background:#b8aa7a;display:inline-block}
 .publish-status.live .publish-dot{background:var(--green);box-shadow:0 0 0 4px rgba(22,138,88,.12)}
+
+.table-view-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.fit-table-btn{background:#e7f1ff;border:1px solid #9fc0e9;color:#2563a7}
+.scroll.fit-mode{overflow:hidden}
+.scroll.fit-mode table{transform-origin:top left}
+
 @media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:12px}.wrap{padding:10px}}
 @media print{header,.footer,.toolbar,.no-print{display:none!important}body{padding:0;background:#fff}.card{box-shadow:none;border:0;padding:0}table{min-width:0;font-size:9px}td input{border:0;padding:0;font-size:9px}}
 </style>
@@ -43,7 +49,11 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 <section class="card" id="netaSec"><h2>② 出店ネタ（イベントから自動反映）</h2><div class="notice">選択したイベントの出店ネタに登録されている品目を、最初は全部表示します。今回不要な品目だけ「今回不要」で外せます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="setAllNeta(false)">全部外す</button></div></section>
 <section class="card" id="priceSec"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="toolbar"><button class="green" id="salesSaveBtn" onclick="saveSalesSettings()">💾 売上設定金額を保存</button></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
 <section class="card" id="listSec"><h2>④ 買い物一覧表</h2><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
-<div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
+<div class="table-view-tools no-print">
+<button id="fitTableBtn" class="fit-table-btn" onclick="toggleFitTable()">🔍 全体表示</button>
+<span style="font-size:12px;color:#6d5a2b;align-self:center">全10列を画面内に縮小表示します</span>
+</div>
+<div class="scroll" id="shoppingTableScroll"><table id="shoppingTable"><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div><div class="sum"><div class="k">買い物金額合計</div><div class="v" id="moneyTotal">¥0</div></div></div></section>
 </div>
 <nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">売上設定</button><button onclick="jump('listSec')">買い物表</button></nav>
@@ -441,6 +451,43 @@ async function saveSalesSettings(){
   }
 }
 
+
+let tableFitMode=false;
+function applyTableFit(){
+  const wrap=document.getElementById('shoppingTableScroll');
+  const table=document.getElementById('shoppingTable');
+  const btn=document.getElementById('fitTableBtn');
+  if(!wrap||!table)return;
+
+  table.style.transform='';
+  wrap.style.height='';
+  wrap.classList.remove('fit-mode');
+
+  if(tableFitMode){
+    const available=wrap.clientWidth;
+    const natural=table.scrollWidth;
+    const scale=Math.min(1, available/natural);
+    table.style.transform='scale('+scale+')';
+    wrap.style.height=Math.ceil(table.offsetHeight*scale)+'px';
+    wrap.classList.add('fit-mode');
+    if(btn)btn.textContent='↔ 通常表示';
+  }else{
+    if(btn)btn.textContent='🔍 全体表示';
+  }
+}
+function toggleFitTable(){
+  tableFitMode=!tableFitMode;
+  applyTableFit();
+}
+window.addEventListener('resize',()=>{if(tableFitMode)applyTableFit()});
+window.addEventListener('orientationchange',()=>setTimeout(()=>{if(tableFitMode)applyTableFit()},250));
+
+
+const tableObserver=new MutationObserver(()=>{if(tableFitMode)requestAnimationFrame(applyTableFit)});
+window.addEventListener('DOMContentLoaded',()=>{
+  const tbody=document.getElementById('tbody');
+  if(tbody)tableObserver.observe(tbody,{childList:true,subtree:true,characterData:true});
+});
 loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();loadMainData(false);
 </script>
 </body></html>
