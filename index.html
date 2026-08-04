@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.22 賃金台帳Firebase連携修正版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.23 売上入力5名固定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -676,10 +676,10 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">まゆみ・藤原・将・文太専用：日別かんたん売上表 v4.3.17</p>
+        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.23</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
-          <div class="admin-badge">🔒 まゆみ＝編集 / 藤原＝閲覧 / 将・文太＝編集｜仕入・経費はキング/事務員アプリで管理</div>
+          <div class="admin-badge">🔒 売上入力・編集は 藤原明裕／まゆみ／文太／将／縁笑だるまや の5名だけ｜仕入・経費はキング/事務員アプリで管理</div>
           <div class="fg">
             <label>対象イベント</label>
             <select id="sales-ev-select" onchange="renderSalesDetail()"></select>
@@ -1197,26 +1197,19 @@ var manualLogout = false;
 
 function roleLabel(r){ return r==='leader'?'リーダー':(r==='staff'?'担当者':'一般'); }
 
-// 売上・経費の閲覧/編集を許可する名前
-// リーダーは全体管理のため常に許可。
-// 一般：まゆみ＝閲覧/編集、藤原＝閲覧のみ。担当者：将/文太＝閲覧/編集。
-var SALES_EXPENSE_ALLOWED = { userView:['まゆみ','藤原'], userEdit:['まゆみ','藤原'], staff:['将','文太'] };
+// 売上・経費の閲覧・入力・修正を許可する名前（v4.3.23 完全固定）
+// 役割に関係なく、下記5名だけが利用可能。リーダー権限だけでは利用不可。
+var SALES_EXPENSE_ALLOWED_NAMES = ['藤原明裕','まゆみ','文太','将','縁笑だるまや'];
 function normalizeAccessName(name){ return String(name||'').replace(/[\s　]+/g,'').trim(); }
 function isNameInListForAccess(name, list){
   var n=normalizeAccessName(name);
   return (list||[]).some(function(x){ return normalizeAccessName(x)===n; });
 }
 function canAccessSalesExpense(){
-  if(role==='leader') return true;
-  if(role==='user') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.userView);
-  if(role==='staff') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.staff);
-  return false;
+  return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED_NAMES);
 }
 function canEditSalesExpense(){
-  if(role==='leader') return true;
-  if(role==='user') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.userEdit);
-  if(role==='staff') return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED.staff);
-  return false;
+  return isNameInListForAccess(userName, SALES_EXPENSE_ALLOWED_NAMES);
 }
 function salesExpenseAccessLabel(){
   if(canEditSalesExpense()) return '閲覧・編集できます';
@@ -1224,31 +1217,29 @@ function salesExpenseAccessLabel(){
   return '閲覧できません';
 }
 
-// 売上表の個別権限
-// ① 記入者（藤原・まゆみ・将・文太）は自分が記入した売上だけ閲覧・編集
-// ② リーダーは全売上を閲覧・編集
-// ③ 一般ユーザーはシークレットイベントを表示しない（canCurrentUserSeeEvent側でも保護）
+// 売上表の権限（v4.3.23）
+// 藤原明裕・まゆみ・文太・将・縁笑だるまやの5名だけが、
+// 担当者や先の記入者に関係なく、閲覧可能な全イベントの売上を閲覧・入力・修正できる。
+// 一般ユーザーにはシークレットイベントを表示しない（canCurrentUserSeeEvent側でも保護）。
 function salesRecordOwner(ev){
   return normalizeAccessName(ev && ev.sales && ev.sales.simple && ev.sales.simple.updatedBy);
 }
 function isSalesRecordMine(ev){
   var owner=salesRecordOwner(ev);
-  if(!owner) return true; // まだ未入力なら許可された記入者が入力できる
+  if(!owner) return true;
   return owner===normalizeAccessName(userName);
 }
 function canViewSalesRecord(ev){
   if(!ev) return false;
   if(!canAccessSalesExpense()) return false;
   if(!canCurrentUserSeeEvent(ev)) return false;
-  if(role==='leader') return true;
-  return isSalesRecordMine(ev);
+  return true;
 }
 function canEditSalesRecord(ev){
   if(!ev) return false;
   if(!canEditSalesExpense()) return false;
   if(!canCurrentUserSeeEvent(ev)) return false;
-  if(role==='leader') return true;
-  return isSalesRecordMine(ev);
+  return true;
 }
 
 function isSecretEvent(ev){
@@ -1274,7 +1265,7 @@ function openSalesView(id){
 }
 function ensureSalesExpenseStaffNames(){
   if(!Array.isArray(state.staffList)) state.staffList=[];
-  SALES_EXPENSE_ALLOWED.userView.concat(SALES_EXPENSE_ALLOWED.staff).forEach(function(n){
+  SALES_EXPENSE_ALLOWED_NAMES.forEach(function(n){
     if(!state.staffList.some(function(x){ return normalizeAccessName(x)===normalizeAccessName(n); })){ state.staffList.push(n); }
   });
 }
@@ -1557,7 +1548,7 @@ function applyPermissions() {
   if(role==='user') hide('btn-add-inv-item');
   else show('btn-add-inv-item');
   if(!canAccessSalesExpense()){
-    lockSection('sales-lock','売上・経費は、まゆみ/藤原（一般）・将/文太（担当者）・リーダーのみ閲覧できます');
+    lockSection('sales-lock','売上・経費は、藤原明裕・まゆみ・文太・将・縁笑だるまやの5名だけが利用できます');
     hide('sales-content');
   } else {
     show('sales-content');
@@ -1612,7 +1603,7 @@ function hide(id){ var e=document.getElementById(id); if(e) e.style.display='non
 // ════ NAV ════
 function buildNav() {
   var items = (NAV[role]||[]).slice();
-  // 売上・経費は、まゆみ（一般）・将/文太（担当者）・リーダーだけ表示
+  // 売上・経費は、固定5名だけ表示
   if(role !== 'leader' && canAccessSalesExpense() && !items.some(function(n){ return n.id==='sales'; })){
     var insertAt = Math.min(2, items.length);
     items.splice(insertAt, 0, {id:'sales', icon:'📊', label:'売上・経費'});
@@ -4240,44 +4231,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       staffList:state.staffList,
       auditLogs:state.auditLogs||[],
       // KING側はこの日別データを読み、連日イベントの全開催日を合算します
-      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[]),
-      // 賃金台帳共有版：メインアプリの日別スタッフ賃金をFirebaseで一元管理
-      laborLedgerShared:{
-        version:3,
-        updatedAt:Date.now(),
-        updatedBy:(typeof userName!=='undefined'&&userName)?userName:'未入力',
-        events:buildKingDailyFinanceRecords(state.events||[]).map(function(r){
-          return {
-            id:r.id,
-            eventId:r.eventId,
-            name:r.eventName,
-            eventName:r.eventName,
-            date:r.date,
-            eventDate:r.date,
-            place:r.place||'',
-            payments:(r.payments||[]).map(function(p){
-              return {
-                name:p.name||p.staffName||'',
-                staffName:p.staffName||p.name||'',
-                type:p.type||'日当',
-                amount:parseInt(p.amount)||0,
-                dueDate:p.dueDate||'',
-                paid:!!p.paid,
-                paidDate:p.paidDate||'',
-                date:r.date
-              };
-            }),
-            sales:r.sales||0,
-            expense:r.expense||0,
-            staffPay:r.staffPay||0,
-            profit:r.profit||0,
-            deposit:r.deposit||0,
-            cash:r.cash||0,
-            unpaid:r.unpaid||0,
-            updatedAt:r.updatedAt||new Date().toLocaleString('ja-JP')
-          };
-        })
-      }
+      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[])
     }).then(function(){ showSync('✅ 同期完了'); })
       .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
   };
