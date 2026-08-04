@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.23 売上入力5名固定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.24 入国承認セキュリティ版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -516,6 +516,28 @@ body::before,#app::before,.page::before{
 }
 
 .btn-prep-shared{background:linear-gradient(135deg,#9b65b7,#6f3d8f)!important;color:#fff!important;border:1.5px solid #5b2a78!important;box-shadow:0 3px 10px rgba(111,61,143,.25);}
+
+
+/* ===== v4.3.24 入国承認セキュリティ ===== */
+.entry-security-link{margin-top:10px;text-align:center}
+.entry-security-link button{border:0;background:transparent;color:#8a6200;text-decoration:underline;font-weight:900;font-size:13px;padding:8px}
+#entry-request-screen{display:none;position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#fff8e8,#ffe9a8,#fff8e8);padding:20px;overflow-y:auto;align-items:center;justify-content:center}
+#entry-request-screen.open{display:flex}
+.entry-card{width:100%;max-width:410px;background:#fffdfa;border:2px solid #d8bf75;border-radius:20px;padding:24px;box-shadow:0 12px 34px rgba(80,55,0,.18)}
+.entry-card h2{margin:0 0 8px;color:#241900;font-size:23px}
+.entry-card p{font-size:12px;line-height:1.75;color:#6d5a2b;margin:0 0 15px}
+.entry-status{display:none;margin-top:12px;border-radius:12px;padding:12px;font-size:13px;font-weight:900;line-height:1.65}
+.entry-status.waiting{display:block;background:#fff3cd;border:1px solid #e5bd45;color:#674d00}
+.entry-status.approved{display:block;background:#dcfce7;border:1px solid #4caf73;color:#126334}
+.entry-status.rejected{display:block;background:#fee2e2;border:1px solid #e57373;color:#991b1b}
+.entry-admin-fab{display:none;position:fixed;right:14px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:180;border:0;border-radius:999px;background:#17324d;color:#fff;padding:11px 15px;font-size:12px;font-weight:950;box-shadow:0 5px 18px rgba(0,0,0,.28)}
+.entry-admin-fab.show{display:block}
+.entry-count{display:inline-flex;min-width:19px;height:19px;border-radius:999px;background:#ef4444;color:#fff;align-items:center;justify-content:center;padding:0 5px;margin-left:5px;font-size:10px}
+.entry-admin-row{background:#fff;border:1px solid #e4d39b;border-radius:13px;padding:12px;margin-bottom:9px}
+.entry-admin-name{font-size:15px;font-weight:950;color:#241900}
+.entry-admin-meta{font-size:11px;line-height:1.65;color:#6d5a2b;margin-top:4px}
+.entry-admin-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -547,7 +569,8 @@ body::before,#app::before,.page::before{
     <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()" style="margin-top:4px">初回登録してログイン →</button>
     <button class="btn btn-ghost btn-full" id="clear-device-btn" onclick="clearDeviceRegistration()" style="margin-top:8px;display:none">この端末の登録を解除</button>
     <div class="login-err" id="login-err">❌ パスワードが違います</div>
-  </div>
+  <div class="entry-security-link"><button type="button" onclick="openEntryRequest()">🔐 初めての方・新しいスタッフは入国申請</button></div>
+    </div>
 </div>
 
 <!-- APP -->
@@ -1123,6 +1146,31 @@ body::before,#app::before,.page::before{
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- 入国申請画面 -->
+<section id="entry-request-screen" aria-hidden="true">
+  <div class="entry-card">
+    <h2>🔐 入国申請</h2>
+    <p>新しくメインアプリを利用する方は申請してください。リーダーが承認するまでイベント情報は表示されません。既存スタッフは今まで通りログインできます。</p>
+    <div class="fg"><label>氏名（必須）</label><input id="entry-request-name" autocomplete="name" placeholder="例：山田 太郎"></div>
+    <div class="fg"><label>所属・担当（任意）</label><input id="entry-request-affiliation" placeholder="例：イベントスタッフ"></div>
+    <button class="btn btn-gold btn-full" type="button" onclick="submitEntryRequest()">リーダーへ申請する</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:8px" type="button" onclick="closeEntryRequest()">ログイン画面へ戻る</button>
+    <div id="entry-request-status" class="entry-status"></div>
+  </div>
+</section>
+<button id="entry-admin-fab" class="entry-admin-fab" type="button" onclick="openEntryAdmin()">🔔 入国承認 <span id="entry-pending-count" class="entry-count">0</span></button>
+<div class="modal-overlay" id="modal-entry-admin">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <div><h2 class="modal-title">🔐 入国承認管理</h2><div style="font-size:11px;color:var(--text2);margin-top:3px">リーダー専用</div></div>
+      <button class="modal-close-btn" onclick="closeModal('modal-entry-admin')">✕</button>
+    </div>
+    <div id="entry-admin-list"><div class="empty-state"><div class="ei">⏳</div>読み込み中...</div></div>
+  </div>
+</div>
+
 
 <script>
 // ════ パスワード ════
@@ -4466,5 +4514,122 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
 })();
 </script>
 
+<script>
+
+// ════ v4.3.24 入国承認セキュリティ ════
+var ENTRY_REQUESTS_PATH='fujiwara_security/main_entry_requests';
+var ENTRY_APPROVALS_PATH='fujiwara_security/main_entry_approvals';
+var ENTRY_DEVICE_KEY='fg_entry_device_id_v1';
+var ENTRY_LOCAL_REQUEST_KEY='fg_entry_request_v1';
+var entryRequestCache={};
+var entryApprovalCache={};
+var entrySecurityListening=false;
+
+function entryNormalizeName(v){return String(v||'').replace(/[\s　]+/g,'').trim();}
+function entrySafeKey(v){return String(v||'').replace(/[.#$\[\]\/]/g,'_').slice(0,100);}
+function getEntryDeviceId(){
+  var id=''; try{id=localStorage.getItem(ENTRY_DEVICE_KEY)||'';}catch(e){}
+  if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);try{localStorage.setItem(ENTRY_DEVICE_KEY,id);}catch(e){}}
+  return id;
+}
+function entryFirebaseReady(){return !!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.database);}
+function entryEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function entryNowIso(){return new Date().toISOString();}
+function entryApprovalKey(name){return entrySafeKey(entryNormalizeName(name));}
+function isExistingApprovedStaff(name){return isRegisteredStaffName(name);}
+function isEntryApproved(name){
+  if(isExistingApprovedStaff(name)) return true;
+  var a=entryApprovalCache[entryApprovalKey(name)];
+  return !!(a&&a.status==='approved');
+}
+function openEntryRequest(){
+  document.getElementById('entry-request-screen').classList.add('open');
+  document.getElementById('entry-request-screen').setAttribute('aria-hidden','false');
+  var saved=null;try{saved=JSON.parse(localStorage.getItem(ENTRY_LOCAL_REQUEST_KEY)||'null');}catch(e){}
+  if(saved&&saved.name){document.getElementById('entry-request-name').value=saved.name||'';document.getElementById('entry-request-affiliation').value=saved.affiliation||'';showEntryRequestStatus(saved.status||'waiting',saved.status==='approved'?'承認されました。ログイン画面から入れます。':saved.status==='rejected'?'申請は拒否されました。リーダーへ確認してください。':'リーダーの承認を待っています。');}
+}
+function closeEntryRequest(){document.getElementById('entry-request-screen').classList.remove('open');document.getElementById('entry-request-screen').setAttribute('aria-hidden','true');}
+function showEntryRequestStatus(status,text){var el=document.getElementById('entry-request-status');el.className='entry-status '+status;el.textContent=text;}
+function submitEntryRequest(){
+  var name=document.getElementById('entry-request-name').value.trim();
+  var affiliation=document.getElementById('entry-request-affiliation').value.trim();
+  if(!name){showEntryRequestStatus('rejected','氏名を入力してください。');return;}
+  if(isExistingApprovedStaff(name)){showEntryRequestStatus('approved','既存スタッフとして登録済みです。申請せずログインできます。');return;}
+  if(!entryFirebaseReady()){showEntryRequestStatus('rejected','通信準備中です。少し待ってからもう一度押してください。');setTimeout(startEntrySecurity,800);return;}
+  var deviceId=getEntryDeviceId();
+  var id=entrySafeKey(deviceId);
+  var data={id:id,deviceId:deviceId,name:name,normalizedName:entryNormalizeName(name),affiliation:affiliation,status:'waiting',requestedAt:entryNowIso(),updatedAt:entryNowIso(),app:'main'};
+  showEntryRequestStatus('waiting','申請を送信しています…');
+  firebase.database().ref(ENTRY_REQUESTS_PATH+'/'+id).set(data).then(function(){
+    try{localStorage.setItem(ENTRY_LOCAL_REQUEST_KEY,JSON.stringify(data));}catch(e){}
+    showEntryRequestStatus('waiting','申請しました。リーダーの承認をお待ちください。');
+  }).catch(function(err){showEntryRequestStatus('rejected','申請を送信できませんでした。通信状態を確認してください。');console.error(err);});
+}
+function renderEntryAdmin(){
+  var box=document.getElementById('entry-admin-list');if(!box)return;
+  var rows=Object.keys(entryRequestCache||{}).map(function(k){return entryRequestCache[k];}).filter(Boolean).sort(function(a,b){return String(b.requestedAt||'').localeCompare(String(a.requestedAt||''));});
+  if(!rows.length){box.innerHTML='<div class="empty-state"><div class="ei">✅</div>申請はありません</div>';return;}
+  box.innerHTML=rows.map(function(r){
+    var status=r.status||'waiting'; var label=status==='approved'?'承認済み':status==='rejected'?'拒否':'承認待ち';
+    return '<div class="entry-admin-row"><div class="entry-admin-name">'+entryEsc(r.name||'氏名未設定')+'　<small>'+label+'</small></div><div class="entry-admin-meta">所属：'+entryEsc(r.affiliation||'未設定')+'<br>申請：'+entryEsc((r.requestedAt||'').replace('T',' ').slice(0,16))+'<br>端末ID：'+entryEsc(String(r.deviceId||'').slice(-10))+'</div><div class="entry-admin-actions">'+(status!=='approved'?'<button class="btn btn-green btn-sm" onclick="approveEntryRequest(\''+entryEsc(r.id)+'\')">✅ 承認</button>':'')+(status!=='rejected'?'<button class="btn btn-danger btn-sm" onclick="rejectEntryRequest(\''+entryEsc(r.id)+'\')">❌ 拒否</button>':'')+'<button class="btn btn-ghost btn-sm" onclick="deleteEntryRequest(\''+entryEsc(r.id)+'\')">削除</button></div></div>';
+  }).join('');
+}
+function openEntryAdmin(){if(role!=='leader'){toast('⛔ リーダーのみ操作できます');return;}renderEntryAdmin();openModal('modal-entry-admin');}
+function approveEntryRequest(id){
+  if(role!=='leader'||!entryFirebaseReady())return;var r=entryRequestCache[id];if(!r)return;
+  var updates={};updates[ENTRY_REQUESTS_PATH+'/'+id+'/status']='approved';updates[ENTRY_REQUESTS_PATH+'/'+id+'/approvedAt']=entryNowIso();updates[ENTRY_REQUESTS_PATH+'/'+id+'/approvedBy']=userName||'リーダー';updates[ENTRY_APPROVALS_PATH+'/'+entryApprovalKey(r.name)]={name:r.name,normalizedName:entryNormalizeName(r.name),status:'approved',approvedAt:entryNowIso(),approvedBy:userName||'リーダー'};
+  firebase.database().ref().update(updates).then(function(){toast('✅ '+r.name+'さんを承認しました');});
+}
+function rejectEntryRequest(id){
+  if(role!=='leader'||!entryFirebaseReady())return;var r=entryRequestCache[id];if(!r)return;
+  var updates={};updates[ENTRY_REQUESTS_PATH+'/'+id+'/status']='rejected';updates[ENTRY_REQUESTS_PATH+'/'+id+'/rejectedAt']=entryNowIso();updates[ENTRY_REQUESTS_PATH+'/'+id+'/rejectedBy']=userName||'リーダー';updates[ENTRY_APPROVALS_PATH+'/'+entryApprovalKey(r.name)]={name:r.name,normalizedName:entryNormalizeName(r.name),status:'rejected',rejectedAt:entryNowIso(),rejectedBy:userName||'リーダー'};
+  firebase.database().ref().update(updates).then(function(){toast('申請を拒否しました');});
+}
+function deleteEntryRequest(id){if(role!=='leader'||!entryFirebaseReady())return;if(!confirm('この申請を削除しますか？'))return;firebase.database().ref(ENTRY_REQUESTS_PATH+'/'+id).remove();}
+function updateEntryAdminBadge(){
+  var count=Object.keys(entryRequestCache||{}).map(function(k){return entryRequestCache[k];}).filter(function(r){return r&&r.status==='waiting';}).length;
+  var c=document.getElementById('entry-pending-count');if(c)c.textContent=String(count);
+  var b=document.getElementById('entry-admin-fab');if(b)b.classList.toggle('show',role==='leader'&&document.getElementById('app').style.display!=='none');
+}
+function syncLocalEntryStatus(){
+  var saved=null;try{saved=JSON.parse(localStorage.getItem(ENTRY_LOCAL_REQUEST_KEY)||'null');}catch(e){}
+  if(!saved||!saved.id)return;var r=entryRequestCache[saved.id];if(!r)return;
+  saved.status=r.status||saved.status;try{localStorage.setItem(ENTRY_LOCAL_REQUEST_KEY,JSON.stringify(saved));}catch(e){}
+  var screen=document.getElementById('entry-request-screen');if(screen&&screen.classList.contains('open'))showEntryRequestStatus(saved.status,saved.status==='approved'?'承認されました。ログイン画面へ戻り、氏名を入力してログインしてください。':saved.status==='rejected'?'申請は拒否されました。リーダーへ確認してください。':'リーダーの承認を待っています。');
+}
+function startEntrySecurity(){
+  if(entrySecurityListening||!entryFirebaseReady())return false;entrySecurityListening=true;
+  firebase.database().ref(ENTRY_REQUESTS_PATH).on('value',function(s){entryRequestCache=s.val()||{};updateEntryAdminBadge();renderEntryAdmin();syncLocalEntryStatus();});
+  firebase.database().ref(ENTRY_APPROVALS_PATH).on('value',function(s){entryApprovalCache=s.val()||{};});
+  return true;
+}
+(function(){var tries=0;var timer=setInterval(function(){tries++;if(startEntrySecurity()||tries>40)clearInterval(timer);},250);})();
+
+// ログインを承認制に差し替え（既存スタッフは従来通り）
+doLogin=function(){
+  var saved=getSavedLoginProfile();
+  var name=document.getElementById('login-name').value.trim();
+  var pw=document.getElementById('login-pw').value;
+  var err=document.getElementById('login-err');
+  if(saved&&saved.name&&!name){name=saved.name;role=saved.role||'user';}
+  if(!name){err.textContent='⚠️ 名前を入力してください';err.style.display='block';return;}
+  if(role!=='leader'&&!isEntryApproved(name)){
+    err.innerHTML='⛔ リーダー承認が必要です。<br><button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="openEntryRequest()">入国申請を開く</button>';
+    err.style.display='block';return;
+  }
+  if(role!=='user'&&pw!==PW[role]){err.textContent='❌ パスワードが違います';err.style.display='block';document.getElementById('login-pw').value='';return;}
+  saveLoginProfile(name,role);refreshSavedLoginBox();finishLogin(name,role,(saved&&saved.name)?'承認済み端末からログインしました':'承認確認後にログインしました');
+  setTimeout(updateEntryAdminBadge,100);
+};
+
+// 自動ログインも承認状態を確認
+var _entryOriginalFinishLogin=finishLogin;
+finishLogin=function(name,r,detail){
+  if(r!=='leader'&&!isEntryApproved(name)){try{localStorage.removeItem(LOGIN_PROFILE_KEY);}catch(e){};document.getElementById('login-err').textContent='⛔ 承認が確認できないためログインを停止しました';document.getElementById('login-err').style.display='block';return;}
+  _entryOriginalFinishLogin(name,r,detail);setTimeout(updateEntryAdminBadge,100);
+};
+var _entryOriginalLogout=doLogout;
+doLogout=function(){_entryOriginalLogout();setTimeout(updateEntryAdminBadge,50);};
+</script>
 </body>
 </html>
