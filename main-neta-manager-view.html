@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
 <title>主力ネタ一覧｜担当者Firebase閲覧版</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",Meiryo,sans-serif;background:linear-gradient(#f8fcff,#edf5fa);color:#172432}
+*{box-sizing:border-box;touch-action:manipulation}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",Meiryo,sans-serif;background:linear-gradient(#f8fcff,#edf5fa);color:#172432}
 .wrap{max-width:1100px;margin:auto;padding:0 12px 80px}header{position:sticky;top:0;background:linear-gradient(135deg,#17324d,#2c6799);color:#fff;padding:15px;z-index:10}
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px}h1{margin:0;font-size:23px}.sub{font-size:12px;color:#d9ebfa}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}
 .card{background:#fff;border:1px solid #d9e4ed;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 9px 25px rgba(23,50,77,.11)}
@@ -14,7 +14,7 @@
 .filters{display:grid;grid-template-columns:1fr 1fr 2fr;gap:9px}.field label{display:block;font-size:12px;font-weight:900;color:#687b8e;margin-bottom:5px}.field input,.field select{width:100%;padding:11px 12px;border:1px solid #c8d6e1;border-radius:11px;font-size:16px}
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.sum{background:#f7fbfe;border:1px solid #d9e4ed;border-radius:14px;padding:12px}.sum .k{font-size:11px;color:#687b8e;font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}
 .event-card{border:1px solid #d9e4ed;border-radius:15px;margin-bottom:12px;overflow:hidden}.event-head{padding:12px 14px;background:#eef5fa;font-weight:950}.event-meta{font-size:12px;color:#687b8e;margin-top:4px}
-.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{background:#f7fbfe;color:#27445e}.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.sale{background:#e8f7ef;color:#176541}.material{background:#fff2cf;color:#755400}.qty{text-align:right;font-weight:950}.empty{text-align:center;color:#687b8e;padding:30px}
+.table-wrap{overflow:auto;touch-action:pan-x pan-y pinch-zoom;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{background:#f7fbfe;color:#27445e}.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.sale{background:#e8f7ef;color:#176541}.material{background:#fff2cf;color:#755400}.qty{text-align:right;font-weight:950}.empty{text-align:center;color:#687b8e;padding:30px}
 .hidden-note{font-size:12px;color:#8a5b00;background:#fff8dc;border:1px solid #efd67f;border-radius:12px;padding:10px 12px;margin-top:10px}
 @media(max-width:700px){.filters{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}}
 </style>
