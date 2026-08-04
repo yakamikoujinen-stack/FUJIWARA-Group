@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 統一版</title>
+<title>ネタ買い物一覧 統一版 v1.3 主力ネタ連携</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -23,20 +23,12 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 .publish-status.error{background:#ffe6e6;border-color:#e9aaaa;color:var(--red)}
 .publish-dot{width:9px;height:9px;border-radius:50%;background:#b8aa7a;display:inline-block}
 .publish-status.live .publish-dot{background:var(--green);box-shadow:0 0 0 4px rgba(22,138,88,.12)}
-
-html,body{touch-action:pan-x pan-y pinch-zoom}
-.table-view-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
-.fit-table-btn{background:#e7f1ff;border:1px solid #9fc0e9;color:#2563a7}
-.table-fit-note{font-size:12px;color:var(--sub)}
-.scroll.fit-active{overflow:hidden}
-#shoppingTableScale{transform-origin:top left;will-change:transform}
-
 @media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:12px}.wrap{padding:10px}}
 @media print{header,.footer,.toolbar,.no-print{display:none!important}body{padding:0;background:#fff}.card{box-shadow:none;border:0;padding:0}table{min-width:0;font-size:9px}td input{border:0;padding:0;font-size:9px}}
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.2</div><div class="sub">イベント別金額保存｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.3</div><div class="sub">イベント別金額保存｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -49,16 +41,9 @@ html,body{touch-action:pan-x pan-y pinch-zoom}
 </section>
 <section class="card" id="netaSec"><h2>② 出店ネタ（イベントから自動反映）</h2><div class="notice">選択したイベントの出店ネタに登録されている品目を、最初は全部表示します。今回不要な品目だけ「今回不要」で外せます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="setAllNeta(false)">全部外す</button></div></section>
 <section class="card" id="priceSec"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="toolbar"><button class="green" id="salesSaveBtn" onclick="saveSalesSettings()">💾 売上設定金額を保存</button></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
-<section class="card" id="listSec"><h2>④ 買い物一覧表</h2><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
-<div class="table-view-tools no-print">
-<button id="fitTableBtn" class="fit-table-btn" type="button" onclick="toggleTableFit()">↔ 通常表示</button>
-<span class="table-fit-note">現在：10列全体を1画面に表示</span>
-</div>
-<div class="scroll fit-active" id="shoppingTableScroll">
-  <div id="shoppingTableScale">
-    <table id="shoppingTable"><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table>
-  </div>
-</div>
+<section class="card" id="listSec"><h2>④ 買い物一覧表</h2>
+<div id="mainNetaLinkStatus" class="notice warn">主力ネタ一覧の必要数量を確認中…</div><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
+<div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>④単価</th><th>⑤金額</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div><div class="sum"><div class="k">買い物金額合計</div><div class="v" id="moneyTotal">¥0</div></div></div></section>
 </div>
 <nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">売上設定</button><button onclick="jump('listSec')">買い物表</button></nav>
@@ -71,6 +56,8 @@ const EVENT_STATE_KEY='fujiwara_neta_event_states_v1';
 const ENTRY_PARAMS=new URLSearchParams(location.search);
 const ENTRY_EVENT_ID=String(ENTRY_PARAMS.get('eventId')||'');
 const ENTRY_NETA=String(ENTRY_PARAMS.get('neta')||'');
+const MAIN_NETA_SHARED_PATH='fujiwara/mainNetaSalesSharedV1';
+let mainNetaShared={records:[],customMaster:{},updatedAt:0};
 const DEFAULT_NETAS=['チーズハットグ','牛串','豚串','鳥串','かき氷','いか焼き','ポテト','からあげ','肉巻きおにぎり','りんご飴','やきそば','ホルそば','串','かまぼこ','だんご','らーめん','チョコバナナ','コットンキャンディー','かすてら','たこ焼き','焼きとうもろこし','フランクフルト','クレープ','串物','揚げ物','麺類','甘味','粉もの・焼き物','ご飯もの','その他'];
 const TEMPLATES={
 'チーズハットグ':['チーズハットグ','チーズブロック','ソーセージ','ミックス粉','パン粉','ケチャップ','マスタード','ハニーマスタード','砂糖','串','袋','パン'],
@@ -296,6 +283,82 @@ async function publishShoppingList(){
   }
 }
 
+
+function normalizeSharedList(v){
+  if(Array.isArray(v))return v.filter(Boolean);
+  if(v&&typeof v==='object')return Object.values(v).filter(Boolean);
+  return [];
+}
+function cleanLinkName(v){
+  return String(v||'').trim().replace(/^\s*[0-9０-９]+[.．、・)）:\-]\s*/,'').replace(/\s+/g,'').toLowerCase();
+}
+function currentEventForMainNeta(){
+  return main.events.find(e=>String(e.id)===String(state.eventId))||{};
+}
+function matchingMainNetaRecords(){
+  const ev=currentEventForMainNeta();
+  const date=String(ev.date||document.getElementById('eventDate')?.value||'');
+  const name=String(ev.name||document.getElementById('eventName')?.value||'').trim();
+  return (mainNetaShared.records||[]).filter(r=>{
+    return String(r.date||'')===date && String(r.eventName||'').trim()===name;
+  });
+}
+function mainNetaNeedFor(neta,item){
+  const rs=matchingMainNetaRecords();
+  const nn=cleanLinkName(neta), ii=cleanLinkName(item);
+  const exact=rs.find(r=>cleanLinkName(r.category)===nn && cleanLinkName(r.subItem)===ii);
+  if(exact)return Number(exact.qty)||0;
+  const itemOnly=rs.find(r=>cleanLinkName(r.subItem)===ii);
+  if(itemOnly)return Number(itemOnly.qty)||0;
+  return 0;
+}
+function applyMainNetaNeeds(){
+  const rs=matchingMainNetaRecords();
+  const status=document.getElementById('mainNetaLinkStatus');
+  if(!rs.length){
+    if(status){
+      status.className='notice warn';
+      status.textContent='このイベントは主力ネタ一覧の保存記録がまだありません。KINGで一覧表を保存すると必要目安へ反映されます。';
+    }
+    return;
+  }
+  let applied=0;
+  state.rows.forEach(r=>{
+    const q=mainNetaNeedFor(r.neta,r.item);
+    if(q>0){
+      r.need=q;
+      r.add=Math.max(q-(Number(r.stock)||0),0);
+      r.needSource='主力ネタ一覧';
+      applied++;
+    }
+  });
+  if(status){
+    status.className='notice';
+    status.textContent='✅ 主力ネタ一覧から '+applied+'品目の必要数量を反映しました。必要数－在庫数＝追加数量です。';
+  }
+  renderRows();
+  saveLocal(false);
+}
+function loadMainNetaShared(){
+  const database=initFirebase();
+  if(!database)return;
+  database.ref(MAIN_NETA_SHARED_PATH).on('value',snap=>{
+    const v=snap.val()||{};
+    mainNetaShared={
+      records:normalizeSharedList(v.records||[]),
+      customMaster:v.customMaster||{},
+      updatedAt:Number(v.updatedAt)||0
+    };
+    if(state.eventId)applyMainNetaNeeds();
+  },err=>{
+    const status=document.getElementById('mainNetaLinkStatus');
+    if(status){
+      status.className='notice warn';
+      status.textContent='主力ネタ一覧の共有データを読込できません。通信を確認してください。';
+    }
+  });
+}
+
 function selectEvent(id,save=true){
   const nextId=String(id||'');
   if(state.eventId && String(state.eventId)!==nextId)saveLocal(false);
@@ -330,6 +393,7 @@ function selectEvent(id,save=true){
   renderNeta();
   renderSales();
   renderRows();
+  applyMainNetaNeeds();
 
   if(save)saveLocal(false);
   attachSharedListener();
@@ -375,8 +439,9 @@ function rebuildRowsFromSelected(doJump){
     if(!item||rows.some(r=>r.neta===n&&r.item===item))return;
     const o=old[n+'||'+item]||{};
     const stock=stockFor(item);
-    const need=Number(o.need)||0;
-    rows.push({bought:!!o.bought,neta:n,item,stock,need:o.need||'',add:Math.max(need-stock,0),unitPrice:o.unitPrice||state.unitPrices[item]||'',note:o.note||'',shop:o.shop||state.shop||'',unit:unitFor(item)});
+    const linkedNeed=mainNetaNeedFor(n,item);
+    const need=linkedNeed>0?linkedNeed:(Number(o.need)||0);
+    rows.push({bought:!!o.bought,neta:n,item,stock,need:need||'',add:Math.max(need-stock,0),unitPrice:o.unitPrice||state.unitPrices[item]||'',note:o.note||'',shop:o.shop||state.shop||'',unit:unitFor(item),needSource:linkedNeed>0?'主力ネタ一覧':(o.needSource||'')});
   }));
   state.rows=rows;
   renderRows();
@@ -456,61 +521,7 @@ async function saveSalesSettings(){
   }
 }
 
-
-let tableFitEnabled=true;
-
-function applyTableFit(){
-  const scroll=document.getElementById('shoppingTableScroll');
-  const layer=document.getElementById('shoppingTableScale');
-  const table=document.getElementById('shoppingTable');
-  const btn=document.getElementById('fitTableBtn');
-  const note=document.querySelector('.table-fit-note');
-  if(!scroll||!layer||!table)return;
-
-  layer.style.transform='none';
-  layer.style.width='auto';
-  scroll.style.height='auto';
-  scroll.classList.remove('fit-active');
-
-  if(tableFitEnabled){
-    const naturalWidth=Math.max(table.scrollWidth,1420);
-    const availableWidth=Math.max(scroll.clientWidth,1);
-    const scale=Math.min(1,availableWidth/naturalWidth);
-
-    layer.style.width=naturalWidth+'px';
-    layer.style.transform='scale('+scale+')';
-    scroll.style.height=Math.ceil(layer.scrollHeight*scale)+'px';
-    scroll.classList.add('fit-active');
-
-    if(btn)btn.textContent='↔ 通常表示';
-    if(note)note.textContent='現在：10列全体を1画面に表示';
-  }else{
-    if(btn)btn.textContent='🔍 全体表示';
-    if(note)note.textContent='現在：通常サイズ（横にスライド）';
-  }
-}
-
-function toggleTableFit(){
-  tableFitEnabled=!tableFitEnabled;
-  applyTableFit();
-}
-
-function scheduleTableFit(){
-  requestAnimationFrame(()=>requestAnimationFrame(applyTableFit));
-}
-
-window.addEventListener('resize',scheduleTableFit);
-window.addEventListener('orientationchange',()=>setTimeout(scheduleTableFit,300));
-window.addEventListener('pageshow',scheduleTableFit);
-
-
-const shoppingTableObserver=new MutationObserver(()=>scheduleTableFit());
-window.addEventListener('DOMContentLoaded',()=>{
-  const tbody=document.getElementById('tbody');
-  if(tbody)shoppingTableObserver.observe(tbody,{childList:true,subtree:true,characterData:true});
-  setTimeout(scheduleTableFit,150);
-});
-
-loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();loadMainData(false);
+loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();loadMainNetaShared();
+loadMainData(false);
 </script>
 </body></html>

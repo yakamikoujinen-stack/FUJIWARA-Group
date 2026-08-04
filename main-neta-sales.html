@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>主力ネタ一覧 v2.5｜追加ボタン・Firebase修正版</title>
+<title>主力ネタ一覧 v2.6｜材料DB・買い物連携版</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d8a62a;--green:#23845a;--red:#c84545;--bg:#f3f8fc;--card:#fff;--text:#172432;--muted:#687b8e;--line:#d9e4ed;--shadow:0 9px 25px rgba(23,50,77,.11)}
-*{box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}body{margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:1200px;margin:auto;padding:0 12px 110px}header{position:sticky;top:0;z-index:20;margin:0 -12px 14px;padding:15px 14px;background:linear-gradient(135deg,var(--navy),#2c6799);color:#fff;box-shadow:0 5px 18px rgba(23,50,77,.23)}.top{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:23px;margin:0}.sub{font-size:12px;color:#d9ebfa;margin-top:4px}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}h2{font-size:18px;margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.field label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #c8d6e1;border-radius:11px;padding:11px 12px;background:#fff;color:var(--text);font-size:16px}.field textarea{min-height:72px;resize:vertical}.span2{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:900}.primary{background:var(--navy);color:#fff}.green{background:var(--green);color:#fff}.gold{background:var(--gold);color:#231800}.ghost{background:#edf3f7;color:#32495c}.danger{background:#fde7e7;color:var(--red)}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.sum{background:#f7fbfe;border:1px solid var(--line);border-radius:14px;padding:12px}.sum .k{font-size:11px;color:var(--muted);font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}.table-wrap{overflow:auto;touch-action:pan-x pan-y pinch-zoom;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{position:sticky;top:0;background:#eef5fa;color:#27445e;font-size:12px;z-index:1}td.num{text-align:right;font-variant-numeric:tabular-nums}.mini{padding:7px 9px;border:0;border-radius:9px;font-weight:900}.edit{background:#e8f2fb;color:#225b87}.del{background:#fdeaea;color:#b33d3d}.empty{text-align:center;color:var(--muted);padding:24px}.rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rank{border:1px solid var(--line);border-radius:14px;overflow:hidden}.rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:8px;padding:10px 12px;border-bottom:1px solid #edf1f5;align-items:center}.rank-row:last-child{border-bottom:0}.rank-no{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:900}.notice{background:#fff8dc;border:1px solid #efd67f;border-radius:14px;padding:11px 13px;color:#735812;font-size:12px;line-height:1.7;margin-bottom:12px}.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:7px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(23,50,77,.08)}.bottom button{flex:1}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#182635;color:#fff;padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:50}.toast.show{opacity:1}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.rank-grid{grid-template-columns:1fr}.span2{grid-column:span 2}}@media(max-width:440px){.grid{grid-template-columns:1fr}.span2{grid-column:span 1}.summary{grid-template-columns:1fr 1fr}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:1200px;margin:auto;padding:0 12px 110px}header{position:sticky;top:0;z-index:20;margin:0 -12px 14px;padding:15px 14px;background:linear-gradient(135deg,var(--navy),#2c6799);color:#fff;box-shadow:0 5px 18px rgba(23,50,77,.23)}.top{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:23px;margin:0}.sub{font-size:12px;color:#d9ebfa;margin-top:4px}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}h2{font-size:18px;margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.field label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #c8d6e1;border-radius:11px;padding:11px 12px;background:#fff;color:var(--text);font-size:16px}.field textarea{min-height:72px;resize:vertical}.span2{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:900}.primary{background:var(--navy);color:#fff}.green{background:var(--green);color:#fff}.gold{background:var(--gold);color:#231800}.ghost{background:#edf3f7;color:#32495c}.danger{background:#fde7e7;color:var(--red)}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.sum{background:#f7fbfe;border:1px solid var(--line);border-radius:14px;padding:12px}.sum .k{font-size:11px;color:var(--muted);font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{position:sticky;top:0;background:#eef5fa;color:#27445e;font-size:12px;z-index:1}td.num{text-align:right;font-variant-numeric:tabular-nums}.mini{padding:7px 9px;border:0;border-radius:9px;font-weight:900}.edit{background:#e8f2fb;color:#225b87}.del{background:#fdeaea;color:#b33d3d}.empty{text-align:center;color:var(--muted);padding:24px}.rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rank{border:1px solid var(--line);border-radius:14px;overflow:hidden}.rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:8px;padding:10px 12px;border-bottom:1px solid #edf1f5;align-items:center}.rank-row:last-child{border-bottom:0}.rank-no{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:900}.notice{background:#fff8dc;border:1px solid #efd67f;border-radius:14px;padding:11px 13px;color:#735812;font-size:12px;line-height:1.7;margin-bottom:12px}.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:7px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(23,50,77,.08)}.bottom button{flex:1}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#182635;color:#fff;padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:50}.toast.show{opacity:1}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.rank-grid{grid-template-columns:1fr}.span2{grid-column:span 2}}@media(max-width:440px){.grid{grid-template-columns:1fr}.span2{grid-column:span 1}.summary{grid-template-columns:1fr 1fr}}
 
 .event-sync{margin-top:10px;padding:12px;border:1px solid #cfe0ec;border-radius:14px;background:#f7fbfe}.sync-status{font-size:12px;font-weight:900;color:#466176;margin-bottom:9px}.event-options,.item-chips{display:flex;gap:8px;flex-wrap:wrap}.event-choice{border:1.5px solid #b9ccda;background:#fff;border-radius:12px;padding:10px 12px;text-align:left;min-width:190px;color:var(--text)}.event-choice.active{border-color:var(--navy);background:#eaf4ff;box-shadow:0 0 0 2px rgba(23,50,77,.1)}.event-choice strong{display:block;font-size:15px}.event-choice small{display:block;color:var(--muted);margin-top:4px}.item-chip{border:1.5px solid #d5b452;background:#fff9df;color:#563f00;border-radius:999px;padding:9px 13px;font-weight:900}.item-chip.active{background:var(--gold);color:#241800;border-color:#a97b08}.sync-empty{padding:10px;border-radius:10px;background:#fff;color:var(--muted);font-size:12px}.sync-heading{font-size:13px;font-weight:950;margin:12px 0 7px}.event-count{display:inline-block;border-radius:999px;background:var(--navy);color:#fff;padding:3px 8px;font-size:11px;margin-left:5px}
 
@@ -15,9 +15,9 @@
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script></head>
 <body>
-<header><div class="top"><div><h1>📈 主力ネタ一覧 v2.5</h1><div class="sub">イベント別の売上・販売数・単価を記録</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📈 主力ネタ一覧 v2.6</h1><div class="sub">イベント別の売上・販売数・単価を記録</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="wrap">
-<div class="notice"><b>v2.5：</b>追加ボタンの停止原因を修正し、KING保存内容をFirebase共有します。<br><b>従来機能：</b>各ネタに「＋売上商品追加」「＋使用資材追加」を付け、各項目に削除ボタンを追加しました。削除しても過去イベントの保存記録は残り、今後の入力一覧からだけ外れます。</div>
+<div class="notice"><b>v2.6：</b>材料マスターをFirebase共有し、買い物表の必要目安へ連携します。<br><b>従来機能：</b>各ネタに「＋売上商品追加」「＋使用資材追加」を付け、各項目に削除ボタンを追加しました。削除しても過去イベントの保存記録は残り、今後の入力一覧からだけ外れます。</div>
 <section class="card">
 <h2>① イベント別・主力品目一覧を登録</h2>
 <div class="grid">
@@ -76,16 +76,20 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function value(id){return $(id)?.value?.trim?.()||''}
 function toast(s){const t=$('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
 function persist(){
-  localStorage.setItem(KEY,JSON.stringify(records));
-  if(mainNetaDb){
-    mainNetaDb.ref(SHARED_PATH).set({
-      version:2,
-      updatedAt:Date.now(),
-      records:records
-    }).catch(function(e){
-      console.warn('主力ネタFirebase保存失敗',e);
-    });
-  }
+ localStorage.setItem(KEY,JSON.stringify(records));
+ saveCustomMaster();
+ saveDeletedMaster();
+ savePriceMaster();
+ if(mainNetaDb){
+  mainNetaDb.ref(SHARED_PATH).set({
+   version:3,
+   updatedAt:Date.now(),
+   records:records,
+   customMaster:customMaster,
+   deletedMaster:deletedMaster,
+   priceMaster:priceMaster
+  }).catch(function(e){console.warn('主力ネタFirebase保存失敗',e)});
+ }
 }
 function splitNeta(raw){return String(raw||'').split(/\r?\n|、|,|・|／|\/|　/).map(s=>s.trim()).filter((s,i,a)=>s&&a.indexOf(s)===i)}
 function eventDates(ev){let out=[];if(Array.isArray(ev.dates))out=out.concat(ev.dates);if(Array.isArray(ev.eventDates))out=out.concat(ev.eventDates);const start=ev.date||'';const end=ev.dateEnd||ev.endDate||ev.toDate||'';if(start&&!out.includes(start))out.push(start);if(start&&end&&/^\d{4}-\d{2}-\d{2}$/.test(start)&&/^\d{4}-\d{2}-\d{2}$/.test(end)){let d=new Date(start+'T00:00:00'),e=new Date(end+'T00:00:00'),guard=0;while(d<=e&&guard++<60){const ds=d.toISOString().slice(0,10);if(!out.includes(ds))out.push(ds);d.setDate(d.getDate()+1)}}return [...new Set(out.filter(Boolean))]}
@@ -109,42 +113,49 @@ function migrateAndDedupeRecords(raw){
  return out;
 }
 function load(){
-  loadCustomMaster();
-  loadDeletedMaster();
-  loadPriceMaster();
-  try{
-    const raw=JSON.parse(localStorage.getItem(KEY)||'[]');
-    records=migrateAndDedupeRecords(raw);
-  }catch(e){
-    records=[];
-  }
-  seedPriceMasterFromRecords();
-  const d=new Date();
-  $('date').value=d.toISOString().slice(0,10);
-  $('filterMonth').value=d.toISOString().slice(0,7);
-  renderAll();
-  initMainEventSync();
-
-  setTimeout(function(){
-    if(!mainNetaDb)return;
-    mainNetaDb.ref(SHARED_PATH).on('value',function(snap){
-      const value=snap.val()||{};
-      const raw=Array.isArray(value.records)?value.records:Object.values(value.records||{});
-      const remote=migrateAndDedupeRecords(raw);
-      if(remote.length){
-        records=remote;
-        localStorage.setItem(KEY,JSON.stringify(records));
-        seedPriceMasterFromRecords();
-        renderAll();
-        if(selectedMainEvent){
-          const categories=splitNeta(selectedMainEvent.itemsText||selectedMainEvent.items||selectedMainEvent.neta);
-          renderCategoryBoard(categories);
-        }
-      }else if(records.length){
-        persist();
-      }
-    });
-  },500);
+ loadCustomMaster();loadDeletedMaster();loadPriceMaster();
+ try{
+  const raw=JSON.parse(localStorage.getItem(KEY)||'[]');
+  records=migrateAndDedupeRecords(raw);
+ }catch(e){records=[]}
+ seedPriceMasterFromRecords();
+ const d=new Date();
+ $('date').value=d.toISOString().slice(0,10);
+ $('filterMonth').value=d.toISOString().slice(0,7);
+ renderAll();
+ initMainEventSync();
+ setTimeout(function(){
+  if(!mainNetaDb)return;
+  mainNetaDb.ref(SHARED_PATH).on('value',function(snap){
+   const v=snap.val()||{};
+   if(v.customMaster&&typeof v.customMaster==='object'){
+    customMaster=v.customMaster;
+    localStorage.setItem(CUSTOM_KEY,JSON.stringify(customMaster));
+   }
+   if(v.deletedMaster&&typeof v.deletedMaster==='object'){
+    deletedMaster=v.deletedMaster;
+    localStorage.setItem(DELETED_KEY,JSON.stringify(deletedMaster));
+   }
+   if(v.priceMaster&&typeof v.priceMaster==='object'){
+    priceMaster=v.priceMaster;
+    localStorage.setItem(PRICE_MASTER_KEY,JSON.stringify(priceMaster));
+   }
+   const raw=Array.isArray(v.records)?v.records:Object.values(v.records||{});
+   const remote=migrateAndDedupeRecords(raw);
+   if(remote.length){
+    records=remote;
+    localStorage.setItem(KEY,JSON.stringify(records));
+    seedPriceMasterFromRecords();
+    renderAll();
+    if(selectedMainEvent){
+     const categories=splitNeta(selectedMainEvent.itemsText||selectedMainEvent.items||selectedMainEvent.neta);
+     renderCategoryBoard(categories);
+    }
+   }else if(records.length){
+    persist();
+   }
+  });
+ },500);
 }
 function initMainEventSync(){try{const config={apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'};if(!firebase.apps.length)firebase.initializeApp(config);mainNetaDb=firebase.database();mainNetaDb.ref('fujiwara/events').on('value',snap=>{const keepDate=value('date'),keepName=value('eventName');const v=snap.val();mainEvents=(Array.isArray(v)?v:Object.values(v||{})).filter(Boolean);$('syncStatus').textContent='✅ メインアプリ連携済み';syncEventsForDate();if(keepDate&&keepName){const idx=(window._dateEvents||[]).findIndex(ev=>(ev.name||'')===keepName);if(idx>=0)selectMainEvent(idx)}},()=>{$('syncStatus').textContent='⚠️ メインアプリを読み込めません'})}catch(e){$('syncStatus').textContent='⚠️ メインアプリ連携エラー'}}
 function syncEventsForDate(){const ds=value('date');selectedMainEvent=null;$('eventName').value='';$('place').value='';$('categoryBoard').innerHTML='<div class="sync-empty">イベントを選択してください。</div>';const list=mainEvents.filter(ev=>eventDates(ev).includes(ds));window._dateEvents=list;$('syncStatus').innerHTML=list.length?'この日のイベントを選択してください <span class="event-count">'+list.length+'件</span>':'この日にはメインアプリのイベントがありません。';$('eventOptions').innerHTML=list.length?list.map((ev,i)=>`<button type="button" class="event-choice" id="eventChoice${i}" onclick="selectMainEvent(${i})"><strong>${esc(ev.name||'名称未設定')}</strong><small>${esc(ev.place||'会場未設定')}｜${esc(splitNeta(ev.itemsText||ev.items||ev.neta).join('・')||'ネタ未設定')}</small></button>`).join(''):'<div class="sync-empty">イベントがありません。</div>'}
