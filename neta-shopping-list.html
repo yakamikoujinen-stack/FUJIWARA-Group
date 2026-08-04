@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.5, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
 <title>ネタ買い物一覧 統一版</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
+*{box-sizing:border-box}
+html,body{touch-action:pan-x pan-y pinch-zoom;}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
 header{position:sticky;top:0;z-index:30;background:linear-gradient(90deg,#fff4d7,#ffe8a8,#fff4d7);border-bottom:2px solid rgba(184,134,11,.45);padding:12px 16px}.brand{font-size:19px;font-weight:900}.sub{font-size:12px;color:var(--sub);line-height:1.5}
 .wrap{padding:14px;max-width:1180px;margin:auto}.card{background:var(--card);border:1.5px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(80,55,0,.10)}h2{font-size:18px;margin:0 0 10px}
 label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-bottom:5px}input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:16px}textarea{min-height:70px}
