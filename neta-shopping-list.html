@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>ネタ買い物一覧 統一版 v1.3 主力ネタ連携</title>
+<title>ネタ買い物一覧 統一版 v1.4 材料必要数連携</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -28,7 +28,7 @@ label{font-size:12px;color:var(--sub);font-weight:800;display:block;margin-botto
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.3</div><div class="sub">イベント別金額保存｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
+<header><div class="brand">🛒 ネタ買い物一覧 統一版 v1.4</div><div class="sub">イベント別金額保存｜保存＝スタッフへ即時反映｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -303,13 +303,46 @@ function matchingMainNetaRecords(){
     return String(r.date||'')===date && String(r.eventName||'').trim()===name;
   });
 }
+function categorySaleQty(neta){
+  const rs=matchingMainNetaRecords();
+  const nn=cleanLinkName(neta);
+  return rs
+    .filter(r=>cleanLinkName(r.category)===nn && String(r.rowType||'sale')!=='material')
+    .reduce((s,r)=>s+(Number(r.qty)||0),0);
+}
+function customMaterialRule(neta,item){
+  const nn=cleanLinkName(neta), ii=cleanLinkName(item);
+  const masters=mainNetaShared.customMaster||{};
+  for(const [cat,rows] of Object.entries(masters)){
+    if(cleanLinkName(cat)!==nn || !Array.isArray(rows))continue;
+    const hit=rows.find(x=>cleanLinkName(x.name)===ii);
+    if(hit)return hit;
+  }
+  return null;
+}
 function mainNetaNeedFor(neta,item){
   const rs=matchingMainNetaRecords();
   const nn=cleanLinkName(neta), ii=cleanLinkName(item);
+
+  // 1. 同じイベントに保存済みの品目・資材があれば、その数量を最優先
   const exact=rs.find(r=>cleanLinkName(r.category)===nn && cleanLinkName(r.subItem)===ii);
-  if(exact)return Number(exact.qty)||0;
-  const itemOnly=rs.find(r=>cleanLinkName(r.subItem)===ii);
-  if(itemOnly)return Number(itemOnly.qty)||0;
+  if(exact && Number(exact.qty)>0)return Number(exact.qty);
+
+  // 2. 品目名だけ一致する保存記録
+  const itemOnly=rs.find(r=>cleanLinkName(r.subItem)===ii && Number(r.qty)>0);
+  if(itemOnly)return Number(itemOnly.qty);
+
+  // 3. 出店ネタ本体行には、そのカテゴリーの販売数量合計を反映
+  const baseQty=categorySaleQty(neta);
+  if(baseQty>0 && (ii===nn || ii.includes(nn) || nn.includes(ii)))return baseQty;
+
+  // 4. 材料マスターの「1単位で作れる数」から必要数を自動計算
+  const rule=customMaterialRule(neta,item);
+  if(rule && baseQty>0){
+    const yieldQty=Number(rule.yieldQty)||0;
+    if(yieldQty>0)return Math.ceil(baseQty/yieldQty);
+  }
+
   return 0;
 }
 function applyMainNetaNeeds(){
@@ -322,7 +355,7 @@ function applyMainNetaNeeds(){
     }
     return;
   }
-  let applied=0;
+  let applied=0, ruleMissing=0;
   state.rows.forEach(r=>{
     const q=mainNetaNeedFor(r.neta,r.item);
     if(q>0){
@@ -330,11 +363,15 @@ function applyMainNetaNeeds(){
       r.add=Math.max(q-(Number(r.stock)||0),0);
       r.needSource='主力ネタ一覧';
       applied++;
+    }else if(categorySaleQty(r.neta)>0){
+      ruleMissing++;
     }
   });
   if(status){
     status.className='notice';
-    status.textContent='✅ 主力ネタ一覧から '+applied+'品目の必要数量を反映しました。必要数－在庫数＝追加数量です。';
+    status.textContent='✅ 主力ネタ一覧から '+applied+'品目を反映しました。'+
+      (ruleMissing?' 未反映の材料は、KINGで「1単位で作れる数」を一度登録してください。':'')+
+      ' 必要数－在庫数＝追加数量です。';
   }
   renderRows();
   saveLocal(false);
