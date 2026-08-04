@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>主力ネタ一覧｜担当者閲覧版</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",Meiryo,sans-serif;background:linear-gradient(#f8fcff,#edf5fa);color:#172432}
+.wrap{max-width:1100px;margin:auto;padding:0 12px 80px}header{position:sticky;top:0;background:linear-gradient(135deg,#17324d,#2c6799);color:#fff;padding:15px;z-index:10}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}h1{margin:0;font-size:23px}.sub{font-size:12px;color:#d9ebfa}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}
+.card{background:#fff;border:1px solid #d9e4ed;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 9px 25px rgba(23,50,77,.11)}
+.notice{background:#eaf4ff;border:1px solid #b9d4ea;border-radius:14px;padding:12px 14px;color:#244b6c;font-weight:800;line-height:1.7}
+.filters{display:grid;grid-template-columns:1fr 1fr 2fr;gap:9px}.field label{display:block;font-size:12px;font-weight:900;color:#687b8e;margin-bottom:5px}.field input,.field select{width:100%;padding:11px 12px;border:1px solid #c8d6e1;border-radius:11px;font-size:16px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.sum{background:#f7fbfe;border:1px solid #d9e4ed;border-radius:14px;padding:12px}.sum .k{font-size:11px;color:#687b8e;font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}
+.event-card{border:1px solid #d9e4ed;border-radius:15px;margin-bottom:12px;overflow:hidden}.event-head{padding:12px 14px;background:#eef5fa;font-weight:950}.event-meta{font-size:12px;color:#687b8e;margin-top:4px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{background:#f7fbfe;color:#27445e}.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.sale{background:#e8f7ef;color:#176541}.material{background:#fff2cf;color:#755400}.qty{text-align:right;font-weight:950}.empty{text-align:center;color:#687b8e;padding:30px}
+.hidden-note{font-size:12px;color:#8a5b00;background:#fff8dc;border:1px solid #efd67f;border-radius:12px;padding:10px 12px;margin-top:10px}
+@media(max-width:700px){.filters{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><h1>📈 主力ネタ一覧</h1><div class="sub">担当者閲覧版・金額非表示</div></div><button class="back" onclick="location.href='manager-app.html'">← 担当者アプリ</button></div></header>
+<div class="wrap">
+<div class="notice">イベント別の主力品目・使用資材・必要数量を確認できます。販売単価、売上、原価、粗利益などの金額情報は表示しません。</div>
+<section class="card"><h2>表示条件</h2><div class="filters"><div class="field"><label>表示月</label><input type="month" id="month" onchange="render()"></div><div class="field"><label>ネタ</label><select id="item" onchange="render()"><option value="">すべて</option></select></div><div class="field"><label>イベント名検索</label><input id="search" placeholder="イベント名を入力" oninput="render()"></div></div></section>
+<section class="card"><h2>確認集計</h2><div class="summary"><div class="sum"><div class="k">イベント数</div><div class="v" id="eventCount">0</div></div><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">数量合計</div><div class="v" id="qtyTotal">0</div></div></div><div class="hidden-note">🔒 金額・単価・売上・原価・粗利益は担当者画面では非表示です。</div></section>
+<section class="card"><h2>イベント別一覧</h2><div id="events"></div></section>
+</div>
+<script>
+const KEY='fujiwara_main_neta_sales_v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=n=>new Intl.NumberFormat('ja-JP').format(Number(n)||0);
+let records=[];
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');records=Array.isArray(v)?v:[]}catch(e){records=[]}const now=new Date();$('month').value=now.toISOString().slice(0,7);refreshItems();render()}
+function refreshItems(){const cur=$('item').value;const items=[...new Set(records.flatMap(r=>[r.category,r.subItem]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ja'));$('item').innerHTML='<option value="">すべて</option>'+items.map(x=>`<option ${x===cur?'selected':''}>${esc(x)}</option>`).join('')}
+function filtered(){const m=$('month').value,it=$('item').value,q=$('search').value.trim().toLowerCase();return records.filter(r=>(!m||String(r.date||'').startsWith(m))&&(!it||r.category===it||r.subItem===it)&&(!q||String(r.eventName||'').toLowerCase().includes(q))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))}
+function render(){const list=filtered();const groups={};list.forEach(r=>{const k=(r.date||'')+'||'+(r.eventName||'');(groups[k]??=[]).push(r)});$('eventCount').textContent=Object.keys(groups).length;$('rowCount').textContent=list.length;$('qtyTotal').textContent=num(list.reduce((s,r)=>s+Number(r.qty||0),0));$('events').innerHTML=Object.entries(groups).map(([k,rows])=>{const [date,name]=k.split('||');const place=rows[0]?.place||'';return `<div class="event-card"><div class="event-head">${esc(date)}　${esc(name)}<div class="event-meta">${esc(place)}｜${rows.length}品目</div></div><div class="table-wrap"><table><thead><tr><th>出店ネタ</th><th>主力品目・資材</th><th>区分</th><th>単位</th><th>数量・必要数</th><th>使用基準</th><th>備考</th></tr></thead><tbody>${rows.map(r=>{const material=(r.rowType||'sale')==='material';return `<tr><td>${esc(r.category)}</td><td><strong>${esc(r.subItem)}</strong></td><td><span class="pill ${material?'material':'sale'}">${material?'使用資材':'売上商品'}</span></td><td>${esc(r.unit||'')}</td><td class="qty">${num(r.qty||0)}</td><td>${material&&r.yieldQty?`1${esc(r.unit||'')}で${num(r.yieldQty)}個分`:'—'}</td><td>${esc(r.memo||'')}</td></tr>`}).join('')}</tbody></table></div></div>`}).join('')||'<div class="empty">表示する記録がありません。</div>'}
+load();
+window.addEventListener('storage',load);
+</script>
+</body>
+</html>
