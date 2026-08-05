@@ -2250,9 +2250,14 @@ listenPartnerMenShareStatus();
 (function listenPartnerMenShareCenter(){ var r=partnerMenCenterRef(); if(!r)return; r.on('value',function(snap){ var v=snap.val()||{}; Object.keys(v).forEach(function(k){ if(v[k]) mergePartnerMenShareLocal(v[k]); }); try{ renderEventList(selDate||null); }catch(e){} }); })();
 
 function parseLocalDateOnly(ds){
-  var m=String(ds||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  /* 2026-8-3 / 2026-08-03 / 前後空白の混在を同じ日付として扱う */
+  var m=String(ds||'').trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if(!m) return null;
-  return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),0,0,0,0);
+  var y=Number(m[1]), mo=Number(m[2]), d=Number(m[3]);
+  if(mo<1||mo>12||d<1||d>31) return null;
+  var dt=new Date(y,mo-1,d,0,0,0,0);
+  if(dt.getFullYear()!==y || dt.getMonth()!==mo-1 || dt.getDate()!==d) return null;
+  return dt;
 }
 function eventEndDateValue(ev){
   return parseLocalDateOnly(ev.dateEnd||ev.endDate||ev.toDate||ev.date);
@@ -2315,7 +2320,17 @@ function renderEventList(dateFilter) {
     });
     label.textContent=dateFilter.slice(5).replace('-','/')+' のイベント（'+evs.length+'件）';
   } else {
-    evs = visibleEvents.filter(function(e){ return eventOverlapsViewedMonth(e); });
+    /* 最終表示の直前で、表示中の年月と重なるイベントだけに限定する。
+       Firebase再同期や再描画後も過去月イベントが戻らないよう、この位置で確定判定する。 */
+    var viewedMonthStart=new Date(calYear,calMonth,1,0,0,0,0);
+    var viewedMonthEnd=new Date(calYear,calMonth+1,0,23,59,59,999);
+    evs = visibleEvents.filter(function(e){
+      var start=parseLocalDateOnly(e.date||e.startDate||'');
+      var end=parseLocalDateOnly(e.dateEnd||e.endDate||e.toDate||e.date||e.startDate||'');
+      if(!start) return false;
+      if(!end) end=start;
+      return start<=viewedMonthEnd && end>=viewedMonthStart;
+    });
     label.textContent='今月のイベント（'+evs.length+'件）';
   }
 
