@@ -106,6 +106,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
             <th>現場退場</th>
             <th>時間</th>
             <th>天気</th>
+            <th>保存日時</th>
           </tr>
         </thead>
         <tbody id="adminAttendanceBody"></tbody>
@@ -124,6 +125,13 @@ let current=new Date(), selectedDate="", jobsData=[], reportsData=[], workersDat
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
 function R(p){return db.ref(base+"/"+p)}
 function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function formatSavedAt(r){
+  const raw=r.createdAt||r.created||"";
+  if(!raw)return "-";
+  const d=new Date(raw);
+  if(isNaN(d.getTime()))return String(raw);
+  return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
 function unique(a){return [...new Set(a.filter(Boolean))]}
 function asArray(v){if(!v)return[];return Object.entries(v).map(([id,val])=>({id,...val}))}
 function readLocal(key){try{const v=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(v)?v:[]}catch(e){return []}}
@@ -159,9 +167,9 @@ function addReport(){if(!rDate.value||!rSite.value||!rReporter.value||!rPeople.v
 function delJob(id){if(confirm("予定を削除しますか？"))R("jobs/"+id).remove()} function delReport(id){if(confirm("日報を削除しますか？"))R("reports/"+id).remove()} function approve(id){R("reports/"+id).update({approved:true,approvedAt:new Date().toISOString()})}
 function copyJob(j){showTab("rep");rDate.value=j.date;rSite.value=j.site;rClient.value=j.client||"";rStart.value=j.start||"";rWork.value=j.work||"";rPeople.value=(j.workers||"").split(/[、,]/).filter(Boolean).length||""}
 function moveMonth(n){current.setMonth(current.getMonth()+n);renderCalendar()}
-function showDay(ds){selectedDate=ds;const js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);dayList.innerHTML=(js.length||rs.length)?js.map(j=>`<div class="card"><b>予定：${j.site}</b><br><span class="small">${j.start||"-"} / 取引先：${j.client||"-"}</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>この予定から日報作成</button><button class="red" onclick="delJob('${j.id}')">予定削除</button></div>`).join("")+rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}<br>現場入場：${r.start} 現場退場：${r.end}<br>内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">日報削除</button></div>`).join(""):"予定・日報なし"}
-function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b>`+js.slice(0,2).map(j=>`<div class="job">${j.start||""} ${j.site}</div>`).join("")+rs.slice(0,3).map(r=>`<div class="job report">${r.site}</div>`).join("")+"</div>"}calendar.innerHTML=html}
-function renderReports(){let a=reportsData.slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>作業内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">削除</button></div>`).join(""):"日報なし"}
+function showDay(ds){selectedDate=ds;const js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);dayList.innerHTML=(js.length||rs.length)?js.map(j=>`<div class="card"><b>予定：${j.site}</b><br><span class="small">${j.start||"-"} / 取引先：${j.client||"-"}</span><br>作業員：${j.workers||"-"}<br>内容：${j.work||"-"}<br><button onclick='copyJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>この予定から日報作成</button><button class="red" onclick="delJob('${j.id}')">予定削除</button></div>`).join("")+rs.map(r=>`<div class="card"><b>日報：${r.site}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}<br>現場入場：${r.start} 現場退場：${r.end}<br>🕒 保存日時：${formatSavedAt(r)}<br>内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">日報削除</button></div>`).join(""):"予定・日報なし"}
+function renderCalendar(){let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),js=jobsData.filter(x=>x.date==ds),rs=reportsData.filter(x=>x.date==ds);html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b>`+js.slice(0,2).map(j=>`<div class="job">${j.start||""} ${j.client||"取引先未登録"}</div>`).join("")+rs.slice(0,3).map(r=>`<div class="job report">${r.client||"取引先未登録"}</div>`).join("")+"</div>"}calendar.innerHTML=html}
+function renderReports(){let a=reportsData.slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${r.date} ${r.site}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${r.company||"-"} / 入力者：${r.reporter||"-"}</span><br>取引先：${r.client||"-"}　担当者：${r.clientPerson||"-"}<br>作業員：${r.worker||"-"}　人数：${r.people}<br>現場入場：${r.start} 現場退場：${r.end} 休憩：${r.breakMin||0}分<br>🕒 保存日時：${formatSavedAt(r)}<br>作業内容：${r.work}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">削除</button></div>`).join(""):"日報なし"}
 
 function timeToMin(t){if(!t)return null;const p=String(t).split(":").map(Number);if(p.length<2||isNaN(p[0])||isNaN(p[1]))return null;return p[0]*60+p[1]}
 function reportHours(r){const s=timeToMin(r.start),e=timeToMin(r.end);if(s===null||e===null)return 0;return Math.max(0,(e-s-Number(r.breakMin||0))/60)}
@@ -199,16 +207,16 @@ function renderAdminAttendance(){
   adminAttendanceBody.innerHTML=arr.map(r=>{
     people+=Number(r.people||0);
     const h=reportHours(r);hours+=h;
-    return `<tr><td>${r.date||""}</td><td>${r.client||"-"}</td><td>${r.clientPerson||"-"}</td><td>${r.site||"-"}</td><td>${r.reporter||"-"}</td><td>${r.worker||"-"}</td><td>${r.people||0}</td><td>${r.start||"-"}</td><td>${r.end||"-"}</td><td>${h.toFixed(2)}h</td><td>${r.weather||"-"}</td></tr>`;
-  }).join("") || '<tr><td colspan="11">該当データなし</td></tr>';
+    return `<tr><td>${r.date||""}</td><td>${r.client||"-"}</td><td>${r.clientPerson||"-"}</td><td>${r.site||"-"}</td><td>${r.reporter||"-"}</td><td>${r.worker||"-"}</td><td>${r.people||0}</td><td>${r.start||"-"}</td><td>${r.end||"-"}</td><td>${h.toFixed(2)}h</td><td>${r.weather||"-"}</td><td>${formatSavedAt(r)}</td></tr>`;
+  }).join("") || '<tr><td colspan="12">該当データなし</td></tr>';
   adminCount.textContent=arr.length;
   adminPeople.textContent=people;
   adminHours.textContent=hours.toFixed(1)+"h";
 }
 function copyAdminCSV(){
   const arr=filteredAdminReports();
-  const csv=["日付,取引先名,取引先担当者,現場名,入力者,作業員,人数,現場入場,現場退場,時間,天気"].concat(arr.map(r=>[
-    r.date||"",r.client||"",r.clientPerson||"",r.site||"",r.reporter||"",r.worker||"",r.people||"",r.start||"",r.end||"",reportHours(r).toFixed(2),r.weather||""
+  const csv=["日付,取引先名,取引先担当者,現場名,入力者,作業員,人数,現場入場,現場退場,時間,天気,保存日時"].concat(arr.map(r=>[
+    r.date||"",r.client||"",r.clientPerson||"",r.site||"",r.reporter||"",r.worker||"",r.people||"",r.start||"",r.end||"",reportHours(r).toFixed(2),r.weather||"",formatSavedAt(r)
   ].join(","))).join("\n");
   navigator.clipboard.writeText(csv).then(()=>alert("CSVをコピーしました")).catch(()=>alert("コピーできない場合は長押しコピーしてください"));
 }
