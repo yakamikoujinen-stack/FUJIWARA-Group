@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.25 金庫番表示同期版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.26 月別表示・過去イベント版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -111,6 +111,20 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .s-active{background:rgba(46,204,138,.15);color:var(--green);}
 .s-done{background:rgba(100,100,100,.15);color:#666;}
 .ev-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+
+/* ===== v4.3.26 当月表示・終了イベント・過去一覧 ===== */
+.ev-card.ev-ended{
+  background:#e7e7e7!important;
+  border-color:#bdbdbd!important;
+  border-left-color:#8a8a8a!important;
+  color:#6b6b6b!important;
+  opacity:.9;
+}
+.ev-card.ev-ended *{color:#6b6b6b!important;}
+.ev-card.ev-ended .status-badge{background:#d5d5d5!important;border:1px solid #b5b5b5!important;color:#555!important;}
+.past-event-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.past-event-card{background:#eeeeee;border:1px solid #c8c8c8;border-left:4px solid #888;border-radius:12px;padding:12px;margin-bottom:9px;color:#555;}
+.past-event-card .ev-name,.past-event-card .ev-meta{color:#555!important;}
 
 /* INVENTORY */
 .inv-cat-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
@@ -605,7 +619,10 @@ body::before,#app::before,.page::before{
         <div class="cal-grid" id="cal-grid" id="cal-swipe-area"></div>
         <div class="sec-hd">
           <span class="sec-title" id="ev-list-label">今月のイベント</span>
-          <button class="btn btn-sm btn-gold" id="btn-add-ev" onclick="handleCalendarActionButton()">＋ 追加</button>
+          <div class="past-event-toolbar">
+            <button class="btn btn-sm btn-ghost" onclick="openPastEvents()">🗂️ 過去イベント</button>
+            <button class="btn btn-sm btn-gold" id="btn-add-ev" onclick="handleCalendarActionButton()">＋ 追加</button>
+          </div>
         </div>
         <div id="event-list"></div>
       </div>
@@ -2232,6 +2249,54 @@ function unshareEventFromPartnerMen(id){
 listenPartnerMenShareStatus();
 (function listenPartnerMenShareCenter(){ var r=partnerMenCenterRef(); if(!r)return; r.on('value',function(snap){ var v=snap.val()||{}; Object.keys(v).forEach(function(k){ if(v[k]) mergePartnerMenShareLocal(v[k]); }); try{ renderEventList(selDate||null); }catch(e){} }); })();
 
+function parseLocalDateOnly(ds){
+  var m=String(ds||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return null;
+  return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),0,0,0,0);
+}
+function eventEndDateValue(ev){
+  return parseLocalDateOnly(ev.dateEnd||ev.endDate||ev.toDate||ev.date);
+}
+function eventStartDateValue(ev){
+  return parseLocalDateOnly(ev.date);
+}
+function isEventEndedByToday(ev){
+  var end=eventEndDateValue(ev);
+  if(!end) return false;
+  var today=new Date(); today.setHours(0,0,0,0);
+  return end < today;
+}
+function eventOverlapsViewedMonth(ev){
+  var start=eventStartDateValue(ev), end=eventEndDateValue(ev);
+  if(!start) return false;
+  if(!end) end=start;
+  var monthStart=new Date(calYear,calMonth,1);
+  var monthEnd=new Date(calYear,calMonth+1,0,23,59,59,999);
+  return start<=monthEnd && end>=monthStart;
+}
+function openPastEvents(){
+  var visible=(state.events||[]).filter(function(ev){
+    if(isSecretEvent(ev) && !(role==='leader'||role==='staff')) return false;
+    return isEventEndedByToday(ev);
+  }).sort(function(a,b){ return String(b.dateEnd||b.date||'').localeCompare(String(a.dateEnd||a.date||'')); });
+  var overlay=document.createElement('div');
+  overlay.className='modal-overlay open';
+  overlay.id='modal-past-events-dynamic';
+  overlay.onclick=function(e){ if(e.target===overlay) overlay.remove(); };
+  var cards=visible.length?visible.map(function(ev){
+    return '<div class="past-event-card" onclick="openPastEventDetail(\''+ev.id+'\')">'
+      +'<div class="ev-card-row"><div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
+      +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+(ev.place||'')+'</div>'
+      +'<div class="ev-meta">終了済み</div></div><span class="status-badge s-done">終了</span></div></div>';
+  }).join(''):'<div class="empty-state"><div class="ei">🗂️</div><p>過去イベントはありません</p></div>';
+  overlay.innerHTML='<div class="modal"><div class="modal-handle"></div><div class="modal-top"><div><div class="modal-title">🗂️ 過去イベント一覧</div><div class="page-sub" style="margin:4px 0 0">終了日が今日より前のイベント</div></div><button class="modal-close-btn" onclick="document.getElementById(\'modal-past-events-dynamic\').remove()">✕</button></div>'+cards+'</div>';
+  document.body.appendChild(overlay);
+}
+function openPastEventDetail(id){
+  var m=document.getElementById('modal-past-events-dynamic'); if(m) m.remove();
+  openBSheet(id);
+}
+
 function renderEventList(dateFilter) {
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
   var label=document.getElementById('ev-list-label');
@@ -2250,18 +2315,23 @@ function renderEventList(dateFilter) {
     });
     label.textContent=dateFilter.slice(5).replace('-','/')+' のイベント（'+evs.length+'件）';
   } else {
-    evs = visibleEvents.filter(function(e){ return e.date && e.date.startsWith(ym); });
+    evs = visibleEvents.filter(function(e){ return eventOverlapsViewedMonth(e); });
     label.textContent='今月のイベント（'+evs.length+'件）';
   }
+
+  evs.sort(function(a,b){ return String(a.date||'').localeCompare(String(b.date||'')); });
 
   var canEdit=role==='leader'||role==='staff';
   var container=document.getElementById('event-list');
   if(!evs.length){ container.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>イベントなし</p></div>'; return; }
 
   container.innerHTML=evs.map(function(ev){
+    var ended=isEventEndedByToday(ev);
+    var endedClass=ended?' ev-ended':'';
     var zClass=ev.zone==='B'?'zone-b':'zone-a';
     var sClass=ev.status==='active'?'s-active':ev.status==='done'?'s-done':'s-planned';
-    var sLabel=ev.status==='active'?'開催中':ev.status==='done'?'終了':'予定';
+    var sLabel=ended?'終了':(ev.status==='active'?'開催中':ev.status==='done'?'終了':'予定');
+    if(ended) sClass='s-done';
     var borderColor=ev.zone==='B'?'var(--green)':'var(--gold)';
     var displayDs=dateFilter||ev.date;
     var displayStaff=getEventStaffForDate(ev,displayDs);
@@ -2313,7 +2383,7 @@ function renderEventList(dateFilter) {
       }
     }
 
-    return '<div class="ev-card" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
+    return '<div class="ev-card'+endedClass+'" style="border-left-color:'+borderColor+'" onclick="openBSheet(\''+ev.id+'\')">'
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
