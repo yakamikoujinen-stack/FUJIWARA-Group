@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17324d">
-<title>担当者専用アプリ v5.1｜最終5本構成</title>
+<title>担当者専用アプリ v5.2｜最終5本構成</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--sky:#eaf4ff;--gold:#f4b942;--green:#2e8b57;--text:#1c2733;--muted:#66788a;--line:#dbe5ee;--white:#fff;--shadow:0 10px 28px rgba(18,46,72,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100vh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#f6fbff,#eef6fb)}
@@ -17,7 +17,7 @@ header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-
 @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}.card{display:flex;flex-direction:column}.desc{flex:1}.actions{flex-direction:column}}
 </style></head>
 <body><div class="app">
-<header><div class="topline"><div><h1>担当者専用アプリ v5.1</h1><p class="subtitle">在庫・仕入・準備・車両・LPGをここから管理</p></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="topline"><div><h1>担当者専用アプリ v5.2</h1><p class="subtitle">在庫・仕入・準備・車両・LPGをここから管理</p></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="notice">最終5本構成です。旧版のネター一覧・主力ネタ一覧カードは削除し、イベント別仕入管理へ統合しました。</div>
 <section class="main-app-card"><div class="main-app-icon">🏠</div><div class="main-app-info"><h2 class="main-app-title">メインアプリ</h2><p class="main-app-text">イベント管理・カレンダー・売上・出勤など、メインアプリへ移動します。</p><button class="main-app-btn" onclick="location.href='index.html'">メインアプリを開く</button></div></section>
 
@@ -28,7 +28,7 @@ header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-
 <script>
 const DEFAULTS=[
 {key:"inventory",icon:"📦",title:"在庫管理",owner:"担当者",desc:"在庫数・保存場所・持出し数・配置図を管理",url:"index.html?open=inventory"},
-{key:"eventPurchase",icon:"🛒",title:"イベント別 仕入管理",owner:"文太",desc:"イベントごとの品目・在庫数・必要目安・追加数量・購入済みを確認",url:"event-purchase-v121.html"},
+{key:"eventPurchase",icon:"🛒",title:"イベント別 仕入管理",owner:"文太",desc:"イベントごとの品目・在庫数・必要目安・追加数量・購入済みを確認",url:"event-purchase-v130.html"},
 {key:"vehicle",icon:"🚚",title:"車両管理アプリ",owner:"将",desc:"車両点検・車検・保険・洗車・修理記録",url:"vehicle-management.html"},
 {key:"prepare",icon:"📦",title:"準備アプリ",owner:"繁充",desc:"積込チェック・準備確認・シート記入・完了報告",url:"preparation-app.html"},
 {key:"lpg",icon:"🔥",title:"松笠商店（LPG）管理",owner:"将",desc:"20kg・10kg・8kgの仕入、返却、今回発注数量、在庫累計",url:"lpg-management.html"}
@@ -38,7 +38,7 @@ function clone(v){return JSON.parse(JSON.stringify(v))}
 
 function getData(){
   try{
-    const saved=JSON.parse(localStorage.getItem("fujiwara_manager_apps_v3"));
+    const saved=JSON.parse(localStorage.getItem("fujiwara_manager_apps_v4"));
     if(Array.isArray(saved)){
       const out=clone(DEFAULTS);
       saved.forEach(s=>{
@@ -47,7 +47,7 @@ function getData(){
       });
 
       // 現在のDEFAULTSだけを保存するため、削除した仕入登録は復活しない
-      localStorage.setItem("fujiwara_manager_apps_v3",JSON.stringify(out));
+      localStorage.setItem("fujiwara_manager_apps_v4",JSON.stringify(out));
       return out;
     }
   }catch(e){}
@@ -81,7 +81,7 @@ function saveSettings(){
   data=data.map((x,i)=>{
     return {...x,owner:document.getElementById(`owner-${i}`).value.trim()||"未設定",url:document.getElementById(`url-${i}`).value.trim()};
   });
-  localStorage.setItem("fujiwara_manager_apps_v3",JSON.stringify(data));
+  localStorage.setItem("fujiwara_manager_apps_v4",JSON.stringify(data));
   renderCards();
   alert("設定を保存しました");
 }
