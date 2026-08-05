@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>主力ネタ一覧 v2.7｜材料マスター一本化版</title>
+<title>主力ネタ一覧 v2.8｜Firebase材料マスター同期版</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d8a62a;--green:#23845a;--red:#c84545;--bg:#f3f8fc;--card:#fff;--text:#172432;--muted:#687b8e;--line:#d9e4ed;--shadow:0 9px 25px rgba(23,50,77,.11)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:1200px;margin:auto;padding:0 12px 110px}header{position:sticky;top:0;z-index:20;margin:0 -12px 14px;padding:15px 14px;background:linear-gradient(135deg,var(--navy),#2c6799);color:#fff;box-shadow:0 5px 18px rgba(23,50,77,.23)}.top{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:23px;margin:0}.sub{font-size:12px;color:#d9ebfa;margin-top:4px}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}h2{font-size:18px;margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.field label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #c8d6e1;border-radius:11px;padding:11px 12px;background:#fff;color:var(--text);font-size:16px}.field textarea{min-height:72px;resize:vertical}.span2{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:900}.primary{background:var(--navy);color:#fff}.green{background:var(--green);color:#fff}.gold{background:var(--gold);color:#231800}.ghost{background:#edf3f7;color:#32495c}.danger{background:#fde7e7;color:var(--red)}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.sum{background:#f7fbfe;border:1px solid var(--line);border-radius:14px;padding:12px}.sum .k{font-size:11px;color:var(--muted);font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{position:sticky;top:0;background:#eef5fa;color:#27445e;font-size:12px;z-index:1}td.num{text-align:right;font-variant-numeric:tabular-nums}.mini{padding:7px 9px;border:0;border-radius:9px;font-weight:900}.edit{background:#e8f2fb;color:#225b87}.del{background:#fdeaea;color:#b33d3d}.empty{text-align:center;color:var(--muted);padding:24px}.rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rank{border:1px solid var(--line);border-radius:14px;overflow:hidden}.rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:8px;padding:10px 12px;border-bottom:1px solid #edf1f5;align-items:center}.rank-row:last-child{border-bottom:0}.rank-no{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:900}.notice{background:#fff8dc;border:1px solid #efd67f;border-radius:14px;padding:11px 13px;color:#735812;font-size:12px;line-height:1.7;margin-bottom:12px}.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:7px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(23,50,77,.08)}.bottom button{flex:1}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#182635;color:#fff;padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:50}.toast.show{opacity:1}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.rank-grid{grid-template-columns:1fr}.span2{grid-column:span 2}}@media(max-width:440px){.grid{grid-template-columns:1fr}.span2{grid-column:span 1}.summary{grid-template-columns:1fr 1fr}}
@@ -17,9 +17,13 @@
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script></head>
 <body>
-<header><div class="top"><div><h1>📈 主力ネタ一覧 v2.7</h1><div class="sub">イベント別の売上・販売数・単価を記録</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📈 主力ネタ一覧 v2.8</h1><div class="sub">イベント別の売上・販売数・単価を記録</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="wrap">
-<div class="notice"><b>v2.7：</b>品目名・単位・使用資材・1単位で作れる数は「主力・在庫データ（材料マスター）」へ一本化しました。<br>この画面ではイベントごとの売上金額・販売単価・原価・備考だけを入力します。品目の追加・訂正は材料マスターで行ってください。<div style="margin-top:9px"><button type="button" class="btn gold" onclick="location.href='material-master.html'">📚 主力・在庫データを開く</button></div></div>
+<div class="notice"><b>v2.8：</b>品目名・単位・使用資材・1単位で作れる数は、Firebaseの「主力・在庫データ（材料マスター）」から自動読込します。<br>この画面ではイベントごとの売上金額・販売単価・原価・備考だけを入力します。品目の追加・訂正は材料マスターで行ってください。<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<button type="button" class="btn gold" onclick="location.href='material-master.html'">📚 主力・在庫データを開く</button>
+<button type="button" class="btn ghost" onclick="reloadMaterialMaster()">🔄 材料マスター再読込</button>
+<span id="materialSyncStatus" style="font-weight:900;color:#526b7e">材料マスターを確認中…</span>
+</div></div>
 <section class="card">
 <h2>① イベント別・主力品目一覧を登録</h2>
 <div class="grid">
@@ -49,7 +53,9 @@
 const KEY='fujiwara_main_neta_sales_v1';
 const CUSTOM_KEY='fujiwara_main_neta_custom_items_v1';
 const PRICE_MASTER_KEY='fujiwara_main_neta_price_master_v2';
-let records=[];let mainEvents=[];let selectedMainEvent=null;let customMaster={};let priceMaster={};
+const DELETED_KEY='fujiwara_main_neta_deleted_items_v1';
+const MATERIAL_SHARED_PATH='fujiwara/mainNetaSalesSharedV1';
+let records=[];let mainEvents=[];let selectedMainEvent=null;let customMaster={};let priceMaster={};let deletedMaster={};let materialMasterReady=false;
 const $=id=>document.getElementById(id);
 const yen=n=>new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(Number(n)||0);
 const num=n=>new Intl.NumberFormat('ja-JP').format(Number(n)||0);
@@ -97,8 +103,85 @@ function migrateAndDedupeRecords(raw){
  });
  return out;
 }
-function load(){loadCustomMaster();loadDeletedMaster();loadPriceMaster();try{const raw=JSON.parse(localStorage.getItem(KEY)||'[]');records=migrateAndDedupeRecords(raw);persist()}catch(e){records=[]}seedPriceMasterFromRecords();const d=new Date();$('date').value=d.toISOString().slice(0,10);$('filterMonth').value=d.toISOString().slice(0,7);renderAll();initMainEventSync()}
+function load(){loadCustomMaster();loadDeletedMaster();loadPriceMaster();try{const raw=JSON.parse(localStorage.getItem(KEY)||'[]');records=migrateAndDedupeRecords(raw);persist()}catch(e){records=[]}seedPriceMasterFromRecords();const d=new Date();$('date').value=d.toISOString().slice(0,10);$('filterMonth').value=d.toISOString().slice(0,7);renderAll();initMainEventSync();initMaterialMasterSync()}
 function initMainEventSync(){try{const config={apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'};if(!firebase.apps.length)firebase.initializeApp(config);firebase.database().ref('fujiwara/events').on('value',snap=>{const keepDate=value('date'),keepName=value('eventName');const v=snap.val();mainEvents=(Array.isArray(v)?v:Object.values(v||{})).filter(Boolean);$('syncStatus').textContent='✅ メインアプリ連携済み';syncEventsForDate();if(keepDate&&keepName){const idx=(window._dateEvents||[]).findIndex(ev=>(ev.name||'')===keepName);if(idx>=0)selectMainEvent(idx)}},()=>{$('syncStatus').textContent='⚠️ メインアプリを読み込めません'})}catch(e){$('syncStatus').textContent='⚠️ メインアプリ連携エラー'}}
+
+function setMaterialSyncStatus(text,ok){
+ const el=$('materialSyncStatus');
+ if(!el)return;
+ el.textContent=text;
+ el.style.color=ok?'#23845a':'#9a6d00';
+}
+function normalizeMasterObject(v){
+ const out={};
+ if(!v||typeof v!=='object')return out;
+ Object.entries(v).forEach(([category,rows])=>{
+  if(!Array.isArray(rows))return;
+  out[cleanName(category)]=rows.filter(Boolean).map((row,index)=>({
+   ...row,
+   id:row.id||('master_'+index),
+   name:cleanName(row.name||''),
+   unit:String(row.unit||'個').trim()||'個',
+   type:row.type==='material'?'material':'sale',
+   yieldQty:Number(row.yieldQty)||0,
+   order:Number(row.order)||index+1
+  })).filter(row=>row.name);
+ });
+ return out;
+}
+function applyFirebaseMaterialMaster(shared){
+ const remoteMaster=normalizeMasterObject(shared.customMaster||{});
+ const remoteDeleted=shared.deletedMaster&&typeof shared.deletedMaster==='object'?shared.deletedMaster:{};
+ const remotePrices=shared.priceMaster&&typeof shared.priceMaster==='object'?shared.priceMaster:{};
+
+ // Firebaseを正とし、ローカルの古い材料名を上書き
+ customMaster=remoteMaster;
+ deletedMaster=remoteDeleted;
+ priceMaster=remotePrices;
+
+ saveCustomMaster();
+ saveDeletedMaster();
+ savePriceMaster();
+ materialMasterReady=true;
+
+ if(selectedMainEvent){
+  const categories=splitNeta(selectedMainEvent.itemsText||selectedMainEvent.items||selectedMainEvent.neta);
+  renderCategoryBoard(categories);
+ }
+ renderAll();
+
+ const count=Object.values(customMaster).reduce((sum,rows)=>sum+(Array.isArray(rows)?rows.length:0),0);
+ setMaterialSyncStatus('✅ Firebase材料マスター同期済み（'+count+'品目）',true);
+}
+function initMaterialMasterSync(){
+ try{
+  const database=firebase.database();
+  setMaterialSyncStatus('材料マスターを読込中…',false);
+  database.ref(MATERIAL_SHARED_PATH).on('value',snap=>{
+   const shared=snap.val()||{};
+   applyFirebaseMaterialMaster(shared);
+  },err=>{
+   console.error(err);
+   setMaterialSyncStatus('⚠️ Firebase材料マスターを読込できません',false);
+  });
+ }catch(e){
+  console.error(e);
+  setMaterialSyncStatus('⚠️ 材料マスター同期エラー',false);
+ }
+}
+async function reloadMaterialMaster(){
+ try{
+  setMaterialSyncStatus('材料マスターを再読込中…',false);
+  const snap=await firebase.database().ref(MATERIAL_SHARED_PATH).once('value');
+  applyFirebaseMaterialMaster(snap.val()||{});
+  toast('材料マスターを再読込しました');
+ }catch(e){
+  console.error(e);
+  setMaterialSyncStatus('⚠️ 再読込できませんでした',false);
+  alert('材料マスターを再読込できませんでした。通信を確認してください。');
+ }
+}
+
 function syncEventsForDate(){const ds=value('date');selectedMainEvent=null;$('eventName').value='';$('place').value='';$('categoryBoard').innerHTML='<div class="sync-empty">イベントを選択してください。</div>';const list=mainEvents.filter(ev=>eventDates(ev).includes(ds));window._dateEvents=list;$('syncStatus').innerHTML=list.length?'この日のイベントを選択してください <span class="event-count">'+list.length+'件</span>':'この日にはメインアプリのイベントがありません。';$('eventOptions').innerHTML=list.length?list.map((ev,i)=>`<button type="button" class="event-choice" id="eventChoice${i}" onclick="selectMainEvent(${i})"><strong>${esc(ev.name||'名称未設定')}</strong><small>${esc(ev.place||'会場未設定')}｜${esc(splitNeta(ev.itemsText||ev.items||ev.neta).join('・')||'ネタ未設定')}</small></button>`).join(''):'<div class="sync-empty">イベントがありません。</div>'}
 
 function cleanName(v){return String(v||'').trim().replace(/^\s*[0-9０-９]+[.．、・)）:\-]\s*/,'').trim()}
@@ -110,12 +193,12 @@ function seedPriceMasterFromRecords(){let changed=false;records.slice().sort((a,
 function masterFor(category,subItem){const exact=priceMaster[priceKey(category,subItem)];if(exact&&(Number(exact.unitPrice)>0||Number(exact.cost)>0))return exact;const target=normName(subItem);let best={};Object.entries(priceMaster).forEach(([k,v])=>{const parts=k.split('||');if(parts[1]===target&&v){if(Number(v.unitPrice)>0)best.unitPrice=Number(v.unitPrice);if(Number(v.cost)>0)best.cost=Number(v.cost);if(v.unit)best.unit=v.unit}});return best}
 function updatePriceMaster(category,subItem,unit,unitPrice,cost){const k=priceKey(category,subItem);const old=priceMaster[k]||{};const next={...old,unit:unit||old.unit||''};if(Number(unitPrice)>0)next.unitPrice=Number(unitPrice);if(Number(cost)>0)next.cost=Number(cost);priceMaster[k]=next;savePriceMaster()}
 
-function loadCustomMaster(){try{const v=JSON.parse(localStorage.getItem(CUSTOM_KEY)||'{}');customMaster=v&&typeof v==='object'?v:{}}catch(e){customMaster={}}}
+function loadCustomMaster(){try{const v=JSON.parse(localStorage.getItem(CUSTOM_KEY)||'{}');customMaster=v&&typeof v==='object'?normalizeMasterObject(v):{}}catch(e){customMaster={}}}
 function saveCustomMaster(){localStorage.setItem(CUSTOM_KEY,JSON.stringify(customMaster))}
 function loadDeletedMaster(){try{const v=JSON.parse(localStorage.getItem(DELETED_KEY)||'{}');deletedMaster=v&&typeof v==='object'?v:{}}catch(e){deletedMaster={}}}
 function saveDeletedMaster(){localStorage.setItem(DELETED_KEY,JSON.stringify(deletedMaster))}
 function masterDeleteKey(category,name){return priceKey(category,name)}
-function subitemsFor(category){const clean=cleanName(category);const masterRows=(Array.isArray(customMaster[category])?customMaster[category]:(Array.isArray(customMaster[clean])?customMaster[clean]:[])).map(x=>({...x,type:x.type||'sale'}));const fallback=(MASTER[category]||MASTER[clean]||[{name:clean||category,unit:'個',type:'sale'}]).map(x=>({...x,type:x.type||'sale'}));const all=masterRows.length?masterRows:fallback;const seen=new Set();return all.filter(x=>{const k=String(x.name||'').trim();if(!k||seen.has(normName(k)))return false;seen.add(normName(k));return true}).sort((a,b)=>(Number(a.order)||999)-(Number(b.order)||999))}
+function subitemsFor(category){const clean=cleanName(category);const exactKey=Object.keys(customMaster).find(k=>normName(k)===normName(clean));const masterRows=(exactKey&&Array.isArray(customMaster[exactKey])?customMaster[exactKey]:[]).map(x=>({...x,type:x.type||'sale'}));const fallback=(MASTER[category]||MASTER[clean]||[{name:clean||category,unit:'個',type:'sale'}]).map(x=>({...x,type:x.type||'sale'}));const all=masterRows.length?masterRows:fallback;const seen=new Set();return all.filter(x=>{const k=String(x.name||'').trim();const deletedKey=masterDeleteKey(clean,k);if(!k||seen.has(normName(k))||deletedMaster[deletedKey])return false;seen.add(normName(k));return true}).sort((a,b)=>(Number(a.order)||999)-(Number(b.order)||999))}
 function addSubItem(category,forcedType){const type=forcedType==='material'?'material':'sale';const example=type==='material'?'サイダー、ストロー、袋、タレ':'姿、ゲソ、牛串、ハットグ';const label=type==='material'?'使用資材':'売上商品';const name=(prompt('「'+category+'」に追加する'+label+'名を入力してください。\n例：'+example)||'').trim();if(!name)return;const existing=subitemsFor(category);if(existing.some(x=>normName(x.name)===normName(name)))return alert('同じ品目がすでにあります');const unit=(prompt('単位を入力してください。\n例：尾・袋・本・個・杯・パック','個')||'個').trim()||'個';let yieldQty='';if(type==='material'){yieldQty=Number(prompt('この資材1単位で、売上商品を何個分作れますか？\n例：サイダー1本で8杯なら「8」','1')||1)||1}const key=cleanName(category);if(!Array.isArray(customMaster[key]))customMaster[key]=[];delete deletedMaster[masterDeleteKey(category,name)];customMaster[key].push({name,unit,type,yieldQty});saveCustomMaster();saveDeletedMaster();const categories=splitNeta(selectedMainEvent?.itemsText||selectedMainEvent?.items||selectedMainEvent?.neta);renderCategoryBoard(categories);toast(name+'を'+label+'として追加しました')}
 function deleteMasterItem(category,name){if(!confirm('「'+name+'」を今後の入力一覧から削除しますか？\n\n過去イベントに保存済みの記録は消えません。'))return;const clean=cleanName(category);[category,clean].forEach(k=>{if(Array.isArray(customMaster[k]))customMaster[k]=customMaster[k].filter(x=>normName(x.name)!==normName(name))});deletedMaster[masterDeleteKey(category,name)]=true;saveCustomMaster();saveDeletedMaster();const categories=splitNeta(selectedMainEvent?.itemsText||selectedMainEvent?.items||selectedMainEvent?.neta);renderCategoryBoard(categories);toast(name+'を今後の一覧から削除しました')}
 function recordKey(date,eventName,category,subItem){return [date,eventName,normName(category),normName(subItem)].join('||')}
