@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>運行記録 v1.0｜FUJIWARA Group</title>
+<title>運行記録 v1.1｜再編集対応</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#e0ac2d;--green:#218a57;--red:#c84545;--bg:#eef6fb;--card:#fff;--line:#d7e3ec;--text:#1c2733;--muted:#66798b;--shadow:0 10px 27px rgba(18,46,72,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:linear-gradient(180deg,#f7fbff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;padding-bottom:90px}
@@ -20,9 +20,10 @@ button,input,select,textarea{font:inherit}header{position:sticky;top:0;z-index:3
 </style>
 </head>
 <body>
-<header><div class="head"><div><h1>🚐 運行記録 v1.0</h1><div class="sub">車両・走行距離・高速料金・給油を記録</div></div><button class="back" onclick="goBack()">← 担当者アプリ</button></div></header>
+<header><div class="head"><div><h1>🚐 運行記録 v1.1</h1><div class="sub">車両・走行距離・高速料金・給油を記録</div></div><button class="back" onclick="goBack()">← 担当者アプリ</button></div></header>
 <div class="wrap">
 <div id="sync" class="notice">Firebaseの運行記録を読み込んでいます…</div>
+<div class="notice ok">出発時は出発時走行距離まで入力して保存し、帰社後は運行履歴の「再編集」から帰社時走行距離を追加してください。</div>
 <section class="card"><h2>① 運行記録を入力</h2>
 <div class="grid">
 <div class="field"><label>日付</label><input type="date" id="date"></div><div class="field"><label>車両名</label><input id="vehicle" placeholder="例：ハイエース"></div><div class="field"><label>運転者</label><input id="driver" placeholder="例：将"></div>
@@ -36,7 +37,7 @@ button,input,select,textarea{font:inherit}header{position:sticky;top:0;z-index:3
 <section class="card"><h2>② 月間集計</h2><div class="grid2"><div class="field"><label>表示月</label><input type="month" id="filterMonth" onchange="render()"></div><div class="field"><label>車両・行先・運転者を検索</label><input id="search" placeholder="検索" oninput="render()"></div></div>
 <div class="summary" style="margin-top:11px"><div class="sum"><div class="k">運行件数</div><div class="v" id="sumCount">0</div></div><div class="sum"><div class="k">走行距離合計</div><div class="v" id="sumDistance">0 km</div></div><div class="sum"><div class="k">高速料金合計</div><div class="v" id="sumToll">¥0</div></div><div class="sum"><div class="k">給油金額合計</div><div class="v" id="sumFuel">¥0</div></div></div></section>
 
-<section class="card"><h2>③ 運行履歴</h2><div class="toolbar" style="margin:0 0 10px"><button class="btn green" onclick="reload()">🔄 最新データ再読込</button></div><div class="tablewrap"><table><thead><tr><th>日付</th><th>車両</th><th>運転者</th><th>行先</th><th>出発km</th><th>帰社km</th><th>走行km</th><th>高速料金</th><th>給油量</th><th>給油金額</th><th>給油場所</th><th>備考</th><th>操作</th></tr></thead><tbody id="tbody"></tbody></table></div></section>
+<section class="card"><h2>③ 運行履歴</h2><div class="toolbar" style="margin:0 0 10px"><button class="btn green" onclick="reload()">🔄 最新データ再読込</button></div><div class="tablewrap"><table><thead><tr><th>再編集</th><th>日付</th><th>車両</th><th>運転者</th><th>行先</th><th>出発km</th><th>帰社km</th><th>走行km</th><th>高速料金</th><th>給油量</th><th>給油金額</th><th>給油場所</th><th>備考</th></tr></thead><tbody id="tbody"></tbody></table></div></section>
 </div>
 <div class="footer"><button class="btn ghost" onclick="goBack()">担当者アプリへ戻る</button><button class="btn primary" onclick="document.querySelector('section.card').scrollIntoView({behavior:'smooth'})">＋ 新規入力</button></div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -48,11 +49,18 @@ function init(){const now=new Date();date.value=now.toISOString().slice(0,10);fi
 function calcDistance(){const start=n(startKm.value),end=n(endKm.value);distance.value=end>=start&&start>0?Math.round((end-start)*10)/10:""}
 async function reload(){sync.className="notice";sync.textContent="Firebaseの運行記録を読み込んでいます…";try{const snap=await db.ref(PATH).once("value");records=toArray(snap.val());sync.className="notice ok";sync.textContent="✅ 運行記録を読み込みました。"+records.length+"件";render()}catch(e){console.error(e);sync.className="notice err";sync.textContent="⚠️ 運行記録を読み込めませんでした。通信またはFirebaseルールを確認してください。"}}
 function formData(){const start=n(startKm.value),end=n(endKm.value);return{id:editingId||safeKey("run_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)),date:date.value,vehicle:vehicle.value.trim(),driver:driver.value.trim(),startKm:start,endKm:end,distance:end>=start?Math.max(Math.round((end-start)*10)/10,0):0,destination:destination.value.trim(),toll:n(toll.value),fuelLiters:n(fuelLiters.value),fuelAmount:n(fuelAmount.value),fuelPlace:fuelPlace.value.trim(),memo:memo.value.trim(),updatedAt:firebase.database.ServerValue.TIMESTAMP}}
-async function saveRecord(){const d=formData();if(!d.date)return alert("日付を入力してください");if(!d.vehicle)return alert("車両名を入力してください");if(!d.driver)return alert("運転者を入力してください");if(!d.destination)return alert("行先を入力してください");if(d.endKm&&d.endKm<d.startKm)return alert("帰社時走行距離が出発時走行距離より小さくなっています");try{await db.ref(PATH+"/"+safeKey(d.id)).set(d);alert("運行記録を保存しました");clearForm();await reload()}catch(e){console.error(e);alert("保存できませんでした。Firebaseルールを確認してください")}}
+async function saveRecord(){const d=formData();if(!d.date)return alert("日付を入力してください");if(!d.vehicle)return alert("車両名を入力してください");if(!d.driver)return alert("運転者を入力してください");if(!d.destination)return alert("行先を入力してください");if(d.endKm&&d.endKm<d.startKm)return alert("帰社時走行距離が出発時走行距離より小さくなっています");try{await db.ref(PATH+"/"+safeKey(d.id)).set(d);alert(editingId?"運行記録を更新しました":"運行記録を保存しました");clearForm();await reload()}catch(e){console.error(e);alert("保存できませんでした。Firebaseルールを確認してください")}}
 function clearForm(){editingId="";const today=new Date().toISOString().slice(0,10);date.value=today;vehicle.value=driver.value=destination.value=fuelPlace.value=memo.value="";startKm.value=endKm.value=distance.value="";toll.value=fuelLiters.value=fuelAmount.value=0;deleteBtn.disabled=true}
 function filtered(){const month=filterMonth.value,q=search.value.trim().toLowerCase();return records.filter(r=>(!month||String(r.date||"").startsWith(month))&&(!q||[r.vehicle,r.driver,r.destination,r.fuelPlace,r.memo].join(" ").toLowerCase().includes(q))).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||Number(b.updatedAt||0)-Number(a.updatedAt||0))}
-function render(){const list=filtered();sumCount.textContent=list.length;sumDistance.textContent=(Math.round(list.reduce((s,r)=>s+n(r.distance),0)*10)/10).toLocaleString("ja-JP")+" km";sumToll.textContent=yen(list.reduce((s,r)=>s+n(r.toll),0));sumFuel.textContent=yen(list.reduce((s,r)=>s+n(r.fuelAmount),0));tbody.innerHTML=list.length?list.map(r=>`<tr><td>${esc(r.date||"")}</td><td>${esc(r.vehicle||"")}</td><td>${esc(r.driver||"")}</td><td>${esc(r.destination||"")}</td><td class="num">${n(r.startKm).toLocaleString("ja-JP")}</td><td class="num">${n(r.endKm).toLocaleString("ja-JP")}</td><td class="num"><b>${n(r.distance).toLocaleString("ja-JP")}</b></td><td class="num">${yen(r.toll)}</td><td class="num">${n(r.fuelLiters).toLocaleString("ja-JP")} L</td><td class="num">${yen(r.fuelAmount)}</td><td>${esc(r.fuelPlace||"")}</td><td>${esc(r.memo||"")}</td><td><button class="mini edit" onclick="editRecord('${esc(r.id)}')">編集</button></td></tr>`).join(""):'<tr><td colspan="13" class="empty">運行記録はまだありません</td></tr>'}
-function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;editingId=String(r.id);date.value=r.date||"";vehicle.value=r.vehicle||"";driver.value=r.driver||"";startKm.value=n(r.startKm)||"";endKm.value=n(r.endKm)||"";distance.value=n(r.distance)||"";destination.value=r.destination||"";toll.value=n(r.toll);fuelLiters.value=n(r.fuelLiters);fuelAmount.value=n(r.fuelAmount);fuelPlace.value=r.fuelPlace||"";memo.value=r.memo||"";deleteBtn.disabled=false;document.querySelector("section.card").scrollIntoView({behavior:"smooth"})}
+function render(){const list=filtered();sumCount.textContent=list.length;sumDistance.textContent=(Math.round(list.reduce((s,r)=>s+n(r.distance),0)*10)/10).toLocaleString("ja-JP")+" km";sumToll.textContent=yen(list.reduce((s,r)=>s+n(r.toll),0));sumFuel.textContent=yen(list.reduce((s,r)=>s+n(r.fuelAmount),0));tbody.innerHTML=list.length?list.map(r=>`<tr>
+<td><button class="mini edit" onclick="editRecord('${esc(r.id)}')">再編集</button></td>
+<td>${esc(r.date||"")}</td><td>${esc(r.vehicle||"")}</td><td>${esc(r.driver||"")}</td><td>${esc(r.destination||"")}</td>
+<td class="num">${n(r.startKm).toLocaleString("ja-JP")}</td><td class="num">${n(r.endKm).toLocaleString("ja-JP")}</td>
+<td class="num"><b>${n(r.distance).toLocaleString("ja-JP")}</b></td><td class="num">${yen(r.toll)}</td>
+<td class="num">${n(r.fuelLiters).toLocaleString("ja-JP")} L</td><td class="num">${yen(r.fuelAmount)}</td>
+<td>${esc(r.fuelPlace||"")}</td><td>${esc(r.memo||"")}</td>
+</tr>`).join(""):'<tr><td colspan="13" class="empty">運行記録はまだありません</td></tr>'}
+function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;editingId=String(r.id);date.value=r.date||"";vehicle.value=r.vehicle||"";driver.value=r.driver||"";startKm.value=n(r.startKm)||"";endKm.value=n(r.endKm)||"";distance.value=n(r.distance)||"";destination.value=r.destination||"";toll.value=n(r.toll);fuelLiters.value=n(r.fuelLiters);fuelAmount.value=n(r.fuelAmount);fuelPlace.value=r.fuelPlace||"";memo.value=r.memo||"";deleteBtn.disabled=false;document.querySelector("section.card").scrollIntoView({behavior:"smooth"});setTimeout(()=>endKm.focus(),500)}
 async function deleteEditing(){if(!editingId)return;const r=records.find(x=>String(x.id)===String(editingId));if(!r)return;if(!confirm("この運行記録を削除しますか？"))return;try{await db.ref("fujiwara/vehicleOperationTrash/"+safeKey(editingId+"_"+Date.now())).set({...r,deletedAt:firebase.database.ServerValue.TIMESTAMP});await db.ref(PATH+"/"+safeKey(editingId)).remove();clearForm();await reload();alert("削除しました。バックアップは残しています")}catch(e){console.error(e);alert("削除できませんでした")}}
 function goBack(){location.href="manager-app.html"}init();
 </script></body></html>
