@@ -2319,7 +2319,16 @@ function renderEventList(dateFilter) {
     label.textContent='今月のイベント（'+evs.length+'件）';
   }
 
-  evs.sort(function(a,b){ return String(a.date||'').localeCompare(String(b.date||'')); });
+  /* 日付表記が 2026-8-13 / 2026-08-13 のように混在しても、必ず年月日順に並べる */
+  evs.sort(function(a,b){
+    var ad=(typeof normalizeEventDateValue==='function' ? normalizeEventDateValue(a.date) : '') || String(a.date||'');
+    var bd=(typeof normalizeEventDateValue==='function' ? normalizeEventDateValue(b.date) : '') || String(b.date||'');
+    var av=parseLocalDateOnly(ad), bv=parseLocalDateOnly(bd);
+    var at=av ? av.getTime() : Number.MAX_SAFE_INTEGER;
+    var bt=bv ? bv.getTime() : Number.MAX_SAFE_INTEGER;
+    if(at!==bt) return at-bt;
+    return String(eventNameSafe(a)||a.name||'').localeCompare(String(eventNameSafe(b)||b.name||''),'ja');
+  });
 
   var canEdit=role==='leader'||role==='staff';
   var container=document.getElementById('event-list');
