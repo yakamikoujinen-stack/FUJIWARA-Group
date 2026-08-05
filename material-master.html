@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>材料マスター管理 v1.2｜見やすさ改善版</title>
+<title>材料マスター管理 v1.3｜保存確実版</title>
 <style>
 :root{
  --navy:#17324d;--blue:#2f6fa7;--gold:#d8a62a;--green:#23845a;--red:#c84545;
@@ -84,7 +84,7 @@ td input,td select{white-space:nowrap;overflow:visible;text-overflow:clip}
 <body>
 <header>
  <div class="top">
-  <div><h1>📚 材料マスター管理 v1.2</h1><div class="sub">KING専用・在庫管理の正式名称へ統一</div></div>
+  <div><h1>📚 材料マスター管理 v1.3</h1><div class="sub">KING専用・在庫管理の正式名称へ統一</div></div>
   <button class="back" onclick="location.href='king.html'">← KINGへ戻る</button>
  </div>
 </header>
@@ -93,7 +93,7 @@ td input,td select{white-space:nowrap;overflow:visible;text-overflow:clip}
  <div class="card">
   <div class="notice">
    各ネタの売上商品・使用資材を登録します。使用資材には「1単位で何食・何本分作れるか」を設定してください。
-   保存した内容はFirebaseで共有され、主力ネタ一覧と買い物表から利用できます。品目名を間違えた場合は「品目名の訂正」から在庫管理の正式名称へ変更してください。品目名の列を広くして、iPadでも最後まで確認しやすくしています。
+   保存した内容はFirebaseで共有され、主力ネタ一覧と買い物表から利用できます。品目名を間違えた場合は「品目名の訂正」から在庫管理の正式名称へ変更してください。品目名の列を広くして、iPadでも最後まで確認しやすくしています。保存時は画面上の入力値をすべて確定してからFirebaseへ送信し、保存後に反映確認を行います。
   </div>
   <div id="syncStatus" class="status wait">Firebaseへ接続しています…</div>
  </div>
@@ -230,15 +230,15 @@ function renderTable(){
  document.getElementById('tbody').innerHTML=rows.map(r=>{
   const type=r.type==='material'?'material':'sale';
   return `<tr data-id="${esc(r.id)}">
-   <td><select onchange="editRow('${esc(r.id)}','type',this.value)"><option value="sale" ${type==='sale'?'selected':''}>売上</option><option value="material" ${type==='material'?'selected':''}>資材</option></select></td>
-   <td><input value="${esc(r.name)}" onchange="editRow('${esc(r.id)}','name',this.value)"></td>
-   <td><input value="${esc(r.unit||'個')}" onchange="editRow('${esc(r.id)}','unit',this.value)"></td>
-   <td><input type="number" min="0" step="0.01" value="${Number(r.yieldQty)||''}" ${type==='sale'?'disabled':''} onchange="editRow('${esc(r.id)}','yieldQty',this.value)"></td>
-   <td><input type="number" min="0" step="0.01" value="${Number(r.standardUsage)||''}" onchange="editRow('${esc(r.id)}','standardUsage',this.value)"></td>
-   <td><input value="${esc(r.supplier||'')}" onchange="editRow('${esc(r.id)}','supplier',this.value)"></td>
-   <td><input type="number" min="0" value="${Number(r.unitPrice)||''}" onchange="editRow('${esc(r.id)}','unitPrice',this.value)"></td>
-   <td><input type="number" min="0" value="${Number(r.minStock)||''}" onchange="editRow('${esc(r.id)}','minStock',this.value)"></td>
-   <td><input type="number" min="1" value="${Number(r.order)||1}" onchange="editRow('${esc(r.id)}','order',this.value)"></td>
+   <td><select data-key="type" onchange="editRow('${esc(r.id)}','type',this.value)"><option value="sale" ${type==='sale'?'selected':''}>売上</option><option value="material" ${type==='material'?'selected':''}>資材</option></select></td>
+   <td><input data-key="name" value="${esc(r.name)}" onchange="editRow('${esc(r.id)}','name',this.value)"></td>
+   <td><input data-key="unit" value="${esc(r.unit||'個')}" onchange="editRow('${esc(r.id)}','unit',this.value)"></td>
+   <td><input data-key="yieldQty" type="number" min="0" step="0.01" value="${Number(r.yieldQty)||''}" ${type==='sale'?'disabled':''} onchange="editRow('${esc(r.id)}','yieldQty',this.value)"></td>
+   <td><input data-key="standardUsage" type="number" min="0" step="0.01" value="${Number(r.standardUsage)||''}" onchange="editRow('${esc(r.id)}','standardUsage',this.value)"></td>
+   <td><input data-key="supplier" value="${esc(r.supplier||'')}" onchange="editRow('${esc(r.id)}','supplier',this.value)"></td>
+   <td><input data-key="unitPrice" type="number" min="0" value="${Number(r.unitPrice)||''}" onchange="editRow('${esc(r.id)}','unitPrice',this.value)"></td>
+   <td><input data-key="minStock" type="number" min="0" value="${Number(r.minStock)||''}" onchange="editRow('${esc(r.id)}','minStock',this.value)"></td>
+   <td><input data-key="order" type="number" min="1" value="${Number(r.order)||1}" onchange="editRow('${esc(r.id)}','order',this.value)"></td>
    <td><button class="btn danger" onclick="deleteRow('${esc(r.id)}')">削除</button></td>
   </tr>`;
  }).join('')||'<tr><td colspan="10" class="empty">まだ登録がありません。「＋売上商品」または「＋使用資材」から追加してください。</td></tr>';
@@ -359,17 +359,60 @@ function deleteRow(id){
  root.customMaster[currentCategory]=root.customMaster[currentCategory].filter(x=>x.id!==id);
  renderCategories();renderTable();saveLocal();
 }
+
+function collectVisibleTableValues(){
+ if(!currentCategory)return;
+ const rows=root.customMaster[currentCategory]||[];
+ document.querySelectorAll('#tbody tr[data-id]').forEach(tr=>{
+  const id=tr.getAttribute('data-id');
+  const row=rows.find(x=>String(x.id)===String(id));
+  if(!row)return;
+  tr.querySelectorAll('[data-key]').forEach(el=>{
+   const key=el.getAttribute('data-key');
+   let value=el.value;
+   if(['yieldQty','standardUsage','unitPrice','minStock','order'].includes(key)){
+    value=Number(value)||0;
+   }else{
+    value=String(value||'').trim();
+   }
+   row[key]=value;
+  });
+  if(row.type==='sale')row.yieldQty=0;
+  row.updatedAt=Date.now();
+ });
+}
+
 function saveLocal(){
  localStorage.setItem(LOCAL,JSON.stringify(root));
 }
 async function saveAll(){
  try{
-  setStatus('Firebaseへ保存しています…','wait');
-  root.version=4;root.updatedAt=Date.now();
-  await db.ref(PATH).set(root);
+  if(document.activeElement&&typeof document.activeElement.blur==='function'){
+   document.activeElement.blur();
+  }
+  collectVisibleTableValues();
   saveLocal();
-  setStatus('✅ 保存完了。主力ネタ一覧・買い物表と共有されています。','ok');
- }catch(e){setStatus('保存失敗：'+(e.message||e),'err')}
+  setStatus('Firebaseへ保存しています…','wait');
+
+  root.version=5;
+  root.updatedAt=Date.now();
+  root.updatedBy='KING材料マスター';
+
+  await db.ref(PATH).set(root);
+
+  const verify=await db.ref(PATH).once('value');
+  const saved=verify.val()||{};
+  if(Number(saved.updatedAt)!==Number(root.updatedAt)){
+   throw new Error('保存確認が一致しませんでした');
+  }
+
+  saveLocal();
+  setStatus('✅ 保存・反映確認完了。主力ネタ一覧と買い物表へ共有されました。','ok');
+  setTimeout(()=>alert('保存しました。\n主力ネタ一覧・買い物表へ反映されています。'),100);
+ }catch(e){
+  setStatus('保存失敗：'+(e.message||e),'err');
+  alert('保存できませんでした。\n'+(e.message||e));
+ }
 }
 function reloadRemote(){
  setStatus('Firebaseから再読込しています…','wait');
