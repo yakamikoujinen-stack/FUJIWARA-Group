@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>担当者アプリ</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#eef6fb;color:#17324d;
+font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+.box{text-align:center;padding:24px}.icon{font-size:64px}.title{font-size:25px;font-weight:900;margin-top:10px}.sub{margin-top:8px;color:#60758a;font-weight:800}
+</style>
+</head>
+<body>
+<div class="box"><div class="icon">👤</div><div class="title">担当者アプリを更新中</div><div class="sub">最新版を開いています…</div></div>
+<script>
+(async()=>{
+ try{
+  if("serviceWorker" in navigator){
+   const regs=await navigator.serviceWorker.getRegistrations();
+   await Promise.all(regs.map(r=>r.unregister()));
+  }
+  if("caches" in window){
+   const keys=await caches.keys();
+   await Promise.all(keys.map(k=>caches.delete(k)));
+  }
+ }catch(e){}
+ location.replace("manager-app.html?v=56&t="+Date.now());
+})();
+</script>
+</body>
+</html>
