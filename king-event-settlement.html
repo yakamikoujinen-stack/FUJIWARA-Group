@@ -238,7 +238,7 @@ function companyLabel(v){
 function render(){
   const month=monthSel.value;
   const target=events.map((ev,i)=>({ev,i})).filter(x=>eventDate(x.ev).slice(0,7)===month).sort((a,b)=>eventDate(a.ev).localeCompare(eventDate(b.ev)));
-  let html='', allSales=0,allCost=0,fuS=0,fuC=0,amS=0,amC=0;
+  let html='',allSales=0,allCost=0,fuS=0,fuC=0,amS=0,amC=0;
 
   function totalBucket(eid,key){
     const e=allocations[safeKey(eid)]||allocations[eid]||{};
@@ -248,21 +248,20 @@ function render(){
       sales:num(t.sales),
       expense:num(t.expense),
       labor:num(t.labor),
-      costTotal:num(t.costTotal)||num(t.expense)+num(t.labor),
-      netProfit:(typeof t.netProfit!=='undefined')?num(t.netProfit):(num(t.sales)-(num(t.costTotal)||num(t.expense)+num(t.labor)))
+      costTotal:num(t.costTotal)||num(t.expense)+num(t.labor)
     };
   }
 
   target.forEach(({ev,i})=>{
-    const eid=eventId(ev,i), items=extractItems(ev).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
-    let eSales=0;
+    const eid=eventId(ev,i);
+    const items=extractItems(ev).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
 
-    const fu=totalBucket(eid,'fujiwara');
-    const am=totalBucket(eid,'amagasaki');
+    let assignedFujiSales=0,assignedAmaSales=0,hasFuji=false,hasAma=false;
 
     const rows=items.length?items.map(item=>{
-      const a=allocFor(eid,item), company=a.company||'', autoSales=autoItemSales(ev,item), sales=autoSales>0?autoSales:num(a.sales);
-      eSales+=sales;
+      const a=allocFor(eid,item),company=a.company||'',autoSales=autoItemSales(ev,item),sales=autoSales>0?autoSales:num(a.sales);
+      if(company==='fujiwara'){assignedFujiSales+=sales;hasFuji=true;}
+      if(company==='amagasaki'){assignedAmaSales+=sales;hasAma=true;}
       return `<div class="neta-row" data-eid="${esc(eid)}" data-item="${esc(item)}">
         <div class="neta-name">${esc(item)}<div style="margin-top:4px">${companyLabel(company)}</div></div>
         <select class="company-select" onchange="updateRowBadge(this);softCalc()">
@@ -272,32 +271,53 @@ function render(){
         </select>
         <div class="money-box"><span class="money-label">売上</span><input class="sales-input" type="number" inputmode="numeric" value="${sales}" oninput="softCalc()"></div>
       </div>`;
-    }).join(''):`<div class="empty">このイベントは出店ネタを自動取得できません。メインアプリ側の出店ネタ登録後に再読込してください。</div>`;
+    }).join(''):`<div class="empty">このイベントは出店ネタを自動取得できません。</div>`;
 
-    const eCost=fu.costTotal+am.costTotal;
-    const eProfit=(fu.netProfit+am.netProfit);
-    allSales+=fu.sales+am.sales;
-    allCost+=eCost;
-    fuS+=fu.sales; fuC+=fu.costTotal;
-    amS+=am.sales; amC+=am.costTotal;
+    const fu=totalBucket(eid,'fujiwara');
+    const am=totalBucket(eid,'amagasaki');
+
+    if(hasFuji) fu.sales=assignedFujiSales;
+    if(hasAma) am.sales=assignedAmaSales;
+
+    const showFuji=hasFuji||fu.sales!==0||fu.costTotal!==0;
+    const showAma=hasAma||am.sales!==0||am.costTotal!==0;
+
+    const fuProfit=fu.sales-fu.costTotal;
+    const amProfit=am.sales-am.costTotal;
+
+    let companyBoxes='';
+    if(showFuji){
+      companyBoxes+=`<div class="event-company-box fuji">
+        <h4>🟡 FUJIWARAグループ</h4>
+        <div class="event-company-line"><span>売上</span><b>${yen(fu.sales)}</b></div>
+        <div class="event-company-line"><span>経費＋労務費</span><b>${yen(fu.costTotal)}</b></div>
+        <div class="event-company-line"><span>純利益</span><b>${yen(fuProfit)}</b></div>
+      </div>`;
+    }
+    if(showAma){
+      companyBoxes+=`<div class="event-company-box ama">
+        <h4>🟠 尼崎本社</h4>
+        <div class="event-company-line"><span>売上</span><b>${yen(am.sales)}</b></div>
+        <div class="event-company-line"><span>経費＋労務費</span><b>${yen(am.costTotal)}</b></div>
+        <div class="event-company-line"><span>純利益</span><b>${yen(amProfit)}</b></div>
+      </div>`;
+    }
+
+    const eSales=(showFuji?fu.sales:0)+(showAma?am.sales:0);
+    const eCost=(showFuji?fu.costTotal:0)+(showAma?am.costTotal:0);
+    const eProfit=eSales-eCost;
+
+    allSales+=eSales; allCost+=eCost;
+    if(showFuji){fuS+=fu.sales;fuC+=fu.costTotal;}
+    if(showAma){amS+=am.sales;amC+=am.costTotal;}
 
     html+=`<article class="event">
-      <div class="event-head"><div><h3>${esc(eventName(ev,i))}</h3><div class="event-meta">${esc(eventDate(ev))}　${esc(eventPlace(ev))}</div></div><div class="event-total">純利益 ${yen(eProfit)}</div></div>
-      <div class="neta-list">${rows}</div>
-      <div class="event-company-totals">
-        <div class="event-company-box fuji">
-          <h4>🟡 FUJIWARAグループ</h4>
-          <div class="event-company-line"><span>売上</span><b>${yen(fu.sales)}</b></div>
-          <div class="event-company-line"><span>経費＋労務費</span><b>${yen(fu.costTotal)}</b></div>
-          <div class="event-company-line"><span>純利益</span><b>${yen(fu.netProfit)}</b></div>
-        </div>
-        <div class="event-company-box ama">
-          <h4>🟠 尼崎本社</h4>
-          <div class="event-company-line"><span>売上</span><b>${yen(am.sales)}</b></div>
-          <div class="event-company-line"><span>経費＋労務費</span><b>${yen(am.costTotal)}</b></div>
-          <div class="event-company-line"><span>純利益</span><b>${yen(am.netProfit)}</b></div>
-        </div>
+      <div class="event-head">
+        <div><h3>${esc(eventName(ev,i))}</h3><div class="event-meta">${esc(eventDate(ev))}　${esc(eventPlace(ev))}</div></div>
+        <div class="event-total">純利益 ${yen(eProfit)}</div>
       </div>
+      <div class="neta-list">${rows}</div>
+      ${companyBoxes?`<div class="event-company-totals">${companyBoxes}</div>`:''}
     </article>`;
   });
 
