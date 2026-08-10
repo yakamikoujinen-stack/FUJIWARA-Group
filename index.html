@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.26 月別表示・過去イベント版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.27 精算区分連携版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -552,6 +552,14 @@ body::before,#app::before,.page::before{
 .entry-admin-meta{font-size:11px;line-height:1.65;color:#6d5a2b;margin-top:4px}
 .entry-admin-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
 
+
+/* ===== v4.3.27 イベント精算区分（FUJIWARA / 尼崎本社） ===== */
+.settlement-tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.settlement-title{font-size:10px;font-weight:900;color:#6d5a2b;margin-right:2px}
+.settlement-tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:950;border:1px solid}
+.settlement-tag.fujiwara{background:#fff1bd;color:#735300;border-color:#d8b33e}
+.settlement-tag.amagasaki{background:#ffe0ca;color:#913f0b;border-color:#e59a60}
+.settlement-tag.unset{background:#f1f1f1;color:#666;border-color:#c8c8c8}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -1202,6 +1210,30 @@ var calYear, calMonth, selDate = null;
 var invCatFilter = 'すべて';
 var inventoryMode = 'list';
 var selectedWarehouseLoc = 'A';
+
+// ===== イベント精算区分 =====
+// 担当者は精算区分の表示のみ。編集・精算操作はKINGリーダー専用。
+// 既存イベント本体とは別領域に保存し、既存データを壊さない
+var EVENT_SETTLEMENT_PATH='fujiwara/event_settlement_allocations';
+var eventSettlementAllocations={};
+function settlementSafeKey(v){ return String(v||'').replace(/[.#$\[\]\/]/g,'_'); }
+function settlementCompanyLabel(v){ return v==='fujiwara'?'FUJIWARAグループ':(v==='amagasaki'?'尼崎本社':'未設定'); }
+function settlementCompanyClass(v){ return v==='fujiwara'?'fujiwara':(v==='amagasaki'?'amagasaki':'unset'); }
+function getSettlementItemRecord(ev,item){
+  var eid=settlementSafeKey(ev&&ev.id);
+  var bucket=eventSettlementAllocations[eid]||eventSettlementAllocations[String(ev&&ev.id)]||{};
+  var items=bucket.items||{};
+  return items[settlementSafeKey(item)]||items[item]||{};
+}
+function renderSettlementTags(ev){
+  if(!(role==='leader'||role==='staff') || !ev) return '';
+  var names=(typeof getEventSalesItems==='function')?getEventSalesItems(ev):[];
+  if(!names.length || (names.length===1 && names[0]==='売上')) return '<div class="settlement-tags"><span class="settlement-title">精算先</span><span class="settlement-tag unset">未設定</span></div>';
+  return '<div class="settlement-tags"><span class="settlement-title">精算先</span>'+names.map(function(name){
+    var rec=getSettlementItemRecord(ev,name), c=rec.company||'';
+    return '<span class="settlement-tag '+settlementCompanyClass(c)+'">'+escHtml(name)+'：'+settlementCompanyLabel(c)+'</span>';
+  }).join('')+'</div>';
+}
 
 var state = {
   events: [
@@ -2292,7 +2324,7 @@ function openPastEvents(){
     return '<div class="past-event-card" onclick="openPastEventDetail(\''+ev.id+'\')">'
       +'<div class="ev-card-row"><div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+(ev.place||'')+'</div>'
-      +'<div class="ev-meta">終了済み</div></div><span class="status-badge s-done">終了</span></div></div>';
+      +'<div class="ev-meta">終了済み</div>'+renderSettlementTags(ev)+'</div><span class="status-badge s-done">終了</span></div></div>';
   }).join(''):'<div class="empty-state"><div class="ei">🗂️</div><p>過去イベントはありません</p></div>';
   overlay.innerHTML='<div class="modal"><div class="modal-handle"></div><div class="modal-top"><div><div class="modal-title">🗂️ 過去イベント一覧</div><div class="page-sub" style="margin:4px 0 0">終了日が今日より前のイベント</div></div><button class="modal-close-btn" onclick="document.getElementById(\'modal-past-events-dynamic\').remove()">✕</button></div>'+cards+'</div>';
   document.body.appendChild(overlay);
@@ -2413,7 +2445,7 @@ function renderEventList(dateFilter) {
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
       +'<div class="ev-meta">👥 担当 '+staffStr+(getEventRequiredStaffForDate(ev,displayDs)?'　🧑‍🍳 体制 '+getEventRequiredStaffForDate(ev,displayDs)+'人':'')+'</div>'
       +(typeof renderAvailabilitySummary==='function'?'<div class="ev-meta">出勤回答 '+renderAvailabilitySummaryForDate(ev,displayDs)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailabilityForDate(ev,displayDs)):'')+'</div>':'')
-      +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+'</div>'
+      +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+renderSettlementTags(ev)+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
       +'<span class="status-badge '+sClass+'">'+sLabel+'</span>'
       +(role==='leader'&&typeof renderAvailabilitySummary==='function'?'<span style="font-size:10px;font-weight:900">'+renderAvailabilitySummaryForDate(ev,displayDs)+'</span>':'')
@@ -4378,6 +4410,16 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   if(!firebase.apps.length){ firebase.initializeApp(config); }
   var db = firebase.database();
   window._fgFirebaseReady = false;
+
+  // 精算区分はイベント本体と別監視。リーダー・担当者の表示だけ更新する。
+  db.ref(EVENT_SETTLEMENT_PATH).on('value',function(snapshot){
+    eventSettlementAllocations=snapshot.val()||{};
+    try{
+      if(document.getElementById('app') && document.getElementById('app').style.display!=='none'){
+        renderEventList(selDate||null);
+      }
+    }catch(e){ console.warn('精算区分表示更新失敗',e); }
+  });
 
   // partner共有は、このSDKの読込み前に一度初期化処理が走るため、
   // Firebase準備完了後に必ず監視を開始し、端末内の共有データも再送信する。

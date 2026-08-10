@@ -21,13 +21,15 @@ h1{margin:0;font-size:clamp(25px,5vw,38px)}.sub{margin:7px 0 0;color:#dcecff;fon
 .card.analysis{border:2px solid #74a9d8;background:linear-gradient(135deg,#f6fbff,#eaf4ff)}
 .card.wage{border:2px solid #e0b12c;background:linear-gradient(135deg,#fffdf4,#fff0b8)}
 .card.master{border:2px solid #60a97c;background:linear-gradient(135deg,#f5fff8,#e8f8ee)}
+.card.settlement{border:2px solid #c7a33d;background:linear-gradient(135deg,#fffdf5,#fff0c8)}
 .icon{width:66px;height:66px;border-radius:19px;display:grid;place-items:center;font-size:37px;background:#eef6ff}
-.primary .icon,.wage .icon{background:#17324d;color:#ffd76a}
+.primary .icon,.wage .icon,.settlement .icon{background:#17324d;color:#ffd76a}
 .master .icon{background:#e2f5e8}
 h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;font-weight:750;flex:1}
 .open{margin-top:16px;border-radius:14px;padding:13px;text-align:center;color:#fff;background:var(--navy);font-weight:950}
 .analysis .open{background:linear-gradient(90deg,#1489e8,#0a73cf)}
 .master .open{background:linear-gradient(90deg,#23845a,#2ca66f)}
+.settlement .open{background:linear-gradient(90deg,#a77b00,#d6a21c)}
 .section-title{margin:24px 0 12px;font-size:20px;color:#123b66}
 .note{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px;line-height:1.7;color:#425568;font-weight:750}
 @media(max-width:650px){.grid{grid-template-columns:1fr}.card{min-height:175px}}
@@ -45,9 +47,16 @@ h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;
   </div>
 </header>
 
-<div class="notice">お金管理・賃金台帳・主力ネタ一覧・主力／在庫データを、この画面にまとめました。</div>
+<div class="notice">既存機能はそのまま。イベント内の出店ネタを「FUJIWARAグループ／尼崎本社」に分けて精算できる「イベント早見精算」を追加しました。</div>
 
 <main class="grid">
+  <a id="leaderSettlementCard" class="card settlement" href="king-event-settlement.html">
+    <div class="icon">🧾</div>
+    <h2>イベント早見精算</h2>
+    <p>同じイベント内でも出店ネタごとに精算先を分け、FUJIWARAグループ・尼崎本社別の売上／経費／利益を早見集計します。</p>
+    <div class="open">早見精算を開く ›</div>
+  </a>
+
   <a class="card primary" href="king-money.html">
     <div class="icon">💰</div>
     <h2>お金管理</h2>
@@ -79,18 +88,28 @@ h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;
 
 <h2 class="section-title">現在の役割分け</h2>
 <div class="note">
+  <b>イベント早見精算：</b>出店ネタ単位でFUJIWARAグループ／尼崎本社へ振り分け<br>
   <b>主力ネタ一覧：</b>イベントごとの販売数・使用資材・必要数量を記録<br>
   <b>主力・在庫データ：</b>在庫管理の正式名称と材料計算ルールを登録<br>
   <b>担当者アプリ：</b>買い物表・準備・在庫・車両などの現場業務<br>
-  <b>KINGアプリ：</b>お金・賃金・主力・在庫データの経営管理
+  <b>KINGアプリ：</b>お金・賃金・主力・在庫・精算データの経営管理
 </div>
 </div>
 
 <script>
+function applyLeaderOnlyVisibility(){
+  try{
+    var raw=localStorage.getItem('fg_login_profile_v15');
+    var p=raw?JSON.parse(raw):null;
+    var card=document.getElementById('leaderSettlementCard');
+    if(card && p && p.role && p.role!=='leader') card.style.display='none';
+  }catch(e){}
+}
 function goBack(){
   if(history.length>1) history.back();
   else location.href='king.html';
 }
+applyLeaderOnlyVisibility();
 </script>
 </body>
 </html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>KING｜イベント早見精算 v1.1</title>
+<style>
+:root{--navy:#17324d;--gold:#d6a21c;--blue:#1774d1;--orange:#db741d;--green:#1e8c5b;--red:#b33b3b;--text:#11213c;--sub:#647188;--line:#e4eaf1;--bg:#f4f8fc}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(180deg,#edf8ff,#fff9eb 55%,#f7f8fa);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--text)}
+.wrap{max-width:1100px;margin:auto;padding:14px 12px 90px}
+.hero{background:linear-gradient(135deg,#17324d,#285f8c);color:#fff;padding:18px;border-radius:22px;box-shadow:0 10px 28px rgba(40,65,95,.16)}
+.hero-row,.toolbar,.event-head,.neta-row,.summary-grid,.company-row{display:flex;align-items:center;gap:10px}
+.hero-row,.event-head{justify-content:space-between}
+h1{font-size:clamp(24px,5vw,36px);margin:0}.sub{color:#dcecff;font-weight:800;margin-top:6px;font-size:13px}
+button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 14px;font-weight:900}.back{background:rgba(255,255,255,.15);color:#fff}
+.toolbar{margin:14px 0;flex-wrap:wrap;background:#fff;padding:12px;border-radius:17px;border:1px solid var(--line)}
+.toolbar select{border:1px solid #ccd7e2;border-radius:11px;padding:10px;min-width:150px;background:#fff}
+.refresh{background:var(--navy);color:#fff}.save{background:var(--green);color:#fff}
+.status{font-size:12px;font-weight:850;color:#52657a}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:17px;padding:14px;box-shadow:0 8px 20px rgba(40,65,95,.08)}
+.kpi small{color:var(--sub);font-weight:850}.kpi b{display:block;margin-top:5px;font-size:23px}
+.company-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px}
+.company{background:#fff;border:2px solid var(--line);border-radius:19px;padding:15px}
+.company.fuji{border-color:#d6a21c;background:#fffdf5}.company.ama{border-color:#e19454;background:#fff8f2}
+.company h2{margin:0 0 10px;font-size:20px}.company-row{justify-content:space-between;padding:5px 0;border-bottom:1px dashed #dde4eb}.company-row:last-child{border:0}
+.events{display:grid;gap:12px}
+.event{background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 7px 20px rgba(40,65,95,.08)}
+.event-head h3{margin:0;font-size:19px}.event-meta{font-size:12px;color:var(--sub);font-weight:800;margin-top:4px}
+.event-total{font-weight:950;color:var(--green);white-space:nowrap}
+.neta-list{display:grid;gap:8px;margin-top:12px}
+.neta-row{display:grid;grid-template-columns:minmax(120px,1.4fr) minmax(130px,1fr) 110px 110px;gap:8px;background:#f8fafc;border:1px solid #e9edf2;border-radius:13px;padding:9px}
+.neta-name{font-weight:950;align-self:center}.neta-row select,.neta-row input{width:100%;border:1px solid #ccd7e2;border-radius:9px;padding:9px;background:#fff}
+.money-label{font-size:10px;color:var(--sub);font-weight:900}.money-box{display:flex;flex-direction:column;gap:3px}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950}
+.fuji-b{background:#fff1bd;color:#785600}.ama-b{background:#ffe0ca;color:#9a4810}.unset-b{background:#eef1f5;color:#68758a}
+.empty{padding:35px 15px;text-align:center;color:var(--sub);font-weight:850;background:#fff;border-radius:18px}
+.note{margin-top:14px;background:#fff8df;border:1px solid #ecd27c;border-radius:14px;padding:12px;color:#6d5411;font-size:12px;font-weight:800;line-height:1.7}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);border-top:1px solid #dfe6ed;padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:10px}
+.bottom button{min-width:145px}
+@media(max-width:720px){.summary-grid{grid-template-columns:1fr 1fr}.company-summary{grid-template-columns:1fr}.neta-row{grid-template-columns:1fr 1fr}.neta-name{grid-column:1/-1}.hero-row{align-items:flex-start}.event-head{align-items:flex-start}.toolbar select{min-width:0;flex:1}}
+.access-denied{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#17324d,#285f8c);color:#fff;align-items:center;justify-content:center;padding:24px}.access-denied.show{display:flex}.access-card{width:min(430px,100%);background:#fff;color:#11213c;border-radius:22px;padding:24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.28)}.access-card h2{margin:0 0 10px;font-size:25px}.access-card p{line-height:1.7;color:#647188;font-weight:800}.access-card button{margin-top:12px;background:#17324d;color:#fff;border:0;border-radius:13px;padding:12px 18px;font-weight:950}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
+<body>
+<div id="leaderOnlyGate" class="access-denied"><div class="access-card"><h2>🔒 リーダー専用</h2><p>イベント早見精算はリーダーのみ利用できます。<br>担当者はメインアプリで精算区分の確認だけできます。</p><button onclick="location.href='king-money-center.html'">← 戻る</button></div></div>
+<main class="wrap">
+<section class="hero">
+  <div class="hero-row">
+    <div><h1>🧾 イベント早見精算</h1><div class="sub">出店ネタ単位で FUJIWARAグループ ／ 尼崎本社 を分けて集計</div></div>
+    <button class="btn back" onclick="location.href='king-money-center.html'">← お金・労務</button>
+  </div>
+</section>
+
+<section class="toolbar">
+  <select id="monthSel" onchange="render()"></select>
+  <button class="btn refresh" onclick="loadAll()">🔄 最新データ</button>
+  <button class="btn save" onclick="saveAll()">💾 区分・金額を保存</button>
+  <span class="status" id="status">Firebase接続中...</span>
+</section>
+
+<section class="summary-grid">
+  <div class="kpi"><small>イベント数</small><b id="eventCount">0件</b></div>
+  <div class="kpi"><small>売上合計</small><b id="salesTotal">¥0</b></div>
+  <div class="kpi"><small>経費合計</small><b id="costTotal">¥0</b></div>
+  <div class="kpi"><small>利益合計</small><b id="profitTotal">¥0</b></div>
+</section>
+
+<section class="company-summary">
+  <div class="company fuji"><h2>🟡 FUJIWARAグループ</h2>
+    <div class="company-row"><span>売上</span><b id="fujiSales">¥0</b></div>
+    <div class="company-row"><span>経費</span><b id="fujiCost">¥0</b></div>
+    <div class="company-row"><span>利益</span><b id="fujiProfit">¥0</b></div>
+  </div>
+  <div class="company ama"><h2>🟠 尼崎本社</h2>
+    <div class="company-row"><span>売上</span><b id="amaSales">¥0</b></div>
+    <div class="company-row"><span>経費</span><b id="amaCost">¥0</b></div>
+    <div class="company-row"><span>利益</span><b id="amaProfit">¥0</b></div>
+  </div>
+</section>
+
+<section id="events" class="events"></section>
+<div class="note">既存のメインアプリのイベントデータは書き換えません。精算先とネタ別の補助金額だけを <b>fujiwara/event_settlement_allocations</b> に保存します。既存イベントを壊さないための分離方式です。</div>
+</main>
+<nav class="bottom">
+  <button class="btn refresh" onclick="location.href='king.html'">👑 KINGへ</button>
+  <button class="btn save" onclick="saveAll()">💾 保存</button>
+</nav>
+
+<script>
+(function(){
+  try{
+    var raw=localStorage.getItem('fg_login_profile_v15');
+    var p=raw?JSON.parse(raw):null;
+    if(p && p.role && p.role!=='leader'){
+      var g=document.getElementById('leaderOnlyGate'); if(g) g.classList.add('show');
+      document.querySelector('main').style.display='none';
+      var n=document.querySelector('nav.bottom'); if(n) n.style.display='none';
+      window.__settlementLeaderDenied=true;
+    }
+  }catch(e){}
+})();
+if(window.__settlementLeaderDenied){ throw new Error('leader-only'); }
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=firebase.database(), EVENT_PATH='fujiwara/events', ALLOC_PATH='fujiwara/event_settlement_allocations';
+let events=[], allocations={};
+const $=id=>document.getElementById(id);
+const yen=v=>'¥'+Math.round(Number(v||0)).toLocaleString('ja-JP');
+const num=v=>{const x=Number(String(v??0).replace(/[^0-9.-]/g,''));return Number.isFinite(x)?x:0};
+const safeKey=v=>String(v||'').replace(/[.#$\[\]\/]/g,'_');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function arr(v){if(!v)return[];return Array.isArray(v)?v.filter(Boolean):typeof v==='object'?Object.values(v).filter(Boolean):[]}
+function eventId(ev,i){return String(ev.id||ev.eventId||ev.mainId||('event_'+i))}
+function eventName(ev,i){return ev.name||ev.eventName||ev.title||('イベント '+(i+1))}
+function eventDate(ev){return String(ev.date||ev.startDate||ev.eventDate||'').slice(0,10)}
+function eventPlace(ev){return ev.place||ev.location||''}
+function uniq(a){return [...new Set(a.map(x=>String(x||'').trim()).filter(Boolean))]}
+function extractItems(ev){
+  let list=[];
+  if(Array.isArray(ev.items)) list.push(...ev.items.map(x=>typeof x==='string'?x:(x.name||x.item||x.title||'')));
+  if(Array.isArray(ev.neta)) list.push(...ev.neta.map(x=>typeof x==='string'?x:(x.name||x.item||'')));
+  if(Array.isArray(ev.menu)) list.push(...ev.menu.map(x=>typeof x==='string'?x:(x.name||x.item||'')));
+  ['itemsText','netaText','menuText','foods','products'].forEach(k=>{
+    const v=ev[k];
+    if(typeof v==='string') list.push(...v.split(/[、,，／\/\n・]+/));
+  });
+  const days=ev&&ev.sales&&ev.sales.days&&typeof ev.sales.days==='object'?ev.sales.days:{};
+  Object.values(days).forEach(day=>{
+    const simple=(day||{}).simple||day||{};
+    if(simple.items&&typeof simple.items==='object') list.push(...Object.keys(simple.items));
+    if(simple.itemSales&&typeof simple.itemSales==='object') list.push(...Object.keys(simple.itemSales));
+    if(simple.netaSales&&typeof simple.netaSales==='object') list.push(...Object.keys(simple.netaSales));
+  });
+  return uniq(list);
+}
+function autoItemSales(ev,item){
+  let total=0;
+  const days=ev&&ev.sales&&ev.sales.days&&typeof ev.sales.days==='object'?ev.sales.days:{};
+  Object.values(days).forEach(day=>{
+    const simple=(day||{}).simple||day||{};
+    [simple.items,simple.itemSales,simple.netaSales,simple.salesByItem].forEach(obj=>{
+      if(obj&&typeof obj==='object'&&Object.prototype.hasOwnProperty.call(obj,item)){
+        const v=obj[item];
+        total+=typeof v==='object'?num(v.sales??v.amount??v.total??v.value):num(v);
+      }
+    });
+  });
+  return total;
+}
+function allocFor(eid,item){
+  const e=allocations[safeKey(eid)]||allocations[eid]||{};
+  const items=e.items||{};
+  return items[safeKey(item)]||items[item]||{};
+}
+function initMonths(){
+  const months=uniq(events.map(e=>eventDate(e).slice(0,7))).sort().reverse();
+  const now=new Date(), current=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  if(!months.includes(current))months.unshift(current);
+  monthSel.innerHTML=months.map(m=>`<option value="${esc(m)}">${esc(m.replace('-','年'))}月</option>`).join('');
+  monthSel.value=months.includes(current)?current:months[0]||current;
+}
+async function loadAll(){
+  status.textContent='読込中...';
+  try{
+    const [es,as]=await Promise.all([db.ref(EVENT_PATH).once('value'),db.ref(ALLOC_PATH).once('value')]);
+    events=arr(es.val()); allocations=as.val()||{};
+    initMonths(); render(); status.textContent='最新データ読込済み';
+  }catch(e){status.textContent='読込失敗：'+(e.message||e)}
+}
+function companyLabel(v){
+  if(v==='fujiwara')return '<span class="badge fuji-b">FUJIWARAグループ</span>';
+  if(v==='amagasaki')return '<span class="badge ama-b">尼崎本社</span>';
+  return '<span class="badge unset-b">未設定</span>';
+}
+function render(){
+  const month=monthSel.value;
+  const target=events.map((ev,i)=>({ev,i})).filter(x=>eventDate(x.ev).slice(0,7)===month).sort((a,b)=>eventDate(a.ev).localeCompare(eventDate(b.ev)));
+  let html='', allSales=0,allCost=0,fuS=0,fuC=0,amS=0,amC=0;
+  target.forEach(({ev,i})=>{
+    const eid=eventId(ev,i), items=extractItems(ev);
+    let eSales=0,eCost=0;
+    const rows=items.length?items.map(item=>{
+      const a=allocFor(eid,item), company=a.company||'', sales=a.sales!==undefined?num(a.sales):autoItemSales(ev,item), cost=num(a.cost);
+      eSales+=sales;eCost+=cost;
+      if(company==='fujiwara'){fuS+=sales;fuC+=cost}
+      if(company==='amagasaki'){amS+=sales;amC+=cost}
+      return `<div class="neta-row" data-eid="${esc(eid)}" data-item="${esc(item)}">
+        <div class="neta-name">${esc(item)}<div style="margin-top:4px">${companyLabel(company)}</div></div>
+        <select class="company-select" onchange="render()">
+          <option value="" ${!company?'selected':''}>精算先を選択</option>
+          <option value="fujiwara" ${company==='fujiwara'?'selected':''}>FUJIWARAグループ</option>
+          <option value="amagasaki" ${company==='amagasaki'?'selected':''}>尼崎本社</option>
+        </select>
+        <div class="money-box"><span class="money-label">売上</span><input class="sales-input" type="number" inputmode="numeric" value="${sales}" oninput="softCalc()"></div>
+        <div class="money-box"><span class="money-label">経費</span><input class="cost-input" type="number" inputmode="numeric" value="${cost}" oninput="softCalc()"></div>
+      </div>`;
+    }).join(''):`<div class="empty">このイベントは出店ネタを自動取得できません。メインアプリ側の出店ネタ登録後に再読込してください。</div>`;
+    allSales+=eSales;allCost+=eCost;
+    html+=`<article class="event">
+      <div class="event-head"><div><h3>${esc(eventName(ev,i))}</h3><div class="event-meta">${esc(eventDate(ev))}　${esc(eventPlace(ev))}</div></div><div class="event-total">利益 ${yen(eSales-eCost)}</div></div>
+      <div class="neta-list">${rows}</div>
+    </article>`;
+  });
+  eventsEl.innerHTML=html||'<div class="empty">この月のイベントはありません。</div>';
+  eventCount.textContent=target.length+'件';
+  salesTotal.textContent=yen(allSales);costTotal.textContent=yen(allCost);profitTotal.textContent=yen(allSales-allCost);
+  fujiSales.textContent=yen(fuS);fujiCost.textContent=yen(fuC);fujiProfit.textContent=yen(fuS-fuC);
+  amaSales.textContent=yen(amS);amaCost.textContent=yen(amC);amaProfit.textContent=yen(amS-amC);
+}
+function collect(){
+  const copy=JSON.parse(JSON.stringify(allocations||{}));
+  document.querySelectorAll('.neta-row').forEach(row=>{
+    const eid=row.dataset.eid,item=row.dataset.item, ek=safeKey(eid), ik=safeKey(item);
+    if(!copy[ek])copy[ek]={eventId:eid};
+    if(!copy[ek].items)copy[ek].items={};
+    copy[ek].items[ik]={
+      itemName:item,
+      company:row.querySelector('.company-select').value,
+      sales:num(row.querySelector('.sales-input').value),
+      cost:num(row.querySelector('.cost-input').value),
+      updatedAt:new Date().toISOString()
+    };
+  });
+  return copy;
+}
+async function saveAll(){
+  status.textContent='保存中...';
+  try{
+    allocations=collect();
+    await db.ref(ALLOC_PATH).set(allocations);
+    status.textContent='保存しました';
+    render();
+  }catch(e){status.textContent='保存失敗：'+(e.message||e)}
+}
+function softCalc(){
+  // 入力中はDOMを再構築せず、保存時に確定
+}
+const eventsEl=$('events'),eventCount=$('eventCount'),salesTotal=$('salesTotal'),costTotal=$('costTotal'),profitTotal=$('profitTotal'),
+fujiSales=$('fujiSales'),fujiCost=$('fujiCost'),fujiProfit=$('fujiProfit'),amaSales=$('amaSales'),amaCost=$('amaCost'),amaProfit=$('amaProfit'),
+monthSel=$('monthSel'),status=$('status');
+loadAll();
+</script>
+</body>
+</html>
