@@ -1235,6 +1235,80 @@ function renderSettlementTags(ev){
   }).join('')+'</div>';
 }
 
+function settlementCompanyOptions(value){
+  value=value||'';
+  return '<option value="" '+(!value?'selected':'')+'>精算先を選択</option>'
+    +'<option value="fujiwara" '+(value==='fujiwara'?'selected':'')+'>FUJIWARAグループ</option>'
+    +'<option value="amagasaki" '+(value==='amagasaki'?'selected':'')+'>尼崎本社</option>';
+}
+function getDayAccountingSplit(simple){
+  simple=simple||{};
+  var s=simple.accountingSplit||{};
+  s.items=s.items||{};
+  s.expenses=s.expenses||{};
+  return s;
+}
+function getExistingItemCompany(ev,name){
+  var rec=getSettlementItemRecord(ev,name);
+  return (rec&&rec.company)||'';
+}
+function accountingCompanySelect(value, cls, extra){
+  return '<select class="'+(cls||'')+'" '+(extra||'')+' style="margin-top:6px;font-weight:900">'
+    +settlementCompanyOptions(value)+'</select>';
+}
+async function syncEventAccountingAllocation(ev){
+  if(!ev || !(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.database)) return;
+  var eid=settlementSafeKey(ev.id);
+  var days=(ev.sales&&ev.sales.days&&typeof ev.sales.days==='object')?ev.sales.days:{};
+  var itemsOut={};
+  var totals={
+    fujiwara:{sales:0,expense:0,labor:0,costTotal:0,netProfit:0},
+    amagasaki:{sales:0,expense:0,labor:0,costTotal:0,netProfit:0},
+    unset:{sales:0,expense:0,labor:0,costTotal:0,netProfit:0}
+  };
+  function bucket(c){ return c==='fujiwara'||c==='amagasaki'?c:'unset'; }
+  Object.keys(days).forEach(function(ds){
+    var rec=days[ds]||{}, simple=rec.simple||rec;
+    if(!simple||typeof simple!=='object') return;
+    var split=getDayAccountingSplit(simple);
+    var labels=simple.labels||{}, vals=simple.items||{};
+    Object.keys(labels).forEach(function(k){
+      var name=String(labels[k]||'').trim(); if(!name) return;
+      var company=(split.items&&split.items[k])||getExistingItemCompany(ev,name)||'';
+      var amount=parseInt(vals[k])||0, b=bucket(company);
+      totals[b].sales+=amount;
+      var sk=settlementSafeKey(name);
+      if(!itemsOut[sk]) itemsOut[sk]={name:name,company:company,sales:0};
+      itemsOut[sk].sales+=amount;
+      if(company) itemsOut[sk].company=company;
+    });
+    var ex=simple.expenses||{}, es=split.expenses||{};
+    [['basho','場所代'],['shiire','仕入れ'],['kotsu','交通費'],['other','その他経費']].forEach(function(pair){
+      var key=pair[0], amount=parseInt(ex[key])||0, company=es[key]||'', b=bucket(company);
+      totals[b].expense+=amount;
+    });
+    var st=(simple.settlement&&Array.isArray(simple.settlement.staffPayments))?simple.settlement.staffPayments:[];
+    st.forEach(function(p){
+      var amount=parseInt(p.amount)||0, b=bucket(p.company||'');
+      totals[b].labor+=amount;
+    });
+  });
+  ['fujiwara','amagasaki','unset'].forEach(function(k){
+    totals[k].costTotal=totals[k].expense+totals[k].labor;
+    totals[k].netProfit=totals[k].sales-totals[k].costTotal;
+  });
+  var payload={
+    eventId:String(ev.id||''),
+    eventName:ev.name||'',
+    date:ev.date||'',
+    items:itemsOut,
+    companyTotals:totals,
+    updatedBy:userName||'未入力',
+    updatedAt:new Date().toISOString()
+  };
+  await firebase.database().ref(EVENT_SETTLEMENT_PATH+'/'+eid).update(payload);
+}
+
 var state = {
   events: [
     { id:'1', name:'春の文化祭', date:'2025-06-14', zone:'A', place:'○○公園広場', status:'active', memo:'メイン出店', staff:['Aさん','Bさん','Cさん'], items:['1','2','3'],
@@ -3404,7 +3478,8 @@ function settlementRowHtml(row,idx){
   row=row||{};
   return '<div class="staff-payment-row" data-index="'+idx+'" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:#fffdfa">'
     +'<div class="fg2"><div class="fg"><label>スタッフ名</label><input type="text" class="sp-name" value="'+String(row.name||'').replace(/"/g,'&quot;')+'" placeholder="例：文太"></div><div class="fg"><label>支払方法</label><select class="sp-type"><option value="日当" '+(row.type==='日当'?'selected':'')+'>日当</option><option value="時給" '+(row.type==='時給'?'selected':'')+'>時給</option><option value="売上歩合" '+(row.type==='売上歩合'?'selected':'')+'>売上歩合</option><option value="固定額" '+(row.type==='固定額'?'selected':'')+'>固定額</option></select></div></div>'
-    +'<div class="fg2"><div class="fg"><label>支払金額（円）</label><input type="number" class="sp-amount" min="0" value="'+(row.amount||'')+'" oninput="updateSimpleSalesEditTotals()"></div><div class="fg"><label>支払予定日</label><input type="date" class="sp-due" value="'+(row.dueDate||'')+'"></div></div>'
+    +'<div class="fg2"><div class="fg"><label>支払金額（円）</label><input type="number" class="sp-amount" min="0" value="'+(row.amount||'')+'" oninput="updateSimpleSalesEditTotals()"></div><div class="fg"><label>精算先</label><select class="sp-company" style="font-weight:900">'+settlementCompanyOptions(row.company||'')+'</select></div></div>'
+    +'<div class="fg"><label>支払予定日</label><input type="date" class="sp-due" value="'+(row.dueDate||'')+'"></div>'
     +'<div style="display:flex;gap:8px;align-items:center"><label style="margin:0"><input type="checkbox" class="sp-paid" style="width:auto" '+(row.paid?'checked':'')+'> 支払済み</label><input type="date" class="sp-paid-date" value="'+(row.paidDate||'')+'" style="max-width:170px"><button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.staff-payment-row\').remove();updateSimpleSalesEditTotals()">削除</button></div>'
     +'</div>';
 }
@@ -3416,7 +3491,7 @@ function addStaffPaymentRow(row){
 function collectStaffPayments(){
   var arr=[];
   document.querySelectorAll('.staff-payment-row').forEach(function(r){
-    arr.push({name:(r.querySelector('.sp-name')||{}).value||'',type:(r.querySelector('.sp-type')||{}).value||'日当',amount:parseInt((r.querySelector('.sp-amount')||{}).value)||0,dueDate:(r.querySelector('.sp-due')||{}).value||'',paid:!!((r.querySelector('.sp-paid')||{}).checked),paidDate:(r.querySelector('.sp-paid-date')||{}).value||''});
+    arr.push({name:(r.querySelector('.sp-name')||{}).value||'',type:(r.querySelector('.sp-type')||{}).value||'日当',amount:parseInt((r.querySelector('.sp-amount')||{}).value)||0,company:(r.querySelector('.sp-company')||{}).value||'',dueDate:(r.querySelector('.sp-due')||{}).value||'',paid:!!((r.querySelector('.sp-paid')||{}).checked),paidDate:(r.querySelector('.sp-paid-date')||{}).value||''});
   });
   return arr;
 }
@@ -3900,15 +3975,20 @@ function openSalesEdit(id, selectedDate) {
   var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'+dayTabs
     +'<div class="fg"><label>イベント名</label><input type="text" value="'+escAttr(ev.name||'')+'" readonly></div>'
     +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:4px">ネタ別売上</div>'
-    +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'"></div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
+    +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); var split=getDayAccountingSplit(simple); var company=(split.items&&split.items[key])||getExistingItemCompany(ev,name)||''; return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'">'+accountingCompanySelect(company,'simple-sales-company','data-key="'+key+'"')+'</div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
     +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:#1769c2;margin-bottom:8px">現金売上・売掛売上</div><div class="fg2"><div class="fg"><label>現金売上（円）</label><input type="number" id="simple-cash-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.cashSales)||'')+'"></div><div class="fg"><label>売掛売上（円）</label><input type="number" id="simple-receivable-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.receivableSales)||'')+'"></div></div></div>'
     +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:var(--gold)">この日のスタッフ支払</div><button type="button" class="btn btn-outline btn-sm" onclick="addStaffPaymentRow({})">＋スタッフ追加</button></div><div id="staff-payment-list">'+((simple.settlement&&simple.settlement.staffPayments)||[]).map(function(x,i){return settlementRowHtml(x,i);}).join('')+'</div><div class="profit-row"><span>スタッフ支払合計</span><b id="simple-auto-staffpay">¥0</b></div></div>'
-    +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">この日の経費・お金</div><div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="simple-exp-basho" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.basho)||'')+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="simple-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.shiire)||'')+'"></div></div><div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="simple-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.kotsu)||'')+'"></div><div class="fg"><label>その他経費</label><input type="number" id="simple-exp-other" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.other)||'')+'"></div></div><div class="fg"><label>労務費 合計</label><input type="number" id="simple-exp-labor" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||'')+'"></div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><button type="button" id="simple-safe-transfer-btn" class="btn btn-green btn-full" style="margin:2px 0 8px;font-size:14px" onclick="transferSimpleCashToSafe()">🔐 手元残を金庫番へ入金</button><div id="simple-safe-transfer-status" style="font-size:11px;color:var(--text2);font-weight:900;margin:0 0 12px"></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
+    +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">この日の経費・お金</div><div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="simple-exp-basho" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.basho)||'')+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="simple-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.shiire)||'')+'"></div></div><div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="simple-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.kotsu)||'')+'"></div><div class="fg"><label>その他経費</label><input type="number" id="simple-exp-other" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.other)||'')+'"></div></div><div class="fg"><label>労務費 合計</label><input type="number" id="simple-exp-labor" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||'')+'" readonly><div style="font-size:10px;color:var(--text2);margin-top:4px">※スタッフ支払から自動集計</div></div>'
+    +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:10px;margin:10px 0"><div style="font-size:12px;font-weight:900;color:#1769c2;margin-bottom:8px">経費の精算先</div>'
+    +'<div class="fg2"><div class="fg"><label>場所代</label><select id="split-exp-basho">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).basho||'')+'</select></div><div class="fg"><label>仕入れ</label><select id="split-exp-shiire">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).shiire||'')+'</select></div></div>'
+    +'<div class="fg2"><div class="fg"><label>交通費</label><select id="split-exp-kotsu">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).kotsu||'')+'</select></div><div class="fg"><label>その他経費</label><select id="split-exp-other">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).other||'')+'</select></div></div>'
+    +'</div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><button type="button" id="simple-safe-transfer-btn" class="btn btn-green btn-full" style="margin:2px 0 8px;font-size:14px" onclick="transferSimpleCashToSafe()">🔐 手元残を金庫番へ入金</button><div id="simple-safe-transfer-status" style="font-size:11px;color:var(--text2);font-weight:900;margin:0 0 12px"></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
     +'<input type="hidden" id="simple-customer" value=""><input type="hidden" id="simple-closing-day" value="月末締め"><input type="hidden" id="simple-cut-rate" value="0"><input type="hidden" id="simple-payment-date"><input type="hidden" id="simple-actual-amount" value="0"><input type="hidden" id="simple-received-date"><input type="checkbox" id="simple-received" style="display:none">'
     +'<div class="fg"><label>この日のメモ</label><textarea id="simple-sales-memo">'+escHtml(simple.memo||'')+'</textarea></div></div>';
   var laborBox=document.getElementById('se-labor-inputs'); if(laborBox){ laborBox.innerHTML=''; var old=document.getElementById('se-daily-inputs'); if(old)old.remove(); laborBox.insertAdjacentHTML('beforebegin','<div id="se-daily-inputs">'+html+'</div>'); }
   var totalInput=document.getElementById('se-total'); if(totalInput){totalInput.readOnly=true;totalInput.style.background='#fff7df';}
-  updateSimpleSalesEditTotals(); openModal('modal-sales-edit'); showPage('sales'); var sel=document.getElementById('sales-ev-select'); if(sel){sel.value=id;renderSalesDetail();}
+  showPage('sales'); var sel=document.getElementById('sales-ev-select'); if(sel){sel.value=id;renderSalesDetail();}
+  updateSimpleSalesEditTotals(); openModal('modal-sales-edit');
 }
 async function saveSalesEdit() {
   if(!canEditSalesExpense()){ toast('⛔ 売上表は編集許可された人だけ保存できます'); return; }
@@ -3919,7 +3999,15 @@ async function saveSalesEdit() {
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
   var previous=getDaySimpleSales(ev,ds);
-  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:parseInt((document.getElementById('simple-exp-labor')||{}).value)||0}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:collectStaffPayments()},memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
+  var accountingSplit={items:{},expenses:{}};
+  document.querySelectorAll('.simple-sales-company').forEach(function(sel){accountingSplit.items[sel.dataset.key]=sel.value||'';});
+  accountingSplit.expenses.basho=(document.getElementById('split-exp-basho')||{}).value||'';
+  accountingSplit.expenses.shiire=(document.getElementById('split-exp-shiire')||{}).value||'';
+  accountingSplit.expenses.kotsu=(document.getElementById('split-exp-kotsu')||{}).value||'';
+  accountingSplit.expenses.other=(document.getElementById('split-exp-other')||{}).value||'';
+  var payments=collectStaffPayments();
+  var laborTotal=payments.reduce(function(sum,p){return sum+(parseInt(p.amount)||0);},0);
+  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:laborTotal}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:payments},accountingSplit:accountingSplit,memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
   ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple};
   aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
 
@@ -3940,6 +4028,11 @@ async function saveSalesEdit() {
     }
   }
 
+  try{
+    await syncEventAccountingAllocation(ev);
+  }catch(syncErr){
+    console.warn('精算区分同期エラー',syncErr);
+  }
   addAudit('日別売上表入力/修正',ev.name+'｜'+ds+'｜入力者 '+(userName||'未入力'));
   fbSave();
   closeModal('modal-sales-edit'); renderSalesPage();

@@ -30,6 +30,14 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 .event{background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 7px 20px rgba(40,65,95,.08)}
 .event-head h3{margin:0;font-size:19px}.event-meta{font-size:12px;color:var(--sub);font-weight:800;margin-top:4px}
 .event-total{font-weight:950;color:var(--green);white-space:nowrap}
+.event-company-totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.event-company-box{border:1.5px solid #d8e0e8;border-radius:13px;padding:10px;background:#fff}
+.event-company-box.fuji{border-color:#d6a21c;background:#fffdf5}
+.event-company-box.ama{border-color:#e19454;background:#fff8f2}
+.event-company-box h4{margin:0 0 6px;font-size:13px}
+.event-company-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0}
+@media(max-width:620px){.event-company-totals{grid-template-columns:1fr}}
+
 .neta-list{display:grid;gap:8px;margin-top:12px}
 .neta-row{display:grid;grid-template-columns:minmax(120px,1.4fr) minmax(130px,1fr) 110px 110px;gap:8px;background:#f8fafc;border:1px solid #e9edf2;border-radius:13px;padding:9px}
 .neta-name{font-weight:950;align-self:center}.neta-row select,.neta-row input{width:100%;border:1px solid #ccd7e2;border-radius:9px;padding:9px;background:#fff}
@@ -67,25 +75,25 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 <section class="summary-grid">
   <div class="kpi"><small>イベント数</small><b id="eventCount">0件</b></div>
   <div class="kpi"><small>売上合計</small><b id="salesTotal">¥0</b></div>
-  <div class="kpi"><small>経費合計</small><b id="costTotal">¥0</b></div>
-  <div class="kpi"><small>利益合計</small><b id="profitTotal">¥0</b></div>
+  <div class="kpi"><small>経費＋労務費</small><b id="costTotal">¥0</b></div>
+  <div class="kpi"><small>純利益</small><b id="profitTotal">¥0</b></div>
 </section>
 
 <section class="company-summary">
   <div class="company fuji"><h2>🟡 FUJIWARAグループ</h2>
     <div class="company-row"><span>売上</span><b id="fujiSales">¥0</b></div>
-    <div class="company-row"><span>経費</span><b id="fujiCost">¥0</b></div>
-    <div class="company-row"><span>利益</span><b id="fujiProfit">¥0</b></div>
+    <div class="company-row"><span>経費＋労務費</span><b id="fujiCost">¥0</b></div>
+    <div class="company-row"><span>純利益</span><b id="fujiProfit">¥0</b></div>
   </div>
   <div class="company ama"><h2>🟠 尼崎本社</h2>
     <div class="company-row"><span>売上</span><b id="amaSales">¥0</b></div>
-    <div class="company-row"><span>経費</span><b id="amaCost">¥0</b></div>
-    <div class="company-row"><span>利益</span><b id="amaProfit">¥0</b></div>
+    <div class="company-row"><span>経費＋労務費</span><b id="amaCost">¥0</b></div>
+    <div class="company-row"><span>純利益</span><b id="amaProfit">¥0</b></div>
   </div>
 </section>
 
 <section id="events" class="events"></section>
-<div class="note">既存のメインアプリのイベントデータは書き換えません。まとめ登録されたネタは1品ずつ分解して表示します。精算先とネタ別の補助金額だけを <b>fujiwara/event_settlement_allocations</b> に保存します。既存イベントを壊さないための分離方式です。</div>
+<div class="note">売上・経費・労務費の振り分けはメインアプリのリーダー編集から行います。KINGでは会社別の経費＋労務費と純利益を自動集計します。精算先とネタ別の補助金額だけを <b>fujiwara/event_settlement_allocations</b> に保存します。既存イベントを壊さないための分離方式です。</div>
 </main>
 <div id="saveToast" class="save-toast"></div>
 <nav class="bottom">
@@ -231,14 +239,30 @@ function render(){
   const month=monthSel.value;
   const target=events.map((ev,i)=>({ev,i})).filter(x=>eventDate(x.ev).slice(0,7)===month).sort((a,b)=>eventDate(a.ev).localeCompare(eventDate(b.ev)));
   let html='', allSales=0,allCost=0,fuS=0,fuC=0,amS=0,amC=0;
+
+  function totalBucket(eid,key){
+    const e=allocations[safeKey(eid)]||allocations[eid]||{};
+    const ct=e.companyTotals||{};
+    const t=ct[key]||{};
+    return {
+      sales:num(t.sales),
+      expense:num(t.expense),
+      labor:num(t.labor),
+      costTotal:num(t.costTotal)||num(t.expense)+num(t.labor),
+      netProfit:(typeof t.netProfit!=='undefined')?num(t.netProfit):(num(t.sales)-(num(t.costTotal)||num(t.expense)+num(t.labor)))
+    };
+  }
+
   target.forEach(({ev,i})=>{
     const eid=eventId(ev,i), items=extractItems(ev).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
-    let eSales=0,eCost=0;
+    let eSales=0;
+
+    const fu=totalBucket(eid,'fujiwara');
+    const am=totalBucket(eid,'amagasaki');
+
     const rows=items.length?items.map(item=>{
-      const a=allocFor(eid,item), company=a.company||'', autoSales=autoItemSales(ev,item), sales=autoSales>0?autoSales:num(a.sales), cost=num(a.cost);
-      eSales+=sales;eCost+=cost;
-      if(company==='fujiwara'){fuS+=sales;fuC+=cost}
-      if(company==='amagasaki'){amS+=sales;amC+=cost}
+      const a=allocFor(eid,item), company=a.company||'', autoSales=autoItemSales(ev,item), sales=autoSales>0?autoSales:num(a.sales);
+      eSales+=sales;
       return `<div class="neta-row" data-eid="${esc(eid)}" data-item="${esc(item)}">
         <div class="neta-name">${esc(item)}<div style="margin-top:4px">${companyLabel(company)}</div></div>
         <select class="company-select" onchange="updateRowBadge(this);softCalc()">
@@ -247,45 +271,63 @@ function render(){
           <option value="amagasaki" ${company==='amagasaki'?'selected':''}>尼崎本社</option>
         </select>
         <div class="money-box"><span class="money-label">売上</span><input class="sales-input" type="number" inputmode="numeric" value="${sales}" oninput="softCalc()"></div>
-        <div class="money-box"><span class="money-label">経費</span><input class="cost-input" type="number" inputmode="numeric" value="${cost}" oninput="softCalc()"></div>
       </div>`;
     }).join(''):`<div class="empty">このイベントは出店ネタを自動取得できません。メインアプリ側の出店ネタ登録後に再読込してください。</div>`;
-    allSales+=eSales;allCost+=eCost;
+
+    const eCost=fu.costTotal+am.costTotal;
+    const eProfit=(fu.netProfit+am.netProfit);
+    allSales+=fu.sales+am.sales;
+    allCost+=eCost;
+    fuS+=fu.sales; fuC+=fu.costTotal;
+    amS+=am.sales; amC+=am.costTotal;
+
     html+=`<article class="event">
-      <div class="event-head"><div><h3>${esc(eventName(ev,i))}</h3><div class="event-meta">${esc(eventDate(ev))}　${esc(eventPlace(ev))}</div></div><div class="event-total">利益 ${yen(eSales-eCost)}</div></div>
+      <div class="event-head"><div><h3>${esc(eventName(ev,i))}</h3><div class="event-meta">${esc(eventDate(ev))}　${esc(eventPlace(ev))}</div></div><div class="event-total">純利益 ${yen(eProfit)}</div></div>
       <div class="neta-list">${rows}</div>
+      <div class="event-company-totals">
+        <div class="event-company-box fuji">
+          <h4>🟡 FUJIWARAグループ</h4>
+          <div class="event-company-line"><span>売上</span><b>${yen(fu.sales)}</b></div>
+          <div class="event-company-line"><span>経費＋労務費</span><b>${yen(fu.costTotal)}</b></div>
+          <div class="event-company-line"><span>純利益</span><b>${yen(fu.netProfit)}</b></div>
+        </div>
+        <div class="event-company-box ama">
+          <h4>🟠 尼崎本社</h4>
+          <div class="event-company-line"><span>売上</span><b>${yen(am.sales)}</b></div>
+          <div class="event-company-line"><span>経費＋労務費</span><b>${yen(am.costTotal)}</b></div>
+          <div class="event-company-line"><span>純利益</span><b>${yen(am.netProfit)}</b></div>
+        </div>
+      </div>
     </article>`;
   });
+
   eventsEl.innerHTML=html||'<div class="empty">この月のイベントはありません。</div>';
   eventCount.textContent=target.length+'件';
-  salesTotal.textContent=yen(allSales);costTotal.textContent=yen(allCost);profitTotal.textContent=yen(allSales-allCost);
-  fujiSales.textContent=yen(fuS);fujiCost.textContent=yen(fuC);fujiProfit.textContent=yen(fuS-fuC);
-  amaSales.textContent=yen(amS);amaCost.textContent=yen(amC);amaProfit.textContent=yen(amS-amC);
+  salesTotal.textContent=yen(allSales);
+  costTotal.textContent=yen(allCost);
+  profitTotal.textContent=yen(allSales-allCost);
+  fujiSales.textContent=yen(fuS);
+  fujiCost.textContent=yen(fuC);
+  fujiProfit.textContent=yen(fuS-fuC);
+  amaSales.textContent=yen(amS);
+  amaCost.textContent=yen(amC);
+  amaProfit.textContent=yen(amS-amC);
 }
 function collect(){
   const copy=JSON.parse(JSON.stringify(allocations||{}));
   document.querySelectorAll('.neta-row').forEach(row=>{
-    const eid=row.dataset.eid,item=row.dataset.item, ek=safeKey(eid), ik=safeKey(item);
-    if(!copy[ek])copy[ek]={eventId:eid};
-    if(!copy[ek].items)copy[ek].items={};
-    copy[ek].items[ik]={
-      itemName:item,
+    const eid=safeKey(row.dataset.eid),item=row.dataset.item, sk=safeKey(item);
+    if(!copy[eid])copy[eid]={};
+    if(!copy[eid].items)copy[eid].items={};
+    const old=copy[eid].items[sk]||copy[eid].items[item]||{};
+    copy[eid].items[sk]=Object.assign({},old,{
+      name:item,
       company:row.querySelector('.company-select').value,
       sales:num(row.querySelector('.sales-input').value),
-      cost:num(row.querySelector('.cost-input').value),
       updatedAt:new Date().toISOString()
-    };
+    });
   });
   return copy;
-}
-function showSaveToast(msg,ok=true){
-  const t=document.getElementById('saveToast');
-  if(!t)return;
-  t.textContent=msg;
-  t.style.background=ok?'#17324d':'#b33b3b';
-  t.classList.add('show');
-  clearTimeout(showSaveToast._tm);
-  showSaveToast._tm=setTimeout(()=>t.classList.remove('show'),2400);
 }
 async function saveAll(){
   const buttons=[...document.querySelectorAll('button[onclick="saveAll()"]')];
