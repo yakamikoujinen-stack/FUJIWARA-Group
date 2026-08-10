@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.29 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.30 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3634,8 +3634,8 @@ function refreshSimpleSafeTransferStatus(currentCash){
     var firstAt=String(transfer.transferredAt||'');
     var latestAt=String(transfer.lastSyncedAt||transfer.transferredAt||'');
     status.innerHTML='入金済み：¥'+Number(transfer.amount||0).toLocaleString('ja-JP')
-      +(firstAt?'<br>初回登録：'+escapeHtml(firstAt):'')
-      +(latestAt?'<br>最終更新：'+escapeHtml(latestAt):'');
+      +(firstAt?'<br>初回登録：'+escHtml(firstAt):'')
+      +(latestAt?'<br>最終更新：'+escHtml(latestAt):'');
   }else{
     btn.textContent='🔐 手元残 ¥'+Number(currentCash||0).toLocaleString('ja-JP')+' を金庫番へ入金';
     btn.disabled=Number(currentCash||0)<=0;
