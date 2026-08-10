@@ -42,6 +42,7 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 .bottom button{min-width:145px}
 @media(max-width:720px){.summary-grid{grid-template-columns:1fr 1fr}.company-summary{grid-template-columns:1fr}.neta-row{grid-template-columns:1fr 1fr}.neta-name{grid-column:1/-1}.hero-row{align-items:flex-start}.event-head{align-items:flex-start}.toolbar select{min-width:0;flex:1}}
 .access-denied{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#17324d,#285f8c);color:#fff;align-items:center;justify-content:center;padding:24px}.access-denied.show{display:flex}.access-card{width:min(430px,100%);background:#fff;color:#11213c;border-radius:22px;padding:24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.28)}.access-card h2{margin:0 0 10px;font-size:25px}.access-card p{line-height:1.7;color:#647188;font-weight:800}.access-card button{margin-top:12px;background:#17324d;color:#fff;border:0;border-radius:13px;padding:12px 18px;font-weight:950}
+.save-toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:9999;background:#17324d;color:#fff;padding:12px 18px;border-radius:999px;font-weight:900;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;white-space:nowrap}.save-toast.show{display:block}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -51,7 +52,7 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 <main class="wrap">
 <section class="hero">
   <div class="hero-row">
-    <div><h1>🧾 イベント早見精算</h1><div class="sub">出店ネタを1品ずつ分けて FUJIWARAグループ ／ 尼崎本社 を選択（N0〜N99等の内部売上コードは完全除外）</div></div>
+    <div><h1>🧾 イベント早見精算</h1><div class="sub">出店ネタを1品ずつ分けて FUJIWARAグループ ／ 尼崎本社 を選択（N0〜N99等の内部売上コードは完全除外・メイン売上自動反映）</div></div>
     <button class="btn back" onclick="location.href='king-money-center.html'">← お金・労務</button>
   </div>
 </section>
@@ -86,6 +87,7 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 <section id="events" class="events"></section>
 <div class="note">既存のメインアプリのイベントデータは書き換えません。まとめ登録されたネタは1品ずつ分解して表示します。精算先とネタ別の補助金額だけを <b>fujiwara/event_settlement_allocations</b> に保存します。既存イベントを壊さないための分離方式です。</div>
 </main>
+<div id="saveToast" class="save-toast"></div>
 <nav class="bottom">
   <button class="btn refresh" onclick="location.href='king.html'">👑 KINGへ</button>
   <button class="btn save" onclick="saveAll()">💾 保存</button>
@@ -175,12 +177,25 @@ function extractItems(ev){
 }
 function autoItemSales(ev,item){
   let total=0;
+  const target=String(item||'').trim();
   const days=ev&&ev.sales&&ev.sales.days&&typeof ev.sales.days==='object'?ev.sales.days:{};
   Object.values(days).forEach(day=>{
     const simple=(day||{}).simple||day||{};
-    [simple.items,simple.itemSales,simple.netaSales,simple.salesByItem].forEach(obj=>{
-      if(obj&&typeof obj==='object'&&Object.prototype.hasOwnProperty.call(obj,item)){
-        const v=obj[item];
+    const labels=simple.labels&&typeof simple.labels==='object'?simple.labels:{};
+    const items=simple.items&&typeof simple.items==='object'?simple.items:{};
+
+    // メインアプリの正式構造：labels[N0]=ネタ名 / items[N0]=売上
+    Object.keys(labels).forEach(key=>{
+      const labelParts=splitCompoundNeta(labels[key]);
+      if(labelParts.some(x=>String(x).trim()===target)){
+        total+=num(items[key]);
+      }
+    });
+
+    // 将来の名称キー形式にも対応
+    [simple.itemSales,simple.netaSales,simple.salesByItem].forEach(obj=>{
+      if(obj&&typeof obj==='object'&&Object.prototype.hasOwnProperty.call(obj,target)){
+        const v=obj[target];
         total+=typeof v==='object'?num(v.sales??v.amount??v.total??v.value):num(v);
       }
     });
@@ -220,7 +235,7 @@ function render(){
     const eid=eventId(ev,i), items=extractItems(ev).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
     let eSales=0,eCost=0;
     const rows=items.length?items.map(item=>{
-      const a=allocFor(eid,item), company=a.company||'', sales=a.sales!==undefined?num(a.sales):autoItemSales(ev,item), cost=num(a.cost);
+      const a=allocFor(eid,item), company=a.company||'', autoSales=autoItemSales(ev,item), sales=autoSales>0?autoSales:num(a.sales), cost=num(a.cost);
       eSales+=sales;eCost+=cost;
       if(company==='fujiwara'){fuS+=sales;fuC+=cost}
       if(company==='amagasaki'){amS+=sales;amC+=cost}
@@ -263,14 +278,47 @@ function collect(){
   });
   return copy;
 }
+function showSaveToast(msg,ok=true){
+  const t=document.getElementById('saveToast');
+  if(!t)return;
+  t.textContent=msg;
+  t.style.background=ok?'#17324d':'#b33b3b';
+  t.classList.add('show');
+  clearTimeout(showSaveToast._tm);
+  showSaveToast._tm=setTimeout(()=>t.classList.remove('show'),2400);
+}
 async function saveAll(){
+  const buttons=[...document.querySelectorAll('button[onclick="saveAll()"]')];
+  buttons.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent='保存中…';});
   status.textContent='保存中...';
+  showSaveToast('保存中…');
   try{
-    allocations=collect();
-    await db.ref(ALLOC_PATH).set(allocations);
+    const next=collect();
+    const updates={};
+    document.querySelectorAll('.neta-row').forEach(row=>{
+      const eid=row.dataset.eid,item=row.dataset.item,ek=safeKey(eid),ik=safeKey(item);
+      updates[ALLOC_PATH+'/'+ek+'/eventId']=eid;
+      updates[ALLOC_PATH+'/'+ek+'/items/'+ik]={
+        itemName:item,
+        company:row.querySelector('.company-select').value,
+        sales:num(row.querySelector('.sales-input').value),
+        cost:num(row.querySelector('.cost-input').value),
+        updatedAt:new Date().toISOString()
+      };
+    });
+    await db.ref().update(updates);
+    allocations=next;
     status.textContent='保存しました';
+    showSaveToast('✅ 保存しました');
     render();
-  }catch(e){status.textContent='保存失敗：'+(e.message||e)}
+  }catch(e){
+    console.error(e);
+    status.textContent='保存失敗：'+(e.message||e);
+    showSaveToast('⚠️ 保存できませんでした',false);
+    alert('保存できませんでした。\n'+(e.message||e));
+  }finally{
+    buttons.forEach(b=>{b.disabled=false;b.textContent=b.dataset.oldText||'💾 保存';});
+  }
 }
 function updateRowBadge(sel){
   const row=sel&&sel.closest?sel.closest('.neta-row'):null;
