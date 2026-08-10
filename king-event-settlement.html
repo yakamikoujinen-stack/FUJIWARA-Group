@@ -143,7 +143,7 @@ function splitCompoundNeta(value){
   if(value===null || value===undefined)return [];
   let s=String(value).trim();
   if(!s)return [];
-  s=s.replace(/^\s*\d+\s*[\.．、:：]\s*/,'').trim();
+  s=s.replace(/^\s*[0-9０-９]+\s*[\.．、:：]\s*/,'').trim();
   return s.split(/[、,，／\/・\n\r\t　 ]+/)
     .map(x=>String(x||'').trim())
     .filter(Boolean)
@@ -254,7 +254,7 @@ function render(){
 
   target.forEach(({ev,i})=>{
     const eid=eventId(ev,i);
-    const items=extractItems(ev).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
+    const items=uniq(extractItems(ev).flatMap(x=>splitCompoundNeta(x))).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
 
     let assignedFujiSales=0,assignedAmaSales=0,hasFuji=false,hasAma=false;
 
@@ -353,31 +353,37 @@ async function saveAll(){
   const buttons=[...document.querySelectorAll('button[onclick="saveAll()"]')];
   buttons.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent='保存中…';});
   status.textContent='保存中...';
-  showSaveToast('保存中…');
+  try{ showSaveToast('保存中…'); }catch(_e){}
   try{
     const next=collect();
     const updates={};
     document.querySelectorAll('.neta-row').forEach(row=>{
-      const eid=row.dataset.eid,item=row.dataset.item,ek=safeKey(eid),ik=safeKey(item);
+      const eid=String(row.dataset.eid||''), item=String(row.dataset.item||'');
+      const ek=safeKey(eid), ik=safeKey(item);
+      const old=((allocations[ek]||allocations[eid]||{}).items||{})[ik]||{};
       updates[ALLOC_PATH+'/'+ek+'/eventId']=eid;
-      updates[ALLOC_PATH+'/'+ek+'/items/'+ik]={
+      updates[ALLOC_PATH+'/'+ek+'/items/'+ik]=Object.assign({},old,{
+        name:item,
         itemName:item,
         company:row.querySelector('.company-select').value,
         sales:num(row.querySelector('.sales-input').value),
-        cost:num(row.querySelector('.cost-input').value),
         updatedAt:new Date().toISOString()
-      };
+      });
     });
-    await db.ref().update(updates);
+    // 通信停止時に「保存中」のまま固まらないよう8秒で終了表示
+    await Promise.race([
+      db.ref().update(updates),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('通信がタイムアウトしました')),8000))
+    ]);
     allocations=next;
-    status.textContent='保存しました';
-    showSaveToast('✅ 保存しました');
+    status.textContent='✅ 保存しました';
+    try{ showSaveToast('✅ 保存しました'); }catch(_e){}
     render();
   }catch(e){
-    console.error(e);
-    status.textContent='保存失敗：'+(e.message||e);
-    showSaveToast('⚠️ 保存できませんでした',false);
-    alert('保存できませんでした。\n'+(e.message||e));
+    console.error('早見精算保存エラー',e);
+    status.textContent='⚠️ 保存失敗：'+(e.message||e);
+    try{ showSaveToast('⚠️ 保存できませんでした',false); }catch(_e){}
+    alert('保存できませんでした。\\n'+(e.message||e));
   }finally{
     buttons.forEach(b=>{b.disabled=false;b.textContent=b.dataset.oldText||'💾 保存';});
   }

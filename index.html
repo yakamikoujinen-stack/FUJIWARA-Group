@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.28 精算区分・編集安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.29 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3851,7 +3851,7 @@ function renderSalesDetail() {
     +'</tbody></table></div>'
     +'<div style="font-size:11px;color:var(--text2);margin-top:8px">入力者：'+(simple.updatedBy||'未入力')+'　'+(simple.updatedAt||'')+'</div>'
     +'</div>'
-    +(canEditSalesRecord(ev)?'<button class="btn btn-outline btn-sm" onclick="openSalesEdit(\''+ev.id+'\')">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">🔒 記入者本人とリーダーだけ編集できます</div>');
+    +(canEditSalesRecord(ev)?'<button type="button" class="btn btn-outline btn-sm sales-edit-direct-btn" data-event-id="'+escAttr(ev.id)+'">✏️ 編集</button>':'<div class="notice-card" style="margin-top:10px">🔒 記入者本人とリーダーだけ編集できます</div>');
   renderMonthlySalesSummary();
 }
 
@@ -5002,18 +5002,24 @@ finishLogin=function(name,r,detail){
 var _entryOriginalLogout=doLogout;
 doLogout=function(){_entryOriginalLogout();setTimeout(updateEntryAdminBadge,50);};
 
-// v4.3.28 売上編集ボタンのクリック保険
-document.addEventListener('click',function(e){
-  var btn=e.target&&e.target.closest?e.target.closest('button'):null;
-  if(!btn)return;
-  var oc=btn.getAttribute('onclick')||'';
-  var m=oc.match(/openSalesEdit\('([^']+)'/);
-  if(m){
-    e.preventDefault();
-    e.stopPropagation();
-    openSalesEdit(m[1]);
+
+// v4.3.29 売上編集ボタン専用ハンドラ
+function forceOpenSalesEditById(id){
+  try{
+    if(!id){ toast('⚠️ イベントを特定できません'); return; }
+    _openSalesEditCore(String(id));
+  }catch(err){
+    console.error('売上編集起動エラー',err);
+    toast('⚠️ 編集画面を開けません：'+(err&&err.message?err.message:'不明なエラー'));
   }
-},true);
+}
+document.addEventListener('click',function(e){
+  var btn=e.target&&e.target.closest?e.target.closest('.sales-edit-direct-btn'):null;
+  if(!btn)return;
+  e.preventDefault();
+  e.stopPropagation();
+  forceOpenSalesEditById(btn.getAttribute('data-event-id'));
+},false);
 </script>
 </body>
 </html>
