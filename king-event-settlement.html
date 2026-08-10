@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>KING｜イベント早見精算 v1.1</title>
+<title>KING｜イベント早見精算 v1.2</title>
 <style>
 :root{--navy:#17324d;--gold:#d6a21c;--blue:#1774d1;--orange:#db741d;--green:#1e8c5b;--red:#b33b3b;--text:#11213c;--sub:#647188;--line:#e4eaf1;--bg:#f4f8fc}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -51,7 +51,7 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 <main class="wrap">
 <section class="hero">
   <div class="hero-row">
-    <div><h1>🧾 イベント早見精算</h1><div class="sub">出店ネタ単位で FUJIWARAグループ ／ 尼崎本社 を分けて集計</div></div>
+    <div><h1>🧾 イベント早見精算</h1><div class="sub">出店ネタを1品ずつ分けて FUJIWARAグループ ／ 尼崎本社 を選択（N0〜N99等の内部売上コードは完全除外）</div></div>
     <button class="btn back" onclick="location.href='king-money-center.html'">← お金・労務</button>
   </div>
 </section>
@@ -84,7 +84,7 @@ button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:11px 1
 </section>
 
 <section id="events" class="events"></section>
-<div class="note">既存のメインアプリのイベントデータは書き換えません。精算先とネタ別の補助金額だけを <b>fujiwara/event_settlement_allocations</b> に保存します。既存イベントを壊さないための分離方式です。</div>
+<div class="note">既存のメインアプリのイベントデータは書き換えません。まとめ登録されたネタは1品ずつ分解して表示します。精算先とネタ別の補助金額だけを <b>fujiwara/event_settlement_allocations</b> に保存します。既存イベントを壊さないための分離方式です。</div>
 </main>
 <nav class="bottom">
   <button class="btn refresh" onclick="location.href='king.html'">👑 KINGへ</button>
@@ -120,23 +120,58 @@ function eventName(ev,i){return ev.name||ev.eventName||ev.title||('イベント 
 function eventDate(ev){return String(ev.date||ev.startDate||ev.eventDate||'').slice(0,10)}
 function eventPlace(ev){return ev.place||ev.location||''}
 function uniq(a){return [...new Set(a.map(x=>String(x||'').trim()).filter(Boolean))]}
+function isRealNetaName(name){
+  const s=String(name||'').trim();
+  if(!s)return false;
+  if(/^N(?:O|[0-9]+)$/i.test(s))return false;
+  if(/^[0-9]+$/.test(s))return false;
+  if(/^[\-_－ー\s]+$/.test(s))return false;
+  if(/^(売上|経費|合計|総計|利益|粗利|その他|未設定)$/i.test(s))return false;
+  return true;
+}
+function splitCompoundNeta(value){
+  if(value===null || value===undefined)return [];
+  let s=String(value).trim();
+  if(!s)return [];
+  s=s.replace(/^\s*\d+\s*[\.．、:：]\s*/,'').trim();
+  return s.split(/[、,，／\/・\n\r\t　 ]+/)
+    .map(x=>String(x||'').trim())
+    .filter(Boolean)
+    .filter(isRealNetaName);
+}
+function pushNetaCandidate(target,value){
+  if(value===null || value===undefined)return;
+  if(Array.isArray(value)){ value.forEach(v=>pushNetaCandidate(target,v)); return; }
+  if(typeof value==='object'){
+    const v=value.name||value.item||value.title||value.neta||value.label||'';
+    if(v)pushNetaCandidate(target,v);
+    return;
+  }
+  splitCompoundNeta(value).forEach(x=>target.push(x));
+}
 function extractItems(ev){
-  let list=[];
-  if(Array.isArray(ev.items)) list.push(...ev.items.map(x=>typeof x==='string'?x:(x.name||x.item||x.title||'')));
-  if(Array.isArray(ev.neta)) list.push(...ev.neta.map(x=>typeof x==='string'?x:(x.name||x.item||'')));
-  if(Array.isArray(ev.menu)) list.push(...ev.menu.map(x=>typeof x==='string'?x:(x.name||x.item||'')));
-  ['itemsText','netaText','menuText','foods','products'].forEach(k=>{
-    const v=ev[k];
-    if(typeof v==='string') list.push(...v.split(/[、,，／\/\n・]+/));
-  });
+  let primary=[],fallback=[];
+  pushNetaCandidate(primary,ev.items);
+  pushNetaCandidate(primary,ev.neta);
+  pushNetaCandidate(primary,ev.menu);
+  pushNetaCandidate(primary,ev.itemsText);
+  pushNetaCandidate(primary,ev.itemsName);
+  pushNetaCandidate(primary,ev.netaText);
+  pushNetaCandidate(primary,ev.menuText);
+  pushNetaCandidate(primary,ev.foods);
+  pushNetaCandidate(primary,ev.products);
+
   const days=ev&&ev.sales&&ev.sales.days&&typeof ev.sales.days==='object'?ev.sales.days:{};
   Object.values(days).forEach(day=>{
     const simple=(day||{}).simple||day||{};
-    if(simple.items&&typeof simple.items==='object') list.push(...Object.keys(simple.items));
-    if(simple.itemSales&&typeof simple.itemSales==='object') list.push(...Object.keys(simple.itemSales));
-    if(simple.netaSales&&typeof simple.netaSales==='object') list.push(...Object.keys(simple.netaSales));
+    [simple.items,simple.itemSales,simple.netaSales,simple.salesByItem].forEach(obj=>{
+      if(obj&&typeof obj==='object')Object.keys(obj).forEach(k=>pushNetaCandidate(fallback,k));
+    });
   });
-  return uniq(list);
+
+  const cleanPrimary=uniq(primary).filter(isRealNetaName);
+  if(cleanPrimary.length)return cleanPrimary;
+  return uniq(fallback).filter(isRealNetaName);
 }
 function autoItemSales(ev,item){
   let total=0;
@@ -182,7 +217,7 @@ function render(){
   const target=events.map((ev,i)=>({ev,i})).filter(x=>eventDate(x.ev).slice(0,7)===month).sort((a,b)=>eventDate(a.ev).localeCompare(eventDate(b.ev)));
   let html='', allSales=0,allCost=0,fuS=0,fuC=0,amS=0,amC=0;
   target.forEach(({ev,i})=>{
-    const eid=eventId(ev,i), items=extractItems(ev);
+    const eid=eventId(ev,i), items=extractItems(ev).filter(isRealNetaName).filter(x=>!/^N(?:O|[0-9]+)$/i.test(String(x||'').trim()));
     let eSales=0,eCost=0;
     const rows=items.length?items.map(item=>{
       const a=allocFor(eid,item), company=a.company||'', sales=a.sales!==undefined?num(a.sales):autoItemSales(ev,item), cost=num(a.cost);
@@ -191,7 +226,7 @@ function render(){
       if(company==='amagasaki'){amS+=sales;amC+=cost}
       return `<div class="neta-row" data-eid="${esc(eid)}" data-item="${esc(item)}">
         <div class="neta-name">${esc(item)}<div style="margin-top:4px">${companyLabel(company)}</div></div>
-        <select class="company-select" onchange="render()">
+        <select class="company-select" onchange="updateRowBadge(this);softCalc()">
           <option value="" ${!company?'selected':''}>精算先を選択</option>
           <option value="fujiwara" ${company==='fujiwara'?'selected':''}>FUJIWARAグループ</option>
           <option value="amagasaki" ${company==='amagasaki'?'selected':''}>尼崎本社</option>
@@ -236,6 +271,20 @@ async function saveAll(){
     status.textContent='保存しました';
     render();
   }catch(e){status.textContent='保存失敗：'+(e.message||e)}
+}
+function updateRowBadge(sel){
+  const row=sel&&sel.closest?sel.closest('.neta-row'):null;
+  if(!row)return;
+  const name=row.querySelector('.neta-name');
+  if(!name)return;
+  let badge=name.querySelector('.badge');
+  let holder=badge?badge.parentElement:null;
+  if(!holder){
+    holder=document.createElement('div');
+    holder.style.marginTop='4px';
+    name.appendChild(holder);
+  }
+  holder.innerHTML=companyLabel(sel.value||'');
 }
 function softCalc(){
   // 入力中はDOMを再構築せず、保存時に確定
