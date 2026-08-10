@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.30 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.31 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -735,7 +735,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.23</p>
+        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.31</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 売上入力・編集は 藤原明裕／まゆみ／文太／将／縁笑だるまや の5名だけ｜仕入・経費はキング/事務員アプリで管理</div>
@@ -1259,6 +1259,43 @@ function getDayAccountingSplit(simple){
   s.expenses=s.expenses||{};
   return s;
 }
+
+function getCompanyExpenseAmounts(simple){
+  simple=simple||{};
+  var split=getDayAccountingSplit(simple);
+  var blank={basho:0,shiire:0,kotsu:0,other:0};
+  var out={
+    fujiwara:Object.assign({},blank),
+    amagasaki:Object.assign({},blank)
+  };
+
+  // v4.3.31以降：会社別経費を直接保存
+  if(split.companyExpenses){
+    ['fujiwara','amagasaki'].forEach(function(c){
+      var src=split.companyExpenses[c]||{};
+      ['basho','shiire','kotsu','other'].forEach(function(k){
+        out[c][k]=parseInt(src[k])||0;
+      });
+    });
+    return out;
+  }
+
+  // 旧版との互換：従来の経費＋精算先選択から会社別へ復元
+  var ex=simple.expenses||{};
+  var oldSplit=split.expenses||{};
+  ['basho','shiire','kotsu','other'].forEach(function(k){
+    var amount=parseInt(ex[k])||0;
+    var company=oldSplit[k]||'';
+    if(company==='amagasaki') out.amagasaki[k]=amount;
+    else if(company==='fujiwara') out.fujiwara[k]=amount;
+    else if(amount){
+      // 未選択だった旧データは消さないためFUJIWARA側に仮置き。
+      // 開いた後に必要なら尼崎本社へ移せる。
+      out.fujiwara[k]=amount;
+    }
+  });
+  return out;
+}
 function getExistingItemCompany(ev,name){
   var rec=getSettlementItemRecord(ev,name);
   return (rec&&rec.company)||'';
@@ -1293,10 +1330,12 @@ async function syncEventAccountingAllocation(ev){
       itemsOut[sk].sales+=amount;
       if(company) itemsOut[sk].company=company;
     });
-    var ex=simple.expenses||{}, es=split.expenses||{};
-    [['basho','場所代'],['shiire','仕入れ'],['kotsu','交通費'],['other','その他経費']].forEach(function(pair){
-      var key=pair[0], amount=parseInt(ex[key])||0, company=es[key]||'', b=bucket(company);
-      totals[b].expense+=amount;
+    var companyEx=getCompanyExpenseAmounts(simple);
+    ['fujiwara','amagasaki'].forEach(function(company){
+      var ex=companyEx[company]||{};
+      ['basho','shiire','kotsu','other'].forEach(function(key){
+        totals[company].expense+=parseInt(ex[key])||0;
+      });
     });
     var st=(simple.settlement&&Array.isArray(simple.settlement.staffPayments))?simple.settlement.staffPayments:[];
     st.forEach(function(p){
@@ -3526,47 +3565,36 @@ function renderMonthlySalesSummary(){
 
 function updateCompanyAccountingSummary(){
   function n(id){var el=document.getElementById(id); return el?(parseInt(el.value)||0):0;}
-  function c(id){var el=document.getElementById(id); return el?(el.value||''):'';}
-
-  var ex={
-    basho:n('simple-exp-basho'),
-    shiire:n('simple-exp-shiire'),
-    kotsu:n('simple-exp-kotsu'),
-    other:n('simple-exp-other')
-  };
-  var co={
-    basho:c('split-exp-basho'),
-    shiire:c('split-exp-shiire'),
-    kotsu:c('split-exp-kotsu'),
-    other:c('split-exp-other')
-  };
-
-  var fExp=0,aExp=0,fLabor=0,aLabor=0;
-  Object.keys(ex).forEach(function(k){
-    if(co[k]==='fujiwara') fExp+=ex[k];
-    else if(co[k]==='amagasaki') aExp+=ex[k];
-  });
-
+  var fExp=n('fuji-exp-basho')+n('fuji-exp-shiire')+n('fuji-exp-kotsu')+n('fuji-exp-other');
+  var aExp=n('ama-exp-basho')+n('ama-exp-shiire')+n('ama-exp-kotsu')+n('ama-exp-other');
+  var fLabor=0,aLabor=0;
   document.querySelectorAll('#simple-staff-payments .staff-payment-row').forEach(function(r){
     var amount=parseInt((r.querySelector('.sp-amount')||{}).value)||0;
     var company=(r.querySelector('.sp-company')||{}).value||'';
     if(company==='fujiwara') fLabor+=amount;
     else if(company==='amagasaki') aLabor+=amount;
   });
-
-  function put(id,v){var el=document.getElementById(id); if(el) el.textContent='¥'+v.toLocaleString();}
-  put('split-fuji-expense',fExp); put('split-fuji-labor',fLabor); put('split-fuji-total',fExp+fLabor);
-  put('split-ama-expense',aExp); put('split-ama-labor',aLabor); put('split-ama-total',aExp+aLabor);
+  function put(id,v){
+    var el=document.getElementById(id);
+    if(el)el.textContent='¥'+v.toLocaleString('ja-JP');
+  }
+  put('fuji-expense-subtotal',fExp);
+  put('fuji-labor-subtotal',fLabor);
+  put('fuji-cost-total',fExp+fLabor);
+  put('ama-expense-subtotal',aExp);
+  put('ama-labor-subtotal',aLabor);
+  put('ama-cost-total',aExp+aLabor);
 }
 function updateSimpleSalesEditTotals(){
   var items={};
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){ items[inp.dataset.key]=parseInt(String(inp.value||'').replace(/[^0-9]/g,''))||0; });
+  function expNum(id){var el=document.getElementById(id);return el?(parseInt(el.value)||0):0;}
   var tmp={items:items, expenses:{
-    basho:(document.getElementById('simple-exp-basho')||{}).value||0,
-    shiire:(document.getElementById('simple-exp-shiire')||{}).value||0,
-    kotsu:(document.getElementById('simple-exp-kotsu')||{}).value||0,
-    other:(document.getElementById('simple-exp-other')||{}).value||0,
-    labor:{total:(document.getElementById('simple-exp-labor')||{}).value||0}
+    basho:expNum('fuji-exp-basho')+expNum('ama-exp-basho'),
+    shiire:expNum('fuji-exp-shiire')+expNum('ama-exp-shiire'),
+    kotsu:expNum('fuji-exp-kotsu')+expNum('ama-exp-kotsu'),
+    other:expNum('fuji-exp-other')+expNum('ama-exp-other'),
+    labor:{total:collectStaffPayments().reduce(function(s,p){return s+(parseInt(p.amount)||0);},0)}
   }, money:{
     deposit:(document.getElementById('simple-money-deposit')||{}).value||0,
     unpaid:(document.getElementById('simple-money-unpaid')||{}).value||0
@@ -4034,22 +4062,31 @@ function _openSalesEditCore(id, selectedDate) {
     +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); var split=getDayAccountingSplit(simple); var company=(split.items&&split.items[key])||getExistingItemCompany(ev,name)||''; return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'">'+accountingCompanySelect(company,'simple-sales-company','data-key="'+key+'"')+'</div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
     +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:#1769c2;margin-bottom:8px">現金売上・売掛売上</div><div class="fg2"><div class="fg"><label>現金売上（円）</label><input type="number" id="simple-cash-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.cashSales)||'')+'"></div><div class="fg"><label>売掛売上（円）</label><input type="number" id="simple-receivable-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.receivableSales)||'')+'"></div></div></div>'
     +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:var(--gold)">この日のスタッフ支払</div><button type="button" class="btn btn-outline btn-sm" onclick="addStaffPaymentRow({})">＋スタッフ追加</button></div><div id="staff-payment-list">'+((simple.settlement&&simple.settlement.staffPayments)||[]).map(function(x,i){return settlementRowHtml(x,i);}).join('')+'</div><div class="profit-row"><span>スタッフ支払合計</span><b id="simple-auto-staffpay">¥0</b></div></div>'
-    +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:8px">この日の経費・お金</div><div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="simple-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+((simple.expenses&&simple.expenses.basho)||'')+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="simple-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+((simple.expenses&&simple.expenses.shiire)||'')+'"></div></div><div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="simple-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+((simple.expenses&&simple.expenses.kotsu)||'')+'"></div><div class="fg"><label>その他経費</label><input type="number" id="simple-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+((simple.expenses&&simple.expenses.other)||'')+'"></div></div><div class="fg"><label>労務費 合計</label><input type="number" id="simple-exp-labor" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||'')+'" readonly><div style="font-size:10px;color:var(--text2);margin-top:4px">※スタッフ支払から自動集計</div></div>'
-    +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:10px;margin:10px 0"><div style="font-size:12px;font-weight:900;color:#1769c2;margin-bottom:8px">経費の精算先</div>'
-    +'<div class="fg2"><div class="fg"><label>場所代</label><select id="split-exp-basho" onchange="updateCompanyAccountingSummary()">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).basho||'')+'</select></div><div class="fg"><label>仕入れ</label><select id="split-exp-shiire" onchange="updateCompanyAccountingSummary()">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).shiire||'')+'</select></div></div>'
-    +'<div class="fg2"><div class="fg"><label>交通費</label><select id="split-exp-kotsu" onchange="updateCompanyAccountingSummary()">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).kotsu||'')+'</select></div><div class="fg"><label>その他経費</label><select id="split-exp-other" onchange="updateCompanyAccountingSummary()">'+settlementCompanyOptions((getDayAccountingSplit(simple).expenses||{}).other||'')+'</select></div></div>'
-    +'</div>'
-    +'<div class="accounting-company-grid" id="accounting-company-grid">'
-      +'<div class="accounting-company-box fuji"><div class="accounting-company-title">🟡 FUJIWARAグループ｜この日の経費・労務費</div>'
-        +'<div class="accounting-company-line"><span>経費</span><b id="split-fuji-expense">¥0</b></div>'
-        +'<div class="accounting-company-line"><span>労務費</span><b id="split-fuji-labor">¥0</b></div>'
-        +'<div class="accounting-company-line"><span>合計</span><b id="split-fuji-total">¥0</b></div>'
-      +'</div>'
-      +'<div class="accounting-company-box ama"><div class="accounting-company-title">🟠 尼崎本社｜この日の経費・労務費</div>'
-        +'<div class="accounting-company-line"><span>経費</span><b id="split-ama-expense">¥0</b></div>'
-        +'<div class="accounting-company-line"><span>労務費</span><b id="split-ama-labor">¥0</b></div>'
-        +'<div class="accounting-company-line"><span>合計</span><b id="split-ama-total">¥0</b></div>'
-      +'</div>'
+    +(function(){
+      var ce=getCompanyExpenseAmounts(simple);
+      var f=ce.fujiwara||{}, a=ce.amagasaki||{};
+      function val(v){return (parseInt(v)||0)||'';}
+      return '<div style="font-size:13px;font-weight:900;color:var(--gold);margin:12px 0 6px">この日の経費・お金</div>'
+        +'<div class="accounting-company-grid">'
+          +'<div class="accounting-company-box fuji">'
+            +'<div class="accounting-company-title">🟡 FUJIWARAグループ｜経費</div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="fuji-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="fuji-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="fuji-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.other)+'"></div></div>'
+            +'<div class="accounting-company-line"><span>経費</span><b id="fuji-expense-subtotal">¥0</b></div>'
+            +'<div class="accounting-company-line"><span>労務費</span><b id="fuji-labor-subtotal">¥0</b></div>'
+            +'<div class="accounting-company-line"><span>経費＋労務費</span><b id="fuji-cost-total">¥0</b></div>'
+          +'</div>'
+          +'<div class="accounting-company-box ama">'
+            +'<div class="accounting-company-title">🟠 尼崎本社｜経費</div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="ama-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="ama-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="ama-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.other)+'"></div></div>'
+            +'<div class="accounting-company-line"><span>経費</span><b id="ama-expense-subtotal">¥0</b></div>'
+            +'<div class="accounting-company-line"><span>労務費</span><b id="ama-labor-subtotal">¥0</b></div>'
+            +'<div class="accounting-company-line"><span>経費＋労務費</span><b id="ama-cost-total">¥0</b></div>'
+          +'</div>'
+        +'</div>'
+        +'<input type="hidden" id="simple-exp-labor" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||0)+'">';
+    })()
     +'</div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><button type="button" id="simple-safe-transfer-btn" class="btn btn-green btn-full" style="margin:2px 0 8px;font-size:14px" onclick="transferSimpleCashToSafe()">🔐 手元残を金庫番へ入金</button><div id="simple-safe-transfer-status" style="font-size:11px;color:var(--text2);font-weight:900;margin:0 0 12px"></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
     +'<input type="hidden" id="simple-customer" value=""><input type="hidden" id="simple-closing-day" value="月末締め"><input type="hidden" id="simple-cut-rate" value="0"><input type="hidden" id="simple-payment-date"><input type="hidden" id="simple-actual-amount" value="0"><input type="hidden" id="simple-received-date"><input type="checkbox" id="simple-received" style="display:none">'
     +'<div class="fg"><label>この日のメモ</label><textarea id="simple-sales-memo">'+escHtml(simple.memo||'')+'</textarea></div></div>';
@@ -4067,15 +4104,23 @@ async function saveSalesEdit() {
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
   var previous=getDaySimpleSales(ev,ds);
-  var accountingSplit={items:{},expenses:{}};
+  var accountingSplit={items:{},expenses:{},companyExpenses:{fujiwara:{},amagasaki:{}}};
   document.querySelectorAll('.simple-sales-company').forEach(function(sel){accountingSplit.items[sel.dataset.key]=sel.value||'';});
-  accountingSplit.expenses.basho=(document.getElementById('split-exp-basho')||{}).value||'';
-  accountingSplit.expenses.shiire=(document.getElementById('split-exp-shiire')||{}).value||'';
-  accountingSplit.expenses.kotsu=(document.getElementById('split-exp-kotsu')||{}).value||'';
-  accountingSplit.expenses.other=(document.getElementById('split-exp-other')||{}).value||'';
+  function evn(id){var el=document.getElementById(id);return el?(parseInt(el.value)||0):0;}
+  accountingSplit.companyExpenses.fujiwara={
+    basho:evn('fuji-exp-basho'),shiire:evn('fuji-exp-shiire'),kotsu:evn('fuji-exp-kotsu'),other:evn('fuji-exp-other')
+  };
+  accountingSplit.companyExpenses.amagasaki={
+    basho:evn('ama-exp-basho'),shiire:evn('ama-exp-shiire'),kotsu:evn('ama-exp-kotsu'),other:evn('ama-exp-other')
+  };
   var payments=collectStaffPayments();
   var laborTotal=payments.reduce(function(sum,p){return sum+(parseInt(p.amount)||0);},0);
-  var simple={date:ds,labels:labels,items:items,expenses:{basho:parseInt((document.getElementById('simple-exp-basho')||{}).value)||0,shiire:parseInt((document.getElementById('simple-exp-shiire')||{}).value)||0,kotsu:parseInt((document.getElementById('simple-exp-kotsu')||{}).value)||0,other:parseInt((document.getElementById('simple-exp-other')||{}).value)||0,labor:{total:laborTotal}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:payments},accountingSplit:accountingSplit,memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
+  var simple={date:ds,labels:labels,items:items,expenses:{
+    basho:accountingSplit.companyExpenses.fujiwara.basho+accountingSplit.companyExpenses.amagasaki.basho,
+    shiire:accountingSplit.companyExpenses.fujiwara.shiire+accountingSplit.companyExpenses.amagasaki.shiire,
+    kotsu:accountingSplit.companyExpenses.fujiwara.kotsu+accountingSplit.companyExpenses.amagasaki.kotsu,
+    other:accountingSplit.companyExpenses.fujiwara.other+accountingSplit.companyExpenses.amagasaki.other,
+    labor:{total:laborTotal}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:payments},accountingSplit:accountingSplit,memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
   ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple};
   aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
 
