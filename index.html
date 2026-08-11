@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.31 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.32 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -735,7 +735,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.31</p>
+        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.32</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 売上入力・編集は 藤原明裕／まゆみ／文太／将／縁笑だるまや の5名だけ｜仕入・経費はキング/事務員アプリで管理</div>
@@ -1269,7 +1269,7 @@ function getCompanyExpenseAmounts(simple){
     amagasaki:Object.assign({},blank)
   };
 
-  // v4.3.31以降：会社別経費を直接保存
+  // v4.3.32以降：会社別経費を直接保存
   if(split.companyExpenses){
     ['fujiwara','amagasaki'].forEach(function(c){
       var src=split.companyExpenses[c]||{};
@@ -3568,7 +3568,7 @@ function updateCompanyAccountingSummary(){
   var fExp=n('fuji-exp-basho')+n('fuji-exp-shiire')+n('fuji-exp-kotsu')+n('fuji-exp-other');
   var aExp=n('ama-exp-basho')+n('ama-exp-shiire')+n('ama-exp-kotsu')+n('ama-exp-other');
   var fLabor=0,aLabor=0;
-  document.querySelectorAll('#simple-staff-payments .staff-payment-row').forEach(function(r){
+  document.querySelectorAll('#staff-payment-list .staff-payment-row').forEach(function(r){
     var amount=parseInt((r.querySelector('.sp-amount')||{}).value)||0;
     var company=(r.querySelector('.sp-company')||{}).value||'';
     if(company==='fujiwara') fLabor+=amount;
