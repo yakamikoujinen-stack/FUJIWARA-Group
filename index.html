@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.35 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.36 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -735,7 +735,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.35</p>
+        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.36</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 売上入力・編集は 藤原明裕／まゆみ／文太／将／縁笑だるまや の5名だけ｜仕入・経費はキング/事務員アプリで管理</div>
@@ -1269,7 +1269,7 @@ function getCompanyExpenseAmounts(simple){
     amagasaki:Object.assign({},blank)
   };
 
-  // v4.3.35以降：会社別経費を直接保存
+  // v4.3.36以降：会社別経費を直接保存
   if(split.companyExpenses){
     ['fujiwara','amagasaki'].forEach(function(c){
       var src=split.companyExpenses[c]||{};
@@ -3529,7 +3529,7 @@ function settlementRowHtml(row,idx){
   row=row||{};
   return '<div class="staff-payment-row" data-index="'+idx+'" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:#fffdfa">'
     +'<div class="fg2"><div class="fg"><label>スタッフ名</label><input type="text" class="sp-name" value="'+String(row.name||'').replace(/"/g,'&quot;')+'" placeholder="例：文太"></div><div class="fg"><label>支払方法</label><select class="sp-type"><option value="日当" '+(row.type==='日当'?'selected':'')+'>日当</option><option value="時給" '+(row.type==='時給'?'selected':'')+'>時給</option><option value="売上歩合" '+(row.type==='売上歩合'?'selected':'')+'>売上歩合</option><option value="固定額" '+(row.type==='固定額'?'selected':'')+'>固定額</option></select></div></div>'
-    +'<div class="fg2"><div class="fg"><label>支払金額（円）</label><input type="number" class="sp-amount" min="0" value="'+(row.amount||'')+'" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()"></div><div class="fg"><label>精算先</label><select class="sp-company" onchange="updateCompanyAccountingSummary()" style="font-weight:900">'+settlementCompanyOptions(row.company||'')+'</select></div></div>'
+    +'<div class="fg2"><div class="fg"><label>支払金額（円）</label><input type="number" class="sp-amount" min="0" value="'+(row.amount||'')+'" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()"></div><div class="fg"><label>精算先</label><select class="sp-company" onchange="updateCompanyAccountingSummary()" style="font-weight:900">'+settlementCompanyOptions(normalizeStaffPaymentCompany(row))+'</select></div></div>'
     +'<div class="fg"><label>支払予定日</label><input type="date" class="sp-due" value="'+(row.dueDate||'')+'"></div>'
     +'<div style="display:flex;gap:8px;align-items:center"><label style="margin:0"><input type="checkbox" class="sp-paid" style="width:auto" '+(row.paid?'checked':'')+'> 支払済み</label><input type="date" class="sp-paid-date" value="'+(row.paidDate||'')+'" style="max-width:170px"><button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.staff-payment-row\').remove();updateSimpleSalesEditTotals()">削除</button></div>'
     +'</div>';
@@ -3539,10 +3539,23 @@ function addStaffPaymentRow(row){
   var idx=box.querySelectorAll('.staff-payment-row').length;
   box.insertAdjacentHTML('beforeend',settlementRowHtml(row||{},idx));
 }
+
+function normalizeStaffPaymentCompany(p){
+  p=p||{};
+  return p.company||p.settlementCompany||p.paymentCompany||'';
+}
 function collectStaffPayments(){
   var arr=[];
   document.querySelectorAll('.staff-payment-row').forEach(function(r){
-    arr.push({name:(r.querySelector('.sp-name')||{}).value||'',type:(r.querySelector('.sp-type')||{}).value||'日当',amount:parseInt((r.querySelector('.sp-amount')||{}).value)||0,company:(r.querySelector('.sp-company')||{}).value||'',dueDate:(r.querySelector('.sp-due')||{}).value||'',paid:!!((r.querySelector('.sp-paid')||{}).checked),paidDate:(r.querySelector('.sp-paid-date')||{}).value||''});
+    arr.push({
+      name:(r.querySelector('.sp-name')||{}).value||'',
+      type:(r.querySelector('.sp-type')||{}).value||'日当',
+      amount:parseInt((r.querySelector('.sp-amount')||{}).value)||0,
+      company:(r.querySelector('.sp-company')||{}).value||'',
+      dueDate:(r.querySelector('.sp-due')||{}).value||'',
+      paid:!!((r.querySelector('.sp-paid')||{}).checked),
+      paidDate:(r.querySelector('.sp-paid-date')||{}).value||''
+    });
   });
   return arr;
 }
@@ -4145,7 +4158,17 @@ async function saveSalesEdit() {
   accountingSplit.companyExpenses.amagasaki={
     basho:evn('ama-exp-basho'),shiire:evn('ama-exp-shiire'),kotsu:evn('ama-exp-kotsu'),other:evn('ama-exp-other')
   };
-  var payments=collectStaffPayments();
+  var payments=collectStaffPayments().map(function(p){
+    return {
+      name:p.name||'',
+      type:p.type||'日当',
+      amount:parseInt(p.amount)||0,
+      company:p.company||'',
+      dueDate:p.dueDate||'',
+      paid:!!p.paid,
+      paidDate:p.paidDate||''
+    };
+  });
   var laborTotal=payments.reduce(function(sum,p){return sum+(parseInt(p.amount)||0);},0);
   var simple={date:ds,labels:labels,items:items,expenses:{
     basho:accountingSplit.companyExpenses.fujiwara.basho+accountingSplit.companyExpenses.amagasaki.basho,
@@ -4162,6 +4185,9 @@ async function saveSalesEdit() {
       var summary=calcSimpleMoneySummary(simple);
       safeSyncResult=await syncTransferredSimpleCashToSafe(ev,ds,simple,summary);
       ev.sales.days[ds]={simple:simple};
+  // v4.3.36: スタッフ精算先をローカル側にも保持し、再表示で消えないようにする
+  ev.sales.days[ds].simple.settlement=ev.sales.days[ds].simple.settlement||{};
+  ev.sales.days[ds].simple.settlement.staffPayments=payments.map(function(p){return Object.assign({},p);});
       aggregateDailySimpleSales(ev);
       addAudit('金庫番入金額を自動更新',ev.name+'｜'+ds+'｜¥'+Number(summary.cash||0).toLocaleString('ja-JP'));
     }catch(error){
