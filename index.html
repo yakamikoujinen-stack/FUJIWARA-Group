@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.33 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.34 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -735,7 +735,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.33</p>
+        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.34</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 売上入力・編集は 藤原明裕／まゆみ／文太／将／縁笑だるまや の5名だけ｜仕入・経費はキング/事務員アプリで管理</div>
@@ -1269,7 +1269,7 @@ function getCompanyExpenseAmounts(simple){
     amagasaki:Object.assign({},blank)
   };
 
-  // v4.3.33以降：会社別経費を直接保存
+  // v4.3.34以降：会社別経費を直接保存
   if(split.companyExpenses){
     ['fujiwara','amagasaki'].forEach(function(c){
       var src=split.companyExpenses[c]||{};
@@ -4133,7 +4133,6 @@ function _openSalesEditCore(id, selectedDate) {
           +'</div>'
         +'</div>'
         +'<input type="hidden" id="simple-exp-labor" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||0)+'">';
-    })()
     })()
     +'</div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><button type="button" id="simple-safe-transfer-btn" class="btn btn-green btn-full" style="margin:2px 0 8px;font-size:14px" onclick="transferSimpleCashToSafe()">🔐 手元残を金庫番へ入金</button><div id="simple-safe-transfer-status" style="font-size:11px;color:var(--text2);font-weight:900;margin:0 0 12px"></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
     +'<input type="hidden" id="simple-customer" value=""><input type="hidden" id="simple-closing-day" value="月末締め"><input type="hidden" id="simple-cut-rate" value="0"><input type="hidden" id="simple-payment-date"><input type="hidden" id="simple-actual-amount" value="0"><input type="hidden" id="simple-received-date"><input type="checkbox" id="simple-received" style="display:none">'
