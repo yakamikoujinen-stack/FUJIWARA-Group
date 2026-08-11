@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.32 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.33 編集ボタン安定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -735,7 +735,7 @@ body::before,#app::before,.page::before{
     <div class="page" id="page-sales">
       <div class="pg">
         <p class="page-title">📈 売上・経費</p>
-        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.32</p>
+        <p class="page-sub">藤原明裕・まゆみ・文太・将・縁笑だるまや専用：日別かんたん売上表 v4.3.33</p>
         <div id="sales-lock"></div>
         <div id="sales-content">
           <div class="admin-badge">🔒 売上入力・編集は 藤原明裕／まゆみ／文太／将／縁笑だるまや の5名だけ｜仕入・経費はキング/事務員アプリで管理</div>
@@ -1269,7 +1269,7 @@ function getCompanyExpenseAmounts(simple){
     amagasaki:Object.assign({},blank)
   };
 
-  // v4.3.32以降：会社別経費を直接保存
+  // v4.3.33以降：会社別経費を直接保存
   if(split.companyExpenses){
     ['fujiwara','amagasaki'].forEach(function(c){
       var src=split.companyExpenses[c]||{};
@@ -3563,8 +3563,23 @@ function renderMonthlySalesSummary(){
 }
 
 
+
+function getCompanySalesSummaryFromEdit(){
+  var out={fujiwara:0,amagasaki:0,hasFuji:false,hasAma:false};
+  document.querySelectorAll('.simple-sales-input').forEach(function(inp){
+    var key=String(inp.dataset.key||''), sel=null;
+    document.querySelectorAll('.simple-sales-company').forEach(function(s){
+      if(String(s.dataset.key||'')===key) sel=s;
+    });
+    var company=sel?(sel.value||''):'';
+    var amount=parseInt(inp.value)||0;
+    if(company==='fujiwara'){out.fujiwara+=amount;out.hasFuji=true;}
+    else if(company==='amagasaki'){out.amagasaki+=amount;out.hasAma=true;}
+  });
+  return out;
+}
 function updateCompanyAccountingSummary(){
-  function n(id){var el=document.getElementById(id); return el?(parseInt(el.value)||0):0;}
+  function n(id){var el=document.getElementById(id);return el?(parseInt(el.value)||0):0;}
   var fExp=n('fuji-exp-basho')+n('fuji-exp-shiire')+n('fuji-exp-kotsu')+n('fuji-exp-other');
   var aExp=n('ama-exp-basho')+n('ama-exp-shiire')+n('ama-exp-kotsu')+n('ama-exp-other');
   var fLabor=0,aLabor=0;
@@ -3574,16 +3589,33 @@ function updateCompanyAccountingSummary(){
     if(company==='fujiwara') fLabor+=amount;
     else if(company==='amagasaki') aLabor+=amount;
   });
+
+  var sales=getCompanySalesSummaryFromEdit();
+  var fCost=fExp+fLabor, aCost=aExp+aLabor;
+
   function put(id,v){
     var el=document.getElementById(id);
     if(el)el.textContent='¥'+v.toLocaleString('ja-JP');
   }
+
+  put('fuji-sales-total',sales.fujiwara);
+  put('fuji-box-sales',sales.fujiwara);
   put('fuji-expense-subtotal',fExp);
   put('fuji-labor-subtotal',fLabor);
-  put('fuji-cost-total',fExp+fLabor);
+  put('fuji-cost-total',fCost);
+  put('fuji-net-profit',sales.fujiwara-fCost);
+
+  put('ama-sales-total',sales.amagasaki);
+  put('ama-box-sales',sales.amagasaki);
   put('ama-expense-subtotal',aExp);
   put('ama-labor-subtotal',aLabor);
-  put('ama-cost-total',aExp+aLabor);
+  put('ama-cost-total',aCost);
+  put('ama-net-profit',sales.amagasaki-aCost);
+
+  var amaTop=document.getElementById('ama-sales-summary-row');
+  if(amaTop)amaTop.style.display=sales.hasAma?'flex':'none';
+  var amaBox=document.getElementById('ama-accounting-box');
+  if(amaBox)amaBox.style.display=sales.hasAma?'block':'none';
 }
 function updateSimpleSalesEditTotals(){
   var items={};
@@ -4059,33 +4091,49 @@ function _openSalesEditCore(id, selectedDate) {
   var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'+dayTabs
     +'<div class="fg"><label>イベント名</label><input type="text" value="'+escAttr(ev.name||'')+'" readonly></div>'
     +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:4px">ネタ別売上</div>'
-    +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); var split=getDayAccountingSplit(simple); var company=(split.items&&split.items[key])||getExistingItemCompany(ev,name)||''; return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'">'+accountingCompanySelect(company,'simple-sales-company','data-key="'+key+'"')+'</div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
+    +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); var split=getDayAccountingSplit(simple); var company=(split.items&&split.items[key])||getExistingItemCompany(ev,name)||''; return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'">'+accountingCompanySelect(company,'simple-sales-company','data-key="'+key+'" onchange="updateCompanyAccountingSummary()"')+'</div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
     +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:#1769c2;margin-bottom:8px">現金売上・売掛売上</div><div class="fg2"><div class="fg"><label>現金売上（円）</label><input type="number" id="simple-cash-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.cashSales)||'')+'"></div><div class="fg"><label>売掛売上（円）</label><input type="number" id="simple-receivable-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.receivableSales)||'')+'"></div></div></div>'
     +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:var(--gold)">この日のスタッフ支払</div><button type="button" class="btn btn-outline btn-sm" onclick="addStaffPaymentRow({})">＋スタッフ追加</button></div><div id="staff-payment-list">'+((simple.settlement&&simple.settlement.staffPayments)||[]).map(function(x,i){return settlementRowHtml(x,i);}).join('')+'</div><div class="profit-row"><span>スタッフ支払合計</span><b id="simple-auto-staffpay">¥0</b></div></div>'
     +(function(){
       var ce=getCompanyExpenseAmounts(simple);
       var f=ce.fujiwara||{}, a=ce.amagasaki||{};
       function val(v){return (parseInt(v)||0)||'';}
-      return '<div style="font-size:13px;font-weight:900;color:var(--gold);margin:12px 0 6px">この日の経費・お金</div>'
+      var split=getDayAccountingSplit(simple), fSales=0, aSales=0, hasA=false;
+      Object.keys(items||{}).forEach(function(k){
+        var amount=parseInt(items[k])||0;
+        var company=(split.items||{})[k]||'';
+        if(company==='fujiwara') fSales+=amount;
+        else if(company==='amagasaki'){ aSales+=amount; hasA=true; }
+      });
+      return '<div style="font-size:13px;font-weight:900;color:var(--gold);margin:12px 0 6px">会社別 売上・経費・お金</div>'
+        +'<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;border:2px solid #d6a21c;background:#fffbea;border-radius:12px;padding:10px 12px;font-weight:950"><span>🟡 FUJIWARAグループ 売上</span><b id="fuji-sales-total">¥'+fSales.toLocaleString('ja-JP')+'</b></div>'
+          +'<div id="ama-sales-summary-row" style="display:'+(hasA?'flex':'none')+';justify-content:space-between;align-items:center;border:2px solid #e19454;background:#fff4ea;border-radius:12px;padding:10px 12px;font-weight:950"><span>🟠 尼崎本社 売上</span><b id="ama-sales-total">¥'+aSales.toLocaleString('ja-JP')+'</b></div>'
+        +'</div>'
         +'<div class="accounting-company-grid">'
           +'<div class="accounting-company-box fuji">'
-            +'<div class="accounting-company-title">🟡 FUJIWARAグループ｜経費</div>'
+            +'<div class="accounting-company-title">🟡 FUJIWARAグループ</div>'
             +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="fuji-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="fuji-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="fuji-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.other)+'"></div></div>'
+            +'<div class="accounting-company-line"><span>売上</span><b id="fuji-box-sales">¥0</b></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="fuji-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="fuji-labor-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>経費＋労務費</span><b id="fuji-cost-total">¥0</b></div>'
+            +'<div class="accounting-company-line"><span>純利益</span><b id="fuji-net-profit">¥0</b></div>'
           +'</div>'
-          +'<div class="accounting-company-box ama">'
-            +'<div class="accounting-company-title">🟠 尼崎本社｜経費</div>'
+          +'<div class="accounting-company-box ama" id="ama-accounting-box" style="display:'+(hasA?'block':'none')+'">'
+            +'<div class="accounting-company-title">🟠 尼崎本社</div>'
             +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="ama-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="ama-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="ama-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.other)+'"></div></div>'
+            +'<div class="accounting-company-line"><span>売上</span><b id="ama-box-sales">¥0</b></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="ama-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="ama-labor-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>経費＋労務費</span><b id="ama-cost-total">¥0</b></div>'
+            +'<div class="accounting-company-line"><span>純利益</span><b id="ama-net-profit">¥0</b></div>'
           +'</div>'
         +'</div>'
         +'<input type="hidden" id="simple-exp-labor" value="'+((simple.expenses&&simple.expenses.labor&&simple.expenses.labor.total)||0)+'">';
+    })()
     })()
     +'</div><div class="fg2"><div class="fg"><label>預金額</label><input type="number" id="simple-money-deposit" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.deposit)||'')+'"></div><div class="fg"><label>未精算・未払い</label><input type="number" id="simple-money-unpaid" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.money&&simple.money.unpaid)||'')+'"></div></div><div class="profit-card"><div class="profit-row"><span>売上</span><b id="simple-auto-sales">¥0</b></div><div class="profit-row"><span>経費</span><b id="simple-auto-expense">¥0</b></div><div class="profit-row"><span>利益</span><b id="simple-auto-profit">¥0</b></div><div class="profit-row"><span>手元残</span><b id="simple-auto-cash">¥0</b></div></div><button type="button" id="simple-safe-transfer-btn" class="btn btn-green btn-full" style="margin:2px 0 8px;font-size:14px" onclick="transferSimpleCashToSafe()">🔐 手元残を金庫番へ入金</button><div id="simple-safe-transfer-status" style="font-size:11px;color:var(--text2);font-weight:900;margin:0 0 12px"></div><div class="fg"><label>お金メモ</label><textarea id="simple-money-note">'+escHtml((simple.money&&simple.money.note)||'')+'</textarea></div></div>'
     +'<input type="hidden" id="simple-customer" value=""><input type="hidden" id="simple-closing-day" value="月末締め"><input type="hidden" id="simple-cut-rate" value="0"><input type="hidden" id="simple-payment-date"><input type="hidden" id="simple-actual-amount" value="0"><input type="hidden" id="simple-received-date"><input type="checkbox" id="simple-received" style="display:none">'
