@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.36 編集ボタン安定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.37 在庫記入者表示版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -125,6 +125,39 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .past-event-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
 .past-event-card{background:#eeeeee;border:1px solid #c8c8c8;border-left:4px solid #888;border-radius:12px;padding:12px;margin-bottom:9px;color:#555;}
 .past-event-card .ev-name,.past-event-card .ev-meta{color:#555!important;}
+
+
+/* ===== v4.3.37 在庫管理：最終記入日・記入者 ===== */
+.inventory-write-meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:0 0 12px;
+  padding:10px 12px;
+  background:#fffdf6;
+  border:1.5px solid #d8bf75;
+  border-radius:12px;
+  box-shadow:0 3px 12px rgba(80,55,0,.08);
+}
+.inventory-write-meta .iwm-label{
+  font-size:11px;
+  font-weight:900;
+  color:#6d5a2b;
+}
+.inventory-write-meta .iwm-value{
+  font-size:13px;
+  font-weight:950;
+  color:#241900;
+  margin-right:8px;
+}
+.inventory-write-meta .iwm-empty{
+  color:#8b7a50;
+}
+@media(max-width:520px){
+  .inventory-write-meta{display:grid;grid-template-columns:auto 1fr}
+  .inventory-write-meta .iwm-value{margin-right:0}
+}
 
 /* INVENTORY */
 .inv-cat-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
@@ -652,6 +685,12 @@ body::before,#app::before,.page::before{
       <div class="pg">
         <p class="page-title">📦 在庫管理</p>
         <p class="page-sub">ストッカー・冷蔵庫の場所と在庫確認</p>
+        <div class="inventory-write-meta" id="inventory-write-meta">
+          <span class="iwm-label">📅 最終記入日</span>
+          <span class="iwm-value iwm-empty" id="inventory-last-date">未記入</span>
+          <span class="iwm-label">👤 記入者</span>
+          <span class="iwm-value iwm-empty" id="inventory-last-user">未記入</span>
+        </div>
         <div id="inv-lock"></div>
         <div id="inv-content">
           <div class="inv-mode-tabs">
@@ -724,7 +763,7 @@ body::before,#app::before,.page::before{
             </table>
           </div>
           <div style="margin-top:14px">
-            <button class="btn btn-green btn-sm" onclick="toast('✅ 持出し数を確定しました')">✅ 持出し確定</button>
+            <button class="btn btn-green btn-sm" onclick="confirmInventoryCarryOut()">✅ 持出し確定</button>
           </div>
           </div>
         </div>
@@ -1389,6 +1428,7 @@ var state = {
   ],
   staffList: ['藤原','縁笑だるまや','まゆみ','龍来','想良','将','文太'],
   auditLogs: [],
+  inventoryMeta: { updatedAt:'', updatedBy:'', action:'' },
 };
 
 // ════ NAV ════
@@ -3205,8 +3245,54 @@ function deleteEvent() {
 }
 
 // ════ INVENTORY ════
+function inventoryWriterName(){
+  return userName || (typeof roleLabel==='function' ? roleLabel(role) : '') || '未入力';
+}
+function markInventoryEdited(item, action){
+  var now=new Date().toISOString();
+  var by=inventoryWriterName();
+  state.inventoryMeta={updatedAt:now,updatedBy:by,action:action||''};
+  if(item){
+    item.inventoryUpdatedAt=now;
+    item.inventoryUpdatedBy=by;
+  }
+  renderInventoryWriteMeta();
+}
+function formatInventoryWriteDate(iso){
+  if(!iso) return '未記入';
+  var d=new Date(iso);
+  if(isNaN(d.getTime())) return String(iso);
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var day=String(d.getDate()).padStart(2,'0');
+  var h=String(d.getHours()).padStart(2,'0');
+  var min=String(d.getMinutes()).padStart(2,'0');
+  return y+'/'+m+'/'+day+' '+h+':'+min;
+}
+function renderInventoryWriteMeta(){
+  var meta=state.inventoryMeta||{};
+  var dateEl=document.getElementById('inventory-last-date');
+  var userEl=document.getElementById('inventory-last-user');
+  if(dateEl){
+    dateEl.textContent=formatInventoryWriteDate(meta.updatedAt);
+    dateEl.classList.toggle('iwm-empty',!meta.updatedAt);
+  }
+  if(userEl){
+    userEl.textContent=meta.updatedBy||'未記入';
+    userEl.classList.toggle('iwm-empty',!meta.updatedBy);
+  }
+}
+function confirmInventoryCarryOut(){
+  if(role==='user'){ toast('⛔ 在庫管理はリーダー・担当者のみ操作できます'); return; }
+  markInventoryEdited(null,'持出し確定');
+  addAudit('在庫持出し確定','記入者 '+inventoryWriterName());
+  toast('✅ 持出し数を確定しました');
+  fbSave();
+}
+
 function renderInventory() {
   if(role==='user') return;
+  renderInventoryWriteMeta();
 
   // カテゴリ一覧を収集
   var cats=['すべて'];
@@ -3275,7 +3361,8 @@ function updateInvItemLocation(id, loc){
   if(!item) return;
   var oldLoc=item.loc||'未設定';
   item.loc=loc||'未設定';
-  addAudit('在庫保存場所変更', item.name+'｜'+oldLoc+'→'+item.loc);
+  markInventoryEdited(item,'保存場所変更');
+  addAudit('在庫保存場所変更', item.name+'｜'+oldLoc+'→'+item.loc+'｜記入者 '+inventoryWriterName());
   renderInventory();
   toast('📍 '+item.name+' を '+item.loc+' に設定しました');
   fbSave();
@@ -3327,7 +3414,7 @@ function warehouseFindItem(){
 }
 function shareWarehouseToKing(){
   if(role!=='leader' && role!=='staff'){ toast('⛔ リーダー・担当者のみ共有できます'); return; }
-  var payload={updatedAt:new Date().toISOString(), invItems:state.invItems||[]};
+  var payload={updatedAt:new Date().toISOString(), invItems:state.invItems||[], inventoryMeta:state.inventoryMeta||{}};
   try{ localStorage.setItem('fujiwara_warehouse_share_v1', JSON.stringify(payload)); }catch(e){}
   if(typeof fbSave==='function') fbSave();
   toast('👑 キングアプリ共有用データを更新しました');
@@ -3354,8 +3441,10 @@ function quickAddItem(){
   var name=document.getElementById('quick-item-name').value.trim();
   if(!name){ toast('⚠️ 品目名を入力してください'); return; }
   var cat=invCatFilter==='すべて'?'その他':invCatFilter;
-  state.invItems.push({id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0,loc:selectedWarehouseLoc||'未設定'});
-  addAudit('在庫品目追加', name+'（'+cat+'）');
+  var newItem={id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0,loc:selectedWarehouseLoc||'未設定'};
+  state.invItems.push(newItem);
+  markInventoryEdited(newItem,'品目追加');
+  addAudit('在庫品目追加', name+'（'+cat+'）｜記入者 '+inventoryWriterName());
   document.getElementById('quick-item-name').value='';
   renderInventory();
   toast('✅ 「'+name+'」を追加しました');
@@ -3383,7 +3472,8 @@ function saveStockAdjust() {
   var oldStock=item.stock||0;
   item.hakobi=parseInt(document.getElementById('stock-hakobi').value)||0;
   item.stock=parseInt(document.getElementById('stock-stock').value)||0;
-  addAudit('在庫数量修正', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock);
+  markInventoryEdited(item,'在庫数量修正');
+  addAudit('在庫数量修正', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock+'｜記入者 '+inventoryWriterName());
   closeModal('modal-stock');
   renderInventory();
   toast('✅ '+item.name+' を更新しました');
@@ -3413,13 +3503,16 @@ function saveInvItemForm() {
   var rawId=document.getElementById('iif-id').value;
   var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,loc:document.getElementById('iif-location').value||'未設定',stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
-    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); break; } }
-    addAudit('在庫品目編集', name);
+    var editedItem=null;
+    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); editedItem=state.invItems[i]; break; } }
+    markInventoryEdited(editedItem,'品目編集');
+    addAudit('在庫品目編集', name+'｜記入者 '+inventoryWriterName());
     toast('✅ 品目を更新しました');
   } else {
     data.id=String(Date.now());
     state.invItems.push(data);
-    addAudit('在庫品目追加', name);
+    markInventoryEdited(data,'品目追加');
+    addAudit('在庫品目追加', name+'｜記入者 '+inventoryWriterName());
     toast('✅ 品目を追加しました');
   }
   closeModal('modal-inv-item');
@@ -3435,7 +3528,8 @@ function deleteInvItem() {
   var delItemName='';
   state.invItems.forEach(function(i){ if(String(i.id)===String(id)) delItemName=i.name||''; });
   state.invItems=state.invItems.filter(function(i){ return String(i.id)!==String(id); });
-  addAudit('在庫品目削除', delItemName);
+  markInventoryEdited(null,'品目削除');
+  addAudit('在庫品目削除', delItemName+'｜記入者 '+inventoryWriterName());
   closeModal('modal-inv-item');
   renderInventory();
   toast('🗑️ 品目を削除しました');
@@ -4749,6 +4843,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     db.ref('fujiwara').update({
       events:state.events,
       invItems:state.invItems,
+      inventoryMeta:state.inventoryMeta||{},
       notices:state.notices,
       staffList:state.staffList,
       auditLogs:state.auditLogs||[],
@@ -4773,6 +4868,9 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(data.invItems){
       var arr2=Array.isArray(data.invItems)?data.invItems:Object.values(data.invItems);
       state.invItems=arr2.filter(Boolean).map(function(i){ return Object.assign({},i,{id:String(i.id)}); });
+    }
+    if(data.inventoryMeta && typeof data.inventoryMeta==='object'){
+      state.inventoryMeta=Object.assign({updatedAt:'',updatedBy:'',action:''},data.inventoryMeta);
     }
     if(data.notices){
       state.notices=(Array.isArray(data.notices)?data.notices:Object.values(data.notices)).filter(Boolean).map(function(n){
