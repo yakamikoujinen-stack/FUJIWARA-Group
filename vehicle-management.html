@@ -76,6 +76,17 @@ td input{font-size:15px;padding:8px}
 }
 .footer button{flex:1;background:transparent;color:#38546b;font-size:11px;padding:7px 3px}
 .note{font-size:12px;color:var(--sub);line-height:1.6}
+.vehicle-detail-btn{background:#e8f2fb;color:#12385d;border:1px solid #bfd5e7;padding:8px 10px;white-space:nowrap}
+.detail-overlay{position:fixed;inset:0;z-index:100;background:rgba(10,28,44,.55);display:none;align-items:flex-end;justify-content:center;padding:14px}
+.detail-overlay.open{display:flex}
+.detail-panel{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px 20px 14px 14px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.detail-head h3{margin:0;font-size:20px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-item{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f8fbfd}
+.detail-item .k{font-size:11px;color:var(--sub);font-weight:800;margin-bottom:4px}
+.detail-item .v{font-size:16px;font-weight:900;word-break:break-all}
+@media(max-width:700px){.detail-grid{grid-template-columns:1fr}}
 .sync-status{
   max-width:1000px;margin:10px auto 0;padding:10px 14px;border-radius:12px;
   background:#fff5d6;color:#775400;border:1px solid #ead283;font-weight:900;font-size:13px
@@ -149,9 +160,19 @@ td input{font-size:15px;padding:8px}
     <div><label>前回の総費用</label><input id="lastCost" type="number" placeholder="円"></div>
   </div>
   <div class="grid2" style="margin-top:10px">
-    <div><label>車検業者・店</label><input id="shakenShop" placeholder="例：〇〇モータース"></div>
-    <div><label>メモ</label><input id="shakenMemo" placeholder="例：タイヤ交換込み"></div>
+    <div><label>車体番号</label><input id="chassisNo" placeholder="例：VWE25-123456"></div>
+    <div><label>型式</label><input id="modelCode" placeholder="例：LDF-VW6E26"></div>
   </div>
+  <div class="grid2" style="margin-top:10px">
+    <div><label>初度登録年月</label><input id="firstRegistration" type="month"></div>
+    <div><label>車両名義</label><input id="ownerName" placeholder="例：藤原一工業合同会社"></div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
+    <div><label>車検業者・店</label><input id="shakenShop" placeholder="例：〇〇モータース"></div>
+    <div><label>車検業者 電話番号</label><input id="shopPhone" type="tel" placeholder="例：090-1234-5678"></div>
+  </div>
+  <div style="margin-top:10px">
+    <label>メモ</label><input id="shakenMemo" placeholder="例：タイヤ交換込み"></div>
   <div class="toolbar">
     <button class="primary" onclick="saveShaken()">＋ 車検情報を登録</button>
     <button class="ghost" onclick="clearShakenForm()">入力をクリア</button>
@@ -171,6 +192,7 @@ td input{font-size:15px;padding:8px}
           <th>前回の総費用</th>
           <th>業者・店</th>
           <th>メモ</th>
+          <th>予約用情報</th>
           <th></th>
         </tr>
       </thead>
@@ -184,6 +206,16 @@ td input{font-size:15px;padding:8px}
   </div>
 </section>
 
+</div>
+
+<div id="detailOverlay" class="detail-overlay" onclick="if(event.target===this)closeVehicleDetail()">
+  <div class="detail-panel">
+    <div class="detail-head">
+      <h3>🚘 車検予約用 車両詳細</h3>
+      <button class="ghost" onclick="closeVehicleDetail()">閉じる</button>
+    </div>
+    <div id="detailContent"></div>
+  </div>
 </div>
 
 <nav class="footer">
@@ -395,7 +427,12 @@ function saveShaken(){
   state.shaken.push({
     id:Date.now(),carName,carNo,date,
     lastCost:Number(val("lastCost"))||0,
+    chassisNo:val("chassisNo").trim(),
+    modelCode:val("modelCode").trim(),
+    firstRegistration:val("firstRegistration"),
+    ownerName:val("ownerName").trim(),
     shop:val("shakenShop").trim(),
+    shopPhone:val("shopPhone").trim(),
     memo:val("shakenMemo").trim()
   });
   state.shaken.sort((a,b)=>a.date.localeCompare(b.date));
@@ -403,7 +440,7 @@ function saveShaken(){
   alert("車検情報を登録しました");
 }
 function clearShakenForm(){
-  ["shakenCarName","shakenCarNo","shakenDate","lastCost","shakenShop","shakenMemo"].forEach(id=>setVal(id,""));
+  ["shakenCarName","shakenCarNo","shakenDate","lastCost","chassisNo","modelCode","firstRegistration","ownerName","shakenShop","shopPhone","shakenMemo"].forEach(id=>setVal(id,""));
 }
 function statusOf(dateStr){
   const now=new Date();now.setHours(0,0,0,0);
@@ -417,7 +454,7 @@ function renderShaken(){
   const body=document.getElementById("shakenBody");
   let soon=0,over=0;
   if(!state.shaken.length){
-    body.innerHTML='<tr><td colspan="8" class="empty">車検情報はまだありません</td></tr>';
+    body.innerHTML='<tr><td colspan="9" class="empty">車検情報はまだありません</td></tr>';
   }else{
     body.innerHTML=state.shaken.map(r=>{
       const s=statusOf(r.date);if(s.cls==="soon")soon++;if(s.cls==="over")over++;
@@ -429,6 +466,7 @@ function renderShaken(){
         <td><input type="number" value="${esc(r.lastCost)}" onblur="updateShaken(${r.id},'lastCost',this.value)"><div style="font-weight:900;margin-top:4px">${yen(r.lastCost)}</div></td>
         <td><input value="${esc(r.shop)}" onblur="updateShaken(${r.id},'shop',this.value)"></td>
         <td><input value="${esc(r.memo)}" onblur="updateShaken(${r.id},'memo',this.value)"></td>
+        <td><button class="vehicle-detail-btn" onclick="showVehicleDetail(${r.id})">📋 予約情報</button></td>
         <td><button class="danger" onclick="deleteShaken(${r.id})">削除</button></td>
       </tr>`
     }).join("");
@@ -443,6 +481,28 @@ function updateShaken(id,key,value){
   state.shaken.sort((a,b)=>a.date.localeCompare(b.date));
   save();renderShaken();
 }
+
+function showVehicleDetail(id){
+  const r=state.shaken.find(x=>String(x.id)===String(id));if(!r)return;
+  const fields=[
+    ["車名",r.carName],["ナンバープレート",r.carNo],
+    ["車体番号",r.chassisNo],["型式",r.modelCode],
+    ["初度登録年月",r.firstRegistration],["車両名義",r.ownerName],
+    ["車検満了日",r.date],["車検業者・店",r.shop],
+    ["業者電話番号",r.shopPhone],["前回車検費用",yen(r.lastCost)],
+    ["メモ",r.memo]
+  ];
+  document.getElementById("detailContent").innerHTML=
+    '<div class="detail-grid">'+fields.map(([k,v])=>`
+      <div class="detail-item"><div class="k">${esc(k)}</div><div class="v">${esc(v||"未登録")}</div></div>
+    `).join("")+'</div>'+
+    '<div class="note" style="margin-top:12px">担当者はこの画面を見ながら車検業者へ予約できます。未登録項目は④車検管理から入力してください。</div>';
+  document.getElementById("detailOverlay").classList.add("open");
+}
+function closeVehicleDetail(){
+  document.getElementById("detailOverlay").classList.remove("open");
+}
+
 function deleteShaken(id){
   if(!confirm("この車検情報を削除しますか？"))return;
   state.shaken=state.shaken.filter(x=>x.id!==id);
