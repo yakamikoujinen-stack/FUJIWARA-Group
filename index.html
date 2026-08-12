@@ -605,7 +605,7 @@ body::before,#app::before,.page::before{
 .settlement-tag.amagasaki{background:#ffe0ca;color:#913f0b;border-color:#e59a60}
 .settlement-tag.unset{background:#f1f1f1;color:#666;border-color:#c8c8c8}
 
-/* ===== v4.3.39 仕入れ簡単明細（ピンポイント追加） ===== */
+/* ===== v4.3.40 仕入れ簡単明細（ピンポイント追加） ===== */
 .purchase-mini-input{cursor:pointer;background:#fffdf6!important;font-weight:900;text-align:right}
 .purchase-mini-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:5000;display:none;align-items:center;justify-content:center;padding:18px}
 .purchase-mini-modal.show{display:flex}
@@ -4333,6 +4333,17 @@ async function saveSalesEdit() {
     labor:{total:laborTotal}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:payments},accountingSplit:accountingSplit,memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
   ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple};
   aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
+
+  // v4.3.40: 日別売上・仕入明細を先にFirebaseへ確定保存する。
+  // EVENT_SETTLEMENT_PATH の同期が先に走ると realtime listener が古い events を読み戻し、
+  // 直前に入力した購入先・金額などが消えることがあるため、events を先に保存して待つ。
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length && firebase.database && window._fgFirebaseReady){
+      await firebase.database().ref('fujiwara/events').set(state.events);
+    }
+  }catch(primarySaveErr){
+    console.warn('日別売上の先行保存エラー', primarySaveErr);
+  }
 
   var safeSyncResult=null;
   if(simple.safeTransfer&&simple.safeTransfer.completed){
