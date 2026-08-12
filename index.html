@@ -604,6 +604,15 @@ body::before,#app::before,.page::before{
 .settlement-tag.fujiwara{background:#fff1bd;color:#735300;border-color:#d8b33e}
 .settlement-tag.amagasaki{background:#ffe0ca;color:#913f0b;border-color:#e59a60}
 .settlement-tag.unset{background:#f1f1f1;color:#666;border-color:#c8c8c8}
+
+/* ===== v4.3.38 仕入れ簡単明細（ピンポイント追加） ===== */
+.purchase-mini-input{cursor:pointer;background:#fffdf6!important;font-weight:900;text-align:right}
+.purchase-mini-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:5000;display:none;align-items:center;justify-content:center;padding:18px}
+.purchase-mini-modal.show{display:flex}
+.purchase-mini-card{width:min(520px,100%);max-height:85vh;overflow:auto;background:#fffdf6;border:2px solid #d8bf75;border-radius:18px;padding:16px;box-shadow:0 14px 40px rgba(0,0,0,.3)}
+.purchase-mini-row{display:grid;grid-template-columns:1fr 120px 44px;gap:7px;margin:8px 0}
+.purchase-mini-row input{width:100%;padding:10px;border:1.5px solid #d8bf75;border-radius:9px;font-size:16px;background:#fff}
+.purchase-mini-total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:950;padding:12px 4px;border-top:2px solid #d8bf75;margin-top:10px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -3681,9 +3690,59 @@ function getCompanySalesSummaryFromEdit(){
     });
     var amount=parseInt(inp.value)||0;
     if(company==='fujiwara') out.fujiwara+=amount;
-    else if(company==='amagasaki'){ out.amagasaki+=amount; out.hasAma=true; }
+    else if(company==='amagasaki'){ out.amagasaki+=amount; if(amount>0)out.hasAma=true; }
   });
   return out;
+}
+var purchaseMiniCompany='fujiwara';
+function getCurrentPurchaseDetails(company){
+  var ev=currentSalesEditEvent(), ds=(document.getElementById('simple-sales-date')||{}).value||'';
+  var simple=ev?getDaySimpleSales(ev,ds):{};
+  var split=getDayAccountingSplit(simple||{});
+  var pd=split.purchaseDetails||{};
+  var rows=Array.isArray(pd[company])?pd[company]:[];
+  if(rows.length) return rows.map(function(r){return {vendor:r.vendor||'',amount:parseInt(r.amount)||0};});
+  var old=getCompanyExpenseAmounts(simple||{}), amount=parseInt(((old[company]||{}).shiire))||0;
+  return amount?[{vendor:'',amount:amount}]:[];
+}
+function purchaseMiniRowsFromDom(){
+  var rows=[];
+  document.querySelectorAll('#purchase-mini-list .purchase-mini-row').forEach(function(r){
+    var vendor=(r.querySelector('.pm-vendor')||{}).value||'';
+    var amount=parseInt((r.querySelector('.pm-amount')||{}).value)||0;
+    if(vendor.trim()||amount) rows.push({vendor:vendor.trim(),amount:amount});
+  });
+  return rows;
+}
+function refreshPurchaseMiniTotal(){
+  var total=purchaseMiniRowsFromDom().reduce(function(a,r){return a+(parseInt(r.amount)||0);},0);
+  var el=document.getElementById('purchase-mini-total'); if(el)el.textContent='¥'+total.toLocaleString('ja-JP');
+}
+function addPurchaseMiniRow(data){
+  data=data||{}; var list=document.getElementById('purchase-mini-list'); if(!list)return;
+  var row=document.createElement('div'); row.className='purchase-mini-row';
+  row.innerHTML='<input class="pm-vendor" placeholder="購入先" value="'+escHtml(data.vendor||'')+'"><input class="pm-amount" type="number" min="0" inputmode="numeric" placeholder="金額" value="'+((parseInt(data.amount)||0)||'')+'" oninput="refreshPurchaseMiniTotal()"><button type="button" class="btn btn-outline btn-sm" onclick="this.parentNode.remove();refreshPurchaseMiniTotal()">×</button>';
+  list.appendChild(row); refreshPurchaseMiniTotal();
+}
+function openPurchaseMini(company){
+  purchaseMiniCompany=company==='amagasaki'?'amagasaki':'fujiwara';
+  var title=document.getElementById('purchase-mini-title'); if(title)title.textContent=(purchaseMiniCompany==='fujiwara'?'FUJIWARAグループ':'尼崎本社')+'｜仕入れ明細';
+  var list=document.getElementById('purchase-mini-list'); if(list)list.innerHTML='';
+  var rows=getCurrentPurchaseDetails(purchaseMiniCompany); if(!rows.length)rows=[{}];
+  rows.forEach(addPurchaseMiniRow); document.getElementById('purchase-mini-modal').classList.add('show');
+}
+function closePurchaseMini(){var m=document.getElementById('purchase-mini-modal');if(m)m.classList.remove('show');}
+function applyPurchaseMini(){
+  var rows=purchaseMiniRowsFromDom(), total=rows.reduce(function(a,r){return a+(parseInt(r.amount)||0);},0);
+  var input=document.getElementById(purchaseMiniCompany==='fujiwara'?'fuji-exp-shiire':'ama-exp-shiire');
+  if(input){input.value=total||''; input.dataset.purchaseDetails=JSON.stringify(rows);}
+  closePurchaseMini(); updateSimpleSalesEditTotals(); updateCompanyAccountingSummary();
+}
+function currentPurchaseDetailsForSave(company, previous){
+  var input=document.getElementById(company==='fujiwara'?'fuji-exp-shiire':'ama-exp-shiire');
+  if(input&&input.dataset.purchaseDetails){try{return JSON.parse(input.dataset.purchaseDetails)||[];}catch(e){}}
+  var split=getDayAccountingSplit(previous||{}), pd=split.purchaseDetails||{};
+  return Array.isArray(pd[company])?pd[company]:[];
 }
 function updateCompanyAccountingSummary(){
   function n(id){var el=document.getElementById(id); return el?(parseInt(el.value)||0):0;}
@@ -4199,7 +4258,7 @@ function _openSalesEditCore(id, selectedDate) {
         var amount=parseInt(simple.items[k])||0;
         var company=(split.items||{})[k]||'';
         if(company==='fujiwara') fSales+=amount;
-        else if(company==='amagasaki'){ aSales+=amount; hasA=true; }
+        else if(company==='amagasaki'){ aSales+=amount; if(amount>0)hasA=true; }
       });
       return '<div style="font-size:13px;font-weight:900;color:var(--gold);margin:12px 0 6px">この日の経費・お金</div>'
         +'<div style="display:flex;flex-direction:column;gap:8px;margin:0 0 10px">'
@@ -4209,7 +4268,7 @@ function _openSalesEditCore(id, selectedDate) {
         +'<div class="accounting-company-grid">'
           +'<div class="accounting-company-box fuji">'
             +'<div class="accounting-company-title">🟡 FUJIWARAグループ｜経費</div>'
-            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="fuji-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="fuji-exp-shiire" min="0" readonly onclick="openPurchaseMini('fujiwara')" value="'+val(f.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="fuji-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="fuji-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.other)+'"></div></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="fuji-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="fuji-labor-subtotal">¥0</b></div>'
@@ -4217,7 +4276,7 @@ function _openSalesEditCore(id, selectedDate) {
           +'</div>'
           +'<div class="accounting-company-box ama">'
             +'<div class="accounting-company-title">🟠 尼崎本社｜経費</div>'
-            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="ama-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="ama-exp-shiire" min="0" readonly onclick="openPurchaseMini('amagasaki')" value="'+val(a.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="ama-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="ama-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.other)+'"></div></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="ama-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="ama-labor-subtotal">¥0</b></div>'
@@ -4243,7 +4302,7 @@ async function saveSalesEdit() {
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
   var previous=getDaySimpleSales(ev,ds);
-  var accountingSplit={items:{},expenses:{},companyExpenses:{fujiwara:{},amagasaki:{}}};
+  var accountingSplit={items:{},expenses:{},companyExpenses:{fujiwara:{},amagasaki:{}},purchaseDetails:{fujiwara:[],amagasaki:[]}};
   document.querySelectorAll('.simple-sales-company').forEach(function(sel){accountingSplit.items[sel.dataset.key]=sel.value||'';});
   function evn(id){var el=document.getElementById(id);return el?(parseInt(el.value)||0):0;}
   accountingSplit.companyExpenses.fujiwara={
@@ -4252,6 +4311,8 @@ async function saveSalesEdit() {
   accountingSplit.companyExpenses.amagasaki={
     basho:evn('ama-exp-basho'),shiire:evn('ama-exp-shiire'),kotsu:evn('ama-exp-kotsu'),other:evn('ama-exp-other')
   };
+  accountingSplit.purchaseDetails.fujiwara=currentPurchaseDetailsForSave('fujiwara',previous);
+  accountingSplit.purchaseDetails.amagasaki=currentPurchaseDetailsForSave('amagasaki',previous);
   var payments=collectStaffPayments().map(function(p){
     return {
       name:p.name||'',
@@ -5222,5 +5283,16 @@ document.addEventListener('click',function(e){
   forceOpenSalesEditById(btn.getAttribute('data-event-id'));
 },false);
 </script>
+
+<div id="purchase-mini-modal" class="purchase-mini-modal" onclick="if(event.target===this)closePurchaseMini()">
+ <div class="purchase-mini-card">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b id="purchase-mini-title" style="font-size:18px">仕入れ明細</b><button type="button" class="btn btn-outline btn-sm" onclick="closePurchaseMini()">閉じる</button></div>
+  <div style="font-size:12px;color:#6d5a2b;margin:7px 0 10px">購入先と金額だけ入力できます。合計金額が「仕入れ」に自動反映されます。</div>
+  <div id="purchase-mini-list"></div>
+  <button type="button" class="btn btn-outline btn-sm" onclick="addPurchaseMiniRow()">＋購入先を追加</button>
+  <div class="purchase-mini-total"><span>仕入れ合計</span><span id="purchase-mini-total">¥0</span></div>
+  <button type="button" class="btn btn-gold" style="width:100%;margin-top:8px" onclick="applyPurchaseMini()">この明細を反映</button>
+ </div>
+</div>
 </body>
 </html>
