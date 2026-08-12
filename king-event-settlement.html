@@ -118,6 +118,26 @@ if(window.__settlementLeaderDenied){ throw new Error('leader-only'); }
 const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94"};
 if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
 const db=firebase.database(), EVENT_PATH='fujiwara/events', ALLOC_PATH='fujiwara/event_settlement_allocations';
+const ALLOC_LOCAL_KEY='fujiwara_event_settlement_backup_v1';
+function readAllocLocal(){try{return JSON.parse(localStorage.getItem(ALLOC_LOCAL_KEY)||'null');}catch(e){return null;}}
+function writeAllocLocal(data,pending,stamp){try{localStorage.setItem(ALLOC_LOCAL_KEY,JSON.stringify({updatedAt:stamp||new Date().toISOString(),pending:!!pending,data:data||{}}));}catch(e){}}
+function recUpdatedAt(rec){return String((rec&&rec.updatedAt)||'');}
+function mergeAllocations(remote,local){
+  const out=JSON.parse(JSON.stringify(remote||{}));
+  const ld=(local&&local.data)||{};
+  Object.keys(ld).forEach(ek=>{
+    if(!out[ek])out[ek]=JSON.parse(JSON.stringify(ld[ek]));
+    else{
+      out[ek].items=out[ek].items||{};
+      const li=(ld[ek]&&ld[ek].items)||{};
+      Object.keys(li).forEach(ik=>{
+        const lr=li[ik], rr=out[ek].items[ik];
+        if(!rr || recUpdatedAt(lr)>recUpdatedAt(rr)) out[ek].items[ik]=JSON.parse(JSON.stringify(lr));
+      });
+    }
+  });
+  return out;
+}
 let events=[], allocations={};
 const $=id=>document.getElementById(id);
 const yen=v=>'¥'+Math.round(Number(v||0)).toLocaleString('ja-JP');
@@ -226,7 +246,16 @@ async function loadAll(){
   status.textContent='読込中...';
   try{
     const [es,as]=await Promise.all([db.ref(EVENT_PATH).once('value'),db.ref(ALLOC_PATH).once('value')]);
-    events=arr(es.val()); allocations=as.val()||{};
+    events=arr(es.val());
+    const localAlloc=readAllocLocal();
+    allocations=mergeAllocations(as.val()||{},localAlloc);
+    writeAllocLocal(allocations,false,new Date().toISOString());
+    // 端末にしかない新しい明細があればFirebaseへ戻す（既存項目を削除しないupdate方式）。
+    if(localAlloc&&localAlloc.pending){
+      const recovery={};
+      Object.keys(allocations).forEach(ek=>{recovery[ALLOC_PATH+'/'+ek]=allocations[ek];});
+      if(Object.keys(recovery).length) db.ref().update(recovery).then(()=>writeAllocLocal(allocations,false,new Date().toISOString())).catch(()=>{});
+    }
     initMonths(); render(); status.textContent='最新データ読込済み';
   }catch(e){status.textContent='読込失敗：'+(e.message||e)}
 }
@@ -356,6 +385,8 @@ async function saveAll(){
   try{ showSaveToast('保存中…'); }catch(_e){}
   try{
     const next=collect();
+    const localStamp=new Date().toISOString();
+    writeAllocLocal(next,true,localStamp);
     const updates={};
     document.querySelectorAll('.neta-row').forEach(row=>{
       const eid=String(row.dataset.eid||''), item=String(row.dataset.item||'');
@@ -376,13 +407,14 @@ async function saveAll(){
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('通信がタイムアウトしました')),8000))
     ]);
     allocations=next;
+    writeAllocLocal(allocations,false,new Date().toISOString());
     status.textContent='✅ 保存しました';
     try{ showSaveToast('✅ 保存しました'); }catch(_e){}
     render();
   }catch(e){
     console.error('早見精算保存エラー',e);
-    status.textContent='⚠️ 保存失敗：'+(e.message||e);
-    try{ showSaveToast('⚠️ 保存できませんでした',false); }catch(_e){}
+    status.textContent='⚠️ Firebase未同期・端末には保存済み：'+(e.message||e);
+    try{ showSaveToast('⚠️ 端末保存済み・共有未同期',false); }catch(_e){}
     alert('保存できませんでした。\\n'+(e.message||e));
   }finally{
     buttons.forEach(b=>{b.disabled=false;b.textContent=b.dataset.oldText||'💾 保存';});
