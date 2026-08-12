@@ -4824,7 +4824,41 @@ function notifyLeaderEmail(kind, detail){
 
 // ════ FIREBASE PLACEHOLDER ════
 // Firebaseが読み込まれるまでの仮関数
-function fbSave(){ if(window._fbSave) window._fbSave(); }
+// ===== v4.3.42 保存消失防止：端末バックアップ + Firebase新旧判定 =====
+var FG_MAIN_BACKUP_KEY='fujiwara_main_state_backup_v1';
+function fgCloneState(src){
+  try{return JSON.parse(JSON.stringify(src));}catch(e){return null;}
+}
+function fgReadMainBackup(){
+  try{return JSON.parse(localStorage.getItem(FG_MAIN_BACKUP_KEY)||'null');}catch(e){return null;}
+}
+function fgWriteMainBackup(pending, stamp){
+  try{
+    var rec={version:1,savedAt:stamp||new Date().toISOString(),pending:!!pending,state:fgCloneState(state)};
+    localStorage.setItem(FG_MAIN_BACKUP_KEY,JSON.stringify(rec));
+    return rec;
+  }catch(e){console.warn('端末バックアップ保存失敗',e);return null;}
+}
+function fgMarkMainBackupSynced(stamp){
+  try{
+    var rec=fgReadMainBackup();
+    if(rec){rec.pending=false;if(stamp)rec.savedAt=stamp;localStorage.setItem(FG_MAIN_BACKUP_KEY,JSON.stringify(rec));}
+  }catch(e){}
+}
+function fgApplyStateObject(src){
+  if(!src||typeof src!=='object')return;
+  if(Array.isArray(src.events)) state.events=src.events;
+  if(Array.isArray(src.invItems)) state.invItems=src.invItems;
+  if(src.inventoryMeta&&typeof src.inventoryMeta==='object') state.inventoryMeta=src.inventoryMeta;
+  if(Array.isArray(src.notices)) state.notices=src.notices;
+  if(Array.isArray(src.staffList)) state.staffList=src.staffList;
+  if(Array.isArray(src.auditLogs)) state.auditLogs=src.auditLogs;
+}
+function fbSave(){
+  // ボタン操作直後に必ず端末へ退避。Firebase通信中でも入力内容を失わない。
+  if(window._fbSave) window._fbSave();
+  else fgWriteMainBackup(true);
+}
 </script>
 
 <!-- FIREBASE SDK (compat) -->
@@ -4887,15 +4921,22 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   }
 
   function normalize(ev){
-    return {
+    // 既存フィールドを全部残す。dates / eventDates / dayAssignments 等を同期時に消さない。
+    ev=ev||{};
+    return Object.assign({},ev,{
       id:String(ev.id||''),
       name:ev.name||'',
       date:ev.date||'',
-      dateEnd:ev.dateEnd||'',
+      dateEnd:ev.dateEnd||ev.endDate||ev.toDate||'',
+      endDate:ev.endDate||ev.dateEnd||ev.toDate||'',
+      toDate:ev.toDate||ev.dateEnd||ev.endDate||'',
+      dates:Array.isArray(ev.dates)?ev.dates:(ev.dates?Object.values(ev.dates):[]),
+      eventDates:Array.isArray(ev.eventDates)?ev.eventDates:(ev.eventDates?Object.values(ev.eventDates):[]),
+      dayAssignments:ev.dayAssignments&&typeof ev.dayAssignments==='object'?ev.dayAssignments:{},
       zone:ev.zone||'A',
       place:ev.place||'',
       status:ev.status||'planned',
-      requiredStaff: parseInt(ev.requiredStaff)||0,
+      requiredStaff:parseInt(ev.requiredStaff)||0,
       memo:ev.memo||'',
       itemsText:ev.itemsText||'',
       bsLeader:ev.bsLeader||'',
@@ -4906,35 +4947,61 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret
-    };
+    });
   }
 
   window._fbSave = function(){
-    // Firebaseの読み込み前に保存すると、初期データで上書きしてしまうため停止
+    // 先に端末へ保存してからFirebaseへ送る。通信不良でも入力内容を保持する。
+    var stamp=new Date().toISOString();
+    fgWriteMainBackup(true,stamp);
     if(!window._fgFirebaseReady){
-      console.log('Firebase読み込み前の保存をスキップしました');
-      return;
+      console.log('Firebase読込前のため端末に保留保存しました');
+      showSync('💾 端末に保留保存しました');
+      return Promise.resolve(false);
     }
     showSync('🔄 保存中...');
-    db.ref('fujiwara').update({
+    return db.ref('fujiwara').update({
       events:state.events,
       invItems:state.invItems,
       inventoryMeta:state.inventoryMeta||{},
       notices:state.notices,
       staffList:state.staffList,
       auditLogs:state.auditLogs||[],
-      // KING側はこの日別データを読み、連日イベントの全開催日を合算します
-      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[])
-    }).then(function(){ showSync('✅ 同期完了'); })
-      .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
+      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[]),
+      'appSyncMeta/mainUpdatedAt':stamp
+    }).then(function(){
+      fgMarkMainBackupSynced(stamp);
+      showSync('✅ 同期完了');
+      return true;
+    }).catch(function(e){
+      showSync('⚠️ Firebase未同期・端末には保存済み');
+      console.warn('Firebase保存失敗。端末バックアップを保持します',e);
+      return false;
+    });
   };
 
   db.ref('fujiwara').on('value', function(snapshot){
     var data=snapshot.val();
     window._fgFirebaseReady = true;
     startPartnerRealtimeSync();
+    var localBackup=fgReadMainBackup();
+    var remoteStamp=(data&&data.appSyncMeta&&data.appSyncMeta.mainUpdatedAt)||'';
+    var localStamp=(localBackup&&localBackup.savedAt)||'';
     if(!data){
-      showSync('✅ Firebase接続済み');
+      if(localBackup&&localBackup.state){
+        fgApplyStateObject(localBackup.state);
+        setTimeout(function(){window._fbSave&&window._fbSave();},0);
+        showSync('💾 端末保存を復元・同期中');
+      }else{
+        showSync('✅ Firebase接続済み');
+      }
+      return;
+    }
+    // 端末側に未同期の新しい保存がある場合、Firebaseの古い値で上書きしない。
+    if(localBackup&&localBackup.state&&localBackup.pending&&localStamp&&(!remoteStamp||localStamp>remoteStamp)){
+      fgApplyStateObject(localBackup.state);
+      setTimeout(function(){window._fbSave&&window._fbSave();},0);
+      showSync('💾 未同期データを復元・再送信中');
       return;
     }
     if(data.events){
@@ -4956,6 +5023,12 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(typeof ensureRouteStaffNames==='function') ensureRouteStaffNames();
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
+    // Firebaseから正常に読めた状態も端末へバックアップする。
+    try{
+      var remoteBackupStamp=remoteStamp||new Date().toISOString();
+      var backupRec={version:1,savedAt:remoteBackupStamp,pending:false,state:fgCloneState(state)};
+      localStorage.setItem(FG_MAIN_BACKUP_KEY,JSON.stringify(backupRec));
+    }catch(e){}
     startPartnerRealtimeSync();
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
