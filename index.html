@@ -4372,6 +4372,17 @@ async function saveSalesEdit() {
   ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple};
   aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
 
+  // v4.3.42: 既存データ保護。
+  // 精算先など別パスの同期より先に、今入力した日別データを Firebase events へ確定する。
+  // これにより realtime listener が古い events を読み戻して入力内容が消える後退を防ぐ。
+  try{
+    if(window.firebase && firebase.apps && firebase.apps.length && firebase.database && window._fgFirebaseReady){
+      await firebase.database().ref('fujiwara/events').set(state.events);
+    }
+  }catch(primarySaveErr){
+    console.warn('日別売上の先行保存エラー', primarySaveErr);
+  }
+
   var safeSyncResult=null;
   if(simple.safeTransfer&&simple.safeTransfer.completed){
     try{
@@ -4947,7 +4958,51 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       staffList:state.staffList,
       auditLogs:state.auditLogs||[],
       // KING側はこの日別データを読み、連日イベントの全開催日を合算します
-      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[])
+      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[]),
+
+      // v4.3.42 賃金台帳共有。
+      // 元データは events.sales.days をそのまま残し、共有用データだけを追加生成する。
+      // 連日イベントは開催日ごとに別レコードになるため、初日だけになる後退を防ぐ。
+      laborLedgerShared:(function(){
+        var daily=buildKingDailyFinanceRecords(state.events||[]);
+        return {
+          version:4,
+          updatedAt:Date.now(),
+          updatedBy:(typeof userName!=='undefined'&&userName)?userName:'未入力',
+          events:daily.map(function(r){
+            return {
+              id:r.id,
+              eventId:r.eventId,
+              name:r.eventName,
+              eventName:r.eventName,
+              date:r.date,
+              eventDate:r.date,
+              place:r.place||'',
+              payments:(r.payments||[]).map(function(p){
+                return {
+                  name:p.name||p.staffName||'',
+                  staffName:p.staffName||p.name||'',
+                  type:p.type||'日当',
+                  amount:parseInt(p.amount)||0,
+                  company:p.company||'',
+                  dueDate:p.dueDate||'',
+                  paid:!!p.paid,
+                  paidDate:p.paidDate||'',
+                  date:r.date
+                };
+              }),
+              sales:r.sales||0,
+              expense:r.expense||0,
+              staffPay:r.staffPay||0,
+              profit:r.profit||0,
+              deposit:r.deposit||0,
+              cash:r.cash||0,
+              unpaid:r.unpaid||0,
+              updatedAt:r.updatedAt||new Date().toLocaleString('ja-JP')
+            };
+          })
+        };
+      })()
     }).then(function(){ showSync('✅ 同期完了'); })
       .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
   };
