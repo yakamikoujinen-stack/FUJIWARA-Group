@@ -605,7 +605,7 @@ body::before,#app::before,.page::before{
 .settlement-tag.amagasaki{background:#ffe0ca;color:#913f0b;border-color:#e59a60}
 .settlement-tag.unset{background:#f1f1f1;color:#666;border-color:#c8c8c8}
 
-/* ===== v4.3.38 仕入れ簡単明細（ピンポイント追加） ===== */
+/* ===== v4.3.39 仕入れ簡単明細（ピンポイント追加） ===== */
 .purchase-mini-input{cursor:pointer;background:#fffdf6!important;font-weight:900;text-align:right}
 .purchase-mini-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:5000;display:none;align-items:center;justify-content:center;padding:18px}
 .purchase-mini-modal.show{display:flex}
@@ -4268,7 +4268,7 @@ function _openSalesEditCore(id, selectedDate) {
         +'<div class="accounting-company-grid">'
           +'<div class="accounting-company-box fuji">'
             +'<div class="accounting-company-title">🟡 FUJIWARAグループ｜経費</div>'
-            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="fuji-exp-shiire" min="0" readonly onclick="openPurchaseMini('fujiwara')" value="'+val(f.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="fuji-exp-shiire" min="0" readonly onclick="openPurchaseMini(&quot;fujiwara&quot;)" value="'+val(f.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="fuji-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="fuji-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.other)+'"></div></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="fuji-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="fuji-labor-subtotal">¥0</b></div>'
@@ -4276,7 +4276,7 @@ function _openSalesEditCore(id, selectedDate) {
           +'</div>'
           +'<div class="accounting-company-box ama">'
             +'<div class="accounting-company-title">🟠 尼崎本社｜経費</div>'
-            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="ama-exp-shiire" min="0" readonly onclick="openPurchaseMini('amagasaki')" value="'+val(a.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="ama-exp-shiire" min="0" readonly onclick="openPurchaseMini(&quot;amagasaki&quot;)" value="'+val(a.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="ama-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="ama-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.other)+'"></div></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="ama-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="ama-labor-subtotal">¥0</b></div>'
