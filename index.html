@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.37 在庫記入者表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.41 開催日表示修正版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -4125,36 +4125,40 @@ function normalizeEventDateValue(v){
   return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
 }
 function dateListForEvent(ev){
+  // v4.3.41: 売上編集の日付は「カレンダーの開催日」だけを正とする。
+  // sales.days / 過去の日別入力 / 同名イベントの残存データから日付を増やさない。
+  // 既存の日別売上データ自体は削除しないため、保存済みデータを壊さない。
   var dates=[];
   if(!ev) return dates;
   var start=normalizeEventDateValue(ev.date||ev.startDate||ev.fromDate);
   if(!start) return dates;
-  var found={}; found[start]=true;
-  function addDate(v){ var d=normalizeEventDateValue(v); if(d && d>=start) found[d]=true; }
-  [ev.dateEnd,ev.endDate,ev.toDate,ev.finishDate,ev.lastDate].forEach(addDate);
-  if(Array.isArray(ev.dates)) ev.dates.forEach(addDate);
-  if(Array.isArray(ev.eventDates)) ev.eventDates.forEach(addDate);
-  [ev.dayAssignments,ev.dayAvailability,ev.dailyStaff,ev.attendanceByDate].forEach(function(m){ if(m&&typeof m==='object') Object.keys(m).forEach(addDate); });
-  if(ev.sales && ev.sales.days && typeof ev.sales.days==='object') Object.keys(ev.sales.days).forEach(addDate);
-  // カレンダー上で同名・同会場が別イベントとして連日登録されている場合も1つの日別編集にまとめる
-  try{
-    (state.events||[]).forEach(function(other){
-      if(!other || String(other.id)===String(ev.id)) return;
-      var n1=normalizeEventMatchName(eventNameSafe(ev)||ev.name), n2=normalizeEventMatchName(eventNameSafe(other)||other.name);
-      var sameName=n1&&n2&&(n1===n2||n1.indexOf(n2)>=0||n2.indexOf(n1)>=0);
-      var samePlace=!String(ev.place||'').trim() || !String(other.place||'').trim() || String(other.place||'').trim()===String(ev.place||'').trim();
-      if(sameName && samePlace) addDate(other.date||other.startDate||other.fromDate);
-    });
-  }catch(e){}
-  var sorted=Object.keys(found).sort();
-  var end=sorted[sorted.length-1]||start;
-  // 開始日から終了日までをすべて作成（連続日を漏らさない）
-  var cur=new Date(start+'T00:00:00'), last=new Date(end+'T00:00:00'), guard=0;
+
+  // 明示的な複数開催日がある場合は、それを優先。
+  var explicit=[];
+  function pushExplicit(v){
+    var d=normalizeEventDateValue(v);
+    if(d && explicit.indexOf(d)<0) explicit.push(d);
+  }
+  if(Array.isArray(ev.dates)) ev.dates.forEach(pushExplicit);
+  if(Array.isArray(ev.eventDates)) ev.eventDates.forEach(pushExplicit);
+  if(explicit.length){
+    pushExplicit(start);
+    return explicit.sort();
+  }
+
+  // カレンダーで終了日が設定されている連日イベントだけ、開始〜終了を展開。
+  var end=normalizeEventDateValue(ev.dateEnd||ev.endDate||ev.toDate||ev.finishDate||ev.lastDate);
+  if(!end || end<start) return [start];
+
+  var cur=new Date(start+'T00:00:00');
+  var last=new Date(end+'T00:00:00');
+  var guard=0;
   while(cur<=last && guard<32){
     dates.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'));
-    cur.setDate(cur.getDate()+1); guard++;
+    cur.setDate(cur.getDate()+1);
+    guard++;
   }
-  return dates;
+  return dates.length?dates:[start];
 }
 function getDaySales(ev, ds){
   var s=ev.sales||{};
