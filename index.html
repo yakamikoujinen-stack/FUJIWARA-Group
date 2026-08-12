@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.41 開催日表示修正版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.38 在庫品目別更新表示版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -157,6 +157,35 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 @media(max-width:520px){
   .inventory-write-meta{display:grid;grid-template-columns:auto 1fr}
   .inventory-write-meta .iwm-value{margin-right:0}
+}
+
+
+/* ===== v4.3.38 在庫管理：品目別の最終更新 ===== */
+.inv-last-update{
+  min-width:185px;
+  font-size:10px;
+  line-height:1.55;
+  color:#5f4a16;
+  white-space:normal;
+}
+.inv-last-update .ilu-action{
+  font-size:11px;
+  font-weight:950;
+  color:#241900;
+}
+.inv-last-update .ilu-detail{
+  color:#8a6200;
+  font-weight:850;
+}
+.inv-last-update .ilu-meta{
+  color:#6d5a2b;
+  margin-top:2px;
+}
+.inv-last-update .ilu-none{
+  color:#9a8a65;
+}
+.inv-table th.inv-update-head{
+  min-width:185px;
 }
 
 /* INVENTORY */
@@ -604,15 +633,6 @@ body::before,#app::before,.page::before{
 .settlement-tag.fujiwara{background:#fff1bd;color:#735300;border-color:#d8b33e}
 .settlement-tag.amagasaki{background:#ffe0ca;color:#913f0b;border-color:#e59a60}
 .settlement-tag.unset{background:#f1f1f1;color:#666;border-color:#c8c8c8}
-
-/* ===== v4.3.40 仕入れ簡単明細（ピンポイント追加） ===== */
-.purchase-mini-input{cursor:pointer;background:#fffdf6!important;font-weight:900;text-align:right}
-.purchase-mini-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:5000;display:none;align-items:center;justify-content:center;padding:18px}
-.purchase-mini-modal.show{display:flex}
-.purchase-mini-card{width:min(520px,100%);max-height:85vh;overflow:auto;background:#fffdf6;border:2px solid #d8bf75;border-radius:18px;padding:16px;box-shadow:0 14px 40px rgba(0,0,0,.3)}
-.purchase-mini-row{display:grid;grid-template-columns:1fr 120px 44px;gap:7px;margin:8px 0}
-.purchase-mini-row input{width:100%;padding:10px;border:1.5px solid #d8bf75;border-radius:9px;font-size:16px;background:#fff}
-.purchase-mini-total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:950;padding:12px 4px;border-top:2px solid #d8bf75;margin-top:10px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -767,7 +787,7 @@ body::before,#app::before,.page::before{
           </div>
           <div class="scroll-x">
             <table class="inv-table">
-              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th></th></tr></thead>
+              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th></th><th class="inv-update-head">最終更新</th></tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table>
           </div>
@@ -3257,13 +3277,15 @@ function deleteEvent() {
 function inventoryWriterName(){
   return userName || (typeof roleLabel==='function' ? roleLabel(role) : '') || '未入力';
 }
-function markInventoryEdited(item, action){
+function markInventoryEdited(item, action, detail){
   var now=new Date().toISOString();
   var by=inventoryWriterName();
   state.inventoryMeta={updatedAt:now,updatedBy:by,action:action||''};
   if(item){
     item.inventoryUpdatedAt=now;
     item.inventoryUpdatedBy=by;
+    item.inventoryUpdatedAction=action||'';
+    item.inventoryUpdatedDetail=detail||'';
   }
   renderInventoryWriteMeta();
 }
@@ -3299,6 +3321,19 @@ function confirmInventoryCarryOut(){
   fbSave();
 }
 
+function inventoryItemUpdateHtml(item){
+  if(!item || !item.inventoryUpdatedAt){
+    return '<div class="inv-last-update"><span class="ilu-none">更新記録なし</span></div>';
+  }
+  var action=item.inventoryUpdatedAction||'更新';
+  var detail=item.inventoryUpdatedDetail||'';
+  return '<div class="inv-last-update">'
+    +'<div class="ilu-action">'+action+'</div>'
+    +(detail?'<div class="ilu-detail">'+detail+'</div>':'')
+    +'<div class="ilu-meta">👤 '+(item.inventoryUpdatedBy||'未記入')+'　📅 '+formatInventoryWriteDate(item.inventoryUpdatedAt)+'</div>'
+    +'</div>';
+}
+
 function renderInventory() {
   if(role==='user') return;
   renderInventoryWriteMeta();
@@ -3332,7 +3367,8 @@ function renderInventory() {
       +'<td><span class="mono" style="font-weight:700">'+item.hakobi+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
       +'<td><span class="mono" style="font-weight:700;color:'+(item.stock<5?'var(--red)':'var(--green)')+'">'+item.stock+'</span></td>'
       +'<td>'+warehouseLocationSelectHtml(item)+'</td>'
-      +'<td>'+editBtns+'</td></tr>';
+      +'<td>'+editBtns+'</td>'
+      +'<td>'+inventoryItemUpdateHtml(item)+'</td></tr>';
   }).join('');
   renderWarehouseMapCounts();
   renderWarehouseList();
@@ -3370,7 +3406,7 @@ function updateInvItemLocation(id, loc){
   if(!item) return;
   var oldLoc=item.loc||'未設定';
   item.loc=loc||'未設定';
-  markInventoryEdited(item,'保存場所変更');
+  markInventoryEdited(item,'保存場所変更',oldLoc+' → '+item.loc);
   addAudit('在庫保存場所変更', item.name+'｜'+oldLoc+'→'+item.loc+'｜記入者 '+inventoryWriterName());
   renderInventory();
   toast('📍 '+item.name+' を '+item.loc+' に設定しました');
@@ -3452,7 +3488,7 @@ function quickAddItem(){
   var cat=invCatFilter==='すべて'?'その他':invCatFilter;
   var newItem={id:String(Date.now()),name:name,cat:cat,unit:'個',stock:0,hakobi:0,loc:selectedWarehouseLoc||'未設定'};
   state.invItems.push(newItem);
-  markInventoryEdited(newItem,'品目追加');
+  markInventoryEdited(newItem,'品目追加','新規登録');
   addAudit('在庫品目追加', name+'（'+cat+'）｜記入者 '+inventoryWriterName());
   document.getElementById('quick-item-name').value='';
   renderInventory();
@@ -3481,7 +3517,7 @@ function saveStockAdjust() {
   var oldStock=item.stock||0;
   item.hakobi=parseInt(document.getElementById('stock-hakobi').value)||0;
   item.stock=parseInt(document.getElementById('stock-stock').value)||0;
-  markInventoryEdited(item,'在庫数量修正');
+  markInventoryEdited(item,'在庫数量修正','在庫 '+oldStock+' → '+item.stock+' / 持出 '+oldHakobi+' → '+item.hakobi);
   addAudit('在庫数量修正', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock+'｜記入者 '+inventoryWriterName());
   closeModal('modal-stock');
   renderInventory();
@@ -3513,14 +3549,31 @@ function saveInvItemForm() {
   var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,loc:document.getElementById('iif-location').value||'未設定',stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
     var editedItem=null;
-    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); editedItem=state.invItems[i]; break; } }
-    markInventoryEdited(editedItem,'品目編集');
+    var oldItemData=null;
+    for(var i=0;i<state.invItems.length;i++){
+      if(String(state.invItems[i].id)===String(rawId)){
+        oldItemData=Object.assign({},state.invItems[i]);
+        Object.assign(state.invItems[i],data);
+        editedItem=state.invItems[i];
+        break;
+      }
+    }
+    var editChanges=[];
+    if(oldItemData){
+      if(String(oldItemData.name||'')!==String(data.name||'')) editChanges.push('品目名 '+(oldItemData.name||'')+' → '+(data.name||''));
+      if(String(oldItemData.cat||'')!==String(data.cat||'')) editChanges.push('カテゴリ '+(oldItemData.cat||'')+' → '+(data.cat||''));
+      if(String(oldItemData.unit||'')!==String(data.unit||'')) editChanges.push('単位 '+(oldItemData.unit||'')+' → '+(data.unit||''));
+      if(String(oldItemData.loc||'未設定')!==String(data.loc||'未設定')) editChanges.push('場所 '+(oldItemData.loc||'未設定')+' → '+(data.loc||'未設定'));
+      if(Number(oldItemData.stock||0)!==Number(data.stock||0)) editChanges.push('在庫 '+(oldItemData.stock||0)+' → '+(data.stock||0));
+      if(Number(oldItemData.hakobi||0)!==Number(data.hakobi||0)) editChanges.push('持出 '+(oldItemData.hakobi||0)+' → '+(data.hakobi||0));
+    }
+    markInventoryEdited(editedItem,'品目編集',editChanges.join(' / ')||'内容更新');
     addAudit('在庫品目編集', name+'｜記入者 '+inventoryWriterName());
     toast('✅ 品目を更新しました');
   } else {
     data.id=String(Date.now());
     state.invItems.push(data);
-    markInventoryEdited(data,'品目追加');
+    markInventoryEdited(data,'品目追加','新規登録');
     addAudit('在庫品目追加', name+'｜記入者 '+inventoryWriterName());
     toast('✅ 品目を追加しました');
   }
@@ -3690,59 +3743,9 @@ function getCompanySalesSummaryFromEdit(){
     });
     var amount=parseInt(inp.value)||0;
     if(company==='fujiwara') out.fujiwara+=amount;
-    else if(company==='amagasaki'){ out.amagasaki+=amount; if(amount>0)out.hasAma=true; }
+    else if(company==='amagasaki'){ out.amagasaki+=amount; out.hasAma=true; }
   });
   return out;
-}
-var purchaseMiniCompany='fujiwara';
-function getCurrentPurchaseDetails(company){
-  var ev=currentSalesEditEvent(), ds=(document.getElementById('simple-sales-date')||{}).value||'';
-  var simple=ev?getDaySimpleSales(ev,ds):{};
-  var split=getDayAccountingSplit(simple||{});
-  var pd=split.purchaseDetails||{};
-  var rows=Array.isArray(pd[company])?pd[company]:[];
-  if(rows.length) return rows.map(function(r){return {vendor:r.vendor||'',amount:parseInt(r.amount)||0};});
-  var old=getCompanyExpenseAmounts(simple||{}), amount=parseInt(((old[company]||{}).shiire))||0;
-  return amount?[{vendor:'',amount:amount}]:[];
-}
-function purchaseMiniRowsFromDom(){
-  var rows=[];
-  document.querySelectorAll('#purchase-mini-list .purchase-mini-row').forEach(function(r){
-    var vendor=(r.querySelector('.pm-vendor')||{}).value||'';
-    var amount=parseInt((r.querySelector('.pm-amount')||{}).value)||0;
-    if(vendor.trim()||amount) rows.push({vendor:vendor.trim(),amount:amount});
-  });
-  return rows;
-}
-function refreshPurchaseMiniTotal(){
-  var total=purchaseMiniRowsFromDom().reduce(function(a,r){return a+(parseInt(r.amount)||0);},0);
-  var el=document.getElementById('purchase-mini-total'); if(el)el.textContent='¥'+total.toLocaleString('ja-JP');
-}
-function addPurchaseMiniRow(data){
-  data=data||{}; var list=document.getElementById('purchase-mini-list'); if(!list)return;
-  var row=document.createElement('div'); row.className='purchase-mini-row';
-  row.innerHTML='<input class="pm-vendor" placeholder="購入先" value="'+escHtml(data.vendor||'')+'"><input class="pm-amount" type="number" min="0" inputmode="numeric" placeholder="金額" value="'+((parseInt(data.amount)||0)||'')+'" oninput="refreshPurchaseMiniTotal()"><button type="button" class="btn btn-outline btn-sm" onclick="this.parentNode.remove();refreshPurchaseMiniTotal()">×</button>';
-  list.appendChild(row); refreshPurchaseMiniTotal();
-}
-function openPurchaseMini(company){
-  purchaseMiniCompany=company==='amagasaki'?'amagasaki':'fujiwara';
-  var title=document.getElementById('purchase-mini-title'); if(title)title.textContent=(purchaseMiniCompany==='fujiwara'?'FUJIWARAグループ':'尼崎本社')+'｜仕入れ明細';
-  var list=document.getElementById('purchase-mini-list'); if(list)list.innerHTML='';
-  var rows=getCurrentPurchaseDetails(purchaseMiniCompany); if(!rows.length)rows=[{}];
-  rows.forEach(addPurchaseMiniRow); document.getElementById('purchase-mini-modal').classList.add('show');
-}
-function closePurchaseMini(){var m=document.getElementById('purchase-mini-modal');if(m)m.classList.remove('show');}
-function applyPurchaseMini(){
-  var rows=purchaseMiniRowsFromDom(), total=rows.reduce(function(a,r){return a+(parseInt(r.amount)||0);},0);
-  var input=document.getElementById(purchaseMiniCompany==='fujiwara'?'fuji-exp-shiire':'ama-exp-shiire');
-  if(input){input.value=total||''; input.dataset.purchaseDetails=JSON.stringify(rows);}
-  closePurchaseMini(); updateSimpleSalesEditTotals(); updateCompanyAccountingSummary();
-}
-function currentPurchaseDetailsForSave(company, previous){
-  var input=document.getElementById(company==='fujiwara'?'fuji-exp-shiire':'ama-exp-shiire');
-  if(input&&input.dataset.purchaseDetails){try{return JSON.parse(input.dataset.purchaseDetails)||[];}catch(e){}}
-  var split=getDayAccountingSplit(previous||{}), pd=split.purchaseDetails||{};
-  return Array.isArray(pd[company])?pd[company]:[];
 }
 function updateCompanyAccountingSummary(){
   function n(id){var el=document.getElementById(id); return el?(parseInt(el.value)||0):0;}
@@ -4125,40 +4128,36 @@ function normalizeEventDateValue(v){
   return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
 }
 function dateListForEvent(ev){
-  // v4.3.41: 売上編集の日付は「カレンダーの開催日」だけを正とする。
-  // sales.days / 過去の日別入力 / 同名イベントの残存データから日付を増やさない。
-  // 既存の日別売上データ自体は削除しないため、保存済みデータを壊さない。
   var dates=[];
   if(!ev) return dates;
   var start=normalizeEventDateValue(ev.date||ev.startDate||ev.fromDate);
   if(!start) return dates;
-
-  // 明示的な複数開催日がある場合は、それを優先。
-  var explicit=[];
-  function pushExplicit(v){
-    var d=normalizeEventDateValue(v);
-    if(d && explicit.indexOf(d)<0) explicit.push(d);
-  }
-  if(Array.isArray(ev.dates)) ev.dates.forEach(pushExplicit);
-  if(Array.isArray(ev.eventDates)) ev.eventDates.forEach(pushExplicit);
-  if(explicit.length){
-    pushExplicit(start);
-    return explicit.sort();
-  }
-
-  // カレンダーで終了日が設定されている連日イベントだけ、開始〜終了を展開。
-  var end=normalizeEventDateValue(ev.dateEnd||ev.endDate||ev.toDate||ev.finishDate||ev.lastDate);
-  if(!end || end<start) return [start];
-
-  var cur=new Date(start+'T00:00:00');
-  var last=new Date(end+'T00:00:00');
-  var guard=0;
+  var found={}; found[start]=true;
+  function addDate(v){ var d=normalizeEventDateValue(v); if(d && d>=start) found[d]=true; }
+  [ev.dateEnd,ev.endDate,ev.toDate,ev.finishDate,ev.lastDate].forEach(addDate);
+  if(Array.isArray(ev.dates)) ev.dates.forEach(addDate);
+  if(Array.isArray(ev.eventDates)) ev.eventDates.forEach(addDate);
+  [ev.dayAssignments,ev.dayAvailability,ev.dailyStaff,ev.attendanceByDate].forEach(function(m){ if(m&&typeof m==='object') Object.keys(m).forEach(addDate); });
+  if(ev.sales && ev.sales.days && typeof ev.sales.days==='object') Object.keys(ev.sales.days).forEach(addDate);
+  // カレンダー上で同名・同会場が別イベントとして連日登録されている場合も1つの日別編集にまとめる
+  try{
+    (state.events||[]).forEach(function(other){
+      if(!other || String(other.id)===String(ev.id)) return;
+      var n1=normalizeEventMatchName(eventNameSafe(ev)||ev.name), n2=normalizeEventMatchName(eventNameSafe(other)||other.name);
+      var sameName=n1&&n2&&(n1===n2||n1.indexOf(n2)>=0||n2.indexOf(n1)>=0);
+      var samePlace=!String(ev.place||'').trim() || !String(other.place||'').trim() || String(other.place||'').trim()===String(ev.place||'').trim();
+      if(sameName && samePlace) addDate(other.date||other.startDate||other.fromDate);
+    });
+  }catch(e){}
+  var sorted=Object.keys(found).sort();
+  var end=sorted[sorted.length-1]||start;
+  // 開始日から終了日までをすべて作成（連続日を漏らさない）
+  var cur=new Date(start+'T00:00:00'), last=new Date(end+'T00:00:00'), guard=0;
   while(cur<=last && guard<32){
     dates.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'));
-    cur.setDate(cur.getDate()+1);
-    guard++;
+    cur.setDate(cur.getDate()+1); guard++;
   }
-  return dates.length?dates:[start];
+  return dates;
 }
 function getDaySales(ev, ds){
   var s=ev.sales||{};
@@ -4262,7 +4261,7 @@ function _openSalesEditCore(id, selectedDate) {
         var amount=parseInt(simple.items[k])||0;
         var company=(split.items||{})[k]||'';
         if(company==='fujiwara') fSales+=amount;
-        else if(company==='amagasaki'){ aSales+=amount; if(amount>0)hasA=true; }
+        else if(company==='amagasaki'){ aSales+=amount; hasA=true; }
       });
       return '<div style="font-size:13px;font-weight:900;color:var(--gold);margin:12px 0 6px">この日の経費・お金</div>'
         +'<div style="display:flex;flex-direction:column;gap:8px;margin:0 0 10px">'
@@ -4272,7 +4271,7 @@ function _openSalesEditCore(id, selectedDate) {
         +'<div class="accounting-company-grid">'
           +'<div class="accounting-company-box fuji">'
             +'<div class="accounting-company-title">🟡 FUJIWARAグループ｜経費</div>'
-            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="fuji-exp-shiire" min="0" readonly onclick="openPurchaseMini(&quot;fujiwara&quot;)" value="'+val(f.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="fuji-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="fuji-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="fuji-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="fuji-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(f.other)+'"></div></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="fuji-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="fuji-labor-subtotal">¥0</b></div>'
@@ -4280,7 +4279,7 @@ function _openSalesEditCore(id, selectedDate) {
           +'</div>'
           +'<div class="accounting-company-box ama">'
             +'<div class="accounting-company-title">🟠 尼崎本社｜経費</div>'
-            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ（タップで明細）</label><input class="purchase-mini-input" type="number" id="ama-exp-shiire" min="0" readonly onclick="openPurchaseMini(&quot;amagasaki&quot;)" value="'+val(a.shiire)+'"></div></div>'
+            +'<div class="fg2"><div class="fg"><label>場所代</label><input type="number" id="ama-exp-basho" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.basho)+'"></div><div class="fg"><label>仕入れ</label><input type="number" id="ama-exp-shiire" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.shiire)+'"></div></div>'
             +'<div class="fg2"><div class="fg"><label>交通費</label><input type="number" id="ama-exp-kotsu" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.kotsu)+'"></div><div class="fg"><label>その他経費</label><input type="number" id="ama-exp-other" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+val(a.other)+'"></div></div>'
             +'<div class="accounting-company-line"><span>経費</span><b id="ama-expense-subtotal">¥0</b></div>'
             +'<div class="accounting-company-line"><span>労務費</span><b id="ama-labor-subtotal">¥0</b></div>'
@@ -4306,7 +4305,7 @@ async function saveSalesEdit() {
   document.querySelectorAll('.simple-sales-label').forEach(function(inp){labels[inp.dataset.key]=(inp.value||'').trim();});
   document.querySelectorAll('.simple-sales-input').forEach(function(inp){items[inp.dataset.key]=parseInt(inp.value)||0;});
   var previous=getDaySimpleSales(ev,ds);
-  var accountingSplit={items:{},expenses:{},companyExpenses:{fujiwara:{},amagasaki:{}},purchaseDetails:{fujiwara:[],amagasaki:[]}};
+  var accountingSplit={items:{},expenses:{},companyExpenses:{fujiwara:{},amagasaki:{}}};
   document.querySelectorAll('.simple-sales-company').forEach(function(sel){accountingSplit.items[sel.dataset.key]=sel.value||'';});
   function evn(id){var el=document.getElementById(id);return el?(parseInt(el.value)||0):0;}
   accountingSplit.companyExpenses.fujiwara={
@@ -4315,8 +4314,6 @@ async function saveSalesEdit() {
   accountingSplit.companyExpenses.amagasaki={
     basho:evn('ama-exp-basho'),shiire:evn('ama-exp-shiire'),kotsu:evn('ama-exp-kotsu'),other:evn('ama-exp-other')
   };
-  accountingSplit.purchaseDetails.fujiwara=currentPurchaseDetailsForSave('fujiwara',previous);
-  accountingSplit.purchaseDetails.amagasaki=currentPurchaseDetailsForSave('amagasaki',previous);
   var payments=collectStaffPayments().map(function(p){
     return {
       name:p.name||'',
@@ -4337,17 +4334,6 @@ async function saveSalesEdit() {
     labor:{total:laborTotal}},money:{deposit:parseInt((document.getElementById('simple-money-deposit')||{}).value)||0,unpaid:parseInt((document.getElementById('simple-money-unpaid')||{}).value)||0,note:(document.getElementById('simple-money-note')||{}).value||''},settlement:{cashSales:parseInt((document.getElementById('simple-cash-sales')||{}).value)||0,receivableSales:parseInt((document.getElementById('simple-receivable-sales')||{}).value)||0,staffPayments:payments},accountingSplit:accountingSplit,memo:(document.getElementById('simple-sales-memo')||{}).value||'',safeTransfer:(previous.safeTransfer||null),updatedBy:userName||'未入力',updatedAt:new Date().toLocaleString('ja-JP')};
   ev.sales=ev.sales||{}; ev.sales.days=ev.sales.days||{}; ev.sales.days[ds]={simple:simple};
   aggregateDailySimpleSales(ev); syncSimpleMoneyToKing(ev);
-
-  // v4.3.40: 日別売上・仕入明細を先にFirebaseへ確定保存する。
-  // EVENT_SETTLEMENT_PATH の同期が先に走ると realtime listener が古い events を読み戻し、
-  // 直前に入力した購入先・金額などが消えることがあるため、events を先に保存して待つ。
-  try{
-    if(window.firebase && firebase.apps && firebase.apps.length && firebase.database && window._fgFirebaseReady){
-      await firebase.database().ref('fujiwara/events').set(state.events);
-    }
-  }catch(primarySaveErr){
-    console.warn('日別売上の先行保存エラー', primarySaveErr);
-  }
 
   var safeSyncResult=null;
   if(simple.safeTransfer&&simple.safeTransfer.completed){
@@ -4824,41 +4810,7 @@ function notifyLeaderEmail(kind, detail){
 
 // ════ FIREBASE PLACEHOLDER ════
 // Firebaseが読み込まれるまでの仮関数
-// ===== v4.3.42 保存消失防止：端末バックアップ + Firebase新旧判定 =====
-var FG_MAIN_BACKUP_KEY='fujiwara_main_state_backup_v1';
-function fgCloneState(src){
-  try{return JSON.parse(JSON.stringify(src));}catch(e){return null;}
-}
-function fgReadMainBackup(){
-  try{return JSON.parse(localStorage.getItem(FG_MAIN_BACKUP_KEY)||'null');}catch(e){return null;}
-}
-function fgWriteMainBackup(pending, stamp){
-  try{
-    var rec={version:1,savedAt:stamp||new Date().toISOString(),pending:!!pending,state:fgCloneState(state)};
-    localStorage.setItem(FG_MAIN_BACKUP_KEY,JSON.stringify(rec));
-    return rec;
-  }catch(e){console.warn('端末バックアップ保存失敗',e);return null;}
-}
-function fgMarkMainBackupSynced(stamp){
-  try{
-    var rec=fgReadMainBackup();
-    if(rec){rec.pending=false;if(stamp)rec.savedAt=stamp;localStorage.setItem(FG_MAIN_BACKUP_KEY,JSON.stringify(rec));}
-  }catch(e){}
-}
-function fgApplyStateObject(src){
-  if(!src||typeof src!=='object')return;
-  if(Array.isArray(src.events)) state.events=src.events;
-  if(Array.isArray(src.invItems)) state.invItems=src.invItems;
-  if(src.inventoryMeta&&typeof src.inventoryMeta==='object') state.inventoryMeta=src.inventoryMeta;
-  if(Array.isArray(src.notices)) state.notices=src.notices;
-  if(Array.isArray(src.staffList)) state.staffList=src.staffList;
-  if(Array.isArray(src.auditLogs)) state.auditLogs=src.auditLogs;
-}
-function fbSave(){
-  // ボタン操作直後に必ず端末へ退避。Firebase通信中でも入力内容を失わない。
-  if(window._fbSave) window._fbSave();
-  else fgWriteMainBackup(true);
-}
+function fbSave(){ if(window._fbSave) window._fbSave(); }
 </script>
 
 <!-- FIREBASE SDK (compat) -->
@@ -4921,22 +4873,15 @@ function fbSave(){
   }
 
   function normalize(ev){
-    // 既存フィールドを全部残す。dates / eventDates / dayAssignments 等を同期時に消さない。
-    ev=ev||{};
-    return Object.assign({},ev,{
+    return {
       id:String(ev.id||''),
       name:ev.name||'',
       date:ev.date||'',
-      dateEnd:ev.dateEnd||ev.endDate||ev.toDate||'',
-      endDate:ev.endDate||ev.dateEnd||ev.toDate||'',
-      toDate:ev.toDate||ev.dateEnd||ev.endDate||'',
-      dates:Array.isArray(ev.dates)?ev.dates:(ev.dates?Object.values(ev.dates):[]),
-      eventDates:Array.isArray(ev.eventDates)?ev.eventDates:(ev.eventDates?Object.values(ev.eventDates):[]),
-      dayAssignments:ev.dayAssignments&&typeof ev.dayAssignments==='object'?ev.dayAssignments:{},
+      dateEnd:ev.dateEnd||'',
       zone:ev.zone||'A',
       place:ev.place||'',
       status:ev.status||'planned',
-      requiredStaff:parseInt(ev.requiredStaff)||0,
+      requiredStaff: parseInt(ev.requiredStaff)||0,
       memo:ev.memo||'',
       itemsText:ev.itemsText||'',
       bsLeader:ev.bsLeader||'',
@@ -4947,61 +4892,35 @@ function fbSave(){
       availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret
-    });
+    };
   }
 
   window._fbSave = function(){
-    // 先に端末へ保存してからFirebaseへ送る。通信不良でも入力内容を保持する。
-    var stamp=new Date().toISOString();
-    fgWriteMainBackup(true,stamp);
+    // Firebaseの読み込み前に保存すると、初期データで上書きしてしまうため停止
     if(!window._fgFirebaseReady){
-      console.log('Firebase読込前のため端末に保留保存しました');
-      showSync('💾 端末に保留保存しました');
-      return Promise.resolve(false);
+      console.log('Firebase読み込み前の保存をスキップしました');
+      return;
     }
     showSync('🔄 保存中...');
-    return db.ref('fujiwara').update({
+    db.ref('fujiwara').update({
       events:state.events,
       invItems:state.invItems,
       inventoryMeta:state.inventoryMeta||{},
       notices:state.notices,
       staffList:state.staffList,
       auditLogs:state.auditLogs||[],
-      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[]),
-      'appSyncMeta/mainUpdatedAt':stamp
-    }).then(function(){
-      fgMarkMainBackupSynced(stamp);
-      showSync('✅ 同期完了');
-      return true;
-    }).catch(function(e){
-      showSync('⚠️ Firebase未同期・端末には保存済み');
-      console.warn('Firebase保存失敗。端末バックアップを保持します',e);
-      return false;
-    });
+      // KING側はこの日別データを読み、連日イベントの全開催日を合算します
+      kingDailyFinance:buildKingDailyFinanceRecords(state.events||[])
+    }).then(function(){ showSync('✅ 同期完了'); })
+      .catch(function(e){ showSync('⚠️ エラー: '+e.message); });
   };
 
   db.ref('fujiwara').on('value', function(snapshot){
     var data=snapshot.val();
     window._fgFirebaseReady = true;
     startPartnerRealtimeSync();
-    var localBackup=fgReadMainBackup();
-    var remoteStamp=(data&&data.appSyncMeta&&data.appSyncMeta.mainUpdatedAt)||'';
-    var localStamp=(localBackup&&localBackup.savedAt)||'';
     if(!data){
-      if(localBackup&&localBackup.state){
-        fgApplyStateObject(localBackup.state);
-        setTimeout(function(){window._fbSave&&window._fbSave();},0);
-        showSync('💾 端末保存を復元・同期中');
-      }else{
-        showSync('✅ Firebase接続済み');
-      }
-      return;
-    }
-    // 端末側に未同期の新しい保存がある場合、Firebaseの古い値で上書きしない。
-    if(localBackup&&localBackup.state&&localBackup.pending&&localStamp&&(!remoteStamp||localStamp>remoteStamp)){
-      fgApplyStateObject(localBackup.state);
-      setTimeout(function(){window._fbSave&&window._fbSave();},0);
-      showSync('💾 未同期データを復元・再送信中');
+      showSync('✅ Firebase接続済み');
       return;
     }
     if(data.events){
@@ -5023,12 +4942,6 @@ function fbSave(){
     if(data.staffList) state.staffList=Array.isArray(data.staffList)?data.staffList:Object.values(data.staffList);
     if(typeof ensureRouteStaffNames==='function') ensureRouteStaffNames();
     if(data.auditLogs) state.auditLogs=Array.isArray(data.auditLogs)?data.auditLogs:Object.values(data.auditLogs);
-    // Firebaseから正常に読めた状態も端末へバックアップする。
-    try{
-      var remoteBackupStamp=remoteStamp||new Date().toISOString();
-      var backupRec={version:1,savedAt:remoteBackupStamp,pending:false,state:fgCloneState(state)};
-      localStorage.setItem(FG_MAIN_BACKUP_KEY,JSON.stringify(backupRec));
-    }catch(e){}
     startPartnerRealtimeSync();
     if(document.getElementById('app').style.display!=='none'){
       renderCalendar();
@@ -5371,16 +5284,5 @@ document.addEventListener('click',function(e){
   forceOpenSalesEditById(btn.getAttribute('data-event-id'));
 },false);
 </script>
-
-<div id="purchase-mini-modal" class="purchase-mini-modal" onclick="if(event.target===this)closePurchaseMini()">
- <div class="purchase-mini-card">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b id="purchase-mini-title" style="font-size:18px">仕入れ明細</b><button type="button" class="btn btn-outline btn-sm" onclick="closePurchaseMini()">閉じる</button></div>
-  <div style="font-size:12px;color:#6d5a2b;margin:7px 0 10px">購入先と金額だけ入力できます。合計金額が「仕入れ」に自動反映されます。</div>
-  <div id="purchase-mini-list"></div>
-  <button type="button" class="btn btn-outline btn-sm" onclick="addPurchaseMiniRow()">＋購入先を追加</button>
-  <div class="purchase-mini-total"><span>仕入れ合計</span><span id="purchase-mini-total">¥0</span></div>
-  <button type="button" class="btn btn-gold" style="width:100%;margin-top:8px" onclick="applyPurchaseMini()">この明細を反映</button>
- </div>
-</div>
 </body>
 </html>
