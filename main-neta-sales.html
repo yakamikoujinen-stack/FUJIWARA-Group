@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17324d">
-<title>主力ネタ一覧 v2.8｜Firebase材料マスター同期版</title>
+<title>主力ネタ一覧 v2.9｜売上予定・仕入連携版</title>
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d8a62a;--green:#23845a;--red:#c84545;--bg:#f3f8fc;--card:#fff;--text:#172432;--muted:#687b8e;--line:#d9e4ed;--shadow:0 9px 25px rgba(23,50,77,.11)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:linear-gradient(180deg,#f8fcff,#edf5fa);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:1200px;margin:auto;padding:0 12px 110px}header{position:sticky;top:0;z-index:20;margin:0 -12px 14px;padding:15px 14px;background:linear-gradient(135deg,var(--navy),#2c6799);color:#fff;box-shadow:0 5px 18px rgba(23,50,77,.23)}.top{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:23px;margin:0}.sub{font-size:12px;color:#d9ebfa;margin-top:4px}.back{border:0;border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.16);color:#fff;font-weight:900}.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}h2{font-size:18px;margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.field label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #c8d6e1;border-radius:11px;padding:11px 12px;background:#fff;color:var(--text);font-size:16px}.field textarea{min-height:72px;resize:vertical}.span2{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:900}.primary{background:var(--navy);color:#fff}.green{background:var(--green);color:#fff}.gold{background:var(--gold);color:#231800}.ghost{background:#edf3f7;color:#32495c}.danger{background:#fde7e7;color:var(--red)}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.sum{background:#f7fbfe;border:1px solid var(--line);border-radius:14px;padding:12px}.sum .k{font-size:11px;color:var(--muted);font-weight:800}.sum .v{font-size:22px;font-weight:950;margin-top:4px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}th,td{padding:10px 8px;border-bottom:1px solid #e8eef3;text-align:left;font-size:13px;white-space:nowrap}th{position:sticky;top:0;background:#eef5fa;color:#27445e;font-size:12px;z-index:1}td.num{text-align:right;font-variant-numeric:tabular-nums}.mini{padding:7px 9px;border:0;border-radius:9px;font-weight:900}.edit{background:#e8f2fb;color:#225b87}.del{background:#fdeaea;color:#b33d3d}.empty{text-align:center;color:var(--muted);padding:24px}.rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rank{border:1px solid var(--line);border-radius:14px;overflow:hidden}.rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:8px;padding:10px 12px;border-bottom:1px solid #edf1f5;align-items:center}.rank-row:last-child{border-bottom:0}.rank-no{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:900}.notice{background:#fff8dc;border:1px solid #efd67f;border-radius:14px;padding:11px 13px;color:#735812;font-size:12px;line-height:1.7;margin-bottom:12px}.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:7px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(23,50,77,.08)}.bottom button{flex:1}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#182635;color:#fff;padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:50}.toast.show{opacity:1}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.rank-grid{grid-template-columns:1fr}.span2{grid-column:span 2}}@media(max-width:440px){.grid{grid-template-columns:1fr}.span2{grid-column:span 1}.summary{grid-template-columns:1fr 1fr}}
@@ -17,7 +17,7 @@
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script></head>
 <body>
-<header><div class="top"><div><h1>📈 主力ネタ一覧 v2.8</h1><div class="sub">イベント別の売上・販売数・単価を記録</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📈 主力ネタ一覧 v2.9</h1><div class="sub">イベント別の売上・販売数・単価を記録</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 <div class="wrap">
 <div class="notice"><b>v2.8：</b>品目名・単位・使用資材・1単位で作れる数は、Firebaseの「主力・在庫データ（材料マスター）」から自動読込します。<br>この画面ではイベントごとの売上金額・販売単価・原価・備考だけを入力します。品目の追加・訂正は材料マスターで行ってください。<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
 <button type="button" class="btn gold" onclick="location.href='material-master.html'">📚 主力・在庫データを開く</button>
@@ -232,7 +232,30 @@ function calcCategory(el){
  const baseQty=saleRows.reduce((sum,tr)=>sum+Number(tr.querySelector('.row-qty')?.value||0),0);
  sec.querySelectorAll('tr[data-type="material"]').forEach(tr=>{const y=Number(tr.querySelector('.row-yield')?.value||0);tr.querySelector('.row-qty').value=baseQty>0&&y>0?Math.ceil(baseQty/y):''});
 }
-function saveEventRows(){
+
+async function publishMainNetaShared(){
+  try{
+    if(!firebase.apps.length)return;
+    const payload={
+      records:records,
+      customMaster:customMaster||{},
+      deletedMaster:deletedMaster||{},
+      priceMaster:priceMaster||{},
+      updatedAt:firebase.database.ServerValue.TIMESTAMP,
+      updatedBy:'KING主力ネタ一覧'
+    };
+    await Promise.race([
+      firebase.database().ref(MATERIAL_SHARED_PATH).update(payload),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('共有保存タイムアウト')),7000))
+    ]);
+    return true;
+  }catch(e){
+    console.error('主力ネタ共有保存エラー',e);
+    return false;
+  }
+}
+
+async function saveEventRows(){
  if(!selectedMainEvent)return alert('イベントを選択してください');
  const date=value('date'),eventName=value('eventName'),place=value('place');
  const trs=[...document.querySelectorAll('#categoryBoard tbody tr')];
@@ -257,9 +280,11 @@ function saveEventRows(){
   persist();
   const check=migrateAndDedupeRecords(JSON.parse(localStorage.getItem(KEY)||'[]'));
   if(!check.some(r=>eventRecordKey(r.date,r.eventName)===target))throw new Error('保存確認に失敗');
-  records=check;$('filterMonth').value=date.slice(0,7);$('filterItem').value='';$('search').value='';renderAll();
+  records=check;
+  const sharedOk=await publishMainNetaShared();
+  $('filterMonth').value=date.slice(0,7);$('filterItem').value='';$('search').value='';renderAll();
   const categories=splitNeta(selectedMainEvent?.itemsText||selectedMainEvent?.items||selectedMainEvent?.neta);renderCategoryBoard(categories);
-  const result=$('saveResult');if(result){result.style.display='block';result.textContent='✅ '+eventName+'：最新の'+newRows.length+'品目へ上書き保存しました。古い重複記録は整理されています。'}
+  const result=$('saveResult');if(result){result.style.display='block';result.textContent='✅ '+eventName+'：最新の'+newRows.length+'品目へ上書き保存しました。'+(sharedOk?'担当者アプリへ売上予定・必要数量を共有しました。':'端末には保存しましたが共有通信を確認してください。')}
   toast(newRows.length+'品目へ上書きしました');setTimeout(()=>{$('eventTables')?.scrollIntoView({behavior:'smooth',block:'start'})},250)
  }catch(e){alert('保存できませんでした。もう一度お試しください。')}finally{if(btn){btn.disabled=false;btn.textContent='💾 このイベントの一覧表を保存'}}
 }
