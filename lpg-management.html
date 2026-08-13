@@ -214,14 +214,51 @@ function resetForm(){
 function resetPlanForm(){
  $("planDate").value=today();$("planKind").value="予定入荷";$("planQty").value=1;$("planSource").value="自社";$("planMemo").value="";
 }
+function persistPlans(){
+ localStorage.setItem(PKEY,JSON.stringify(plans));
+}
 function savePlan(){
  const q=+$("planQty").value||0;
  if(q<1)return alert("予定本数を入力してください");
- plans.push({id:uid(),date:$("planDate").value||today(),kind:$("planKind").value,qty:q,source:$("planSource").value,memo:$("planMemo").value.trim(),createdAt:Date.now()});
- persist();resetPlanForm();render();
+
+ const item={
+  id:uid(),
+  date:$("planDate").value||today(),
+  kind:$("planKind").value,
+  qty:q,
+  source:$("planSource").value,
+  memo:$("planMemo").value.trim(),
+  createdAt:Date.now()
+ };
+
+ try{
+  plans.push(item);
+  persistPlans();
+
+  const check=JSON.parse(localStorage.getItem(PKEY)||"[]");
+  if(!Array.isArray(check)||!check.some(x=>x.id===item.id)){
+   throw new Error("保存確認に失敗");
+  }
+
+  plans=check;
+  renderWeekSchedule();
+  resetPlanForm();
+  alert("尼崎の予定を保存しました");
+ }catch(e){
+  plans=plans.filter(x=>x.id!==item.id);
+  alert("予定を保存できませんでした。もう一度お試しください。");
+ }
 }
 function delPlan(id){
- if(confirm("この予定を削除しますか？")){plans=plans.filter(x=>x.id!==id);persist();render();}
+ if(confirm("この予定を削除しますか？")){
+  plans=plans.filter(x=>x.id!==id);
+  try{
+   persistPlans();
+   renderWeekSchedule();
+  }catch(e){
+   alert("削除内容を保存できませんでした");
+  }
+ }
 }
 
 function saveEntry(){
