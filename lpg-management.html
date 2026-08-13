@@ -169,6 +169,10 @@ th{background:#edf6fb;color:#3b6078}
       <div><label>区分</label><select id="planSource"><option>自社</option><option>松笠商店</option></select></div>
       <div><label>予定</label><input id="planKind" readonly></div>
     </div>
+    <div class="grid g2" style="margin-top:9px">
+      <div><label>記入者</label><select id="planWriter"><option>藤原</option><option>将</option><option>文太</option></select></div>
+      <div><label>確認</label><select id="planChecked"><option value="0">未確認</option><option value="1">✅ 確認済</option></select></div>
+    </div>
     <div style="margin-top:9px"><label>行先・備考（任意）</label><input id="planMemo" placeholder="例：○○イベント用"></div>
     <div class="tools">
       <button class="primary" onclick="savePlan()">保存する</button>
@@ -311,6 +315,7 @@ async function load(){
  const map=new Map();
  merged.forEach(x=>{if(x&&x.id)map.set(x.id,x)});
  plans=[...map.values()].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+ plans=plans.map(x=>({...x,writer:x.writer||"未設定",checked:!!x.checked}));
 
  if(plans.length){
   try{localStorage.setItem(PKEY,JSON.stringify(plans));await idbSet(PKEY,plans)}catch(e){}
@@ -370,13 +375,15 @@ async function savePlan(){
  if(q<1)return alert("予定本数を入力してください");
  const item={
   id:uid(),date:$("planDate").value||today(),kind:$("planKind").value||"予定入荷",
-  qty:q,source:$("planSource").value,memo:$("planMemo").value.trim(),createdAt:Date.now()
+  qty:q,source:$("planSource").value,memo:$("planMemo").value.trim(),
+  writer:$("planWriter").value||"藤原",checked:$("planChecked").value==="1",
+  createdAt:Date.now()
  };
  plans.push(item);
  const ok=await savePlans();
  if(!ok){plans=plans.filter(x=>x.id!==item.id);return alert("保存できませんでした")}
  render();
- $("planQty").value=1;$("planMemo").value="";
+ $("planQty").value=1;$("planMemo").value="";$("planWriter").value="藤原";$("planChecked").value="0";
  closeForm("planForm");
  alert(`${item.kind} ${item.qty}本を保存しました`);
 }
@@ -452,13 +459,23 @@ function renderWeek(){
  $("amagasakiStock").textContent=`${calc("尼崎","20kg").stock}本`;
 
  const p=plans.filter(x=>x.date>=w.start&&x.date<=w.end).sort((a,b)=>a.date.localeCompare(b.date));
- $("amagasakiPlanList").innerHTML=p.length?p.map(planCard).join(""):'<div class="empty">今週の入荷・返却予定なし</div>';
+ $("amagasakiPlanList").innerHTML=p.length?p.map(x=>{
+   const checkText=x.checked?"✅ 確認済":"⬜ 未確認";
+   return `<div style="color:#c62828;font-weight:1000;padding:8px 0;border-top:1px solid #f1d6d6">
+     ${jp(x.date)}　${esc(x.kind)} ${+x.qty||0}本<br>
+     <span style="font-size:12px;font-weight:800">${esc(x.source)} ／ 記入者：${esc(x.writer||"未設定")} ／ ${checkText}</span>
+   </div>`;
+ }).join(""):'<div class="empty">今週の入荷・返却予定なし</div>';
 }
 function planCard(x){
  const cls=x.kind==="予定入荷"?"in":"out";
+ const checkText=x.checked?"✅ 確認済":"⬜ 未確認";
  return `<div class="planitem ${cls}">
-   <div><div class="planmain">${jp(x.date)}　${esc(x.kind)} ${+x.qty||0}本</div>
-   <div class="planmeta">${esc(x.source)}${x.memo?` ／ ${esc(x.memo)}`:""}</div></div>
+   <div>
+    <div class="planmain">${jp(x.date)}　${esc(x.kind)} ${+x.qty||0}本</div>
+    <div class="planmeta">${esc(x.source)}${x.memo?` ／ ${esc(x.memo)}`:""}</div>
+    <div class="planmeta">記入者：${esc(x.writer||"未設定")} ／ ${checkText}</div>
+   </div>
    <button class="del" onclick="delPlan('${x.id}')">削除</button>
  </div>`;
 }
