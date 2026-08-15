@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>イベント別 仕入管理 v1.3.3｜購入先選択対応</title>
+<title>イベント別 仕入管理 v1.3.4｜購入先別一覧対応</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -43,9 +43,13 @@ table{min-width:100%;width:100%;table-layout:fixed}
 }
 
 </style>
+
+<style>
+.supplier-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.supplier-box{border:1.5px solid var(--line);border-radius:13px;background:#fff;padding:10px}.supplier-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:950;font-size:16px;margin-bottom:8px}.supplier-count{font-size:12px;background:#fff2c8;color:#805d00;padding:4px 8px;border-radius:999px}.supplier-table{width:100%!important;min-width:0!important;table-layout:auto!important}.supplier-table th,.supplier-table td{font-size:12px;padding:7px!important}.supplier-table th:nth-child(n),.supplier-table td:nth-child(n){width:auto!important}.supplier-empty{padding:16px;text-align:center;color:var(--sub);border:1px dashed var(--line);border-radius:10px}@media(max-width:760px){.supplier-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<header><div class="brand">🛒 イベント別 仕入管理 v1.3.3</div><div class="sub">イベント別必要数量｜スタッフ共有｜在庫自動反映</div></header>
+<header><div class="brand">🛒 イベント別 仕入管理 v1.3.4</div><div class="sub">イベント別必要数量｜スタッフ共有｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -62,8 +66,9 @@ table{min-width:100%;width:100%;table-layout:fixed}
 <div id="mainNetaLinkStatus" class="notice warn">主力ネタ一覧の必要数量を確認中…</div><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
 <div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>購入先</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div></div></section>
+<section class="card" id="supplierSec"><h2>⑤ 購入先別一覧</h2><div class="notice">上の「購入先」で選んだ内容を自動集計します。追加数量が1以上で、まだ「買った」にチェックしていない品目を購入先ごとに表示します。</div><div id="supplierSummary"></div></section>
 </div>
-<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('listSec')">買い物表</button></nav>
+<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('listSec')">買い物表</button><button onclick="jump('supplierSec')">購入先別</button></nav>
 <datalist id="inventoryList"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -605,6 +610,22 @@ function updateSummary(){
  const qtyTotal=document.getElementById('qtyTotal');
  if(rowCount)rowCount.textContent=rows.length;
  if(qtyTotal)qtyTotal.textContent=rows.reduce((s,r)=>s+(Number(r.add)||0),0);
+
+ renderSupplierSummary();
+}
+function renderSupplierSummary(){
+ const root=document.getElementById('supplierSummary');
+ if(!root)return;
+ const rows=(state.rows||[]).filter(r=>!r.bought && (Number(r.add)||0)>0);
+ const destinations=PURCHASE_DESTINATIONS.filter(Boolean);
+ const groups={}; destinations.forEach(d=>groups[d]=[]); groups['未選択']=[];
+ rows.forEach(r=>{const d=String(r.purchaseDestination||'').trim();(groups[d]||groups['未選択']).push(r)});
+ const order=[...destinations,'未選択'];
+ const boxes=order.filter(d=>groups[d].length).map(d=>{
+   const list=groups[d];
+   return `<div class="supplier-box"><div class="supplier-head"><span>🏪 ${esc(d)}</span><span class="supplier-count">${list.length}品目</span></div><table class="supplier-table"><thead><tr><th>ネタ</th><th>品目</th><th>数量</th></tr></thead><tbody>${list.map(r=>`<tr><td>${esc(r.neta||'')}</td><td><strong>${esc(r.item||'')}</strong></td><td><strong>${esc(r.add)}</strong>${esc(r.unit||'')}</td></tr>`).join('')}</tbody></table></div>`;
+ }).join('');
+ root.innerHTML=boxes?`<div class="supplier-grid">${boxes}</div>`:'<div class="supplier-empty">購入する品目がまだありません。購入先を選ぶと、ここに自動でまとまります。</div>';
 }
 function copyText(){
  const ev=main.events.find(e=>String(e.id)===state.eventId);
