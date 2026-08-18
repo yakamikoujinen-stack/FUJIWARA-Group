@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>イベント別 仕入管理 v1.3.4｜購入先別一覧対応</title>
+<title>イベント別 仕入管理 v1.3.5｜購入先別一覧対応</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -49,7 +49,7 @@ table{min-width:100%;width:100%;table-layout:fixed}
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 イベント別 仕入管理 v1.3.4</div><div class="sub">イベント別必要数量｜スタッフ共有｜在庫自動反映</div></header>
+<header><div class="brand">🛒 イベント別 仕入管理 v1.3.5</div><div class="sub">イベント別必要数量｜スタッフ共有｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -68,7 +68,7 @@ table{min-width:100%;width:100%;table-layout:fixed}
 <div class="summary"><div class="sum"><div class="k">品目数</div><div class="v" id="rowCount">0</div></div><div class="sum"><div class="k">追加数量合計</div><div class="v" id="qtyTotal">0</div></div></div></section>
 <section class="card" id="supplierSec"><h2>⑤ 購入先別一覧</h2><div class="notice">上の「購入先」で選んだ内容を自動集計します。追加数量が1以上で、まだ「買った」にチェックしていない品目を購入先ごとに表示します。</div><div id="supplierSummary"></div></section>
 </div>
-<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('listSec')">買い物表</button><button onclick="jump('supplierSec')">購入先別</button></nav>
+<nav class="footer"><button onclick="jump('eventSec')">イベント</button><button onclick="jump('netaSec')">ネタ選択</button><button onclick="jump('priceSec')">売上設定</button><button onclick="jump('listSec')">買い物表</button><button onclick="jump('supplierSec')">購入先別</button></nav>
 <datalist id="inventoryList"></datalist>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
