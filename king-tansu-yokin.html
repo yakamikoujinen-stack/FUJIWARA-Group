@@ -61,7 +61,7 @@ th{background:var(--soft);color:var(--brown);font-weight:950}.money{text-align:r
     <div class="field"><label>項目</label><input id="item" placeholder="例：現金保管"></div>
     <div class="field"><label>入金</label><input id="income" type="number" inputmode="numeric" min="0" placeholder="0"></div>
     <div class="field"><label>出金</label><input id="expense" type="number" inputmode="numeric" min="0" placeholder="0"></div>
-    <div class="field"><label>残高</label><input id="balance" type="number" inputmode="numeric" placeholder="0"></div>
+    <div class="field"><label>残高（自動計算）</label><input id="balance" type="text" value="¥0" readonly style="background:#f5f2ed;font-weight:950;color:#6f5130"></div>
     <div class="field full"><label>備考</label><textarea id="memo" placeholder="保管場所・理由・補足など"></textarea></div>
   </div>
   <div class="actions">
@@ -79,7 +79,7 @@ th{background:var(--soft);color:var(--brown);font-weight:950}.money{text-align:r
       <tbody id="rows"></tbody>
     </table>
   </div>
-  <div class="warning">入金・出金・残高はすべて手入力です。金庫番・メインアプリ・お金管理などの数字とは自動連動しません。</div>
+  <div class="warning">入金・出金は手入力、残高はタンス預金内だけで「前回残高＋入金－出金」を自動計算します。金庫番・メインアプリ・お金管理などとは自動連動しません。</div>
 </section>
 </main>
 
@@ -102,7 +102,17 @@ function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function saveLocal(){localStorage.setItem(LOCAL,JSON.stringify(records))}
 function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL)||"[]");records=Array.isArray(x)?x:[]}catch(e){records=[]}}
-function sorted(){return records.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||Number(b.createdAt||0)-Number(a.createdAt||0))}
+function chronological(list){
+  return (list||[]).slice().sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||Number(a.createdAt||0)-Number(b.createdAt||0));
+}
+function withRunningBalance(list){
+  let running=0;
+  return chronological(list).map(r=>{
+    running += Number(r.income||0)-Number(r.expense||0);
+    return {...r,calcBalance:running};
+  });
+}
+function sorted(){return withRunningBalance(records).reverse()}
 function render(){
   const list=sorted();
   $("rows").innerHTML=list.length?list.map(r=>`<tr>
@@ -110,25 +120,28 @@ function render(){
     <td><b>${esc(r.item)}</b></td>
     <td class="money in">${Number(r.income||0)?yen(r.income):"-"}</td>
     <td class="money out">${Number(r.expense||0)?yen(r.expense):"-"}</td>
-    <td class="money">${yen(r.balance)}</td>
+    <td class="money">${yen(r.calcBalance)}</td>
     <td><button class="detail" data-id="${esc(r.id)}">詳細</button></td>
   </tr>`).join(""):'<tr><td colspan="6" class="empty">まだ記録がありません。</td></tr>';
-  $("latestBalance").textContent=list.length?yen(list[0].balance):"¥0";
+  $("latestBalance").textContent=list.length?yen(list[0].calcBalance):"¥0";
+  updateBalancePreview();
 }
 function resetForm(scroll=false){
-  editingId=null;$("formTitle").textContent="記録を追加";$("date").value=today();$("item").value="";$("income").value="";$("expense").value="";$("balance").value="";$("memo").value="";$("deleteBtn").style.display="none";
+  editingId=null;$("formTitle").textContent="記録を追加";$("date").value=today();$("item").value="";$("income").value="";$("expense").value="";$("balance").value="¥0";$("memo").value="";$("deleteBtn").style.display="none";
   if(scroll)$("formSection").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function edit(id){
   const r=records.find(x=>String(x.id)===String(id));if(!r)return;
-  editingId=r.id;$("formTitle").textContent="記録の詳細・編集";$("date").value=r.date||today();$("item").value=r.item||"";$("income").value=r.income||"";$("expense").value=r.expense||"";$("balance").value=r.balance??"";$("memo").value=r.memo||"";$("deleteBtn").style.display="inline-block";$("formSection").scrollIntoView({behavior:"smooth",block:"start"});
+  editingId=r.id;$("formTitle").textContent="記録の詳細・編集";$("date").value=r.date||today();$("item").value=r.item||"";$("income").value=r.income||"";$("expense").value=r.expense||"";$("memo").value=r.memo||"";$("deleteBtn").style.display="inline-block";
+  updateBalancePreview();
+  $("formSection").scrollIntoView({behavior:"smooth",block:"start"});
 }
 async function save(){
-  const date=$("date").value,item=$("item").value.trim(),income=Number($("income").value||0),expense=Number($("expense").value||0),balance=Number($("balance").value||0),memo=$("memo").value.trim();
+  const date=$("date").value,item=$("item").value.trim(),income=Number($("income").value||0),expense=Number($("expense").value||0),memo=$("memo").value.trim();
   if(!date){alert("日付を入力してください");return}
   if(!item){alert("項目を入力してください");return}
   const id=editingId||("tansu_"+Date.now()),old=records.find(x=>String(x.id)===String(id));
-  const rec={id,date,item,income,expense,balance,memo,createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
+  const rec={id,date,item,income,expense,memo,createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
   try{
     $("status").textContent="保存中…";
     if(firebaseReady){await db.ref(PATH+"/"+id).set(rec)}
@@ -144,12 +157,33 @@ async function del(){
     resetForm(false);
   }catch(e){alert("削除に失敗しました")}
 }
+
+function updateBalancePreview(){
+  const date=$("date").value||today();
+  const income=Number($("income").value||0);
+  const expense=Number($("expense").value||0);
+  const tempId=editingId||"__preview__";
+  const old=records.find(x=>String(x.id)===String(editingId));
+  const draft={
+    id:tempId,
+    date,
+    income,
+    expense,
+    createdAt:old?.createdAt||Date.now()
+  };
+  const temp=records.filter(x=>String(x.id)!==String(editingId));
+  temp.push(draft);
+  const calc=withRunningBalance(temp).find(x=>String(x.id)===String(tempId));
+  $("balance").value=yen(calc?calc.calcBalance:0);
+}
+
 function connect(){
   loadLocal();render();resetForm(false);
   if(!firebaseReady){$("status").textContent="端末保存";return}
   $("status").textContent="専用データ共有中";
   db.ref(PATH).on("value",snap=>{const v=snap.val()||{};records=Object.keys(v).map(id=>({id,...v[id]}));saveLocal();render()},()=>{$("status").textContent="端末保存";firebaseReady=false});
 }
+["date","income","expense"].forEach(id=>$(id).addEventListener("input",updateBalancePreview));
 $("saveBtn").addEventListener("click",save);
 $("clearBtn").addEventListener("click",()=>resetForm(false));
 $("deleteBtn").addEventListener("click",del);
