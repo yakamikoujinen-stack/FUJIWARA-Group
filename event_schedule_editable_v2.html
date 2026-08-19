@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2026年度 イベント予定表</title>
+<style>
+:root {
+  --bg:#f4f5f7; --card:#fff; --line:#b9bec6; --text:#1c1f23;
+  --head:#e9edf2; --accent:#1f6feb; --danger:#c62828;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1400px;margin:auto;padding:16px}
+.toolbar{position:sticky;top:0;z-index:20;background:rgba(244,245,247,.96);backdrop-filter:blur(8px);padding:10px 0 12px}
+h1{font-size:24px;margin:0 0 4px}
+.sub{font-size:13px;color:#5d6670;margin-bottom:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;background:#dde3ea;color:#20252b}
+button.primary{background:var(--accent);color:white}
+button.danger{background:#fbe9e9;color:var(--danger)}
+.status{font-size:12px;color:#65707b;margin-top:8px;min-height:18px}
+.card{background:var(--card);border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.06);overflow:hidden}
+.table-scroll{overflow:auto;max-height:calc(100vh - 190px)}
+table{border-collapse:separate;border-spacing:0;min-width:1050px;width:100%;font-size:15px}
+th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;vertical-align:top;background:#fff}
+th{position:sticky;top:0;z-index:5;background:var(--head);text-align:center;padding:10px 8px}
+th:first-child,td:first-child{border-left:1px solid var(--line)}
+tr:first-child th{border-top:1px solid var(--line)}
+td input,td textarea{
+  width:100%;border:0;outline:0;background:transparent;padding:10px;font:inherit;color:inherit;
+}
+td textarea{min-height:44px;resize:vertical}
+th[contenteditable="true"]{outline:none;cursor:text}
+th[contenteditable="true"]:focus{box-shadow:inset 0 0 0 2px var(--accent)}
+.col-date{width:150px} .col-event{width:310px} .col-place{width:260px} .col-menu{width:310px} .col-attend{width:130px;text-align:center} .col-note{width:260px}
+.row-actions{width:90px;text-align:center;white-space:nowrap}
+.iconbtn{padding:8px 9px;margin:5px 2px;border-radius:8px}
+.footer-note{font-size:12px;color:#6b7280;padding:10px 4px}
+@media (max-width:700px){
+  .wrap{padding:10px} h1{font-size:20px} button{padding:9px 11px}
+  .table-scroll{max-height:calc(100vh - 175px)}
+}
+@media print{
+  body{background:white} .toolbar,.row-actions,.footer-note{display:none!important}
+  .wrap{max-width:none;padding:0} .card{box-shadow:none} .table-scroll{overflow:visible;max-height:none}
+  table{min-width:0;font-size:10pt} th{position:static}
+  td textarea,td input{padding:4px} 
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <h1 contenteditable="true" id="title">2026年度 イベント予定</h1>
+    <div class="sub">名称・見出し・各セルをすべて直接編集できます。出欠欄は✅で登録でき、内容はこの端末に自動保存されます。</div>
+    <div class="actions">
+      <button class="primary" onclick="addRow()">＋ 行を追加</button>
+      <button onclick="saveNow()">💾 保存</button>
+      <button onclick="sortRows()">↕ 日付順</button>
+      <button onclick="window.print()">🖨 印刷 / PDF</button>
+      <button onclick="exportCSV()">⬇ CSV</button>
+      <button class="danger" onclick="resetData()">初期状態に戻す</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-date" contenteditable="true" data-head="0">月日</th>
+            <th class="col-event" contenteditable="true" data-head="1">イベント</th>
+            <th class="col-place" contenteditable="true" data-head="2">会場</th>
+            <th class="col-menu" contenteditable="true" data-head="3">出店メニュー</th>
+            <th class="col-attend" contenteditable="true" data-head="4">出欠できるか</th>
+            <th class="col-note" contenteditable="true" data-head="5">備考</th>
+            <th class="row-actions">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="footer-note">※ 写真から読み取った初期データには、文字が不鮮明な箇所があるため、必要に応じて修正してください。</div>
+</div>
+
+<script>
+const KEY='fujiwara_event_schedule_2026_v1';
+const TITLEKEY='fujiwara_event_schedule_2026_title';
+const HEADKEY='fujiwara_event_schedule_2026_headers_v2';
+const initialData=[["8/23(日)", "神鍋高原スイカ祭", "神鍋高原 道の駅", "", ""], ["8/29(土)", "コムズエルムフクザ夏祭り", "三田市", "", ""], ["9/12(土)", "JAパスカル三田移転祝祭", "三田市", "", ""], ["9/19(土)", "香住ガニ祭り", "香住漁港西港上屋4号", "", ""], ["10/4(日)", "伊賀市西部交流フェスタ", "伊賀ひぞっこPにて", "", ""], ["10/10(土)", "日本製鉄(株)関西製鉄所", "尼崎市", "", ""], ["10/11(日)", "長田神社祭り", "神戸市長田区", "", ""], ["10/17(土)", "JAパスカル三田（予定）", "三田市", "", ""], ["10/17(土)", "JA丹波ひかみ春日郷祭", "丹波市春日IC", "", ""], ["10/18(日)", "熊野神社秋祭り", "兵庫県仁川", "", ""], ["10/24(土)〜10/25(日)", "JAいがひぞっこ収穫祭", "三重県伊賀市", "", ""], ["10/24(土)", "JA丹波ひかみ島郷祭", "丹波市春日IC", "", ""], ["10/25(日)", "JAみえエムケイプラザ祭り", "三田市", "", ""], ["10/31(土)", "JA丹波ひかみ青垣郷祭", "丹波市青垣IC", "", ""], ["10/25(日)", "神鍋高原マロニエ祭", "神鍋高原 道の駅", "", ""], ["11/3(火)", "JA丹波ひかみ本店祭", "丹波市氷上本店", "", ""], ["11/7(土)", "JAたじま和田山郷祭", "朝来市", "", ""], ["11/7(土)", "JA丹波ひかみ柏原郷祭", "丹波市柏原IC", "", ""], ["11/?", "JAパスカル三田農業祭", "三田市", "", ""], ["11/13(金)〜11/14(土)", "JA兵庫六甲農業祭", "神戸市北区八多町", "", ""], ["未定", "神鍋高原スキー祭り", "神鍋高原 道の駅", "", ""], ["11/14(土)", "JA丹波ひかみ山南郷祭", "丹波市山南支店", "", ""], ["11/14(土)", "JA兵庫西しょう", "宍粟市", "", ""], ["11/15(日)", "香住松葉ガニ祭り", "香住漁港西港上屋4号", "", ""], ["11/21(土)", "JA兵庫西安富郷祭", "姫路市", "", ""], ["11/21(土)", "JAみなみかんべ郷ふるさと祭", "神戸市北区淡河町", "", ""], ["12/2(水)〜12/3(木)", "全農兵庫フェスタ", "三木市メッセ三木", "", ""], ["12/17(木)", "JA丹波ひかみ冬まつり", "丹波市", "", ""], ["12/18(金)〜12/19(土)", "JAパスカル三田農業祭", "三田市", "", ""], ["12/19(土)〜12/20(日)", "JAいがひぞっこ歳末祭", "三重県伊賀市", "", ""], ["なし？", "サンパレス六甲物産展", "西宮市山口町", "", ""]];
+
+function esc(v) {
+  return String(v??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function loadData(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(KEY)) || initialData;
+    return raw.map(r=>{
+      const a=[...(r||[])];
+      if(a.length===5) return [a[0]||'',a[1]||'',a[2]||'',a[3]||'',false,a[4]||''];
+      return [a[0]||'',a[1]||'',a[2]||'',a[3]||'',!!a[4],a[5]||''];
+    });
+  }catch(e){
+    return initialData.map(r=>[r[0]||'',r[1]||'',r[2]||'',r[3]||'',false,r[4]||'']);
+  }
+}
+function render(){
+  const data=loadData();
+  const tb=document.getElementById('tbody');
+  tb.innerHTML=data.map((r,i)=>`
+    <tr data-i="${i}">
+      <td><input value="${esc(r[0])}" oninput="queueSave()"></td>
+      <td><textarea oninput="queueSave()">${esc(r[1])}</textarea></td>
+      <td><textarea oninput="queueSave()">${esc(r[2])}</textarea></td>
+      <td><textarea oninput="queueSave()">${esc(r[3])}</textarea></td>
+      <td class="col-attend"><input type="checkbox" ${r[4] ? 'checked' : ''} onchange="queueSave()" style="width:28px;height:28px;margin:8px;"></td>
+      <td><textarea oninput="queueSave()">${esc(r[5])}</textarea></td>
+      <td class="row-actions"><button class="iconbtn" onclick="moveRow(${i},-1)">↑</button><button class="iconbtn" onclick="moveRow(${i},1)">↓</button><button class="iconbtn danger" onclick="deleteRow(${i})">削除</button></td>
+    </tr>`).join('');
+  const savedTitle=localStorage.getItem(TITLEKEY); if(savedTitle) document.getElementById('title').innerText=savedTitle;
+  try{
+    const heads=JSON.parse(localStorage.getItem(HEADKEY)||'null');
+    if(heads) document.querySelectorAll('th[data-head]').forEach((th,i)=>{ if(heads[i]!=null) th.innerText=heads[i]; });
+  }catch(e){}
+}
+function collect(){
+  return [...document.querySelectorAll('#tbody tr')].map(tr=>{
+    const els=tr.querySelectorAll('input,textarea');
+    return [
+      els[0]?.value||'',
+      els[1]?.value||'',
+      els[2]?.value||'',
+      els[3]?.value||'',
+      !!els[4]?.checked,
+      els[5]?.value||''
+    ];
+  });
+}
+let timer;
+function queueSave(){
+  clearTimeout(timer);
+  document.getElementById('status').textContent='編集中…';
+  timer=setTimeout(saveNow,500);
+}
+function saveNow(){
+  localStorage.setItem(KEY,JSON.stringify(collect()));
+  localStorage.setItem(TITLEKEY,document.getElementById('title').innerText.trim());
+  localStorage.setItem(HEADKEY,JSON.stringify([...document.querySelectorAll('th[data-head]')].map(th=>th.innerText.trim())));
+  const s=document.getElementById('status');
+  s.textContent='保存しました ✓';
+  setTimeout(()=>{if(s.textContent.includes('保存')) s.textContent='';},1500);
+}
+function addRow(){
+  const d=collect(); d.push(['','','','',false,'']); localStorage.setItem(KEY,JSON.stringify(d)); render();
+  document.querySelector('#tbody tr:last-child input')?.focus(); saveNow();
+}
+function deleteRow(i){
+  if(!confirm('この行を削除しますか？')) return;
+  const d=collect(); d.splice(i,1); localStorage.setItem(KEY,JSON.stringify(d)); render(); saveNow();
+}
+function moveRow(i,dir){
+  const d=collect(), j=i+dir; if(j<0||j>=d.length) return;
+  [d[i],d[j]]=[d[j],d[i]]; localStorage.setItem(KEY,JSON.stringify(d)); render(); saveNow();
+}
+function parseDate(s){
+  s=String(s).trim();
+  if(!s || s.includes('未定') || s.includes('なし') || s.includes('?')) return 99999;
+  const m=s.match(/(\d{1,2})\s*\/\s*(\d{1,2})/);
+  if(!m) return 99998;
+  return Number(m[1])*100+Number(m[2]);
+}
+function sortRows(){
+  const d=collect(); d.sort((a,b)=>parseDate(a[0])-parseDate(b[0]));
+  localStorage.setItem(KEY,JSON.stringify(d)); render(); saveNow();
+}
+function exportCSV(){
+  saveNow();
+  const heads=[...document.querySelectorAll('th[data-head]')].map(th=>th.innerText.trim());
+  const d=[heads,...collect().map(r=>[r[0],r[1],r[2],r[3],r[4]?'✅':'',r[5]])];
+  const csv='\ufeff'+d.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='2026イベント予定.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+function resetData(){
+  if(!confirm('入力内容を消して、写真から作った初期状態に戻しますか？')) return;
+  localStorage.removeItem(KEY); localStorage.removeItem(TITLEKEY); localStorage.removeItem(HEADKEY); render();
+}
+document.getElementById('title').addEventListener('input',queueSave);
+document.querySelectorAll('th[data-head]').forEach(th=>th.addEventListener('input',queueSave));
+window.addEventListener('beforeunload',saveNow);
+render();
+</script>
+</body>
+</html>
