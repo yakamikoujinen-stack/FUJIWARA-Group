@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>コナンプロデュース予定取込</title>
+<style>
+:root{--navy:#17324d;--blue:#1677e8;--line:#d7dde6;--bg:#f4f7fb;--text:#172033;--muted:#667085}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1400px;margin:auto;padding:16px 14px 90px}
+.hero{background:linear-gradient(135deg,#17324d,#2c6495);color:white;border-radius:20px;padding:18px;box-shadow:0 10px 28px rgba(23,50,77,.18)}
+.hero h1{margin:0;font-size:clamp(24px,4vw,38px)} .hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}
+.panel{margin-top:16px;background:white;border:1px solid #e5eaf0;border-radius:18px;padding:15px;box-shadow:0 8px 24px rgba(20,40,70,.07)}
+h2{margin:0 0 10px;font-size:20px;color:#153b63}
+textarea#pasteBox{width:100%;min-height:190px;border:1px solid #cfd6df;border-radius:14px;padding:12px;font:inherit;line-height:1.6;background:#fbfdff}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+button{border:0;border-radius:11px;padding:10px 14px;font-weight:900;background:#e7edf5;color:#1d2939}
+button.primary{background:var(--blue);color:white}
+button.danger{background:#feecec;color:#b42318}
+.note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;min-width:900px;border-collapse:collapse}
+th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;background:#fff}
+th{background:#edf2f7;padding:11px 8px;text-align:center;position:sticky;top:0;z-index:2}
+th:last-child,td:last-child{border-right:0}
+td input,td textarea{width:100%;border:0;outline:0;padding:10px;font:inherit;background:transparent}
+td textarea{min-height:46px;resize:vertical}
+.chk{width:70px;text-align:center}.date{width:150px}.event{width:300px}.place{width:250px}.item{width:320px}.del{width:80px;text-align:center}
+.chk input{width:28px;height:28px}
+.sun{color:#d32f2f!important;font-weight:900}.sat{color:#1565c0!important;font-weight:900}
+.status{font-size:12px;color:#2f6f44;font-weight:800;min-height:18px;margin-top:7px}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(1400px,100%);background:rgba(255,255,255,.96);border-top:1px solid #dce2e9;display:flex;justify-content:center;gap:10px;padding:9px calc(10px + env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom));z-index:10}
+.bottom a{padding:10px 16px;border-radius:10px;text-decoration:none;background:#17324d;color:white;font-weight:900}
+@media(max-width:650px){.wrap{padding:10px 8px 90px}.panel{padding:10px}.hero{border-radius:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>📋 コナンプロデュース予定取込</h1>
+    <p>相手から届いた予定を貼り付け → 一覧表に変換 → 修正・保存</p>
+  </section>
+
+  <section class="panel">
+    <h2>① 届いた内容を貼り付け</h2>
+    <textarea id="pasteBox" placeholder="例：
+8/23(日)　神鍋高原スイカ祭　神鍋高原 道の駅
+8/29(土)　○○夏祭り　三田市
+..."></textarea>
+    <div class="actions">
+      <button class="primary" onclick="convertText()">一覧表に変換</button>
+      <button onclick="addRow()">＋ 空白行を追加</button>
+      <button onclick="saveNow()">💾 保存</button>
+      <button onclick="sortRows()">↕ 日付順</button>
+      <button onclick="exportCSV()">⬇ CSV</button>
+      <button class="danger" onclick="clearAll()">全件クリア</button>
+    </div>
+    <div class="note">※ 貼り付け文章は完璧に揃っていなくても大丈夫です。変換後に「日付・イベント名・場所・出店アイテム」を直接修正できます。</div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section class="panel">
+    <h2>② 一覧表</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th class="chk">✅</th>
+          <th class="date">日付</th>
+          <th class="event">イベント名</th>
+          <th class="place">場所</th>
+          <th class="item">出店アイテム</th>
+          <th class="del">削除</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<nav class="bottom">
+  <a href="king-production.html" onclick="if(history.length>1){history.back();return false;}">← KINGへ戻る</a>
+</nav>
+
+<script>
+const KEY='fujiwara_conan_schedule_v1';
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function dateClass(v){
+  v=String(v||'');
+  if(/[（(]土[）)]/.test(v)) return 'sat';
+  if(/[（(]日[）)]/.test(v) || /祝/.test(v)) return 'sun';
+  return '';
+}
+function loadRows(){
+  try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}
+}
+function render(){
+  const rows=loadRows();
+  tbody.innerHTML=rows.map((r,i)=>`<tr>
+    <td class="chk"><input type="checkbox" ${r.ok?'checked':''} onchange="edit(${i},'ok',this.checked)"></td>
+    <td><input class="${dateClass(r.date)}" value="${esc(r.date)}" oninput="this.className=dateClass(this.value);edit(${i},'date',this.value)"></td>
+    <td><textarea oninput="edit(${i},'event',this.value)">${esc(r.event)}</textarea></td>
+    <td><textarea oninput="edit(${i},'place',this.value)">${esc(r.place)}</textarea></td>
+    <td><textarea oninput="edit(${i},'item',this.value)">${esc(r.item)}</textarea></td>
+    <td class="del"><button class="danger" onclick="delRow(${i})">削除</button></td>
+  </tr>`).join('');
+}
+function saveRows(rows,msg='保存しました ✓'){
+  localStorage.setItem(KEY,JSON.stringify(rows));
+  render();
+  status.textContent=msg;
+  setTimeout(()=>{if(status.textContent===msg)status.textContent=''},1600);
+}
+function edit(i,k,v){
+  const rows=loadRows(); if(!rows[i])return; rows[i][k]=v; localStorage.setItem(KEY,JSON.stringify(rows));
+  status.textContent='自動保存しました ✓';
+}
+function addRow(){
+  const rows=loadRows(); rows.push({ok:false,date:'',event:'',place:'',item:''}); saveRows(rows,'空白行を追加しました');
+}
+function delRow(i){
+  if(!confirm('この行を削除しますか？'))return;
+  const rows=loadRows(); rows.splice(i,1); saveRows(rows,'削除しました');
+}
+function saveNow(){saveRows(loadRows());}
+function splitLine(line){
+  line=line.trim().replace(/[｜|]/g,'\t');
+  if(!line)return null;
+  const dm=line.match(/((?:\d{1,2}\/\d{1,2})(?:\s*[（(][月火水木金土日祝][）)])?(?:\s*[〜～~-]\s*\d{1,2}\/\d{1,2}(?:\s*[（(][月火水木金土日祝][）)])?)?|未定|なし\??)/);
+  if(!dm)return null;
+  const date=dm[1].trim();
+  let rest=(line.slice(0,dm.index)+line.slice(dm.index+dm[1].length)).trim();
+  let parts=rest.split(/\t+| {2,}|　{1,}/).map(x=>x.trim()).filter(Boolean);
+  if(parts.length<2){
+    parts=rest.split(/\s+/).map(x=>x.trim()).filter(Boolean);
+  }
+  return {ok:false,date,event:parts[0]||'',place:parts[1]||'',item:parts.slice(2).join(' ')||''};
+}
+function convertText(){
+  const raw=pasteBox.value.trim();
+  if(!raw){alert('先に届いた内容を貼り付けてください');return;}
+  const parsed=[];
+  raw.split(/\r?\n/).forEach(line=>{
+    const r=splitLine(line);
+    if(r && (r.date||r.event||r.place)) parsed.push(r);
+  });
+  if(!parsed.length){
+    alert('日付を含む行を読み取れませんでした。貼り付け内容を確認してください。');
+    return;
+  }
+  const current=loadRows();
+  saveRows(current.concat(parsed), parsed.length+'件を一覧表に変換しました');
+}
+function parseDate(s){
+  const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})/);
+  return m ? Number(m[1])*100+Number(m[2]) : 99999;
+}
+function sortRows(){
+  const rows=loadRows(); rows.sort((a,b)=>parseDate(a.date)-parseDate(b.date)); saveRows(rows,'日付順に並べました');
+}
+function exportCSV(){
+  const rows=loadRows();
+  const data=[['✅','日付','イベント名','場所','出店アイテム'],...rows.map(r=>[r.ok?'✅':'',r.date,r.event,r.place,r.item])];
+  const csv='\ufeff'+data.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='コナンプロデュース予定.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+function clearAll(){
+  if(!confirm('保存しているコナン予定を全て消しますか？'))return;
+  localStorage.removeItem(KEY); render(); status.textContent='全件クリアしました';
+}
+render();
+</script>
+</body>
+</html>
