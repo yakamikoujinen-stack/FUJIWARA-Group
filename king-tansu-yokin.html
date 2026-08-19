@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6f5130">
+<title>タンス預金｜FUJIWARA KING SYSTEM</title>
+<style>
+:root{
+  --brown:#6f5130;--brown2:#8a6842;--soft:#f7f0e6;--line:#e4d5c3;
+  --text:#2a2117;--sub:#766b5e;--green:#19834b;--red:#bd3d3d;
+  --shadow:0 12px 28px rgba(71,52,30,.12)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--text);background:linear-gradient(180deg,#f8f1e6,#fff 48%,#f8f4ee)}
+button,input,textarea{font:inherit}
+.wrap{max-width:1080px;margin:auto;padding:16px 14px 105px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.header{padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:60px;height:60px;border-radius:18px;background:var(--soft);display:grid;place-items:center;font-size:32px}
+h1{margin:0;font-size:29px;color:var(--brown)}.sub{margin-top:4px;font-size:13px;color:var(--sub);font-weight:800}
+.back{border:0;border-radius:12px;background:#f2eee9;color:var(--brown);padding:11px 14px;font-weight:950}
+.summary{margin-top:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.summary small{font-weight:850;color:var(--sub)}.summary b{font-size:30px;color:var(--brown)}
+.form{margin-top:14px;padding:18px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.section-head h2{margin:0;font-size:21px;color:var(--brown)}.note{font-size:12px;color:var(--sub);font-weight:850}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:14px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:950;color:#665542}
+input,textarea{width:100%;border:1px solid #d8ccbf;border-radius:12px;padding:13px;font-size:17px;background:#fff}
+textarea{min-height:105px;resize:vertical}
+.actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;margin-top:15px}.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:950}
+.save{background:var(--brown);color:#fff}.clear{background:#f2eee9;color:#4b3b29}.delete{display:none;background:#ffe7e7;color:#a32121;margin-right:auto}
+.list{margin-top:14px;padding:16px}.table-wrap{overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:14px}
+table{width:100%;min-width:800px;border-collapse:collapse;background:#fff}th,td{padding:12px 10px;border-bottom:1px solid #eee5db;text-align:left;font-size:14px}
+th{background:var(--soft);color:var(--brown);font-weight:950}.money{text-align:right;font-weight:900}.in{color:var(--green)}.out{color:var(--red)}
+.detail{border:1px solid #b99972;background:#fff;color:var(--brown);border-radius:999px;padding:6px 12px;font-weight:950}.empty{text-align:center;padding:30px;color:var(--sub);font-weight:850}
+.warning{margin-top:12px;background:#fff8df;border:1px solid #e6cc7a;border-radius:12px;padding:11px 13px;color:#745c13;font-size:12px;font-weight:850}
+.bottom{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:10px;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-top:1px solid #e9e0d8;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+.bottom button{flex:1;max-width:420px;border:0;border-radius:13px;padding:13px 16px;font-size:16px;font-weight:950}.king{background:#17324d;color:#fff}.new{background:var(--brown);color:#fff}
+@media(max-width:700px){.header{align-items:flex-start}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.summary{align-items:flex-start;flex-direction:column}.actions{display:grid;grid-template-columns:1fr 1fr}.delete{grid-column:1/-1;margin:0}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
+<body>
+<main class="wrap">
+<section class="card header">
+  <div class="brand"><div class="logo">🗄️</div><div><h1>タンス預金</h1><div class="sub">完全手入力・他アプリとは連動しません</div></div></div>
+  <button class="back" onclick="location.href='king.html'">← KINGへ戻る</button>
+</section>
+
+<section class="card summary">
+  <div><small>最新の残高（最後に入力した残高）</small></div>
+  <b id="latestBalance">¥0</b>
+</section>
+
+<section class="card form" id="formSection">
+  <div class="section-head"><h2 id="formTitle">記録を追加</h2><span class="note" id="status">専用データとして保存</span></div>
+  <div class="grid">
+    <div class="field"><label>日付</label><input id="date" type="date"></div>
+    <div class="field"><label>項目</label><input id="item" placeholder="例：現金保管"></div>
+    <div class="field"><label>入金</label><input id="income" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+    <div class="field"><label>出金</label><input id="expense" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+    <div class="field"><label>残高</label><input id="balance" type="number" inputmode="numeric" placeholder="0"></div>
+    <div class="field full"><label>備考</label><textarea id="memo" placeholder="保管場所・理由・補足など"></textarea></div>
+  </div>
+  <div class="actions">
+    <button class="btn delete" id="deleteBtn" type="button">削除</button>
+    <button class="btn clear" id="clearBtn" type="button">入力を消す</button>
+    <button class="btn save" id="saveBtn" type="button">保存</button>
+  </div>
+</section>
+
+<section class="card list">
+  <div class="section-head"><h2>タンス預金一覧</h2><span class="note">日付／項目／入金／出金／残高／備考</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>日付</th><th>項目</th><th>入金</th><th>出金</th><th>残高</th><th>備考</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="warning">入金・出金・残高はすべて手入力です。金庫番・メインアプリ・お金管理などの数字とは自動連動しません。</div>
+</section>
+</main>
+
+<nav class="bottom">
+  <button class="king" onclick="location.href='king.html'">👑 KINGへ戻る</button>
+  <button class="new" id="newBtn">＋ 新規入力</button>
+</nav>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94"};
+if(typeof firebase!=="undefined"&&!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=(typeof firebase!=="undefined")?firebase.database():null;
+const PATH="fujiwara/king_tansu_yokin";
+const LOCAL="king_tansu_yokin_v1";
+let records=[],editingId=null,firebaseReady=!!db;
+const $=id=>document.getElementById(id);
+const yen=v=>"¥"+Number(v||0).toLocaleString("ja-JP");
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function saveLocal(){localStorage.setItem(LOCAL,JSON.stringify(records))}
+function loadLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL)||"[]");records=Array.isArray(x)?x:[]}catch(e){records=[]}}
+function sorted(){return records.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||Number(b.createdAt||0)-Number(a.createdAt||0))}
+function render(){
+  const list=sorted();
+  $("rows").innerHTML=list.length?list.map(r=>`<tr>
+    <td>${esc(r.date)}</td>
+    <td><b>${esc(r.item)}</b></td>
+    <td class="money in">${Number(r.income||0)?yen(r.income):"-"}</td>
+    <td class="money out">${Number(r.expense||0)?yen(r.expense):"-"}</td>
+    <td class="money">${yen(r.balance)}</td>
+    <td><button class="detail" data-id="${esc(r.id)}">詳細</button></td>
+  </tr>`).join(""):'<tr><td colspan="6" class="empty">まだ記録がありません。</td></tr>';
+  $("latestBalance").textContent=list.length?yen(list[0].balance):"¥0";
+}
+function resetForm(scroll=false){
+  editingId=null;$("formTitle").textContent="記録を追加";$("date").value=today();$("item").value="";$("income").value="";$("expense").value="";$("balance").value="";$("memo").value="";$("deleteBtn").style.display="none";
+  if(scroll)$("formSection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function edit(id){
+  const r=records.find(x=>String(x.id)===String(id));if(!r)return;
+  editingId=r.id;$("formTitle").textContent="記録の詳細・編集";$("date").value=r.date||today();$("item").value=r.item||"";$("income").value=r.income||"";$("expense").value=r.expense||"";$("balance").value=r.balance??"";$("memo").value=r.memo||"";$("deleteBtn").style.display="inline-block";$("formSection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function save(){
+  const date=$("date").value,item=$("item").value.trim(),income=Number($("income").value||0),expense=Number($("expense").value||0),balance=Number($("balance").value||0),memo=$("memo").value.trim();
+  if(!date){alert("日付を入力してください");return}
+  if(!item){alert("項目を入力してください");return}
+  const id=editingId||("tansu_"+Date.now()),old=records.find(x=>String(x.id)===String(id));
+  const rec={id,date,item,income,expense,balance,memo,createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
+  try{
+    $("status").textContent="保存中…";
+    if(firebaseReady){await db.ref(PATH+"/"+id).set(rec)}
+    else{const i=records.findIndex(x=>String(x.id)===String(id));if(i>=0)records[i]=rec;else records.push(rec);saveLocal();render()}
+    $("status").textContent="保存済み";resetForm(false);
+  }catch(e){$("status").textContent="保存失敗";alert("保存に失敗しました")}
+}
+async function del(){
+  if(!editingId||!confirm("この記録を削除しますか？"))return;
+  try{
+    if(firebaseReady)await db.ref(PATH+"/"+editingId).remove();
+    else{records=records.filter(x=>String(x.id)!==String(editingId));saveLocal();render()}
+    resetForm(false);
+  }catch(e){alert("削除に失敗しました")}
+}
+function connect(){
+  loadLocal();render();resetForm(false);
+  if(!firebaseReady){$("status").textContent="端末保存";return}
+  $("status").textContent="専用データ共有中";
+  db.ref(PATH).on("value",snap=>{const v=snap.val()||{};records=Object.keys(v).map(id=>({id,...v[id]}));saveLocal();render()},()=>{$("status").textContent="端末保存";firebaseReady=false});
+}
+$("saveBtn").addEventListener("click",save);
+$("clearBtn").addEventListener("click",()=>resetForm(false));
+$("deleteBtn").addEventListener("click",del);
+$("newBtn").addEventListener("click",()=>resetForm(true));
+$("rows").addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(b)edit(b.dataset.id)});
+connect();
+</script>
+</body>
+</html>
