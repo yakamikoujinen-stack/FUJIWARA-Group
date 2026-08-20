@@ -40,6 +40,20 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
   <div class="note">タイトルは自由に変更できます。例：2026年度 秋イベント予定、2027年度 出店予定。</div>
 </section>
 
+
+<section class="panel" id="handover">
+  <div class="head">
+    <h2>旧表から引き継ぐ</h2>
+    <div class="actions">
+      <label style="display:inline-block">
+        <input id="handoverFile" type="file" accept=".json,application/json" style="display:none" onchange="importHandoverFile(this.files[0])">
+        <span style="display:inline-block;background:#fff3c4;color:#6a4b00;border-radius:11px;padding:10px 13px;font-weight:900;cursor:pointer">📦 引継ぎデータを選ぶ</span>
+      </label>
+    </div>
+  </div>
+  <div class="note">旧「2026年度イベント予定表」で「📦 新アプリへ引継ぎ」を押して作ったJSONファイルを選んでください。旧表は消さず、コピーとして追加します。</div>
+</section>
+
 <section class="panel" id="list">
   <div class="head"><h2>保存済み一覧表</h2></div>
   <div id="sheetGrid" class="grid"></div>
@@ -88,6 +102,48 @@ function uid(){return 's_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)}
 function now(){return new Date().toLocaleString('ja-JP')}
 function getApp(){try{const d=JSON.parse(localStorage.getItem(APP_KEY)||'null');if(d&&Array.isArray(d.sheets))return d}catch(e){}return{sheets:[]}}
 function saveApp(a){localStorage.setItem(APP_KEY,JSON.stringify(a))}
+
+function importHandoverFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const d=JSON.parse(reader.result);
+      if(!d || d.type!=='fujiwara_conan_handover_v1' || !Array.isArray(d.rows)){
+        alert('引継ぎデータとして認識できませんでした。');
+        return;
+      }
+      const app=getApp();
+      const id=uid();
+      const rows=d.rows.map(r=>({
+        ok:!!r.ok,
+        date:r.date||'',
+        event:r.event||'',
+        place:r.place||'',
+        item:r.item||'',
+        lastItem:r.lastItem||'',
+        lastSales:r.lastSales||''
+      }));
+      app.sheets.push({
+        id,
+        title:(d.title||'2026年度 イベント予定')+'（引継ぎ）',
+        updated:now(),
+        rows
+      });
+      saveApp(app);
+      renderList();
+      openSheet(id);
+      alert('旧表をコピーして引き継ぎました。旧表はそのまま残っています。');
+    }catch(e){
+      alert('引継ぎファイルを読み込めませんでした。');
+    }finally{
+      const input=document.getElementById('handoverFile');
+      if(input) input.value='';
+    }
+  };
+  reader.readAsText(file,'utf-8');
+}
+
 function migrate(){
   const a=getApp();if(a.sheets.length)return;
   let raw=null;try{raw=JSON.parse(localStorage.getItem(OLD_KEY)||'null')}catch(e){}

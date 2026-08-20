@@ -33,26 +33,17 @@ td input,td textarea{
 td textarea{min-height:44px;resize:vertical}
 .date-sun,.date-holiday{color:#d32f2f!important;font-weight:700}
 .date-sat{color:#1565c0!important;font-weight:700}
-.col-attend{width:72px;text-align:center} .col-date{width:150px} .col-event{width:300px} .col-place{width:250px} .col-menu{width:260px} .col-lastitem{width:250px} .col-lastsales{width:150px}
+.col-attend{width:72px;text-align:center} .col-date{width:150px} .col-event{width:310px} .col-place{width:260px} .col-menu{width:310px} .col-note{width:260px}
 .footer-note{font-size:12px;color:#6b7280;padding:10px 4px}
-
-.private-col{background:#fff8e8!important}
-.private-badge{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;background:#f59e0b;color:#fff;font-size:10px;font-weight:800}
-.money{text-align:right;font-weight:800}
-
 @media (max-width:700px){
   .wrap{padding:10px} h1{font-size:20px} button{padding:9px 11px}
   .table-scroll{max-height:calc(100vh - 175px)}
 }
 @media print{
-  body{background:white}
-  .toolbar,.footer-note,.private-col{display:none!important}
-  .wrap{max-width:none;padding:0}
-  .card{box-shadow:none}
-  .table-scroll{overflow:visible;max-height:none}
-  table{min-width:0;font-size:10pt}
-  th{position:static}
-  td textarea,td input{padding:4px}
+  body{background:white} .toolbar,.row-actions,.footer-note{display:none!important}
+  .wrap{max-width:none;padding:0} .card{box-shadow:none} .table-scroll{overflow:visible;max-height:none}
+  table{min-width:0;font-size:10pt} th{position:static}
+  td textarea,td input{padding:4px} 
 }
 </style>
 </head>
@@ -61,13 +52,14 @@ td textarea{min-height:44px;resize:vertical}
 <div class="wrap">
   <div class="toolbar">
     <h1 contenteditable="true" id="title">2026年度 イベント予定</h1>
-    <div class="sub">✅・日付・イベント名・場所・出店アイテムに加えて、内部確認用の「去年のアイテム」「去年売上」を追加しています。外部向けの印刷/PDFでは内部用2列は自動で非表示になります。</div>
+    <div class="sub">✅・日付・イベント名・場所・出店アイテムの5項目です。日付・イベント名・場所・出店アイテムは直接編集でき、日曜・祝日は赤、土曜は青で表示します。</div>
     <div class="actions">
       <button class="primary" onclick="addRow()">＋ 行を追加</button>
       <button onclick="saveNow()">💾 保存</button>
       <button onclick="sortRows()">↕ 日付順</button>
-      <button onclick="window.print()">🖨 外部向け印刷 / PDF</button>
+      <button onclick="window.print()">🖨 印刷 / PDF</button>
       <button onclick="exportCSV()">⬇ CSV</button>
+      <button class="primary" onclick="exportHandover()">📦 新アプリへ引継ぎ</button>
       <button class="danger" onclick="resetData()">初期状態に戻す</button>
     </div>
     <div class="status" id="status"></div>
@@ -83,15 +75,13 @@ td textarea{min-height:44px;resize:vertical}
             <th class="col-event">イベント名</th>
             <th class="col-place">場所</th>
             <th class="col-menu">出店アイテム</th>
-            <th class="col-lastitem private-col">去年のアイテム<span class="private-badge">内部用</span></th>
-            <th class="col-lastsales private-col">去年売上<span class="private-badge">内部用</span></th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
   </div>
-  <div class="footer-note">※ 「去年のアイテム」「去年売上」は内部確認用です。外部向け印刷/PDFには表示されません。</div>
+  <div class="footer-note">※ 写真から読み取った初期データには、文字が不鮮明な箇所があるため、必要に応じて修正してください。</div>
 </div>
 
 <script>
@@ -107,15 +97,18 @@ function loadData(){
     const raw = JSON.parse(localStorage.getItem(KEY)) || initialData;
     return raw.map(r=>{
       const a=[...(r||[])];
-      if(a.length>=7 && typeof a[0]==='boolean') return [!!a[0],a[1]||'',a[2]||'',a[3]||'',a[4]||'',a[5]||'',a[6]||''];
-      if(a.length===5 && typeof a[0]==='boolean') return [!!a[0],a[1]||'',a[2]||'',a[3]||'',a[4]||'','',''];
-      if(a.length===5) return [false,a[0]||'',a[1]||'',a[2]||'',a[3]||'','',''];
-      if(a.length===6 && typeof a[0]==='boolean') return [!!a[0],a[1]||'',a[2]||'',a[3]||'',a[4]||'','',''];
-      if(a.length===6 && typeof a[4]==='boolean') return [!!a[4],a[0]||'',a[1]||'',a[2]||'',a[3]||'','',''];
-      return [false,'','','','','',''];
+      // v3: [attend,date,event,place,menu,note]
+      if(a.length===6 && typeof a[0]==='boolean') return [!!a[0],a[1]||'',a[2]||'',a[3]||'',a[4]||''];
+      // v2: [date,event,place,menu,attend,note]
+      if(a.length===6 && typeof a[4]==='boolean') return [!!a[4],a[0]||'',a[1]||'',a[2]||'',a[3]||''];
+      // old: [date,event,place,menu,note]
+      if(a.length===5 && typeof a[0]!=='boolean') return [false,a[0]||'',a[1]||'',a[2]||'',a[3]||''];
+      // v4 already
+      if(a.length===5) return [!!a[0],a[1]||'',a[2]||'',a[3]||'',a[4]||''];
+      return [false,'','','',''];
     });
   }catch(e){
-    return initialData.map(r=>[false,r[0]||'',r[1]||'',r[2]||'',r[3]||'','','']);
+    return initialData.map(r=>[false,r[0]||'',r[1]||'',r[2]||'',r[3]||'']);
   }
 }
 function render(){
@@ -128,8 +121,6 @@ function render(){
       <td><textarea oninput="queueSave()">${esc(r[2])}</textarea></td>
       <td><textarea oninput="queueSave()">${esc(r[3])}</textarea></td>
       <td><textarea oninput="queueSave()">${esc(r[4])}</textarea></td>
-      <td class="private-col"><textarea oninput="queueSave()">${esc(r[5])}</textarea></td>
-      <td class="private-col"><input class="money" inputmode="numeric" value="${esc(r[6])}" oninput="this.value=this.value.replace(/[^0-9]/g,'');queueSave()"></td>
     </tr>`).join('');
   const savedTitle=localStorage.getItem(TITLEKEY); if(savedTitle) document.getElementById('title').innerText=savedTitle;
 }
@@ -161,7 +152,7 @@ function saveNow(){
   setTimeout(()=>{if(s.textContent.includes('保存')) s.textContent='';},1500);
 }
 function addRow(){
-  const d=collect(); d.push([false,'','','','','','']); localStorage.setItem(KEY,JSON.stringify(d)); render();
+  const d=collect(); d.push([false,'','','','']); localStorage.setItem(KEY,JSON.stringify(d)); render();
   document.querySelector('#tbody tr:last-child input')?.focus(); saveNow();
 }
 function deleteRow(i){
@@ -189,8 +180,8 @@ function sortRows(){
 function exportCSV(){
   saveNow();
   const d = [
-    ['✅','日付','イベント名','場所','出店アイテム','去年のアイテム','去年売上'],
-    ...collect().map(r=>[r[0] ? '✅' : '', r[1], r[2], r[3], r[4], r[5], r[6]])
+    ['✅','日付','イベント名','場所','出店アイテム'],
+    ...collect().map(r=>[r[0] ? '✅' : '', r[1], r[2], r[3], r[4]])
   ];
   const csv='\ufeff'+d.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
@@ -200,6 +191,33 @@ function exportCSV(){
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+function exportHandover(){
+  saveNow();
+  const payload={
+    type:'fujiwara_conan_handover_v1',
+    title:document.getElementById('title').innerText.trim()||'2026年度 イベント予定',
+    rows:collect().map(r=>({
+      ok:!!r[0],
+      date:r[1]||'',
+      event:r[2]||'',
+      place:r[3]||'',
+      item:r[4]||'',
+      lastItem:r[5]||'',
+      lastSales:r[6]||''
+    })),
+    exportedAt:new Date().toISOString()
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='コナン予定_引継ぎデータ.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  const s=document.getElementById('status');
+  s.textContent='引継ぎデータを作成しました ✓';
+}
+
 function resetData(){
   if(!confirm('入力内容を消して、初期状態に戻しますか？')) return;
   localStorage.removeItem(KEY); localStorage.removeItem(TITLEKEY); render();
