@@ -23,7 +23,9 @@ td textarea{min-height:46px;resize:vertical;line-height:1.35;overflow-wrap:anywh
   td input,td textarea{font-size:9.5pt!important;line-height:1.25!important;white-space:pre-wrap!important}
   td textarea:placeholder-shown,td input:placeholder-shown{color:transparent!important}
 .toolbar{display:none!important}.wrap{max-width:none;padding:0}.sheet{box-shadow:none;border:0;padding:0}input,textarea{border:0!important;padding:0!important}.box{border:0;padding:0}.tablewrap{overflow:visible}@page{size:A4;margin:12mm}}
-</style></head>
+</style><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
 <body><div class="wrap">
 <div class="toolbar"><div class="actions"><button class="primary" onclick="addRow()">＋ 明細を追加</button><button onclick="save()">💾 保存</button><button class="primary" onclick="archiveQuote()">📚 この見積を保存</button><button onclick="window.print()">🖨 印刷 / PDF</button><button onclick="resetForm()">初期化</button></div><div id="saveStatus" style="font-weight:900;color:#166534;margin-top:8px;min-height:20px"></div></div>
 <section class="sheet"><div class="title">御 見 積 書</div>
@@ -46,6 +48,12 @@ td textarea{min-height:46px;resize:vertical;line-height:1.35;overflow-wrap:anywh
 <div class="company"><div class="company-grid"><div><label>見積提出者</label><input id="companyName" value="藤原一工業合同会社"></div><div><label>担当</label><input id="companyContact" placeholder="藤原"></div><div><label>住所</label><input id="address" placeholder="住所"></div><div><label>電話 / 連絡先</label><input id="phone" placeholder="電話番号"></div></div></div>
 <div class="footer-note">※ 買取案件用の見積様式です。金額・数量・条件は案件ごとに編集してください。</div></section></div>
 <script>
+
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const sharedDb=firebase.database();
+const DOC_BASE='fujiwara/documents';
+
 const KEY='conan_purchase_quote_v1';
 function yen(n){return '¥'+Math.round(Number(n)||0).toLocaleString('ja-JP')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -152,7 +160,7 @@ function load(){const wasNew=applyNewQuoteMode();let d={};try{d=JSON.parse(local
     ? d.rows.map(r=>({name:r.name||'',unit:r.unit||'',qty:r.qty??'',price:r.price??'',note:r.note||''}))
     : [{name:'',unit:'',qty:'',price:'',note:''}];
   rows.forEach(addRow);calc()}
-function archiveQuote(){
+async function archiveQuote(){
   save();
   let archive=[];
   try{archive=JSON.parse(localStorage.getItem('fujiwara_quote_archive_v1')||'[]')}catch(e){archive=[]}
@@ -160,18 +168,21 @@ function archiveQuote(){
   const d={id:'Q'+Date.now(),savedAt:new Date().toISOString(),rows:collectRows()};
   fields().forEach(id=>d[id]=document.getElementById(id).value);
   d.totalText=document.getElementById('total').textContent;
+  d.source='quote';
+  d.shared=true;
+
+  // Local backup first
   archive.unshift(d);
   localStorage.setItem('fujiwara_quote_archive_v1',JSON.stringify(archive));
-  let check=[];
-  try{check=JSON.parse(localStorage.getItem('fujiwara_quote_archive_v1')||'[]')}catch(e){}
-  const ok=Array.isArray(check)&&check.some(x=>x.id===d.id);
+
   const s=document.getElementById('saveStatus');
-  if(ok){
-    s.textContent='✅ この見積を保存しました（保存済み '+check.length+'件）';
-    alert('保存できました。KINGの「見積書・請求書」から確認できます。');
-  }else{
-    s.textContent='⚠️ 保存できませんでした';
-    alert('保存できませんでした。');
+  try{
+    await sharedDb.ref(DOC_BASE+'/quotes/'+d.id).set(d);
+    if(s) s.textContent='✅ 保存・共有しました（Firebase）';
+    alert('保存して共有しました。別のiPad・PCからもKINGの書類センターで確認できます。');
+  }catch(e){
+    if(s) s.textContent='⚠️ 端末には保存済み／共有は失敗';
+    alert('端末には保存しましたが、共有に失敗しました：'+e.message);
   }
 }
 function resetForm(){if(!confirm('入力内容を初期化しますか？'))return;localStorage.removeItem(KEY);location.reload()}
