@@ -25,7 +25,7 @@ td textarea{min-height:46px;resize:vertical;line-height:1.35;overflow-wrap:anywh
 .toolbar{display:none!important}.wrap{max-width:none;padding:0}.sheet{box-shadow:none;border:0;padding:0}input,textarea{border:0!important;padding:0!important}.box{border:0;padding:0}.tablewrap{overflow:visible}@page{size:A4;margin:12mm}}
 </style></head>
 <body><div class="wrap">
-<div class="toolbar"><div class="actions"><button class="primary" onclick="addRow()">＋ 明細を追加</button><button onclick="save()">💾 保存</button><button onclick="window.print()">🖨 印刷 / PDF</button><button onclick="resetForm()">初期化</button></div></div>
+<div class="toolbar"><div class="actions"><button class="primary" onclick="addRow()">＋ 明細を追加</button><button onclick="save()">💾 保存</button><button class="primary" onclick="archiveQuote()">📚 この見積を保存</button><button onclick="window.print()">🖨 印刷 / PDF</button><button onclick="resetForm()">初期化</button></div></div>
 <section class="sheet"><div class="title">御 見 積 書</div>
 <div class="topgrid"><div><div class="recipient"><input id="recipient" value="コナンプロデュース 御中"></div><div style="margin-top:18px"><label>件名</label><input id="subject" value="買取案件 お見積り"></div><div style="margin-top:10px"><label>案件名 / イベント名</label><input id="project" placeholder="例：○○イベント 買取案件"></div></div>
 <div class="box"><div class="info-grid"><div><label>見積番号</label><input id="quoteNo" placeholder="Q-2026-001"></div><div><label>見積日</label><input id="quoteDate" type="date"></div><div><label>有効期限</label><input id="validUntil" type="date"></div><div><label>担当者</label><input id="contact" placeholder="担当者名"></div></div></div></div>
@@ -122,6 +122,18 @@ function load(){let d={};try{d=JSON.parse(localStorage.getItem(KEY)||'{}')}catch
     ? d.rows.map(r=>({name:r.name||'',unit:r.unit||'',qty:r.qty??'',price:r.price??'',note:r.note||''}))
     : [{name:'',unit:'',qty:'',price:'',note:''}];
   rows.forEach(addRow);calc()}
+function archiveQuote(){
+  save();
+  let archive=[];
+  try{archive=JSON.parse(localStorage.getItem('fujiwara_quote_archive_v1')||'[]')}catch(e){}
+  if(!Array.isArray(archive)) archive=[];
+  const d={id:'Q'+Date.now(),savedAt:new Date().toISOString(),rows:collectRows()};
+  fields().forEach(id=>d[id]=document.getElementById(id).value);
+  d.totalText=document.getElementById('total').textContent;
+  archive.unshift(d);
+  localStorage.setItem('fujiwara_quote_archive_v1',JSON.stringify(archive));
+  alert('この見積を保存しました');
+}
 function resetForm(){if(!confirm('入力内容を初期化しますか？'))return;localStorage.removeItem(KEY);location.reload()}
 document.addEventListener('input',saveSoon);window.addEventListener('beforeunload',save);load();
 </script></body></html>
