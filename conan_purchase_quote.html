@@ -13,9 +13,16 @@ button{border:0;border-radius:10px;padding:10px 14px;font-weight:900;background:
 .topgrid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}.box{border:1px solid var(--line);border-radius:10px;padding:14px}label{display:block;font-size:12px;color:var(--sub);font-weight:800;margin-bottom:4px}
 input,textarea{width:100%;border:1px solid #d4dae2;border-radius:8px;padding:9px 10px;font:inherit;background:#fff}textarea{min-height:64px;resize:vertical}.recipient input{font-size:22px;font-weight:950;border:0;border-bottom:2px solid #222;border-radius:0;padding-left:0}
 .info-grid,.company-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.totalbox{margin:18px 0;border:2px solid #1f2937;border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center}.totalbox .label{font-size:18px;font-weight:900}.totalbox .amount{font-size:30px;font-weight:950}
-table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #bfc6cf;padding:6px;background:#fff}th{background:#edf1f5;text-align:center}td input{border:0;border-radius:0;padding:8px}.num{text-align:right}.memo{margin-top:18px}.company{margin-top:22px;border-top:2px solid #1f2937;padding-top:14px}.footer-note{margin-top:16px;font-size:12px;color:var(--sub)}
+table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #bfc6cf;padding:6px;background:#fff}th{background:#edf1f5;text-align:center}td input,td textarea{border:0;border-radius:0;padding:7px;font-size:14px}
+td textarea{min-height:46px;resize:vertical;line-height:1.35;overflow-wrap:anywhere}
+.num{text-align:right}.unit{text-align:center}
+@media(max-width:700px){td input,td textarea{font-size:12px;padding:5px}}.memo{margin-top:18px}.company{margin-top:22px;border-top:2px solid #1f2937;padding-top:14px}.footer-note{margin-top:16px;font-size:12px;color:var(--sub)}
 @media(max-width:700px){.sheet{padding:16px}.topgrid,.company-grid,.info-grid{grid-template-columns:1fr}.title{font-size:24px}table{min-width:860px}.tablewrap{overflow:auto}}
-@media print{body{background:#fff}.toolbar{display:none!important}.wrap{max-width:none;padding:0}.sheet{box-shadow:none;border:0;padding:0}input,textarea{border:0!important;padding:0!important}.box{border:0;padding:0}.tablewrap{overflow:visible}@page{size:A4;margin:12mm}}
+@media print{
+  body{background:#fff}
+  td input,td textarea{font-size:9.5pt!important;line-height:1.25!important;white-space:pre-wrap!important}
+  td textarea:placeholder-shown,td input:placeholder-shown{color:transparent!important}
+.toolbar{display:none!important}.wrap{max-width:none;padding:0}.sheet{box-shadow:none;border:0;padding:0}input,textarea{border:0!important;padding:0!important}.box{border:0;padding:0}.tablewrap{overflow:visible}@page{size:A4;margin:12mm}}
 </style></head>
 <body><div class="wrap">
 <div class="toolbar"><div class="actions"><button class="primary" onclick="addRow()">＋ 明細を追加</button><button onclick="save()">💾 保存</button><button onclick="window.print()">🖨 印刷 / PDF</button><button onclick="resetForm()">初期化</button></div></div>
@@ -23,7 +30,18 @@ table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid
 <div class="topgrid"><div><div class="recipient"><input id="recipient" value="コナンプロデュース 御中"></div><div style="margin-top:18px"><label>件名</label><input id="subject" value="買取案件 お見積り"></div><div style="margin-top:10px"><label>案件名 / イベント名</label><input id="project" placeholder="例：○○イベント 買取案件"></div></div>
 <div class="box"><div class="info-grid"><div><label>見積番号</label><input id="quoteNo" placeholder="Q-2026-001"></div><div><label>見積日</label><input id="quoteDate" type="date"></div><div><label>有効期限</label><input id="validUntil" type="date"></div><div><label>担当者</label><input id="contact" placeholder="担当者名"></div></div></div></div>
 <div class="totalbox"><div class="label">お見積金額（税込）</div><div class="amount" id="grandTotal">¥0</div></div>
-<div class="tablewrap"><table><thead><tr><th style="width:42%">品名・内容</th><th style="width:10%">数量</th><th style="width:14%">単価</th><th style="width:14%">金額</th><th style="width:20%">備考</th></tr></thead><tbody id="tbody"></tbody><tfoot><tr><th colspan="3">小計</th><td class="num" id="subtotal">¥0</td><td></td></tr><tr><th colspan="3">消費税</th><td class="num" id="tax">¥0</td><td><input id="taxRate" value="10" inputmode="numeric" oninput="calc()" style="width:55px;text-align:right"> %</td></tr><tr><th colspan="3">合計</th><td class="num" id="total">¥0</td><td></td></tr></tfoot></table></div>
+<div class="tablewrap"><table><thead><tr>
+<th style="width:34%">品名・内容</th>
+<th style="width:8%">単位</th>
+<th style="width:9%">数量</th>
+<th style="width:14%">単価</th>
+<th style="width:14%">金額</th>
+<th style="width:21%">備考</th>
+</tr></thead><tbody id="tbody"></tbody><tfoot>
+<tr><th colspan="4">小計</th><td class="num" id="subtotal">¥0</td><td></td></tr>
+<tr><th colspan="4">消費税</th><td class="num" id="tax">¥0</td><td><input id="taxRate" value="10" inputmode="numeric" oninput="calc()" style="width:55px;text-align:right"> %</td></tr>
+<tr><th colspan="4">合計</th><td class="num" id="total">¥0</td><td></td></tr>
+</tfoot></table></div>
 <div class="memo"><label>見積条件・備考</label><textarea id="memo" placeholder="例：搬入費込み／現地渡し／数量変更時は再見積／支払条件など"></textarea></div>
 <div class="company"><div class="company-grid"><div><label>見積提出者</label><input id="companyName" value="藤原一工業合同会社"></div><div><label>担当</label><input id="companyContact" placeholder="藤原"></div><div><label>住所</label><input id="address" placeholder="住所"></div><div><label>電話 / 連絡先</label><input id="phone" placeholder="電話番号"></div></div></div>
 <div class="footer-note">※ 買取案件用の見積様式です。金額・数量・条件は案件ごとに編集してください。</div></section></div>
@@ -31,14 +49,71 @@ table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid
 const KEY='conan_purchase_quote_v1';
 function yen(n){return '¥'+Math.round(Number(n)||0).toLocaleString('ja-JP')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function rowHtml(r={name:'',qty:1,price:'',note:''}){return `<tr><td><input value="${esc(r.name)}" placeholder="品名・買取内容"></td><td><input class="num" inputmode="decimal" value="${esc(r.qty)}" oninput="calc()"></td><td><input class="num" inputmode="numeric" value="${esc(r.price)}" oninput="calc()"></td><td class="num lineTotal">¥0</td><td><input value="${esc(r.note)}" placeholder="備考"></td></tr>`}
-function addRow(r){tbody.insertAdjacentHTML('beforeend',rowHtml(r));calc();saveSoon()}
-function collectRows(){return [...tbody.querySelectorAll('tr')].map(tr=>{const x=tr.querySelectorAll('input');return{name:x[0].value,qty:x[1].value,price:x[2].value,note:x[3].value}})}
-function calc(){let sub=0;[...tbody.querySelectorAll('tr')].forEach(tr=>{const x=tr.querySelectorAll('input');const v=(parseFloat(x[1].value)||0)*(parseFloat(String(x[2].value).replace(/,/g,''))||0);tr.querySelector('.lineTotal').textContent=yen(v);sub+=v});const rate=parseFloat(taxRate.value)||0;const t=Math.round(sub*rate/100),g=sub+t;subtotal.textContent=yen(sub);tax.textContent=yen(t);total.textContent=yen(g);grandTotal.textContent=yen(g)}
+function parseNum(v){
+  const s=String(v??'').replace(/,/g,'').trim();
+  if(s===''||s==='-'||s==='−') return 0;
+  return Number(s.replace('−','-'))||0;
+}
+function formatNum(v){
+  const s=String(v??'').replace(/,/g,'').trim();
+  if(s==='') return '';
+  const n=Number(s.replace('−','-'));
+  return Number.isFinite(n)?n.toLocaleString('ja-JP'):'';
+}
+function rowHtml(r={name:'',unit:'',qty:'',price:'',note:''}){
+  r=r||{};
+  return `<tr>
+    <td><textarea data-role="name" placeholder="" oninput="saveSoon()">${esc(r.name||'')}</textarea></td>
+    <td><input data-role="unit" class="unit" value="${esc(r.unit||'')}" placeholder="" oninput="saveSoon()"></td>
+    <td><input data-role="qty" class="num" inputmode="decimal" value="${esc(r.qty??'')}" placeholder="" oninput="calc();saveSoon()"></td>
+    <td><input data-role="price" class="num" inputmode="text" value="${esc(formatNum(r.price??''))}" placeholder=""
+      onfocus="this.value=String(this.value).replace(/,/g,'')"
+      onblur="this.value=formatNum(this.value);calc();saveSoon()"
+      oninput="calc();saveSoon()"></td>
+    <td class="num lineTotal"></td>
+    <td><textarea data-role="note" placeholder="" oninput="saveSoon()">${esc(r.note||'')}</textarea></td>
+  </tr>`;
+}
+function addRow(r){
+  tbody.insertAdjacentHTML('beforeend',rowHtml(r));
+  calc();saveSoon();
+}
+function collectRows(){
+  return [...tbody.querySelectorAll('tr')].map(tr=>({
+    name:tr.querySelector('[data-role="name"]')?.value||'',
+    unit:tr.querySelector('[data-role="unit"]')?.value||'',
+    qty:tr.querySelector('[data-role="qty"]')?.value||'',
+    price:String(tr.querySelector('[data-role="price"]')?.value||'').replace(/,/g,''),
+    note:tr.querySelector('[data-role="note"]')?.value||''
+  }));
+}
+function calc(){
+  let sub=0;
+  [...tbody.querySelectorAll('tr')].forEach(tr=>{
+    const qty=parseNum(tr.querySelector('[data-role="qty"]')?.value);
+    const price=parseNum(tr.querySelector('[data-role="price"]')?.value);
+    const hasQty=String(tr.querySelector('[data-role="qty"]')?.value||'').trim()!=='';
+    const hasPrice=String(tr.querySelector('[data-role="price"]')?.value||'').trim()!=='';
+    const cell=tr.querySelector('.lineTotal');
+    if(!hasQty || !hasPrice){
+      cell.textContent='';
+      return;
+    }
+    const v=qty*price;
+    cell.textContent=yen(v);
+    sub+=v;
+  });
+  const rate=parseFloat(taxRate.value)||0;
+  const t=Math.round(sub*rate/100),g=sub+t;
+  subtotal.textContent=yen(sub);tax.textContent=yen(t);total.textContent=yen(g);grandTotal.textContent=yen(g);
+}
 function fields(){return ['recipient','subject','project','quoteNo','quoteDate','validUntil','contact','taxRate','memo','companyName','companyContact','address','phone']}
 function save(){const d={rows:collectRows()};fields().forEach(id=>d[id]=document.getElementById(id).value);localStorage.setItem(KEY,JSON.stringify(d))}
 let timer;function saveSoon(){clearTimeout(timer);timer=setTimeout(save,300)}
-function load(){let d={};try{d=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}fields().forEach(id=>{if(d[id]!=null)document.getElementById(id).value=d[id]});if(!quoteDate.value)quoteDate.value=new Date().toISOString().slice(0,10);tbody.innerHTML='';const rows=Array.isArray(d.rows)&&d.rows.length?d.rows:[{name:'',qty:1,price:'',note:''}];rows.forEach(addRow);calc()}
+function load(){let d={};try{d=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}fields().forEach(id=>{if(d[id]!=null)document.getElementById(id).value=d[id]});if(!quoteDate.value)quoteDate.value=new Date().toISOString().slice(0,10);tbody.innerHTML='';const rows=Array.isArray(d.rows)&&d.rows.length
+    ? d.rows.map(r=>({name:r.name||'',unit:r.unit||'',qty:r.qty??'',price:r.price??'',note:r.note||''}))
+    : [{name:'',unit:'',qty:'',price:'',note:''}];
+  rows.forEach(addRow);calc()}
 function resetForm(){if(!confirm('入力内容を初期化しますか？'))return;localStorage.removeItem(KEY);location.reload()}
 document.addEventListener('input',saveSoon);window.addEventListener('beforeunload',save);load();
 </script></body></html>
