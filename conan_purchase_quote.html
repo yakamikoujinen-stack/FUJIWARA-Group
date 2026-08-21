@@ -118,7 +118,37 @@ function calc(){
 function fields(){return ['recipient','subject','project','quoteNo','quoteDate','validUntil','contact','taxRate','memo','companyName','companyContact','address','phone']}
 function save(){const d={rows:collectRows()};fields().forEach(id=>d[id]=document.getElementById(id).value);localStorage.setItem(KEY,JSON.stringify(d))}
 let timer;function saveSoon(){clearTimeout(timer);timer=setTimeout(save,300)}
-function load(){let d={};try{d=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}fields().forEach(id=>{if(d[id]!=null)document.getElementById(id).value=d[id]});if(!quoteDate.value)quoteDate.value=new Date().toISOString().slice(0,10);tbody.innerHTML='';const rows=Array.isArray(d.rows)&&d.rows.length
+
+function nextQuoteNo(){
+  let a=[];
+  try{a=JSON.parse(localStorage.getItem('fujiwara_quote_archive_v1')||'[]')}catch(e){}
+  if(!Array.isArray(a)) a=[];
+  const now=new Date();
+  const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  let max=0;
+  a.forEach(x=>{
+    const m=String(x.quoteNo||'').match(/(\d{4})-(\d{2})-(\d+)$/);
+    if(m && (m[1]+'-'+m[2])===ym) max=Math.max(max,Number(m[3])||0);
+  });
+  return ym+'-'+String(max+1).padStart(3,'0');
+}
+function startNewQuote(){
+  localStorage.removeItem(KEY); // 作業中の下書きだけ消す。保存済み見積は触らない
+  const p=new URLSearchParams(location.search);
+  p.delete('new');
+  history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():''));
+  location.reload();
+}
+function applyNewQuoteMode(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('new')!=='1') return false;
+  localStorage.removeItem(KEY);
+  p.delete('new');
+  history.replaceState(null,'',location.pathname+(p.toString()?'?'+p.toString():''));
+  return true;
+}
+
+function load(){const wasNew=applyNewQuoteMode();let d={};try{d=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}fields().forEach(id=>{if(d[id]!=null)document.getElementById(id).value=d[id]});if(!quoteDate.value)quoteDate.value=new Date().toISOString().slice(0,10);if(wasNew||!quoteNo.value)quoteNo.value=nextQuoteNo();tbody.innerHTML='';const rows=Array.isArray(d.rows)&&d.rows.length
     ? d.rows.map(r=>({name:r.name||'',unit:r.unit||'',qty:r.qty??'',price:r.price??'',note:r.note||''}))
     : [{name:'',unit:'',qty:'',price:'',note:''}];
   rows.forEach(addRow);calc()}

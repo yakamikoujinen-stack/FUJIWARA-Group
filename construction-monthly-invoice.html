@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>建設 月次請求連携</title>
+<style>
+:root{--navy:#1f3a5f;--green:#0a7a2f;--bg:#eef2f7;--line:#d6dde8}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:#172033}
+.wrap{max-width:1000px;margin:auto;padding:14px}.hero,.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}.hero{background:linear-gradient(135deg,#1f3a5f,#376a9c);color:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}select,input,button{width:100%;font-size:16px;padding:11px;border-radius:10px;border:1px solid #ccd3dd;margin-top:8px}button{border:0;background:var(--navy);color:#fff;font-weight:900}.green{background:var(--green)}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.box{background:#f8fafc;border-radius:12px;padding:14px;text-align:center}.big{font-size:24px;font-weight:900}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left}th{background:var(--navy);color:#fff}.status{font-size:12px;color:#64748b}
+@media(max-width:700px){.row,.sum{grid-template-columns:1fr}.scroll{overflow:auto}table{min-width:760px}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head><body><div class="wrap">
+<section class="hero"><h1>🏗 建設 月次請求連携</h1><p>建設アプリの日報データから、取引先・月別の請求書下書きを作成します。</p></section>
+<section class="card">
+<div class="row"><div><b>取引先</b><select id="client" onchange="render()"></select></div><div><b>対象月</b><input id="month" type="month" onchange="render()"></div></div>
+<div id="status" class="status">Firebase読込中...</div>
+</section>
+<section class="card"><div class="sum"><div class="box"><div class="big" id="count">0</div>日報件数</div><div class="box"><div class="big" id="people">0</div>延べ人数</div><div class="box"><div class="big" id="hours">0.0h</div>合計現場時間</div></div></section>
+<section class="card"><h3>月間実績</h3><div class="scroll"><table><thead><tr><th>日付</th><th>現場</th><th>人数</th><th>入場</th><th>退場</th><th>作業員</th></tr></thead><tbody id="body"></tbody></table></div>
+<button class="green" onclick="sendToInvoice()">📑 この月の請求書を作る</button>
+<p class="status">※ 金額・単価は請求書画面で入力します。日報件数・延べ人数・現場時間は備考へ引き継ぎます。</p>
+</section></div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
+firebase.initializeApp(firebaseConfig);const db=firebase.database(),base="fujiwara/construction";let reports=[];
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function mins(a,b,br){if(!a||!b)return 0;const [ah,am]=a.split(':').map(Number),[bh,bm]=b.split(':').map(Number);let x=(bh*60+bm)-(ah*60+am);if(x<0)x+=1440;return Math.max(0,x-(Number(br)||0))}
+function selected(){return reports.filter(r=>(!client.value||r.client===client.value)&&(!month.value||String(r.date||'').startsWith(month.value)))}
+function render(){
+ const arr=selected();let p=0,m=0;arr.forEach(r=>{p+=Number(r.people)||0;m+=mins(r.start,r.end,r.breakMin)});
+ count.textContent=arr.length;people.textContent=p;hours.textContent=(m/60).toFixed(1)+'h';
+ body.innerHTML=arr.sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.site)}</td><td>${esc(r.people)}</td><td>${esc(r.start)}</td><td>${esc(r.end)}</td><td>${esc(r.worker||r.reporter)}</td></tr>`).join('');
+}
+function sendToInvoice(){
+ const arr=selected();if(!client.value)return alert('取引先を選択してください');if(!month.value)return alert('対象月を選択してください');
+ let p=0,m=0;arr.forEach(r=>{p+=Number(r.people)||0;m+=mins(r.start,r.end,r.breakMin)});
+ const label=month.value.replace('-','年')+'月';
+ const sites=[...new Set(arr.map(r=>r.site).filter(Boolean))];
+ const payload={
+   client:client.value,
+   subject:'建設 月次ご請求',
+   project:label+' 建設作業',
+   memo:`建設アプリ連携\\n対象月：${label}\\n日報件数：${arr.length}件\\n延べ人数：${p}人\\n合計現場時間：${(m/60).toFixed(1)}時間\\n現場：${sites.join('、')}`,
+   rows:[{name:label+' 建設作業費',unit:'式',qty:'1',price:'',note:'建設アプリ月間実績より'}]
+ };
+ localStorage.setItem('fujiwara_construction_invoice_prefill_v1',JSON.stringify(payload));
+ location.href='fujiwara_invoice.html?new=1';
+}
+month.value=new Date().toISOString().slice(0,7);
+db.ref(base+'/reports').on('value',s=>{
+ const v=s.val()||{};reports=Object.entries(v).map(([id,x])=>({id,...x}));
+ const cs=[...new Set(reports.map(r=>r.client).filter(Boolean))].sort();
+ client.innerHTML='<option value="">取引先を選択</option>'+cs.map(x=>`<option>${esc(x)}</option>`).join('');
+ status.textContent='Firebase共有データを読み込みました';render();
+},e=>status.textContent='読込エラー：'+e.message);
+</script></body></html>
