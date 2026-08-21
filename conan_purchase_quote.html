@@ -15,7 +15,7 @@ input,textarea{width:100%;border:1px solid #d4dae2;border-radius:8px;padding:9px
 .info-grid,.company-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.totalbox{margin:18px 0;border:2px solid #1f2937;border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center}.totalbox .label{font-size:18px;font-weight:900}.totalbox .amount{font-size:30px;font-weight:950}
 table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #bfc6cf;padding:6px;background:#fff}th{background:#edf1f5;text-align:center}td input,td textarea{border:0;border-radius:0;padding:7px;font-size:14px}
 td textarea{min-height:46px;resize:vertical;line-height:1.35;overflow-wrap:anywhere}
-.num{text-align:right}.unit{text-align:center}
+.num{text-align:right}.unit{text-align:center}.negative{color:#d32f2f!important;font-weight:900}
 @media(max-width:700px){td input,td textarea{font-size:12px;padding:5px}}.memo{margin-top:18px}.company{margin-top:22px;border-top:2px solid #1f2937;padding-top:14px}.footer-note{margin-top:16px;font-size:12px;color:var(--sub)}
 @media(max-width:700px){.sheet{padding:16px}.topgrid,.company-grid,.info-grid{grid-template-columns:1fr}.title{font-size:24px}table{min-width:860px}.tablewrap{overflow:auto}}
 @media print{
@@ -66,10 +66,10 @@ function rowHtml(r={name:'',unit:'',qty:'',price:'',note:''}){
     <td><textarea data-role="name" placeholder="" oninput="saveSoon()">${esc(r.name||'')}</textarea></td>
     <td><input data-role="unit" class="unit" value="${esc(r.unit||'')}" placeholder="" oninput="saveSoon()"></td>
     <td><input data-role="qty" class="num" inputmode="decimal" value="${esc(r.qty??'')}" placeholder="" oninput="calc();saveSoon()"></td>
-    <td><input data-role="price" class="num" inputmode="text" value="${esc(formatNum(r.price??''))}" placeholder=""
-      onfocus="this.value=String(this.value).replace(/,/g,'')"
-      onblur="this.value=formatNum(this.value);calc();saveSoon()"
-      oninput="calc();saveSoon()"></td>
+    <td><input data-role="price" class="num ${parseNum(r.price)<0?'negative':''}" inputmode="text" value="${esc(formatNum(r.price??''))}" placeholder=""
+      onfocus="this.value=String(this.value).replace(/,/g,'');this.classList.toggle('negative',parseNum(this.value)<0)"
+      onblur="this.value=formatNum(this.value);this.classList.toggle('negative',parseNum(this.value)<0);calc();saveSoon()"
+      oninput="this.classList.toggle('negative',parseNum(this.value)<0);calc();saveSoon()"></td>
     <td class="num lineTotal"></td>
     <td><textarea data-role="note" placeholder="" oninput="saveSoon()">${esc(r.note||'')}</textarea></td>
   </tr>`;
@@ -101,11 +101,19 @@ function calc(){
     }
     const v=qty*price;
     cell.textContent=yen(v);
+    cell.classList.toggle('negative',v<0);
     sub+=v;
   });
   const rate=parseFloat(taxRate.value)||0;
   const t=Math.round(sub*rate/100),g=sub+t;
-  subtotal.textContent=yen(sub);tax.textContent=yen(t);total.textContent=yen(g);grandTotal.textContent=yen(g);
+  subtotal.textContent=yen(sub);
+  tax.textContent=yen(t);
+  total.textContent=yen(g);
+  grandTotal.textContent=yen(g);
+  subtotal.classList.toggle('negative',sub<0);
+  tax.classList.toggle('negative',t<0);
+  total.classList.toggle('negative',g<0);
+  grandTotal.classList.toggle('negative',g<0);
 }
 function fields(){return ['recipient','subject','project','quoteNo','quoteDate','validUntil','contact','taxRate','memo','companyName','companyContact','address','phone']}
 function save(){const d={rows:collectRows()};fields().forEach(id=>d[id]=document.getElementById(id).value);localStorage.setItem(KEY,JSON.stringify(d))}
