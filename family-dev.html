@@ -52,67 +52,22 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu G
 <div class="bottom">FUJIWARA FAMILY 開発版 v0.2｜個人ログイン＋ログアウト対応</div>
 <script>
 const PEOPLE=[
-  {id:"mayumi",name:"まゆみ",icon:"👩",hash:"40b4eaad2f3ec3400de8e478ab3a46abd4ed4fb99896cb58fc2d1293d3ddfe6b"},
-  {id:"ryuki",name:"龍来",icon:"👨",hash:"f745cefd31fc872ee22bc097691706a3d33505f38d3130eb061358e365861236"},
-  {id:"ayumi",name:"歩未",icon:"👩",hash:"51a67613b668d14054141711d4db776d75ebe99dce9a13465d398e88387cf32c"},
-  {id:"sora",name:"想良",icon:"👨",hash:"6349baadb1c762b9cae4c6b79e3567835cc9d7b3f7cf812341d7c8b355df8b9a"},
+  {id:"mayumi",name:"まゆみ",icon:"👩",hash:"a777e09fefa1c39b972e657277e12a562ae60b74e9eae129d2f367b3de1f67df"},
+  {id:"ryuki",name:"龍来",icon:"👨",hash:"3d587ef006444e43ed4a0e71d027a9e82db9bfd6b9941cb45a879536932f1298"},
+  {id:"ayumi",name:"歩未",icon:"👩",hash:"dade5294b388a7d81b29f786873edfaf74aa7a056af68d9f707fbca2dc38cf0d"},
+  {id:"sora",name:"想良",icon:"👨",hash:"a664d8a49a838f445fa520284f94891a86ac57cfccdd35df2b8defe278342934"},
   {id:"fujiwara",name:"藤原",icon:"👑",hash:"f0691e02aec1cdb5a1cd67ec94e67b969794444e2c48c3bb0f9e33ea9caa0f6d"}
 ];
 let current=null;
 const members=document.getElementById("members");
 members.innerHTML=PEOPLE.map(p=>`<button class="member" data-id="${p.id}" onclick="selectPerson('${p.id}')"><span class="face">${p.icon}</span><span class="name">${p.name}</span></button>`).join("");
-
-function selectPerson(id){
-  current=PEOPLE.find(p=>p.id===id);
-  document.querySelectorAll(".member").forEach(x=>x.classList.toggle("active",x.dataset.id===id));
-  document.getElementById("who").textContent="選択中："+current.name;
-  document.getElementById("loginBox").classList.remove("hidden");
-  document.getElementById("error").classList.add("hidden");
-  document.getElementById("password").value="";
-  setTimeout(()=>document.getElementById("password").focus(),50);
-}
-async function sha256(text){
-  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-}
-async function login(){
-  if(!current)return;
-  const entered=document.getElementById("password").value;
-  const h=await sha256(entered);
-  if(h!==current.hash){document.getElementById("error").classList.remove("hidden");return;}
-  sessionStorage.setItem("fujiwara_family_login",current.id);
-  showMenu(current.id);
-}
-function showMenu(id){
-  current=PEOPLE.find(p=>p.id===id);
-  if(!current)return;
-  document.getElementById("loginCard").classList.add("hidden");
-  document.getElementById("menu").classList.remove("hidden");
-  document.getElementById("spec").classList.remove("hidden");
-  document.getElementById("menuTitle").textContent=current.name+" のメニュー";
-  document.getElementById("tansuLink").classList.toggle("hidden",id!=="mayumi");
-  const txt=id==="mayumi"
-   ? "まゆみ：メインアプリは従来どおり。シークレットイベントは閲覧不可。自分が参加したイベントは売上編集対象。タンス預金は編集可。自分の労務費・未納・参加イベント一覧を閲覧可。"
-   : id==="fujiwara"
-   ? "藤原：家族アプリ開発確認用。最終的な家族向け権限とは分離して管理します。"
-   : current.name+"：メインアプリは従来どおりシークレット以外を閲覧。自分の労務費集計・未納分・自分が行くイベント一覧のみ閲覧できます。";
-  document.getElementById("specText").textContent=txt;
-}
-function logout(){
-  sessionStorage.removeItem("fujiwara_family_login");
-  current=null;
-  document.getElementById("menu").classList.add("hidden");
-  document.getElementById("spec").classList.add("hidden");
-  document.getElementById("loginCard").classList.remove("hidden");
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("who").textContent="名前を選択してください";
-  document.querySelectorAll(".member").forEach(x=>x.classList.remove("active"));
-  document.getElementById("password").value="";
-}
+function selectPerson(id){current=PEOPLE.find(p=>p.id===id);document.querySelectorAll(".member").forEach(x=>x.classList.toggle("active",x.dataset.id===id));document.getElementById("who").textContent="選択中："+current.name;document.getElementById("loginBox").classList.remove("hidden");document.getElementById("error").classList.add("hidden");document.getElementById("password").value="";setTimeout(()=>document.getElementById("password").focus(),50)}
+async function sha256(text){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")}
+async function login(){if(!current)return;const entered=document.getElementById("password").value;const h=await sha256(entered);if(h!==current.hash){document.getElementById("error").classList.remove("hidden");return}sessionStorage.setItem("fujiwara_family_login",current.id);showMenu(current.id)}
+function showMenu(id){current=PEOPLE.find(p=>p.id===id);if(!current)return;document.getElementById("loginCard").classList.add("hidden");document.getElementById("menu").classList.remove("hidden");document.getElementById("spec").classList.remove("hidden");document.getElementById("menuTitle").textContent=current.name+" のメニュー";document.getElementById("tansuLink").classList.toggle("hidden",id!=="mayumi");const txt=id==="mayumi"?"まゆみ：メインアプリは従来どおり。シークレットイベントは閲覧不可。自分が参加したイベントは売上編集対象。タンス預金は編集可。自分の労務費・未納・参加イベント一覧を閲覧可。":id==="fujiwara"?"藤原：家族アプリ開発確認用。最終的な家族向け権限とは分離して管理します。":current.name+"：メインアプリは従来どおりシークレット以外を閲覧。自分の労務費集計・未納分・自分が行くイベント一覧のみ閲覧できます。";document.getElementById("specText").textContent=txt}
+function logout(){sessionStorage.removeItem("fujiwara_family_login");current=null;document.getElementById("menu").classList.add("hidden");document.getElementById("spec").classList.add("hidden");document.getElementById("loginCard").classList.remove("hidden");document.getElementById("loginBox").classList.add("hidden");document.getElementById("who").textContent="名前を選択してください";document.querySelectorAll(".member").forEach(x=>x.classList.remove("active"));document.getElementById("password").value=""}
 function openMyEvents(){if(current)location.href="family-my-events-dev.html?person="+encodeURIComponent(current.name)}
 function openLabor(){if(current)location.href="family-my-labor-dev.html?person="+encodeURIComponent(current.name)}
-document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
-const logged=sessionStorage.getItem("fujiwara_family_login");
-if(logged&&PEOPLE.some(p=>p.id===logged))showMenu(logged);
+document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter")login()});const logged=sessionStorage.getItem("fujiwara_family_login");if(logged&&PEOPLE.some(p=>p.id===logged))showMenu(logged);
 </script>
 </body></html>
