@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>まゆみ｜タンス預金</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;background:#fff6f8;color:#2d2530}
+.wrap{max-width:900px;margin:auto;padding:16px 14px 90px}header{background:linear-gradient(135deg,#e95383,#f78eaa);color:#fff;border-radius:24px;padding:20px}
+header h1{margin:0;font-size:25px}header p{margin:7px 0 0;opacity:.92}
+.card{background:#fff;border:1px solid #f2dce3;border-radius:20px;padding:16px;margin-top:14px;box-shadow:0 10px 28px #8d294912}
+.form{display:grid;grid-template-columns:1fr 1.4fr 1fr 1fr;gap:8px}input{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px}
+textarea{width:100%;min-height:72px;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px;margin-top:8px}
+button{border:0;border-radius:12px;padding:13px 16px;font-weight:900;font-size:15px}.save{background:#d94673;color:#fff;width:100%;margin-top:10px}
+table{width:100%;border-collapse:collapse;min-width:680px}th,td{padding:10px 8px;border-bottom:1px solid #eee;text-align:left}th{font-size:12px;color:#667085;background:#fff8fa;position:sticky;top:0}
+.num{text-align:right}.wraptable{overflow:auto;border-radius:14px;border:1px solid #eee}.edit{background:#fce7ef;color:#a61f49;padding:7px 10px}
+.total{font-size:28px;font-weight:950;color:#b42355}.bottom{position:fixed;bottom:0;left:0;right:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #eee}
+.back{display:block;text-align:center;text-decoration:none;background:#5b5360;color:#fff;border-radius:12px;padding:12px;font-weight:900}
+@media(max-width:650px){.form{grid-template-columns:1fr 1fr}}
+</style></head>
+<body><div class="wrap">
+<header><h1>🗄️ まゆみ｜タンス預金</h1><p>KINGの他の情報を開かず、タンス預金だけを確認・編集します。</p></header>
+<section class="card"><div>現在残高</div><div class="total" id="balance">¥0</div></section>
+<section class="card">
+<div class="form">
+<input type="date" id="date"><input id="item" placeholder="項目"><input id="income" inputmode="numeric" placeholder="入金"><input id="expense" inputmode="numeric" placeholder="出金">
+</div><textarea id="note" placeholder="備考"></textarea>
+<button class="save" onclick="saveRecord()">保存</button>
+</section>
+<section class="card"><div class="wraptable"><table><thead><tr><th>日付</th><th>項目</th><th class="num">入金</th><th class="num">出金</th><th class="num">残高</th><th>備考</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></section>
+</div>
+<div class="bottom"><a class="back" href="family-dev.html">← 家族アプリへ戻る</a></div>
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+  authDomain:"fujiwara-group-3a600.firebaseapp.com",
+  databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+  projectId:"fujiwara-group-3a600",
+  storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+  messagingSenderId:"709887362301",
+  appId:"1:709887362301:web:8ff756d645bc0398956a94"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const PATH="fujiwara/king_tansu_yokin";
+let records=[],editingId=null;
+const yen=v=>"¥"+Number(v||0).toLocaleString("ja-JP");
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+document.getElementById("date").value=today();
+
+function normalized(raw){
+  if(!raw)return [];
+  return Object.entries(raw).map(([id,v])=>({id,...(v||{})}));
+}
+function chrono(list){return list.slice().sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))||Number(a.createdAt||0)-Number(b.createdAt||0))}
+function render(){
+  let running=0;
+  const list=chrono(records).map(r=>{running+=Number(r.income||0)-Number(r.expense||0);return {...r,balance:running}});
+  document.getElementById("balance").textContent=yen(running);
+  document.getElementById("rows").innerHTML=list.slice().reverse().map(r=>`<tr>
+    <td>${esc(r.date||"")}</td><td>${esc(r.item||"")}</td><td class="num">${yen(r.income)}</td><td class="num">${yen(r.expense)}</td><td class="num"><b>${yen(r.balance)}</b></td>
+    <td>${esc(r.note||"")}</td><td><button class="edit" onclick="editRecord('${r.id}')">編集</button></td></tr>`).join("") || '<tr><td colspan="7">登録はまだありません</td></tr>';
+}
+db.ref(PATH).on("value",snap=>{records=normalized(snap.val());render()},err=>alert("読み込みエラー："+err.message));
+
+function num(id){return Number(String(document.getElementById(id).value||"0").replace(/,/g,""))||0}
+async function saveRecord(){
+  const data={date:document.getElementById("date").value||today(),item:document.getElementById("item").value.trim(),income:num("income"),expense:num("expense"),note:document.getElementById("note").value.trim(),updatedAt:Date.now()};
+  if(!data.item)return alert("項目を入力してください");
+  if(editingId) await db.ref(PATH+"/"+editingId).update(data);
+  else await db.ref(PATH).push({...data,createdAt:Date.now()});
+  editingId=null;["item","income","expense","note"].forEach(id=>document.getElementById(id).value="");document.getElementById("date").value=today();
+}
+function editRecord(id){
+ const r=records.find(x=>x.id===id); if(!r)return;
+ editingId=id;document.getElementById("date").value=r.date||today();document.getElementById("item").value=r.item||"";document.getElementById("income").value=r.income||"";document.getElementById("expense").value=r.expense||"";document.getElementById("note").value=r.note||"";window.scrollTo({top:0,behavior:"smooth"});
+}
+</script></body></html>

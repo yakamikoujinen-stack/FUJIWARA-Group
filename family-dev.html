@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FUJIWARA FAMILY｜開発版</title>
+<meta name="theme-color" content="#7c3aed">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#f4efff,#fff 45%,#fff8ee);color:#182033}
+.wrap{max-width:1000px;margin:auto;padding:18px 16px 90px}
+.hero{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:26px;padding:22px;box-shadow:0 14px 35px #7c3aed33}
+.hero h1{margin:0;font-size:29px} .hero p{margin:8px 0 0;opacity:.92;line-height:1.65}
+.dev{display:inline-block;margin-top:10px;background:#fff3;color:#fff;border:1px solid #ffffff55;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}
+.card{background:#fff;border:1px solid #ece8f3;border-radius:22px;padding:18px;margin-top:16px;box-shadow:0 10px 28px #35206012}
+h2{margin:0 0 12px;font-size:20px}
+.members{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.member{border:2px solid #eee;background:#fff;border-radius:18px;padding:14px 8px;text-align:center;font-weight:900;cursor:pointer}
+.member.active{border-color:#7c3aed;background:#f5f0ff;color:#6d28d9}
+.face{font-size:30px;display:block;margin-bottom:5px}
+.name{font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tile{min-height:112px;border-radius:19px;padding:15px;text-decoration:none;color:#172033;border:1px solid #e8e8ee;background:#fff;display:flex;flex-direction:column;justify-content:space-between}
+.tile b{font-size:17px} .tile small{color:#667085;line-height:1.5}
+.tile .icon{font-size:28px}
+.main{background:#eaf5ff;border-color:#b8dcff} .labor{background:#effcf3;border-color:#bce8ca}
+.events{background:#fff7e8;border-color:#f4d69f} .tansu{background:#fff0f4;border-color:#f1bfcc}
+.notice{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:16px;padding:13px;line-height:1.65;font-size:13px;color:#475467}
+.hidden{display:none!important}
+.status{font-size:12px;font-weight:800;color:#7c3aed;margin-top:8px}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#ffffffef;backdrop-filter:blur(12px);border-top:1px solid #eee;padding:10px 14px calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:12px;color:#667085}
+@media(max-width:680px){.members{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>👨‍👩‍👧‍👦 FUJIWARA FAMILY</h1>
+    <p>家族用の仕事アプリ。自分に必要なイベント・労務費・未納状況だけを分かりやすく確認します。</p>
+    <span class="dev">開発版｜まだ家族へ配布しません</span>
+  </section>
+
+  <section class="card">
+    <h2>使う人を選択</h2>
+    <div class="members" id="members"></div>
+    <div class="status" id="who">未選択</div>
+  </section>
+
+  <section class="card hidden" id="menu">
+    <h2 id="menuTitle">メニュー</h2>
+    <div class="grid">
+      <a class="tile main" href="index.html">
+        <span class="icon">🎪</span><b>メインアプリ</b>
+        <small>今まで通り。シークレットイベントは従来の権限に従います。</small>
+      </a>
+      <a class="tile events" href="#" onclick="openMyEvents();return false;">
+        <span class="icon">📅</span><b>自分が行くイベント</b>
+        <small>自分が出勤・参加するイベントだけを一覧表示する専用画面へ。</small>
+      </a>
+      <a class="tile labor" href="#" onclick="openLabor();return false;">
+        <span class="icon">💴</span><b>自分の労務費</b>
+        <small>自分の月別・合計・未納分のみを確認。ほかの人の金額は表示しません。</small>
+      </a>
+      <a class="tile tansu hidden" id="tansuLink" href="family-tansu-dev.html">
+        <span class="icon">🗄️</span><b>タンス預金</b>
+        <small>まゆみ専用。KINGの他画面を通らず、タンス預金だけ確認・編集。</small>
+      </a>
+    </div>
+  </section>
+
+  <section class="card hidden" id="spec">
+    <h2>現在の権限設定</h2>
+    <div class="notice" id="specText"></div>
+  </section>
+</div>
+<div class="bottom">FUJIWARA FAMILY 開発版 v0.1｜正規 family.html にはまだ上書きしません</div>
+<script>
+const PEOPLE=[
+  {id:"mayumi",name:"まゆみ",icon:"👩"},
+  {id:"ryuki",name:"龍来",icon:"👨"},
+  {id:"ayumi",name:"歩未",icon:"👩"},
+  {id:"sora",name:"想良",icon:"👨"},
+  {id:"fujiwara",name:"藤原",icon:"👑"}
+];
+let current=null;
+const members=document.getElementById("members");
+members.innerHTML=PEOPLE.map(p=>`<button class="member" data-id="${p.id}" onclick="selectPerson('${p.id}')"><span class="face">${p.icon}</span><span class="name">${p.name}</span></button>`).join("");
+
+function selectPerson(id){
+  current=PEOPLE.find(p=>p.id===id);
+  document.querySelectorAll(".member").forEach(x=>x.classList.toggle("active",x.dataset.id===id));
+  document.getElementById("who").textContent="選択中："+current.name;
+  document.getElementById("menu").classList.remove("hidden");
+  document.getElementById("spec").classList.remove("hidden");
+  document.getElementById("menuTitle").textContent=current.name+" のメニュー";
+  document.getElementById("tansuLink").classList.toggle("hidden",id!=="mayumi");
+  const txt=id==="mayumi"
+   ? "まゆみ：メインアプリは従来どおり。シークレットイベントは閲覧不可。自分が参加したイベントは売上編集対象。タンス預金は編集可。自分の労務費・未納・参加イベント一覧を閲覧可。"
+   : id==="fujiwara"
+   ? "藤原：家族アプリ開発確認用。最終的な家族向け権限とは分離して管理します。"
+   : current.name+"：メインアプリは従来どおりシークレット以外を閲覧。自分の労務費集計・未納分・自分が行くイベント一覧のみ閲覧できます。";
+  document.getElementById("specText").textContent=txt;
+  localStorage.setItem("fujiwara_family_person",id);
+}
+function openMyEvents(){
+  if(!current)return;
+  location.href="family-my-events-dev.html?person="+encodeURIComponent(current.name);
+}
+function openLabor(){
+  if(!current)return;
+  location.href="family-my-labor-dev.html?person="+encodeURIComponent(current.name);
+}
+const saved=localStorage.getItem("fujiwara_family_person");
+if(saved && PEOPLE.some(p=>p.id===saved)) selectPerson(saved);
+</script>
+</body></html>
