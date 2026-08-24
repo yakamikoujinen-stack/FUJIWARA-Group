@@ -1,1 +1,133 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>自分が行くイベント｜開発中</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",sans-serif;background:#fff7e8;margin:0;padding:20px;color:#283044}.card{max-width:700px;margin:auto;background:#fff;border-radius:22px;padding:22px;box-shadow:0 10px 30px #0001}a{display:block;margin-top:20px;background:#7c3aed;color:#fff;text-align:center;text-decoration:none;padding:13px;border-radius:12px;font-weight:900}</style></head><body><div class="card"><h1>📅 自分が行くイベント</h1><p id="p"></p><p>次の工程でメインアプリの出勤・参加情報と直接つなぎ、本人が行くイベントだけを日付順に表示します。</p><a href="family-dev.html">← 戻る</a></div><script>const n=new URLSearchParams(location.search).get("person")||"";document.getElementById("p").textContent=n+"さん専用画面";</script></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>自分が行くイベント｜FUJIWARA FAMILY</title>
+<meta name="theme-color" content="#d99516">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#fff4d9,#fff 42%,#fffaf0);color:#242b3a}
+.wrap{max-width:880px;margin:auto;padding:16px 14px 100px}
+.hero{background:linear-gradient(135deg,#e5a11c,#f3c24e);color:#3a2700;border-radius:24px;padding:20px;box-shadow:0 12px 30px #9b6b1926}
+.hero h1{font-size:25px;margin:0}.hero p{margin:7px 0 0;line-height:1.6;font-weight:700}.badge{display:inline-block;margin-top:10px;border-radius:999px;background:#fff9;padding:6px 10px;font-size:12px;font-weight:900}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.stat{background:#fff;border:1px solid #eedba7;border-radius:16px;padding:13px;text-align:center;box-shadow:0 5px 18px #0000000b}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:#7a6a42;font-weight:800}
+.section{margin-top:18px}.section-title{font-size:17px;font-weight:950;margin:0 0 9px}.event{background:#fff;border:1px solid #eadcb9;border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:0 7px 20px #543b110c;border-left:5px solid #e0a01e}.event.past{opacity:.72;border-left-color:#9ca3af;background:#f7f7f7}.date{font-size:13px;font-weight:950;color:#a36700;margin-bottom:5px}.past .date{color:#667085}.name{font-size:18px;font-weight:950;line-height:1.4}.meta{margin-top:7px;color:#667085;font-size:13px;line-height:1.65}.staff{display:inline-block;margin-top:8px;border-radius:999px;background:#fff5d8;padding:5px 9px;font-size:11px;font-weight:900;color:#8a5a00}.today{display:inline-block;margin-left:5px;background:#d97706;color:#fff;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900}.empty,.loading,.error{background:#fff;border:1px dashed #d4c8a8;border-radius:18px;padding:24px;text-align:center;color:#667085;line-height:1.7}.error{color:#b42318;border-color:#efb7b0}.hidden{display:none!important}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fffffff2;backdrop-filter:blur(10px);border-top:1px solid #eee;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}.back{display:block;max-width:880px;margin:auto;background:#7c3aed;color:#fff;text-align:center;text-decoration:none;border-radius:13px;padding:13px;font-weight:950}
+@media(max-width:560px){.summary{grid-template-columns:repeat(3,1fr)}.stat{padding:10px 5px}.stat b{font-size:20px}.hero h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>📅 自分が行くイベント</h1>
+    <p id="ownerText">本人の出勤イベントを確認中...</p>
+    <span class="badge">メインアプリと自動連動</span>
+  </section>
+
+  <div class="summary">
+    <div class="stat"><b id="futureCount">-</b><span>これから</span></div>
+    <div class="stat"><b id="monthCount">-</b><span>今月</span></div>
+    <div class="stat"><b id="allCount">-</b><span>表示合計</span></div>
+  </div>
+
+  <div id="loading" class="loading section">🔄 メインアプリのイベントを読み込んでいます...</div>
+  <div id="error" class="error section hidden"></div>
+
+  <section id="futureSection" class="section hidden">
+    <h2 class="section-title">🔜 これから行くイベント</h2>
+    <div id="futureList"></div>
+  </section>
+
+  <section id="pastSection" class="section hidden">
+    <h2 class="section-title">✅ 行ったイベント</h2>
+    <div id="pastList"></div>
+  </section>
+</div>
+<div class="bottom"><a class="back" href="family-dev.html">← 家族アプリへ戻る</a></div>
+<script>
+const PEOPLE={mayumi:'まゆみ',ryuki:'龍来',ayumi:'歩未',sora:'想良',fujiwara:'藤原'};
+const loginId=sessionStorage.getItem('fujiwara_family_login');
+const person=PEOPLE[loginId]||'';
+if(!person){location.replace('family-dev.html');}
+document.getElementById('ownerText').textContent=person+'さんが出勤・参加するイベントだけを表示します。';
+
+const config={
+  apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',
+  authDomain:'fujiwara-group-3a600.firebaseapp.com',
+  databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',
+  projectId:'fujiwara-group-3a600',
+  storageBucket:'fujiwara-group-3a600.firebasestorage.app',
+  messagingSenderId:'709887362301',
+  appId:'1:709887362301:web:5ec6b7e2a2165066956a94'
+};
+if(!firebase.apps.length)firebase.initializeApp(config);
+const db=firebase.database();
+
+function norm(v){return String(v||'').replace(/[\s　]+/g,'').trim()}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function iso(v){
+  if(!v)return '';
+  const s=String(v).trim().replace(/[./]/g,'-');
+  const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):'';
+}
+function addDays(ds,n){const d=new Date(ds+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function dateRange(start,end){const out=[];if(!start)return out;let cur=start;let guard=0;while(cur<=end&&guard<100){out.push(cur);cur=addDays(cur,1);guard++}return out}
+function eventDates(ev){
+  const start=iso(ev.date||ev.startDate||ev.fromDate);
+  let explicit=[];
+  ['dates','eventDates','openDates'].forEach(k=>{if(Array.isArray(ev[k]))ev[k].forEach(v=>{const d=iso(v);if(d)explicit.push(d)})});
+  if(explicit.length)return [...new Set(explicit)].sort();
+  let ends=[ev.dateEnd,ev.endDate,ev.toDate,ev.finishDate,ev.lastDate].map(iso).filter(Boolean);
+  ['dayAssignments','dayAvailability','dailyStaff','attendanceByDate'].forEach(k=>{const m=ev[k];if(m&&typeof m==='object')Object.keys(m).forEach(v=>{const d=iso(v);if(d)ends.push(d)})});
+  const end=ends.filter(d=>!start||d>=start).sort().pop()||start;
+  return start?dateRange(start,end):[];
+}
+function staffForDate(ev,ds){
+  const rec=ev.dayAssignments&&ev.dayAssignments[ds];
+  let arr=rec&&Array.isArray(rec.staff)?rec.staff.slice():(Array.isArray(ev.staff)?ev.staff.slice():[]);
+  if(ev.bsLeader)arr.push(ev.bsLeader);
+  if(ev.bsHelper)arr.push(ev.bsHelper);
+  return arr;
+}
+function assigned(ev,ds){return staffForDate(ev,ds).some(n=>norm(n)===norm(person))}
+function venue(ev){return ev.place||ev.venue||ev.location||ev.address||ev.area||''}
+function evName(ev){return ev.name||ev.eventName||ev.title||'イベント'}
+function fmt(ds){const d=new Date(ds+'T12:00:00');const w='日月火水木金土'[d.getDay()];return (d.getMonth()+1)+'/'+d.getDate()+'（'+w+'）'}
+function renderCard(x,past){
+  const staff=staffForDate(x.ev,x.date);
+  const place=venue(x.ev);
+  const today=localToday();
+  return `<article class="event ${past?'past':''}"><div class="date">${esc(fmt(x.date))}${x.date===today?'<span class="today">今日</span>':''}</div><div class="name">${esc(evName(x.ev))}</div><div class="meta">${place?'📍 '+esc(place)+'<br>':''}${x.ev.time?'🕒 '+esc(x.ev.time)+'<br>':''}${x.ev.note?'📝 '+esc(x.ev.note):''}</div><span class="staff">👥 出勤：${esc(staff.join('・')||person)}</span></article>`;
+}
+function localToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function render(events){
+  const rows=[];
+  (Array.isArray(events)?events:Object.values(events||{})).forEach(ev=>{
+    if(!ev||ev.secret===true)return;
+    eventDates(ev).forEach(ds=>{if(assigned(ev,ds))rows.push({ev,date:ds})});
+  });
+  rows.sort((a,b)=>a.date.localeCompare(b.date)||evName(a.ev).localeCompare(evName(b.ev),'ja'));
+  const today=localToday();
+  const future=rows.filter(x=>x.date>=today);
+  const past=rows.filter(x=>x.date<today).reverse();
+  const ym=today.slice(0,7);
+  document.getElementById('futureCount').textContent=future.length;
+  document.getElementById('monthCount').textContent=rows.filter(x=>x.date.startsWith(ym)).length;
+  document.getElementById('allCount').textContent=rows.length;
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('futureSection').classList.remove('hidden');
+  document.getElementById('pastSection').classList.remove('hidden');
+  document.getElementById('futureList').innerHTML=future.length?future.map(x=>renderCard(x,false)).join(''):'<div class="empty">現在、これから行くイベントは登録されていません。</div>';
+  document.getElementById('pastList').innerHTML=past.length?past.map(x=>renderCard(x,true)).join(''):'<div class="empty">過去の出勤イベントはありません。</div>';
+}
+
+db.ref('fujiwara/events').on('value',snap=>render(snap.val()||[]),err=>{
+  document.getElementById('loading').classList.add('hidden');
+  const e=document.getElementById('error');e.classList.remove('hidden');e.textContent='⚠️ イベントを読み込めませんでした：'+err.message;
+});
+</script>
+</body>
+</html>
