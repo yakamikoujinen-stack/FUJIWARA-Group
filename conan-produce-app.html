@@ -25,14 +25,14 @@ th{background:#edf2f7;padding:11px 8px;text-align:center;position:sticky;top:0}t
 td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.chk input{width:28px;height:28px}
 .private{background:var(--private)!important}.pb{font-size:10px;background:#f59e0b;color:#fff;border-radius:999px;padding:2px 5px;margin-left:4px}
 .sun{color:#d32f2f!important;font-weight:900}.sat{color:#1565c0!important;font-weight:900}.money{text-align:right;font-weight:900}
-.conflict-badge{display:inline-block;margin:0 8px 7px;padding:4px 7px;border-radius:999px;background:#fff0f0;color:#c62828;font-size:11px;font-weight:950;border:1px solid #ffc7c7;white-space:nowrap}
+.conflict-name{display:block;padding:6px 8px;color:#c62828;font-size:12px;font-weight:900;line-height:1.35;white-space:normal;word-break:break-word}
 .custom-head{min-width:150px}.custom-head-wrap{display:flex;align-items:center;justify-content:center;gap:5px}
 .custom-head-wrap button{padding:3px 7px;font-size:11px;border-radius:7px}
 .bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;display:grid;grid-template-columns:repeat(3,1fr);padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
 .bottom button{background:transparent}.bottom b{display:block;font-size:22px}
 @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.grid{grid-template-columns:1fr}}
 @media print{
-  .hero,#top,#handover,#list,.editor-actions,.bottom,.private,.delcol,.note,.conflict-badge,.conflict-col,.custom-head-wrap button{display:none!important}
+  .hero,#top,#handover,#list,.editor-actions,.bottom,.private,.delcol,.note,.conflict-name,.conflict-col,.custom-head-wrap button{display:none!important}
   .wrap{padding:0}.panel{border:0;box-shadow:none;padding:0;margin:0}#editor{display:block!important}
   #sheetTitle{border:0;padding:0 0 12px;font-size:20pt}.tablewrap{overflow:visible;border:0}
   table{min-width:0;font-size:10pt}th{position:static}
@@ -77,7 +77,7 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
     <button onclick="duplicateCurrent()">複製</button>
     <button class="danger" onclick="deleteCurrent()">この表を削除</button>
   </div>
-  <div class="note">同じ日付に複数イベントがある場合は「⚠ 同日○件」を画面だけに表示します。外部向け印刷/PDFには表示されません。「去年のアイテム」「去年売上」も外部印刷では非表示です。</div>
+  <div class="note">同じ日付に複数イベントがある場合は、被り欄に「もう一方のイベント名」を画面だけに表示します。外部向け印刷/PDFには表示されません。「去年のアイテム」「去年売上」も外部印刷では非表示です。</div>
   <div class="tablewrap">
     <table>
       <thead><tr id="tableHead"></tr></thead>
@@ -159,10 +159,15 @@ function dateKey(v){
   const m=String(v||'').trim().match(/(\d{1,2})\/(\d{1,2})/);
   return m?(Number(m[1])+'/'+Number(m[2])):'';
 }
-function conflictCounts(rows){
-  const c={};
-  (rows||[]).forEach(r=>{const k=dateKey(r.date);if(k)c[k]=(c[k]||0)+1});
-  return c;
+function conflictGroups(rows){
+  const g={};
+  (rows||[]).forEach((r,i)=>{
+    const k=dateKey(r.date);
+    if(!k)return;
+    if(!g[k])g[k]=[];
+    g[k].push({index:i,event:String(r.event||'').trim()});
+  });
+  return g;
 }
 function renderHeader(s){
   const h=document.getElementById('tableHead');
@@ -173,11 +178,15 @@ function renderHeader(s){
 function renderRows(){
   const {s}=current(),tb=document.getElementById('tbody');if(!s){tb.innerHTML='';return}
   renderHeader(s);
-  const counts=conflictCounts(s.rows||[]);
+  const groups=conflictGroups(s.rows||[]);
   tb.innerHTML=(s.rows||[]).map((r,i)=>{
     if(!r.custom||typeof r.custom!=='object')r.custom={};
-    const key=dateKey(r.date),n=key?(counts[key]||0):0;
-    const badge=n>1?`<span class="conflict-badge">⚠ 同日${n}件</span>`:'';
+    const key=dateKey(r.date);
+    const same=key?(groups[key]||[]):[];
+    const others=same.filter(x=>x.index!==i && x.event);
+    const badge=others.length
+      ? `<div class="conflict-name">${others.map(x=>'⚠ '+esc(x.event)).join('<br>')}</div>`
+      : '';
     const custom=(s.columns||[]).map(c=>`<td><textarea oninput="editCustom(${i},'${c.id}',this.value)">${esc(r.custom[c.id]||'')}</textarea></td>`).join('');
     return `<tr>
       <td class="chk"><input type="checkbox" ${r.ok?'checked':''} onchange="edit(${i},'ok',this.checked)"></td>
