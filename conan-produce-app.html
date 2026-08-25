@@ -32,7 +32,7 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
 .bottom button{background:transparent}.bottom b{display:block;font-size:22px}
 @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.grid{grid-template-columns:1fr}}
 @media print{
-  .hero,#top,#handover,#list,.editor-actions,.bottom,.private,.delcol,.note,.conflict-badge,.custom-head-wrap button{display:none!important}
+  .hero,#top,#handover,#list,.editor-actions,.bottom,.private,.delcol,.note,.conflict-badge,.conflict-col,.custom-head-wrap button{display:none!important}
   .wrap{padding:0}.panel{border:0;box-shadow:none;padding:0;margin:0}#editor{display:block!important}
   #sheetTitle{border:0;padding:0 0 12px;font-size:20pt}.tablewrap{overflow:visible;border:0}
   table{min-width:0;font-size:10pt}th{position:static}
@@ -167,7 +167,7 @@ function conflictCounts(rows){
 function renderHeader(s){
   const h=document.getElementById('tableHead');
   const custom=(s.columns||[]).map((c,i)=>`<th class="custom-head"><div class="custom-head-wrap"><span>${esc(c.name||'追加列')}</span><button class="delcol" onclick="renameColumn(${i})">✏️</button><button class="danger delcol" onclick="deleteColumn(${i})">×</button></div></th>`).join('');
-  h.innerHTML='<th>✅</th><th>日付</th><th>イベント名</th><th>場所</th><th>出店アイテム</th>'+custom+
+  h.innerHTML='<th>✅</th><th>日付</th><th class="conflict-col">被り</th><th>イベント名</th><th>場所</th><th>出店アイテム</th>'+custom+
     '<th class="private">去年のアイテム<span class="pb">内部用</span></th><th class="private">去年売上<span class="pb">内部用</span></th><th class="delcol">削除</th>';
 }
 function renderRows(){
@@ -181,7 +181,8 @@ function renderRows(){
     const custom=(s.columns||[]).map(c=>`<td><textarea oninput="editCustom(${i},'${c.id}',this.value)">${esc(r.custom[c.id]||'')}</textarea></td>`).join('');
     return `<tr>
       <td class="chk"><input type="checkbox" ${r.ok?'checked':''} onchange="edit(${i},'ok',this.checked)"></td>
-      <td><input class="${dc(r.date)}" value="${esc(r.date||'')}" oninput="this.className=dc(this.value);edit(${i},'date',this.value);renderRows()">${badge}</td>
+      <td><input class="${dc(r.date)}" value="${esc(r.date||'')}" oninput="this.className=dc(this.value);edit(${i},'date',this.value);renderRows()"></td>
+      <td class="conflict-col" style="text-align:center;min-width:130px">${badge}</td>
       <td><textarea oninput="edit(${i},'event',this.value)">${esc(r.event||'')}</textarea></td>
       <td><textarea oninput="edit(${i},'place',this.value)">${esc(r.place||'')}</textarea></td>
       <td><textarea oninput="edit(${i},'item',this.value)">${esc(r.item||'')}</textarea></td>
