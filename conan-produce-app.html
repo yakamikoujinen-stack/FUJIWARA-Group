@@ -25,10 +25,18 @@ th{background:#edf2f7;padding:11px 8px;text-align:center;position:sticky;top:0}t
 td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.chk input{width:28px;height:28px}
 .private{background:var(--private)!important}.pb{font-size:10px;background:#f59e0b;color:#fff;border-radius:999px;padding:2px 5px;margin-left:4px}
 .sun{color:#d32f2f!important;font-weight:900}.sat{color:#1565c0!important;font-weight:900}.money{text-align:right;font-weight:900}
+.conflict-badge{display:inline-block;margin:0 8px 7px;padding:4px 7px;border-radius:999px;background:#fff0f0;color:#c62828;font-size:11px;font-weight:950;border:1px solid #ffc7c7;white-space:nowrap}
+.custom-head{min-width:150px}.custom-head-wrap{display:flex;align-items:center;justify-content:center;gap:5px}
+.custom-head-wrap button{padding:3px 7px;font-size:11px;border-radius:7px}
 .bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;display:grid;grid-template-columns:repeat(3,1fr);padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
 .bottom button{background:transparent}.bottom b{display:block;font-size:22px}
 @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.grid{grid-template-columns:1fr}}
-@media print{.hero,#top,#list,.editor-actions,.bottom,.private,.delcol,.note{display:none!important}.wrap{padding:0}.panel{border:0;box-shadow:none;padding:0;margin:0}#editor{display:block!important}#sheetTitle{border:0;padding:0 0 12px;font-size:20pt}.tablewrap{overflow:visible;border:0}table{min-width:0;font-size:10pt}th{position:static}}
+@media print{
+  .hero,#top,#handover,#list,.editor-actions,.bottom,.private,.delcol,.note,.conflict-badge,.custom-head-wrap button{display:none!important}
+  .wrap{padding:0}.panel{border:0;box-shadow:none;padding:0;margin:0}#editor{display:block!important}
+  #sheetTitle{border:0;padding:0 0 12px;font-size:20pt}.tablewrap{overflow:visible;border:0}
+  table{min-width:0;font-size:10pt}th{position:static}
+}
 </style>
 </head>
 <body>
@@ -40,7 +48,6 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
   <div class="note">タイトルは自由に変更できます。例：2026年度 秋イベント予定、2027年度 出店予定。</div>
 </section>
 
-
 <section class="panel" id="handover">
   <div class="head">
     <h2>旧表から引き継ぐ</h2>
@@ -51,7 +58,7 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
       </label>
     </div>
   </div>
-  <div class="note">旧「2026年度イベント予定表」で「📦 新アプリへ引継ぎ」を押して作ったJSONファイルを選んでください。旧表は消さず、コピーとして追加します。</div>
+  <div class="note">旧表の引継ぎJSONを選ぶと、旧表を消さずコピーとして追加します。</div>
 </section>
 
 <section class="panel" id="list">
@@ -63,21 +70,17 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
   <input id="sheetTitle" oninput="saveTitle(this.value)">
   <div class="actions editor-actions" style="margin:10px 0">
     <button class="primary" onclick="addRow()">＋ 行を追加</button>
+    <button class="primary" onclick="addColumn()">＋ 列を追加</button>
     <button onclick="sortRows()">↕ 日付順</button>
     <button onclick="window.print()">🖨 外部向け印刷 / PDF</button>
     <button onclick="exportCSV()">⬇ 内部保存CSV</button>
     <button onclick="duplicateCurrent()">複製</button>
     <button class="danger" onclick="deleteCurrent()">この表を削除</button>
   </div>
-  <div class="note">「去年のアイテム」「去年売上」は内部用です。外部向け印刷/PDFでは表示されません。</div>
+  <div class="note">同じ日付に複数イベントがある場合は「⚠ 同日○件」を画面だけに表示します。外部向け印刷/PDFには表示されません。「去年のアイテム」「去年売上」も外部印刷では非表示です。</div>
   <div class="tablewrap">
     <table>
-      <thead><tr>
-        <th>✅</th><th>日付</th><th>イベント名</th><th>場所</th><th>出店アイテム</th>
-        <th class="private">去年のアイテム<span class="pb">内部用</span></th>
-        <th class="private">去年売上<span class="pb">内部用</span></th>
-        <th class="delcol">削除</th>
-      </tr></thead>
+      <thead><tr id="tableHead"></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
@@ -100,7 +103,19 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function dc(v){v=String(v||'');if(/[（(]土[）)]/.test(v))return'sat';if(/[（(]日[）)]/.test(v)||/祝/.test(v))return'sun';return''}
 function uid(){return 's_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)}
 function now(){return new Date().toLocaleString('ja-JP')}
-function getApp(){try{const d=JSON.parse(localStorage.getItem(APP_KEY)||'null');if(d&&Array.isArray(d.sheets))return d}catch(e){}return{sheets:[]}}
+function getApp(){
+  try{
+    const d=JSON.parse(localStorage.getItem(APP_KEY)||'null');
+    if(d&&Array.isArray(d.sheets)){
+      d.sheets.forEach(s=>{
+        if(!Array.isArray(s.columns))s.columns=[];
+        (s.rows||[]).forEach(r=>{if(!r.custom||typeof r.custom!=='object')r.custom={}})
+      });
+      return d
+    }
+  }catch(e){}
+  return{sheets:[]}
+}
 function saveApp(a){localStorage.setItem(APP_KEY,JSON.stringify(a))}
 
 function importHandoverFile(file){
@@ -110,36 +125,14 @@ function importHandoverFile(file){
     try{
       const d=JSON.parse(reader.result);
       if(!d || d.type!=='fujiwara_conan_handover_v1' || !Array.isArray(d.rows)){
-        alert('引継ぎデータとして認識できませんでした。');
-        return;
+        alert('引継ぎデータとして認識できませんでした。');return;
       }
-      const app=getApp();
-      const id=uid();
-      const rows=d.rows.map(r=>({
-        ok:!!r.ok,
-        date:r.date||'',
-        event:r.event||'',
-        place:r.place||'',
-        item:r.item||'',
-        lastItem:r.lastItem||'',
-        lastSales:r.lastSales||''
-      }));
-      app.sheets.push({
-        id,
-        title:(d.title||'2026年度 イベント予定')+'（引継ぎ）',
-        updated:now(),
-        rows
-      });
-      saveApp(app);
-      renderList();
-      openSheet(id);
-      alert('旧表をコピーして引き継ぎました。旧表はそのまま残っています。');
-    }catch(e){
-      alert('引継ぎファイルを読み込めませんでした。');
-    }finally{
-      const input=document.getElementById('handoverFile');
-      if(input) input.value='';
-    }
+      const app=getApp(),id=uid();
+      const rows=d.rows.map(r=>({ok:!!r.ok,date:r.date||'',event:r.event||'',place:r.place||'',item:r.item||'',lastItem:r.lastItem||'',lastSales:r.lastSales||'',custom:{}}));
+      app.sheets.push({id,title:(d.title||'2026年度 イベント予定')+'（引継ぎ）',updated:now(),columns:[],rows});
+      saveApp(app);renderList();openSheet(id);alert('旧表をコピーして引き継ぎました。旧表はそのまま残っています。');
+    }catch(e){alert('引継ぎファイルを読み込めませんでした。')}
+    finally{const input=document.getElementById('handoverFile');if(input)input.value=''}
   };
   reader.readAsText(file,'utf-8');
 }
@@ -149,21 +142,87 @@ function migrate(){
   let raw=null;try{raw=JSON.parse(localStorage.getItem(OLD_KEY)||'null')}catch(e){}
   if(!Array.isArray(raw)||!raw.length)return;
   const rows=raw.map(r=>{const x=[...(r||[])];
-    if(x.length>=7&&typeof x[0]==='boolean')return{ok:!!x[0],date:x[1]||'',event:x[2]||'',place:x[3]||'',item:x[4]||'',lastItem:x[5]||'',lastSales:x[6]||''};
-    if(x.length===5&&typeof x[0]==='boolean')return{ok:!!x[0],date:x[1]||'',event:x[2]||'',place:x[3]||'',item:x[4]||'',lastItem:'',lastSales:''};
-    return{ok:false,date:x[0]||'',event:x[1]||'',place:x[2]||'',item:x[3]||'',lastItem:'',lastSales:''}
+    if(x.length>=7&&typeof x[0]==='boolean')return{ok:!!x[0],date:x[1]||'',event:x[2]||'',place:x[3]||'',item:x[4]||'',lastItem:x[5]||'',lastSales:x[6]||'',custom:{}};
+    if(x.length===5&&typeof x[0]==='boolean')return{ok:!!x[0],date:x[1]||'',event:x[2]||'',place:x[3]||'',item:x[4]||'',lastItem:'',lastSales:'',custom:{}};
+    return{ok:false,date:x[0]||'',event:x[1]||'',place:x[2]||'',item:x[3]||'',lastItem:'',lastSales:'',custom:{}}
   });
-  a.sheets.push({id:uid(),title:localStorage.getItem(OLD_TITLE)||'2026年度 イベント予定',updated:now(),rows});saveApp(a)
+  a.sheets.push({id:uid(),title:localStorage.getItem(OLD_TITLE)||'2026年度 イベント予定',updated:now(),columns:[],rows});saveApp(a)
 }
 function renderList(){const a=getApp(),g=document.getElementById('sheetGrid');g.innerHTML=a.sheets.length?a.sheets.slice().reverse().map(s=>`<div class="sheet"><h3>${esc(s.title||'無題')}</h3><div class="meta">${(s.rows||[]).length}件<br>更新：${esc(s.updated||'')}</div><div class="actions"><button class="primary" onclick="openSheet('${s.id}')">開く</button><button onclick="duplicateSheet('${s.id}')">複製</button><button class="danger" onclick="deleteSheet('${s.id}')">削除</button></div></div>`).join(''):'<div class="note">まだ一覧表がありません。</div>'}
-function createSheet(){const t=prompt('表のタイトルを入力してください','新しいイベント予定表');if(t===null)return;const a=getApp(),id=uid();a.sheets.push({id,title:t.trim()||'新しいイベント予定表',updated:now(),rows:[]});saveApp(a);openSheet(id)}
+function createSheet(){const t=prompt('表のタイトルを入力してください','新しいイベント予定表');if(t===null)return;const a=getApp(),id=uid();a.sheets.push({id,title:t.trim()||'新しいイベント予定表',updated:now(),columns:[],rows:[]});saveApp(a);openSheet(id)}
 function current(){const a=getApp();return{a,s:a.sheets.find(x=>x.id===currentId)}}
 function openSheet(id){currentId=id;const {s}=current();if(!s)return;document.getElementById('sheetTitle').value=s.title||'';document.getElementById('editor').classList.add('show');renderRows();renderList();setTimeout(()=>document.getElementById('editor').scrollIntoView({behavior:'smooth'}),50)}
 function showHome(){currentId=null;document.getElementById('editor').classList.remove('show');renderList();window.scrollTo({top:0,behavior:'smooth'})}
 function saveTitle(v){const {a,s}=current();if(!s)return;s.title=v;s.updated=now();saveApp(a);renderList()}
-function renderRows(){const {s}=current(),tb=document.getElementById('tbody');if(!s){tb.innerHTML='';return}tb.innerHTML=(s.rows||[]).map((r,i)=>`<tr><td class="chk"><input type="checkbox" ${r.ok?'checked':''} onchange="edit(${i},'ok',this.checked)"></td><td><input class="${dc(r.date)}" value="${esc(r.date||'')}" oninput="this.className=dc(this.value);edit(${i},'date',this.value)"></td><td><textarea oninput="edit(${i},'event',this.value)">${esc(r.event||'')}</textarea></td><td><textarea oninput="edit(${i},'place',this.value)">${esc(r.place||'')}</textarea></td><td><textarea oninput="edit(${i},'item',this.value)">${esc(r.item||'')}</textarea></td><td class="private"><textarea oninput="edit(${i},'lastItem',this.value)">${esc(r.lastItem||'')}</textarea></td><td class="private"><input class="money" inputmode="numeric" value="${esc(r.lastSales||'')}" oninput="this.value=this.value.replace(/[^0-9]/g,'');edit(${i},'lastSales',this.value)"></td><td class="delcol"><button class="danger" onclick="deleteRow(${i})">削除</button></td></tr>`).join('')}
+
+function dateKey(v){
+  const m=String(v||'').trim().match(/(\d{1,2})\/(\d{1,2})/);
+  return m?(Number(m[1])+'/'+Number(m[2])):'';
+}
+function conflictCounts(rows){
+  const c={};
+  (rows||[]).forEach(r=>{const k=dateKey(r.date);if(k)c[k]=(c[k]||0)+1});
+  return c;
+}
+function renderHeader(s){
+  const h=document.getElementById('tableHead');
+  const custom=(s.columns||[]).map((c,i)=>`<th class="custom-head"><div class="custom-head-wrap"><span>${esc(c.name||'追加列')}</span><button class="delcol" onclick="renameColumn(${i})">✏️</button><button class="danger delcol" onclick="deleteColumn(${i})">×</button></div></th>`).join('');
+  h.innerHTML='<th>✅</th><th>日付</th><th>イベント名</th><th>場所</th><th>出店アイテム</th>'+custom+
+    '<th class="private">去年のアイテム<span class="pb">内部用</span></th><th class="private">去年売上<span class="pb">内部用</span></th><th class="delcol">削除</th>';
+}
+function renderRows(){
+  const {s}=current(),tb=document.getElementById('tbody');if(!s){tb.innerHTML='';return}
+  renderHeader(s);
+  const counts=conflictCounts(s.rows||[]);
+  tb.innerHTML=(s.rows||[]).map((r,i)=>{
+    if(!r.custom||typeof r.custom!=='object')r.custom={};
+    const key=dateKey(r.date),n=key?(counts[key]||0):0;
+    const badge=n>1?`<span class="conflict-badge">⚠ 同日${n}件</span>`:'';
+    const custom=(s.columns||[]).map(c=>`<td><textarea oninput="editCustom(${i},'${c.id}',this.value)">${esc(r.custom[c.id]||'')}</textarea></td>`).join('');
+    return `<tr>
+      <td class="chk"><input type="checkbox" ${r.ok?'checked':''} onchange="edit(${i},'ok',this.checked)"></td>
+      <td><input class="${dc(r.date)}" value="${esc(r.date||'')}" oninput="this.className=dc(this.value);edit(${i},'date',this.value);renderRows()">${badge}</td>
+      <td><textarea oninput="edit(${i},'event',this.value)">${esc(r.event||'')}</textarea></td>
+      <td><textarea oninput="edit(${i},'place',this.value)">${esc(r.place||'')}</textarea></td>
+      <td><textarea oninput="edit(${i},'item',this.value)">${esc(r.item||'')}</textarea></td>
+      ${custom}
+      <td class="private"><textarea oninput="edit(${i},'lastItem',this.value)">${esc(r.lastItem||'')}</textarea></td>
+      <td class="private"><input class="money" inputmode="numeric" value="${esc(r.lastSales||'')}" oninput="this.value=this.value.replace(/[^0-9]/g,'');edit(${i},'lastSales',this.value)"></td>
+      <td class="delcol"><button class="danger" onclick="deleteRow(${i})">削除</button></td>
+    </tr>`
+  }).join('')
+}
 function edit(i,k,v){const {a,s}=current();if(!s||!s.rows[i])return;s.rows[i][k]=v;s.updated=now();saveApp(a)}
-function addRow(){const {a,s}=current();if(!s)return;s.rows.push({ok:false,date:'',event:'',place:'',item:'',lastItem:'',lastSales:''});s.updated=now();saveApp(a);renderRows()}
+function editCustom(i,id,v){const {a,s}=current();if(!s||!s.rows[i])return;if(!s.rows[i].custom)s.rows[i].custom={};s.rows[i].custom[id]=v;s.updated=now();saveApp(a)}
+function addRow(){const {a,s}=current();if(!s)return;s.rows.push({ok:false,date:'',event:'',place:'',item:'',lastItem:'',lastSales:'',custom:{}});s.updated=now();saveApp(a);renderRows()}
+
+function addColumn(){
+  const name=prompt('追加する列の名前を入力してください','備考');
+  if(name===null)return;
+  const clean=name.trim();if(!clean){alert('列名を入力してください。');return}
+  const {a,s}=current();if(!s)return;
+  const id='c_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  if(!Array.isArray(s.columns))s.columns=[];
+  s.columns.push({id,name:clean});
+  (s.rows||[]).forEach(r=>{if(!r.custom)r.custom={};r.custom[id]=''});
+  s.updated=now();saveApp(a);renderRows()
+}
+function renameColumn(i){
+  const {a,s}=current();if(!s||!s.columns[i])return;
+  const name=prompt('列名を変更してください',s.columns[i].name||'');
+  if(name===null)return;
+  const clean=name.trim();if(!clean)return;
+  s.columns[i].name=clean;s.updated=now();saveApp(a);renderRows()
+}
+function deleteColumn(i){
+  const {a,s}=current();if(!s||!s.columns[i])return;
+  const col=s.columns[i];
+  if(!confirm('「'+col.name+'」列を削除しますか？\nこの列に入力した内容も削除されます。'))return;
+  s.columns.splice(i,1);
+  (s.rows||[]).forEach(r=>{if(r.custom)delete r.custom[col.id]});
+  s.updated=now();saveApp(a);renderRows()
+}
+
 function deleteRow(i){if(!confirm('この行を削除しますか？'))return;const {a,s}=current();s.rows.splice(i,1);s.updated=now();saveApp(a);renderRows()}
 function pd(s){const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})/);return m?+m[1]*100 + +m[2]:99999}
 function sortRows(){const {a,s}=current();if(!s)return;s.rows.sort((x,y)=>pd(x.date)-pd(y.date));s.updated=now();saveApp(a);renderRows()}
@@ -171,7 +230,15 @@ function duplicateSheet(id){const a=getApp(),s=a.sheets.find(x=>x.id===id);if(!s
 function duplicateCurrent(){if(currentId)duplicateSheet(currentId)}
 function deleteSheet(id){const a=getApp(),s=a.sheets.find(x=>x.id===id);if(!s||!confirm('この表を削除しますか？'))return;a.sheets=a.sheets.filter(x=>x.id!==id);saveApp(a);if(currentId===id)showHome();else renderList()}
 function deleteCurrent(){if(currentId)deleteSheet(currentId)}
-function exportCSV(){const {s}=current();if(!s)return;const d=[['✅','日付','イベント名','場所','出店アイテム','去年のアイテム','去年売上'],...(s.rows||[]).map(r=>[r.ok?'✅':'',r.date,r.event,r.place,r.item,r.lastItem,r.lastSales])];const csv='\ufeff'+d.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(s.title||'コナン一覧表')+'.csv';a.click();URL.revokeObjectURL(a.href)}
+function exportCSV(){
+  const {s}=current();if(!s)return;
+  const cols=s.columns||[];
+  const header=['✅','日付','イベント名','場所','出店アイテム',...cols.map(c=>c.name),'去年のアイテム','去年売上'];
+  const d=[header,...(s.rows||[]).map(r=>[r.ok?'✅':'',r.date,r.event,r.place,r.item,...cols.map(c=>(r.custom||{})[c.id]||''),r.lastItem,r.lastSales])];
+  const csv='\ufeff'+d.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=(s.title||'コナン一覧表')+'.csv';a.click();URL.revokeObjectURL(a.href)
+}
 migrate();renderList();
 </script>
 </body>
