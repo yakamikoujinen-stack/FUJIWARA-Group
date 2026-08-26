@@ -74,13 +74,13 @@ td textarea{min-height:46px;resize:vertical}.chk{width:65px;text-align:center}.c
     <button class="primary" onclick="addRow()">＋ 行を追加</button>
     <button class="primary" onclick="addColumn()">＋ 列を追加</button>
     <button onclick="sortRows()">↕ 日付順</button>
-    <button onclick="loadMainEvents(true)">🔄 メインアプリ同期</button>
+    <button onclick="loadMainEvents(true)">🔄 メイン予定を同期</button>
     <button onclick="window.print()">🖨 外部向け印刷 / PDF</button>
     <button onclick="exportCSV()">⬇ 内部保存CSV</button>
     <button onclick="duplicateCurrent()">複製</button>
     <button class="danger" onclick="deleteCurrent()">この表を削除</button>
   </div>
-  <div class="note">被り欄は編集できます。メインアプリの同日イベントも自動候補として表示します。編集した内容は保存され、外部向け印刷/PDFでは被り列ごと非表示です。「去年のアイテム」「去年売上」も外部印刷では非表示です。</div>
+  <div class="note">メインアプリの同日イベントを「他イベント」欄に表示します。必要なら内容を編集できます。空欄時は何も表示せず、外部向け印刷/PDFではこの列ごと非表示です。「去年のアイテム」「去年売上」も外部印刷では非表示です。</div>
   <div class="tablewrap">
     <table>
       <thead><tr id="tableHead"></tr></thead>
@@ -137,7 +137,7 @@ async function loadMainEvents(manual=false){
     mainEvents=toArray(snap.val());
     mainEventsLoaded=true;
     renderRows();
-    if(manual)alert('メインアプリのイベント '+mainEvents.length+'件を読み込みました。');
+    if(manual)alert('メインアプリの予定 '+mainEvents.length+'件を読み込みました。\n同日の他イベントがある行だけ表示します。');
   }catch(e){
     console.error(e);
     if(manual)alert('メインアプリのイベントを読み込めませんでした。通信を確認してください。');
@@ -208,27 +208,48 @@ function dateKey(v){
   const m=String(v||'').trim().match(/(\d{1,2})\/(\d{1,2})/);
   return m?(Number(m[1])+'/'+Number(m[2])):'';
 }
-function dateKeys(v){
+function parseDateToken(v){
   const s=String(v||'').trim();
-  const ms=[...s.matchAll(/(\d{1,2})\/(\d{1,2})/g)];
-  if(!ms.length)return [];
-  const start={m:Number(ms[0][1]),d:Number(ms[0][2])};
-  if(ms.length<2)return [start.m+'/'+start.d];
-  const end={m:Number(ms[1][1]),d:Number(ms[1][2])};
+  let m=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(m)return {y:Number(m[1]),m:Number(m[2]),d:Number(m[3])};
+  m=s.match(/(?:^|[^\d])(\d{1,2})[\/\-](\d{1,2})(?:[^\d]|$)/);
+  if(m)return {y:2026,m:Number(m[1]),d:Number(m[2])};
+  return null;
+}
+function dateKeys(v,endValue){
+  const a=parseDateToken(v);
+  if(!a)return [];
+  let b=parseDateToken(endValue);
+
+  // コナン表側の「10/24(土)〜10/25(日)」にも対応
+  if(!b){
+    const s=String(v||'');
+    const all=[...s.matchAll(/(\d{1,2})[\/\-](\d{1,2})/g)];
+    if(all.length>=2){
+      b={y:a.y,m:Number(all[1][1]),d:Number(all[1][2])};
+    }
+  }
+  if(!b)return [a.m+'/'+a.d];
+
   try{
-    const y=2026;
-    let a=new Date(y,start.m-1,start.d), b=new Date(y,end.m-1,end.d);
-    if(b<a)b=new Date(y+1,end.m-1,end.d);
+    let d1=new Date(a.y,a.m-1,a.d);
+    let d2=new Date(b.y||a.y,b.m-1,b.d);
+    if(d2<d1)d2=new Date((b.y||a.y)+1,b.m-1,b.d);
     const out=[];
-    for(let d=new Date(a),n=0; d<=b && n<40; d.setDate(d.getDate()+1),n++){
+    for(let d=new Date(d1),n=0; d<=d2 && n<62; d.setDate(d.getDate()+1),n++){
       out.push((d.getMonth()+1)+'/'+d.getDate());
     }
     return out;
-  }catch(e){return [start.m+'/'+start.d]}
+  }catch(e){
+    return [a.m+'/'+a.d];
+  }
 }
 function rowDateKeys(r){return dateKeys(r?.date||'')}
 function mainEventDateKeys(ev){
-  return dateKeys(String(ev?.date||ev?.startDate||ev?.day||''));
+  return dateKeys(
+    ev?.date||ev?.startDate||ev?.day||'',
+    ev?.dateEnd||ev?.endDate||''
+  );
 }
 function sameDateAny(a,b){
   const sb=new Set(b);
@@ -272,7 +293,7 @@ function conflictGroups(rows){
 function renderHeader(s){
   const h=document.getElementById('tableHead');
   const custom=(s.columns||[]).map((c,i)=>`<th class="custom-head"><div class="custom-head-wrap"><span>${esc(c.name||'追加列')}</span><button class="delcol" onclick="renameColumn(${i})">✏️</button><button class="danger delcol" onclick="deleteColumn(${i})">×</button></div></th>`).join('');
-  h.innerHTML='<th>✅</th><th>日付</th><th class="conflict-col">被り</th><th>イベント名</th><th>場所</th><th>出店アイテム</th>'+custom+
+  h.innerHTML='<th>✅</th><th>日付</th><th class="conflict-col">他イベント</th><th>イベント名</th><th>場所</th><th>出店アイテム</th>'+custom+
     '<th class="private">去年のアイテム<span class="pb">内部用</span></th><th class="private">去年売上<span class="pb">内部用</span></th><th class="delcol">削除</th>';
 }
 function renderRows(){
@@ -285,7 +306,7 @@ function renderRows(){
     const autoText=autoNames.join('\n');
     if(!r.conflictManual && !r.conflictText && autoText)r.conflictText=autoText;
     const shown = r.conflictManual ? (r.conflictText||'') : (autoText || r.conflictText || '');
-    const badge=`<textarea class="conflict-name" placeholder="被りイベント名" oninput="editConflict(${i},this.value)">${esc(shown)}</textarea>`;
+    const badge=`<textarea class="conflict-name" placeholder="" oninput="editConflict(${i},this.value)">${esc(shown)}</textarea>`;
     const custom=(s.columns||[]).map(c=>`<td><textarea oninput="editCustom(${i},'${c.id}',this.value)">${esc(r.custom[c.id]||'')}</textarea></td>`).join('');
     return `<tr>
       <td class="chk"><input type="checkbox" ${r.ok?'checked':''} onchange="edit(${i},'ok',this.checked)"></td>
