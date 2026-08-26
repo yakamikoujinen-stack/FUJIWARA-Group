@@ -1,1 +1,133 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>自分の労務費｜開発中</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",sans-serif;background:#effcf3;margin:0;padding:20px;color:#283044}.card{max-width:700px;margin:auto;background:#fff;border-radius:22px;padding:22px;box-shadow:0 10px 30px #0001}a{display:block;margin-top:20px;background:#7c3aed;color:#fff;text-align:center;text-decoration:none;padding:13px;border-radius:12px;font-weight:900}</style></head><body><div class="card"><h1>💴 自分の労務費</h1><p id="p"></p><p>次の工程で労務費データから本人分だけを抽出し、合計・月別・未納分を表示します。他の家族やスタッフの金額は表示しません。</p><a href="family-dev.html">← 戻る</a></div><script>const n=new URLSearchParams(location.search).get("person")||"";document.getElementById("p").textContent=n+"さん専用画面";</script></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>自分の労務費｜FUJIWARA FAMILY</title>
+<meta name="theme-color" content="#23965b">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eaf9ef,#fff 43%,#f8fff9);color:#202b26}
+.wrap{max-width:900px;margin:auto;padding:16px 14px 104px}
+.hero{background:linear-gradient(135deg,#238a55,#48b978);color:#fff;border-radius:24px;padding:20px;box-shadow:0 12px 30px #237a4c2e}.hero h1{margin:0;font-size:25px}.hero p{margin:7px 0 0;line-height:1.6;font-weight:700}.badge{display:inline-block;margin-top:10px;background:#ffffff2b;border:1px solid #ffffff50;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}
+.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:14px}.stat{background:#fff;border:1px solid #cfe9d7;border-radius:17px;padding:14px;box-shadow:0 5px 18px #0000000b}.stat span{display:block;font-size:11px;color:#617066;font-weight:900}.stat b{display:block;font-size:23px;margin-top:4px}.stat.unpaid b{color:#c43b31}.stat.paid b{color:#18804c}
+.section{margin-top:18px}.section-title{font-size:17px;font-weight:950;margin:0 0 9px;display:flex;align-items:center;justify-content:space-between;gap:10px}.section-title small{font-size:11px;color:#7a847e}
+.month-box{background:#fff;border:1px solid #d8e8dd;border-radius:17px;padding:14px;margin-bottom:10px;box-shadow:0 6px 20px #0000000b}.month-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.month-name{font-weight:950;font-size:17px}.month-total{font-size:18px;font-weight:950;color:#1c7b4a}.month-sub{font-size:12px;color:#66756b;margin-top:2px}
+.pay{border-top:1px solid #edf0ee;padding:11px 0;display:grid;grid-template-columns:1fr auto;gap:10px}.pay:first-of-type{border-top:0}.event{font-size:14px;font-weight:900;line-height:1.45}.meta{font-size:11px;color:#6b756e;line-height:1.6;margin-top:3px}.amount{text-align:right;font-weight:950;font-size:16px;white-space:nowrap}.status{display:inline-block;margin-top:4px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:950}.status.done{background:#e6f7ed;color:#147543}.status.wait{background:#fff0ee;color:#ba332a;border:1px solid #f1c3bd}.due{color:#b42318;font-weight:900}
+.unpaid-card{background:#fff;border:1.5px solid #efc0ba;border-left:5px solid #d34a40;border-radius:17px;padding:14px;margin-bottom:9px;box-shadow:0 6px 18px #a92f2210}.unpaid-top{display:flex;justify-content:space-between;gap:10px}.unpaid-name{font-weight:950;font-size:15px}.unpaid-amount{font-weight:950;color:#bd3028;font-size:18px;white-space:nowrap}.unpaid-meta{font-size:12px;color:#716864;line-height:1.65;margin-top:6px}
+.empty,.loading,.error{background:#fff;border:1px dashed #cadbd0;border-radius:18px;padding:24px;text-align:center;color:#667085;line-height:1.7}.error{color:#b42318;border-color:#efb7b0}.hidden{display:none!important}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fffffff2;backdrop-filter:blur(10px);border-top:1px solid #eee;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}.back{display:block;max-width:900px;margin:auto;background:#7c3aed;color:#fff;text-align:center;text-decoration:none;border-radius:13px;padding:13px;font-weight:950}
+@media(min-width:700px){.summary{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>💴 自分の労務費</h1>
+    <p id="ownerText">本人分の労務費を確認中...</p>
+    <span class="badge">閲覧専用｜他の人の金額は表示しません</span>
+  </section>
+
+  <div class="summary">
+    <div class="stat"><span>今月の労務費</span><b id="thisMonth">-</b></div>
+    <div class="stat"><span>労務費 合計</span><b id="grandTotal">-</b></div>
+    <div class="stat paid"><span>支払済み</span><b id="paidTotal">-</b></div>
+    <div class="stat unpaid"><span>未納・未払い</span><b id="unpaidTotal">-</b></div>
+  </div>
+
+  <div id="loading" class="loading section">🔄 メインアプリの労務費を読み込んでいます...</div>
+  <div id="error" class="error section hidden"></div>
+
+  <section id="unpaidSection" class="section hidden">
+    <h2 class="section-title"><span>🔴 未納・未払い</span><small id="unpaidCount"></small></h2>
+    <div id="unpaidList"></div>
+  </section>
+
+  <section id="monthlySection" class="section hidden">
+    <h2 class="section-title"><span>📆 月別労務費</span><small>新しい月から表示</small></h2>
+    <div id="monthlyList"></div>
+  </section>
+</div>
+<div class="bottom"><a class="back" href="family-dev.html">← 家族アプリへ戻る</a></div>
+<script>
+const PEOPLE={mayumi:'まゆみ',ryuki:'龍来',ayumi:'歩未',sora:'想良',fujiwara:'藤原'};
+const loginId=sessionStorage.getItem('fujiwara_family_login');
+const person=PEOPLE[loginId]||'';
+if(!person){location.replace('family-dev.html');}
+document.getElementById('ownerText').textContent=person+'さん本人の労務費・支払状況だけを表示します。';
+
+const config={apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:5ec6b7e2a2165066956a94'};
+if(!firebase.apps.length)firebase.initializeApp(config);
+const db=firebase.database();
+function norm(v){return String(v||'').replace(/[\s　]+/g,'').trim()}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function yen(n){return '¥'+(Number(n)||0).toLocaleString('ja-JP')}
+function iso(v){if(!v)return'';const s=String(v).trim().replace(/[./]/g,'-');const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):''}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmt(ds){if(!ds)return'日付未設定';const d=new Date(ds+'T12:00:00');return (d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'[d.getDay()]+'）'}
+function eventName(ev){return ev.name||ev.eventName||ev.title||'イベント'}
+function readPayments(events){
+  const out=[];
+  const arr=Array.isArray(events)?events:Object.values(events||{});
+  arr.forEach(ev=>{
+    if(!ev||ev.secret===true)return;
+    const sales=ev.sales||{};
+    const days=sales.days&&typeof sales.days==='object'?sales.days:null;
+    let usedDaily=false;
+    if(days){
+      Object.keys(days).sort().forEach(ds=>{
+        const rec=days[ds]||{};
+        const simple=rec.simple||rec;
+        const pays=simple&&simple.settlement&&Array.isArray(simple.settlement.staffPayments)?simple.settlement.staffPayments:[];
+        if(pays.length)usedDaily=true;
+        pays.forEach(p=>push(ev,p,iso(ds)||iso(simple.date)||iso(ev.date)));
+      });
+    }
+    if(!usedDaily){
+      const simple=sales.simple||{};
+      const pays=simple&&simple.settlement&&Array.isArray(simple.settlement.staffPayments)?simple.settlement.staffPayments:[];
+      pays.forEach(p=>push(ev,p,iso(p.date)||iso(simple.date)||iso(ev.date)));
+    }
+  });
+  function push(ev,p,ds){
+    if(norm(p&&p.name)!==norm(person))return;
+    const amount=Math.max(0,parseInt(p.amount)||0);
+    if(!amount)return;
+    out.push({date:ds,event:eventName(ev),amount,type:p.type||'',company:p.company||'',dueDate:iso(p.dueDate),paid:!!p.paid,paidDate:iso(p.paidDate)});
+  }
+  return out.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+function render(events){
+  const rows=readPayments(events), now=today(), ym=now.slice(0,7);
+  const total=rows.reduce((s,x)=>s+x.amount,0);
+  const paid=rows.filter(x=>x.paid).reduce((s,x)=>s+x.amount,0);
+  const unpaid=rows.filter(x=>!x.paid);
+  const unpaidSum=unpaid.reduce((s,x)=>s+x.amount,0);
+  const month=rows.filter(x=>(x.date||'').slice(0,7)===ym).reduce((s,x)=>s+x.amount,0);
+  document.getElementById('thisMonth').textContent=yen(month);
+  document.getElementById('grandTotal').textContent=yen(total);
+  document.getElementById('paidTotal').textContent=yen(paid);
+  document.getElementById('unpaidTotal').textContent=yen(unpaidSum);
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('unpaidSection').classList.remove('hidden');
+  document.getElementById('monthlySection').classList.remove('hidden');
+  document.getElementById('unpaidCount').textContent=unpaid.length+'件';
+  document.getElementById('unpaidList').innerHTML=unpaid.length?unpaid.map(x=>{
+    const overdue=x.dueDate&&x.dueDate<now;
+    return `<article class="unpaid-card"><div class="unpaid-top"><div class="unpaid-name">${esc(x.event)}</div><div class="unpaid-amount">${yen(x.amount)}</div></div><div class="unpaid-meta">📅 ${esc(fmt(x.date))}${x.type?'　'+esc(x.type):''}<br>${x.dueDate?'支払予定：<span class="'+(overdue?'due':'')+'">'+esc(x.dueDate)+'</span>':'支払予定日：未設定'}</div></article>`;
+  }).join(''):'<div class="empty">✅ 現在、未納・未払いの労務費はありません。</div>';
+
+  const groups={};
+  rows.forEach(x=>{const key=(x.date||'').slice(0,7)||'日付未設定';(groups[key]||(groups[key]=[])).push(x)});
+  const keys=Object.keys(groups).sort().reverse();
+  document.getElementById('monthlyList').innerHTML=keys.length?keys.map(key=>{
+    const list=groups[key], sum=list.reduce((s,x)=>s+x.amount,0), wait=list.filter(x=>!x.paid).reduce((s,x)=>s+x.amount,0);
+    const label=key==='日付未設定'?key:key.replace('-','年')+'月';
+    return `<div class="month-box"><div class="month-head"><div><div class="month-name">${esc(label)}</div><div class="month-sub">${list.length}件${wait?' ／ 未払い '+yen(wait):' ／ 全て支払済み'}</div></div><div class="month-total">${yen(sum)}</div></div>${list.map(x=>`<div class="pay"><div><div class="event">${esc(x.event)}</div><div class="meta">${esc(fmt(x.date))}${x.type?' ｜ '+esc(x.type):''}${x.dueDate?' ｜ 予定 '+esc(x.dueDate):''}</div><span class="status ${x.paid?'done':'wait'}">${x.paid?'✅ 支払済'+(x.paidDate?' '+esc(x.paidDate):''):'🔴 未払い'}</span></div><div class="amount">${yen(x.amount)}</div></div>`).join('')}</div>`;
+  }).join(''):'<div class="empty">本人名で登録された労務費データはまだありません。</div>';
+}
+db.ref('fujiwara/events').on('value',snap=>render(snap.val()||[]),err=>{document.getElementById('loading').classList.add('hidden');const e=document.getElementById('error');e.classList.remove('hidden');e.textContent='⚠️ 労務費を読み込めませんでした：'+err.message});
+</script>
+</body>
+</html>
