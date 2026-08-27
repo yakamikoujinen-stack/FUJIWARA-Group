@@ -22,14 +22,16 @@ h1{margin:0;font-size:clamp(25px,5vw,38px)}.sub{margin:7px 0 0;color:#dcecff;fon
 .card.wage{border:2px solid #e0b12c;background:linear-gradient(135deg,#fffdf4,#fff0b8)}
 .card.master{border:2px solid #60a97c;background:linear-gradient(135deg,#f5fff8,#e8f8ee)}
 .card.settlement{border:2px solid #c7a33d;background:linear-gradient(135deg,#fffdf5,#fff0c8)}
+.card.office{border:2px solid #7ea58a;background:linear-gradient(135deg,#f6fff8,#eaf5ec)}
 .icon{width:66px;height:66px;border-radius:19px;display:grid;place-items:center;font-size:37px;background:#eef6ff}
 .primary .icon,.wage .icon,.settlement .icon{background:#17324d;color:#ffd76a}
-.master .icon{background:#e2f5e8}
+.master .icon{background:#e2f5e8}.office .icon{background:#e7f4e9}
 h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;font-weight:750;flex:1}
 .open{margin-top:16px;border-radius:14px;padding:13px;text-align:center;color:#fff;background:var(--navy);font-weight:950}
 .analysis .open{background:linear-gradient(90deg,#1489e8,#0a73cf)}
 .master .open{background:linear-gradient(90deg,#23845a,#2ca66f)}
 .settlement .open{background:linear-gradient(90deg,#a77b00,#d6a21c)}
+.office .open{background:linear-gradient(90deg,#42634b,#5d8067)}
 .section-title{margin:24px 0 12px;font-size:20px;color:#123b66}
 .note{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px;line-height:1.7;color:#425568;font-weight:750}
 @media(max-width:650px){.grid{grid-template-columns:1fr}.card{min-height:175px}}
@@ -64,6 +66,13 @@ h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;
     <div class="open">お金管理を開く ›</div>
   </a>
 
+  <a class="card office" href="king-office-expense.html">
+    <div class="icon">🏢</div>
+    <h2>事務所・会社経費</h2>
+    <p>電気代・水道代・通信費・作業着・消耗品・買掛金・その他雑費など、会社全体の経費と未払を管理します。</p>
+    <div class="open">事務所経費を開く ›</div>
+  </a>
+
   <a class="card wage" href="king-wage-ledger.html">
     <div class="icon">💴</div>
     <h2>賃金台帳</h2>
@@ -89,6 +98,7 @@ h2{font-size:24px;margin:14px 0 8px}p{margin:0;color:var(--sub);line-height:1.7;
 <h2 class="section-title">現在の役割分け</h2>
 <div class="note">
   <b>イベント早見精算：</b>出店ネタ単位でFUJIWARAグループ／尼崎本社へ振り分け<br>
+  <b>事務所・会社経費：</b>電気代・光熱費・作業着・買掛・その他会社共通経費を管理<br>
   <b>主力ネタ一覧：</b>イベントごとの販売数・使用資材・必要数量を記録<br>
   <b>主力・在庫データ：</b>在庫管理の正式名称と材料計算ルールを登録<br>
   <b>担当者アプリ：</b>買い物表・準備・在庫・車両などの現場業務<br>
