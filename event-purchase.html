@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=0.5,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ネタ買い物一覧">
-<title>イベント別 仕入管理 v1.3.6｜売上設定復旧</title>
+<title>イベント別 仕入管理 v1.3.7｜売上設定完全復旧</title>
 <style>
 :root{--gold:#b8860b;--gold2:#d6a634;--line:#d8bf75;--bg:#fff8e8;--card:#fffdfa;--text:#241900;--sub:#6d5a2b;--red:#d64242;--green:#168a58;--blue:#2563a7}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:linear-gradient(#fff8e8,#f4ead0);color:var(--text);padding-bottom:82px}
@@ -49,7 +49,7 @@ table{min-width:100%;width:100%;table-layout:fixed}
 </style>
 </head>
 <body>
-<header><div class="brand">🛒 イベント別 仕入管理 v1.3.6</div><div class="sub">イベント別必要数量｜スタッフ共有｜在庫自動反映</div></header>
+<header><div class="brand">🛒 イベント別 仕入管理 v1.3.7</div><div class="sub">イベント別必要数量｜スタッフ共有｜在庫自動反映</div></header>
 <div class="wrap">
 <section class="card" id="eventSec">
 <h2>① イベント情報（メインアプリから選択）</h2>
@@ -61,7 +61,7 @@ table{min-width:100%;width:100%;table-layout:fixed}
 <div class="toolbar"><button class="blue" onclick="loadMainData(true)">🔄 メインアプリから再読込</button><button class="ghost" onclick="location.href='index.html'">🏠 メインアプリ</button></div>
 </section>
 <section class="card" id="netaSec"><h2>② 出店ネタ（イベントから自動反映）</h2><div class="notice">選択したイベントの出店ネタに登録されている品目を、最初は全部表示します。今回不要な品目だけ「今回不要」で外せます。</div><div id="netaGrid" class="neta-grid"></div><div class="toolbar"><button class="gold" onclick="buildList()">選択したネタで買い物表を作る</button><button class="ghost" onclick="setAllNeta(false)">全部外す</button></div></section>
-<section class="card" id="priceSec" style="display:none"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="toolbar"><button class="green" id="salesSaveBtn" onclick="saveSalesSettings()">💾 売上設定金額を保存</button></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
+<section class="card" id="priceSec"><h2>③ 出店ネタの今回売上設定金額</h2><div class="notice">選択したイベントの出店ネタごとに、今回目標とする売上金額を入力します。これは1個の販売価格ではなく、そのネタ全体の今回売上設定金額です。</div><div id="salesGrid" class="sales-grid"></div><div class="toolbar"><button class="green" id="salesSaveBtn" onclick="saveSalesSettings()">💾 売上設定金額を保存</button></div><div class="total"><span>今回売上設定金額 合計</span><strong id="salesTargetTotal">¥0</strong></div></section>
 <section class="card" id="listSec"><h2>④ イベント別 仕入一覧</h2><div class="notice">担当者用のため、単価・金額・金庫に関する情報は表示しません。在庫数・必要目安・追加数量・購入状況だけを管理します。</div>
 <div id="mainNetaLinkStatus" class="notice warn">主力ネタ一覧の必要数量を確認中…</div><div class="toolbar no-print"><button class="gold" onclick="addRow()">＋ 品目追加</button><button class="green" id="publishBtn" onclick="saveAndPublish()">💾 保存してスタッフへ反映</button><button class="ghost" onclick="copyText()">📋 文字コピー</button><button class="ghost" onclick="window.print()">印刷</button><button class="danger" onclick="clearRows()">表だけ消す</button></div><div id="publishStatus" class="publish-status no-print"><span class="publish-dot"></span><span>イベントを選ぶと、スタッフ共有の更新状況を表示します</span></div>
 <div class="scroll"><table><thead><tr><th>買った</th><th>ネタ</th><th>①品目</th><th>購入先</th><th>②在庫数</th><th>必要目安</th><th>③追加数量</th><th>買った店・備考</th><th>削除</th></tr></thead><tbody id="tbody"></tbody></table></div>
@@ -638,6 +638,18 @@ ${ev?.date||''} ${ev?.name||''} ${ev?.place||''}
 `;
  });
  navigator.clipboard?.writeText(t).then(()=>alert('仕入一覧をコピーしました')).catch(()=>prompt('この文字をコピーしてください',t));
+}
+
+async function saveSalesSettings(){
+  if(!state.eventId){alert('先にイベントを選択してください');return;}
+  saveLocal(false);
+  const btn=document.getElementById('salesSaveBtn');
+  if(btn){btn.disabled=true;btn.textContent='保存中…';}
+  try{
+    await publishShoppingList();
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='💾 売上設定金額を保存';}
+  }
 }
 
 loadLocal();document.getElementById('buyer').value=state.buyer||'';document.getElementById('shop').value=state.shop||'';document.getElementById('memo').value=state.memo||'';renderNeta();renderSales();renderRows();loadMainNetaShared();
