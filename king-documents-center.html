@@ -1,39 +1,21 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>見積書・請求書</title><style>
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:#f4f7fb;color:#172033}.wrap{max-width:1050px;margin:auto;padding:16px}.hero{background:linear-gradient(135deg,#17324d,#2c6495);color:#fff;border-radius:22px;padding:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.card{background:#fff;border-radius:18px;padding:16px;border:1px solid #e2e8f0}.btn{display:inline-block;background:#1f6feb;color:#fff;text-decoration:none;padding:10px 13px;border-radius:10px;font-weight:900}.item{padding:10px 0;border-top:1px solid #e2e8f0}.meta{font-size:12px;color:#64748b}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-</head><body><div class="wrap"><section class="hero"><h1>📄 見積書・請求書</h1><p>KING用 書類管理</p><button onclick="render()" style="border:0;border-radius:10px;padding:9px 12px;font-weight:900">🔄 保存一覧を更新</button></section><div class="grid"><section class="card"><h2>🧾 見積書</h2><a class="btn" href="conan_purchase_quote.html?new=1">新しい見積書</a><div id="quotes"></div></section><section class="card"><h2>📑 請求書</h2><a class="btn" href="fujiwara_invoice.html?new=1">新しい請求書</a><div id="invoices"></div></section></div><section class="card" style="margin-top:14px"><h2>🏗 建設 月次請求</h2><p class="meta">建設アプリのFirebase日報から、取引先・月別の請求書下書きを作ります。</p><a class="btn" href="construction-monthly-invoice.html">建設の月次請求を作る</a></section></div><script>
-const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
-if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db=firebase.database(), DOC_BASE='fujiwara/documents';
-
-function e(v){return String(v??'').replace(/[&<>"]/g,'')}
-function readLocal(k){try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(x){return[]}}
-function vals(v){return v?Object.values(v):[]}
-function sortSaved(a){return a.sort((x,y)=>String(y.savedAt||'').localeCompare(String(x.savedAt||'')))}
-function fmtDate(v){try{return new Date(v).toLocaleString('ja-JP')}catch(e){return v||''}}
-
-function renderLists(q,i,shared){
-  quotes.innerHTML=q.length?q.map(x=>`<div class="item"><b>${e(x.project||x.subject||'見積書')}</b><div>${e(x.totalText||'')}</div><div class="meta">${e(x.recipient||'')} / 保存 ${fmtDate(x.savedAt)} ${shared?'☁️共有':''}</div></div>`).join(''):'<p class="meta">保存済み見積なし</p>';
-  invoices.innerHTML=i.length?i.map(x=>`<div class="item"><b>${e(x.project||x.subject||'請求書')}</b><div>${e(x.totalText||'')}</div><div class="meta">${e(x.recipient||'')} / 保存 ${fmtDate(x.savedAt)} ${shared?'☁️共有':''}</div></div>`).join(''):'<p class="meta">保存済み請求書なし</p>';
-}
-
-function render(){
-  Promise.all([
-    db.ref(DOC_BASE+'/quotes').once('value'),
-    db.ref(DOC_BASE+'/invoices').once('value')
-  ]).then(([qs,is])=>{
-    const q=sortSaved(vals(qs.val()));
-    const i=sortSaved(vals(is.val()));
-    renderLists(q,i,true);
-  }).catch(()=>{
-    renderLists(
-      sortSaved(readLocal('fujiwara_quote_archive_v1')),
-      sortSaved(readLocal('fujiwara_invoice_archive_v1')),
-      false
-    );
-  });
-}
-db.ref(DOC_BASE+'/quotes').on('value',()=>render());
-db.ref(DOC_BASE+'/invoices').on('value',()=>render());
-render();
-</script></body></html>
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>見積・請求管理｜FUJIWARA KING</title>
+<style>
+:root{--navy:#17324d;--gold:#c99a16;--blue:#1f6feb;--green:#3f7650;--bg:#f5f8fb;--line:#dfe6ee;--text:#15233f;--sub:#667085}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:linear-gradient(180deg,#eef5ff,#fff 50%,#fff8ea);color:var(--text)}
+.wrap{max-width:980px;margin:auto;padding:16px 14px 90px}.head{background:linear-gradient(135deg,#17324d,#2b5d86);color:#fff;border-radius:24px;padding:20px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+h1{margin:0;font-size:30px}.sub{margin-top:6px;color:#dcecff;font-weight:800}.back{border:0;border-radius:12px;padding:11px 14px;background:rgba(255,255,255,.16);color:#fff;font-weight:950}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px;text-decoration:none;color:var(--text);box-shadow:0 12px 30px rgba(34,54,80,.1);display:flex;flex-direction:column;min-height:250px}
+.card.estimate{border:2px solid #73a987;background:linear-gradient(135deg,#f7fff9,#edf8f0)}.card.invoice{border:2px solid #6fa5d8;background:linear-gradient(135deg,#f7fbff,#edf5ff)}
+.icon{font-size:44px}.card h2{font-size:26px;margin:14px 0 8px}.card p{margin:0;color:var(--sub);line-height:1.7;font-weight:750;flex:1}.open{margin-top:18px;border-radius:14px;padding:14px;text-align:center;color:#fff;font-weight:950}.estimate .open{background:#3f7650}.invoice .open{background:#1f6feb}
+.note{margin-top:16px;background:#fff8dd;border:1px solid #ead17d;border-radius:16px;padding:14px;font-weight:800;color:#705611}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<section class="head"><div><h1>📄 見積・請求管理</h1><div class="sub">見積書と請求書をここにまとめて管理</div></div><button class="back" onclick="location.href='king-money-center.html'">← お金・労務へ</button></section>
+<section class="grid">
+<a class="card estimate" href="fujiwara-estimate.html?new=1"><div class="icon">📝</div><h2>見積書</h2><p>品名・単位・数量・単価・金額・備考を入力し、印刷/PDF・保存・共有します。</p><div class="open">新しい見積書を作る ›</div></a>
+<a class="card invoice" href="fujiwara-invoice.html?new=1"><div class="icon">🧾</div><h2>請求書</h2><p>既存のFUJIWARA請求書を正規版として使用。明細・消費税・合計・印刷/PDF・Firebase保存に対応。</p><div class="open">新しい請求書を作る ›</div></a>
+</section>
+<div class="note">元の請求書アプリのFirebase保存先・入力機能を残し、見積書は別保存領域に分離しています。</div>
+</main></body></html>
