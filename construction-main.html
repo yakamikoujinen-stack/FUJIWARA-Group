@@ -135,6 +135,10 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <button onclick="copyAdminCSV()">一覧をCSVコピー</button>
 <button class="green" onclick="window.print()">この月間一覧を印刷 / PDF</button>
 </div>
+<div class="no-print">
+<button class="green" onclick="createConstructionInvoice()">🧾 この月の請求書を作る</button>
+<div class="small">選択中の取引先・対象月・日報明細を正規のFUJIWARA請求書へ引き継ぎます。単価・金額は請求書側で入力してください。</div>
+</div>
 </div>
 </section>
 </main>
@@ -223,6 +227,29 @@ function csvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"'}
 function copyAdminCSV(){
  const arr=filteredAdminReports();const csv=["日付","取引先名","取引先担当者","現場名","入力者","作業員","人数","現場入場","現場退場","時間","天気","保存日時"].map(csvCell).join(",")+"\n"+arr.map(r=>[r.date,r.client,r.clientPerson,r.site,r.reporter,r.worker,r.people,r.start,r.end,reportHours(r).toFixed(2),r.weather,formatSavedAt(r)].map(csvCell).join(",")).join("\n");
  navigator.clipboard.writeText(csv).then(()=>alert("月間一覧をCSVコピーしました")).catch(()=>alert("コピーできない場合は長押しコピーしてください"));
+}
+function createConstructionInvoice(){
+ const arr=filteredAdminReports();
+ if(!arr.length)return alert("請求書に入れる日報がありません");
+ const client=adminClientFilter.value||"";
+ if(!client)return alert("先に取引先名を1社選んでください");
+ const month=adminMonthFilter.value||"";
+ const sites=unique(arr.map(r=>r.site).filter(Boolean));
+ const prefill={
+   client:client,
+   project:(month?month+" ":"")+"建設作業"+(sites.length===1?" / "+sites[0]:""),
+   subject:"建設 月次ご請求",
+   memo:"建設アプリの月間日報から作成。単価・金額を確認して請求書を完成してください。",
+   rows:arr.map(r=>({
+     name:(r.date||"")+" "+(r.site||"建設作業"),
+     unit:"人",
+     qty:r.people||"",
+     price:"",
+     note:[r.worker?"作業員："+r.worker:"",reportHours(r)?"現場時間："+reportHours(r).toFixed(2)+"h":""].filter(Boolean).join(" / ")
+   }))
+ };
+ localStorage.setItem("fujiwara_construction_invoice_prefill_v1",JSON.stringify(prefill));
+ location.href="fujiwara-invoice.html?new=1";
 }
 function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance()}
 let t=fmt(new Date());jDate.value=t;rDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
