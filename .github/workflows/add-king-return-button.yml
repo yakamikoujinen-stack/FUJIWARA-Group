@@ -29,7 +29,6 @@ jobs:
               s=s.replace(old,new,1)
           elif new not in s:
               raise SystemExit('KING button CSS anchor not found; refusing to modify')
-
           anchor="  badge.className = 'role-badge ' + cls[role];"
           line="\n  var kingReturnBtn = document.querySelector('.king-return-btn');\n  if (kingReturnBtn) kingReturnBtn.style.display = (role === 'leader') ? 'inline-flex' : 'none';"
           if 'kingReturnBtn.style.display' not in s:
@@ -50,3 +49,4 @@ jobs:
           git add index.html
           git commit -m 'Show KING return button only for leader'
           git push origin main
+# rerun 2026-08-31 19:00 JST
