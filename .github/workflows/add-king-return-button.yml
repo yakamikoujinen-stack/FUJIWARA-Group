@@ -1,4 +1,4 @@
-name: Add KING return button
+name: Restrict KING return button to leaders
 
 on:
   push:
@@ -16,34 +16,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Add KING return button without changing existing app logic
+      - name: Show KING return button only to leader
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='.king-return-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;'
+          new='.king-return-btn{display:none;align-items:center;justify-content:center;gap:5px;'
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('KING button CSS anchor not found; refusing to modify')
 
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          if 'class="king-return-btn"' in s:
-              print('KING return button already exists; no change needed.')
-              raise SystemExit(0)
-
-          css_anchor = '.main-content{flex:1;padding-bottom:66px;}'
-          css = '''.king-return-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 11px;border:1.5px solid var(--gold);border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;text-decoration:none;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 10px rgba(200,168,75,.22);}\n.king-return-btn:active{transform:scale(.97);}\n@media(max-width:520px){.king-return-btn{height:34px;padding:0 9px;font-size:10px}.king-return-btn .king-return-label{display:none}.king-return-btn .king-return-short{display:inline}}\n@media(min-width:521px){.king-return-btn .king-return-short{display:none}}\n'''
-          if css_anchor not in s:
-              raise SystemExit('CSS anchor not found; refusing to modify index.html')
-          s = s.replace(css_anchor, css + css_anchor, 1)
-
-          html_anchor = '      <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>'
-          button = '      <a class="king-return-btn" href="king.html" aria-label="KINGアプリへ戻る">👑 <span class="king-return-label">KINGへ戻る</span><span class="king-return-short">KING</span></a>\n'
-          if html_anchor not in s:
-              raise SystemExit('Header anchor not found; refusing to modify index.html')
-          s = s.replace(html_anchor, button + html_anchor, 1)
-
-          p.write_text(s, encoding='utf-8')
+          anchor="  badge.className = 'role-badge ' + cls[role];"
+          line="\n  var kingReturnBtn = document.querySelector('.king-return-btn');\n  if (kingReturnBtn) kingReturnBtn.style.display = (role === 'leader') ? 'inline-flex' : 'none';"
+          if 'kingReturnBtn.style.display' not in s:
+              if anchor not in s:
+                  raise SystemExit('initApp role anchor not found; refusing to modify')
+              s=s.replace(anchor,anchor+line,1)
+          p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit patched main app
+      - name: Commit leader-only visibility change
         shell: bash
         run: |
           if git diff --quiet -- index.html; then
@@ -53,5 +48,5 @@ jobs:
           git config user.name 'FUJIWARA App Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add index.html
-          git commit -m 'Add KING return button to main app'
+          git commit -m 'Show KING return button only for leader'
           git push origin main
