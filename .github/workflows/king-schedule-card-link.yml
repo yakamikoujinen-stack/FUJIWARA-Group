@@ -1,0 +1,47 @@
+name: KING schedule card link
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/king-schedule-card-link.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Replace embedded schedule with compact card
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king.html')
+          s=p.read_text(encoding='utf-8')
+          start=s.find('<section class="king-construction-schedule">')
+          if start < 0:
+              if 'href="king-client-schedule.html"' in s:
+                  print('Already patched')
+                  raise SystemExit(0)
+              raise SystemExit('schedule block not found; no changes made')
+          end=s.find('</section></section>', start)
+          if end < 0:
+              raise SystemExit('schedule block end not found; no changes made')
+          end += len('</section>')
+          card='''<a class="hub-card manager" href="king-client-schedule.html"><div><div class="hub-top"><div class="hub-icon">📅</div><div class="hub-title">取引先別 月間スケジュール</div></div><div class="hub-desc">メイン＋建設の予定を取引先別・色分けで月間確認</div></div><div class="hub-open">開く ›</div></a>'''
+          # Put it in the existing 業務の中心 grid, next to the other small cards.
+          grid_end=s.rfind('</div>', 0, start)
+          if grid_end < 0:
+              raise SystemExit('hub grid end not found; no changes made')
+          s=s[:grid_end]+card+s[grid_end:start]+s[end:]
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          if git diff --quiet -- king.html; then exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king.html
+          git commit -m 'Move client monthly schedule to compact KING card'
+          git push origin main
