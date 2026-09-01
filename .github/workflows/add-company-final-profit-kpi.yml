@@ -1,0 +1,48 @@
+name: Add company final profit KPI
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/add-company-final-profit-kpi.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - name: Patch king-money safely
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king-money.html')
+          s=p.read_text(encoding='utf-8')
+          # Rename current profit KPI because current calculation already includes office/company expenses.
+          s=s.replace('<div class="kpi"><small>総利益</small><b id="kProfit" class="green">¥0</b></div>',
+                      '<div class="kpi"><small>現場利益</small><b id="kFieldProfit" class="green">¥0</b></div><div class="kpi"><small>会社最終利益</small><b id="kProfit" class="green">¥0</b></div>',1)
+          # Add visible formula under office expense box.
+          old='<span id="officeMonthTotal" class="office-total">今月の事務所経費 ¥0</span>'
+          new='<span id="officeMonthTotal" class="office-total">今月の事務所経費 ¥0</span><small id="companyProfitFormula" style="display:block;margin-top:5px;color:#42634b;font-weight:950">会社最終利益 ＝ 現場利益 − 事務所・会社経費</small>'
+          if old in s and 'companyProfitFormula' not in s:
+              s=s.replace(old,new,1)
+          # Populate field profit separately; keep existing kProfit as final profit.
+          oldjs="const officeTotal=officeExpenseTotal(month),combinedExpense=totals.expense+officeTotal,combinedProfit=totals.sales-combinedExpense;kSales.textContent=yen(totals.sales);kExpense.textContent=yen(combinedExpense);kProfit.textContent=yen(combinedProfit);"
+          newjs="const officeTotal=officeExpenseTotal(month),fieldProfit=totals.sales-totals.expense,combinedExpense=totals.expense+officeTotal,combinedProfit=fieldProfit-officeTotal;kSales.textContent=yen(totals.sales);kExpense.textContent=yen(combinedExpense);if(document.getElementById('kFieldProfit')){kFieldProfit.textContent=yen(fieldProfit);kFieldProfit.className=fieldProfit<0?'red':'green';}kProfit.textContent=yen(combinedProfit);"
+          if oldjs not in s:
+              raise SystemExit('profit calculation anchor not found; refusing to modify')
+          s=s.replace(oldjs,newjs,1)
+          # Clarify the notice to prevent double subtraction.
+          s=s.replace('総経費は「イベント経費＋事務所・会社経費」で表示します。イベント一覧の各行は従来どおりイベント単体の経費・利益です。',
+                      '総経費は「イベント経費＋事務所・会社経費」です。現場利益は「売上－イベント経費」、会社最終利益は「現場利益－事務所・会社経費」で表示します。事務所経費を二重に差し引くことはありません。',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet -- king-money.html; then exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king-money.html
+          git commit -m 'Show field profit and company final profit separately'
+          git push origin main
