@@ -1,0 +1,58 @@
+name: KING money company split v2
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/king-money-company-split-v2.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king-money.html'); s=p.read_text(encoding='utf-8')
+          # Preserve all existing data/storage code; add a read-only company split summary.
+          css='''.company-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:6px 0 12px}.company-kpi{background:#fff;border:2px solid #e4cd88;border-radius:20px;padding:14px;text-align:center}.company-kpi small{display:block;font-weight:950;color:#80682c}.company-kpi .main{display:block;font-size:25px;font-weight:950;margin:5px 0}.company-kpi .split{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.company-kpi .split span{background:#f8f6ef;border-radius:9px;padding:6px 4px;font-size:11px;font-weight:900}.company-kpi.fuji-only{border-color:#d6a21c;background:#fffdf5}.company-kpi.thankyou{border-color:#d59b45;background:#fffaf2;cursor:pointer}.company-kpi.deposit{border-color:#7aa6d5;background:#f7fbff}@media(max-width:760px){.company-kpis{grid-template-columns:1fr 1fr}.company-kpi .main{font-size:21px}}'''
+          if '.company-kpis{' not in s: s=s.replace('</style>',css+'</style>',1)
+          old='<section class="kpis">'
+          dashboard='''<section class="company-kpis" id="companyKpis">
+          <div class="company-kpi"><small>① 総売上</small><b class="main" id="csSales">¥0</b><div class="split"><span>FUJIWARA<br><b id="csFujiSales">¥0</b></span><span>尼崎<br><b id="csAmaSales">¥0</b></span></div></div>
+          <div class="company-kpi"><small>② 総経費</small><b class="main red" id="csCost">¥0</b><div class="split"><span>FUJIWARA<br><b id="csFujiCost">¥0</b></span><span>尼崎<br><b id="csAmaCost">¥0</b></span></div></div>
+          <div class="company-kpi"><small>③ 現場利益</small><b class="main green" id="csFieldProfit">¥0</b><div class="split"><span>FUJIWARA<br><b id="csFujiProfit">¥0</b></span><span>尼崎<br><b id="csAmaProfit">¥0</b></span></div></div>
+          <div class="company-kpi fuji-only"><small>④ 事務所・会社経費</small><b class="main red" id="csOffice">¥0</b><div class="split"><span>FUJIWARAのみ</span></div></div>
+          <div class="company-kpi fuji-only"><small>⑤ 会社最終利益</small><b class="main green" id="csFinal">¥0</b><div class="split"><span>FUJIWARAのみ</span></div></div>
+          <div class="company-kpi thankyou" onclick="location.href='king-thankyou-management.html'"><small>⑥ 御礼（10%）</small><b class="main" id="csThanks">¥0</b><div class="split"><span>テキヤ・FUJIWARAのみ</span></div></div>
+          <div class="company-kpi deposit"><small>⑦ 預金</small><b class="main blue" id="csDeposit">¥0</b><div class="split"><span>FUJIWARAのみ</span></div></div>
+          </section>'''
+          if 'id="companyKpis"' not in s: s=s.replace(old,dashboard+old,1)
+          # Load allocations alongside existing sources.
+          s=s.replace('let events=[],officeExpenses=[];','let events=[],officeExpenses=[],companyAlloc={};',1)
+          # Helper functions: tolerate both stored companyTotals and item-level allocations.
+          helper='''\nfunction companyTotalsForMonth(month){let out={fujiwara:{sales:0,cost:0},amagasaki:{sales:0,cost:0}};Object.values(companyAlloc||{}).forEach(rec=>{if(!rec||typeof rec!=="object")return;let d=String(rec.date||rec.eventDate||rec.startDate||"").slice(0,7);if(month&&d&&d!==month)return;let ct=rec.companyTotals||{};["fujiwara","amagasaki"].forEach(k=>{let c=ct[k]||{};out[k].sales+=n(c.sales);out[k].cost+=n(c.cost!=null?c.cost:(c.expense!=null?c.expense:c.expenses));});if(!ct.fujiwara&&!ct.amagasaki){Object.values(rec.items||{}).forEach(it=>{if(!it)return;let k=it.company==="fujiwara"?"fujiwara":(it.company==="amagasaki"||it.company==="ama"?"amagasaki":null);if(!k)return;out[k].sales+=n(it.sales);out[k].cost+=n(it.cost!=null?it.cost:(it.expense!=null?it.expense:it.expenses));});}});return out}\nfunction tekiyaThankyouForMonth(month){let total=0;events.forEach((ev,i)=>{let d=String(ev.date||ev.startDate||ev.eventDate||"").slice(0,7);if(month&&d!==month)return;let supplier=String(ev.zone||ev.client||ev.supplier||"");if(!supplier.includes("テキヤ"))return;let id=String(ev.id||ev.eventId||ev.mainId||("event_"+i)),key=id.replace(/[.#$\\[\\]\\/]/g,"_"),rec=companyAlloc[key]||companyAlloc[id]||{},c=(rec.companyTotals||{}).fujiwara||{},sales=n(c.sales);if(!sales)Object.values(rec.items||{}).forEach(it=>{if(it&&it.company==="fujiwara")sales+=n(it.sales)});total+=Math.round(sales*.10)});return total}\nfunction renderCompanyKpis(month,officeTotal,depositFallback){let c=companyTotalsForMonth(month),fs=c.fujiwara.sales,as=c.amagasaki.sales,fc=c.fujiwara.cost,ac=c.amagasaki.cost;let hasSplit=(fs+as+fc+ac)!==0;let totalSales=hasSplit?fs+as:0,totalCost=hasSplit?fc+ac:0,fp=fs-fc,ap=as-ac,field=totalSales-totalCost,final=fp-officeTotal,thanks=tekiyaThankyouForMonth(month);let set=(id,v)=>{let e=document.getElementById(id);if(e)e.textContent=yen(v)};set("csSales",totalSales);set("csFujiSales",fs);set("csAmaSales",as);set("csCost",totalCost);set("csFujiCost",fc);set("csAmaCost",ac);set("csFieldProfit",field);set("csFujiProfit",fp);set("csAmaProfit",ap);set("csOffice",officeTotal);set("csFinal",final);set("csThanks",thanks);set("csDeposit",depositFallback);let e=document.getElementById("csFinal");if(e)e.className="main "+(final<0?"red":"green")}\n'''
+          anchor='function officeExpenseTotal(month){'
+          if 'function companyTotalsForMonth' not in s: s=s.replace(anchor,helper+anchor,1)
+          # Keep legacy KPIs intact but make definitions match: total expense = field expense only, field profit = sales - field expense.
+          oldcalc='const officeTotal=officeExpenseTotal(month),fieldProfit=totals.sales-totals.expense,combinedExpense=totals.expense+officeTotal,combinedProfit=fieldProfit-officeTotal;kSales.textContent=yen(totals.sales);kExpense.textContent=yen(combinedExpense);'
+          newcalc='const officeTotal=officeExpenseTotal(month),fieldProfit=totals.sales-totals.expense,combinedExpense=totals.expense,combinedProfit=fieldProfit-officeTotal;kSales.textContent=yen(totals.sales);kExpense.textContent=yen(combinedExpense);renderCompanyKpis(month,officeTotal,totals.deposit);'
+          if oldcalc in s: s=s.replace(oldcalc,newcalc,1)
+          # Load company split allocation read-only.
+          oldload="const [eventSnap,officeSnap]=await Promise.all([db.ref('fujiwara/events').once('value'),db.ref('fujiwara/king_office_expenses').once('value')]);events=arr(eventSnap.val());officeExpenses=arr(officeSnap.val());render()"
+          newload="const [eventSnap,officeSnap,allocSnap]=await Promise.all([db.ref('fujiwara/events').once('value'),db.ref('fujiwara/king_office_expenses').once('value'),db.ref('fujiwara/event_settlement_allocations').once('value')]);events=arr(eventSnap.val());officeExpenses=arr(officeSnap.val());companyAlloc=allocSnap.val()||{};render()"
+          if oldload not in s: raise SystemExit('load anchor not found; refusing unsafe patch')
+          s=s.replace(oldload,newload,1)
+          s=s.replace('総経費は「イベント経費＋事務所・会社経費」です。現場利益は「売上－イベント経費」、会社最終利益は「現場利益－事務所・会社経費」で表示します。事務所経費を二重に差し引くことはありません。','上の①〜③は現場分、④〜⑦はFUJIWARAグループ専用です。①〜③の会社別内訳はイベント早見精算のFUJIWARA／尼崎振り分けを読み取ります。既存データは変更しません。',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - shell: bash
+        run: |
+          if git diff --quiet -- king-money.html; then exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king-money.html
+          git commit -m 'Add seven-part company split money dashboard'
+          git push origin main
