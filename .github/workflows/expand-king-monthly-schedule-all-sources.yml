@@ -1,0 +1,87 @@
+name: Expand KING monthly schedule from main and construction
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/expand-king-monthly-schedule-all-sources.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - name: Patch KING safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king.html'); s=p.read_text(encoding='utf-8')
+          # Repair the previous injected JS that accidentally sat inside the firebase SDK script tag.
+          a=s.find('<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js">')
+          b=s.find('</script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>',a)
+          if a>=0 and b>=0:
+              s=s[:a]+'<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>'+s[b+len('</script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>'):]
+          # Update labels only; existing app links and save logic remain untouched.
+          s=s.replace('🏗️ 取引先別 月間スケジュール表','📅 取引先名別 月間スケジュール表')
+          s=s.replace('建設日報から自動表示','メインアプリ＋建設アプリから自動表示')
+          s=s.replace('表示対象：優成建設・前田建設のみ。建設アプリの日報は変更せず、KING側で読み取り表示します。','メインアプリのイベントと建設アプリの日報をまとめて表示します。元データの保存処理は変更しません。')
+          # Add source/filter UI once.
+          needle='<div class="kcs-grid" id="kcsCalendar"></div>'
+          if 'id="kcsClientFilter"' not in s:
+              repl='<div style="margin:8px 0 12px"><select id="kcsClientFilter" onchange="renderKingConstructionSchedule()" style="width:100%;max-width:360px;padding:10px;border:1px solid #cdd9e7;border-radius:10px;font-weight:900"><option value="">すべての取引先</option></select></div>'+needle
+              s=s.replace(needle,repl,1)
+          # Append a clean override after Firebase initialization code; it reads only.
+          js=r'''
+<script>
+// ===== KING 統合月間スケジュール v2：メインイベント＋建設日報（読み取り専用） =====
+var kingMainEvents=[], kingConstructionReports=[], kingConstructionMonth=new Date(); kingConstructionMonth.setDate(1);
+function kcsEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})}
+function kcsClientOf(x,source){
+  if(source==='main') return String(x.client||x.clientName||x.customer||x.customerName||x.zone||x.orderer||x.supplier||'未設定');
+  return String(x.client||x.clientName||x.customer||x.customerName||'未設定');
+}
+function kcsDates(ev){
+  var out=[],a=String(ev.date||'').slice(0,10),b=String(ev.dateEnd||'').slice(0,10); if(!a)return out;
+  var d=new Date(a+'T00:00:00'), end=b?new Date(b+'T00:00:00'):new Date(d); if(isNaN(d)||isNaN(end))return [a];
+  for(var guard=0;d<=end&&guard<62;guard++,d.setDate(d.getDate()+1)) out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  return out;
+}
+function loadKingConstructionSchedule(){
+  if(typeof firebase==='undefined'||!firebase.apps.length)return;
+  var db=firebase.database();
+  db.ref('fujiwara/events').on('value',function(s){var v=s.val()||{};kingMainEvents=(Array.isArray(v)?v:Object.keys(v).map(function(k){return v[k]})).filter(Boolean);kcsRefreshFilter();renderKingConstructionSchedule()});
+  db.ref('fujiwara/construction/reports').on('value',function(s){var v=s.val()||{};kingConstructionReports=Object.keys(v).map(function(k){return Object.assign({id:k},v[k]||{})});kcsRefreshFilter();renderKingConstructionSchedule()});
+}
+function kcsRefreshFilter(){
+  var el=document.getElementById('kcsClientFilter');if(!el)return;var cur=el.value,names={};
+  kingMainEvents.forEach(function(x){names[kcsClientOf(x,'main')]=1});kingConstructionReports.forEach(function(x){names[kcsClientOf(x,'construction')]=1});
+  el.innerHTML='<option value="">すべての取引先</option>'+Object.keys(names).filter(function(n){return n&&n!=='未設定'}).sort().map(function(n){return '<option value="'+kcsEsc(n)+'">'+kcsEsc(n)+'</option>'}).join(''); if(names[cur])el.value=cur;
+}
+function moveKingConstructionMonth(n){kingConstructionMonth.setMonth(kingConstructionMonth.getMonth()+n);renderKingConstructionSchedule()}
+function resetKingConstructionMonth(){kingConstructionMonth=new Date();kingConstructionMonth.setDate(1);renderKingConstructionSchedule()}
+function renderKingConstructionSchedule(){
+  var box=document.getElementById('kcsCalendar'),title=document.getElementById('kcsMonthTitle');if(!box||!title)return;
+  var y=kingConstructionMonth.getFullYear(),m=kingConstructionMonth.getMonth(),filter=(document.getElementById('kcsClientFilter')||{}).value||'';title.textContent=y+'年 '+(m+1)+'月';
+  var rows=[];
+  kingMainEvents.forEach(function(e){var client=kcsClientOf(e,'main');if(filter&&client!==filter)return;kcsDates(e).forEach(function(ds){rows.push({date:ds,client:client,title:e.name||'イベント名未入力',place:e.place||'',source:'メイン'})})});
+  kingConstructionReports.forEach(function(r){var client=kcsClientOf(r,'construction');if(filter&&client!==filter)return;rows.push({date:String(r.date||r.rDate||'').slice(0,10),client:client,title:r.site||r.siteName||r.place||r.rSite||'現場名未入力',place:'',people:r.people||r.peopleCount||r.rPeople||'',start:r.start||r.startTime||r.rStart||'',end:r.end||r.endTime||r.rEnd||'',source:'建設'})});
+  var dows=['日','月','火','水','木','金','土'],html=dows.map(function(d,i){return '<div class="kcs-dow" style="'+(i===0?'color:#d33':i===6?'color:#1670c5':'')+'">'+d+'</div>'}).join('');
+  var first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());
+  for(var i=0;i<42;i++){var d=new Date(start);d.setDate(start.getDate()+i);var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),inMonth=d.getMonth()===m,dayRows=rows.filter(function(r){return r.date===ds});
+    html+='<div class="kcs-day '+(inMonth?'':'kcs-out')+'"><div class="kcs-num">'+d.getDate()+'</div>'+dayRows.map(function(r){var extra=r.source==='建設'?((r.people?' / '+kcsEsc(r.people)+'名':'')+((r.start||r.end)?'<br>'+kcsEsc(r.start||'-')+'〜'+kcsEsc(r.end||'-'):'')):(r.place?'<br>📍'+kcsEsc(r.place):'');return '<div class="kcs-entry '+(r.source==='メイン'?'maeda':'')+'"><b>'+kcsEsc(r.client)+'</b> <small>['+r.source+']</small><br>'+kcsEsc(r.title)+extra+'</div>'}).join('')+'</div>';
+  } box.innerHTML=html;
+}
+setTimeout(loadKingConstructionSchedule,700);
+</script>
+'''
+          s=s.replace('</body>',js+'</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Expand KING monthly schedule to main events and construction reports'
+          git push origin main
