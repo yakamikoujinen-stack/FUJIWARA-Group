@@ -1,0 +1,30 @@
+name: Add thank-you management link
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/add-thankyou-link.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king-supplier-summary.html'); s=p.read_text(encoding='utf-8')
+          if 'king-thankyou-management.html' in s: raise SystemExit(0)
+          marker='<section class="card panel"><div class="panel-head"><h2>発注先別一覧</h2>'
+          if marker not in s: raise SystemExit('marker not found')
+          card='''<section class="card panel" style="border:2px solid #d6a21c;background:#fffdf5"><div class="panel-head"><div><h2>🎁 テキヤ 御礼金管理</h2><div class="status" style="margin-top:5px">FUJIWARAグループ売上 × 10% を自動計算</div></div><button class="mode-btn active" type="button" onclick="location.href='king-thankyou-management.html'">御礼金一覧を開く ›</button></div></section>\n'''
+          s=s.replace(marker,card+marker,1); p.write_text(s,encoding='utf-8')
+          PY
+      - run: |
+          if git diff --quiet -- king-supplier-summary.html; then exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king-supplier-summary.html
+          git commit -m 'Link Tekiya thank-you management from supplier summary'
+          git push origin main
