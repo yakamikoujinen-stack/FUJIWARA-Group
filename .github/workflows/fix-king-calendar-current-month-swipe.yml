@@ -1,0 +1,60 @@
+name: Fix KING calendar month display and swipe
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-king-calendar-current-month-swipe.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - name: Patch KING calendar only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king.html')
+          s=p.read_text(encoding='utf-8')
+
+          # 1) 横スワイプ可能なカレンダー領域にする（縦スクロールは維持）
+          old='.kcs-grid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid #dbe3ed;border-top:1px solid #dbe3ed}'
+          new='.kcs-grid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid #dbe3ed;border-top:1px solid #dbe3ed;touch-action:pan-y}'
+          if old in s:
+              s=s.replace(old,new,1)
+
+          # 2) 前後月セルにはイベントを出さず、当月だけ表示
+          old2="var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),rr=rows.filter(function(r){return r.date===ds});html+='<div class=\"kcs-day '+(d.getMonth()===m?'':'kcs-out')+'\"><div class=\"kcs-num\">'+d.getDate()+'</div>'+rr.map(function(r){var col=kcsColor(r.client);return '<div class=\"kcs-entry\" style=\"--client-bg:'+col[0]+';--client-border:'+col[1]+'\"><b>'+kcsEsc(r.client)+'</b> <small>['+(r.src==='main'?'メイン':'建設')+']</small><br>'+kcsEsc(r.title)+(r.place?'<br>📍'+kcsEsc(r.place):'')+'</div>'}).join('')+'</div>'"
+          new2="var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),inMonth=d.getMonth()===m,rr=inMonth?rows.filter(function(r){return r.date===ds}):[];html+='<div class=\"kcs-day '+(inMonth?'':'kcs-out')+'\"><div class=\"kcs-num\">'+(inMonth?d.getDate():'')+'</div>'+rr.map(function(r){var col=kcsColor(r.client);return '<div class=\"kcs-entry\" style=\"--client-bg:'+col[0]+';--client-border:'+col[1]+'\"><b>'+kcsEsc(r.client)+'</b> <small>['+(r.src==='main'?'メイン':'建設')+']</small><br>'+kcsEsc(r.title)+(r.place?'<br>📍'+kcsEsc(r.place):'')+'</div>'}).join('')+'</div>'"
+          if old2 not in s:
+              raise SystemExit('calendar render anchor not found; refusing to modify')
+          s=s.replace(old2,new2,1)
+
+          # 3) 左右スワイプで月移動（左→次月、右→前月）
+          anchor="renderKingConstructionSchedule();\n</script>"
+          swipe="""renderKingConstructionSchedule();
+(function(){
+  var el=document.getElementById('kcsCalendar'); if(!el)return;
+  var sx=0,sy=0;
+  el.addEventListener('touchstart',function(e){var t=e.changedTouches&&e.changedTouches[0];if(!t)return;sx=t.clientX;sy=t.clientY},{passive:true});
+  el.addEventListener('touchend',function(e){var t=e.changedTouches&&e.changedTouches[0];if(!t)return;var dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>=60&&Math.abs(dx)>Math.abs(dy)*1.2){moveKingConstructionMonth(dx<0?1:-1)}},{passive:true});
+})();
+</script>"""
+          if 'touchstart' not in s:
+              if anchor not in s:
+                  raise SystemExit('script end anchor not found; refusing to modify')
+              s=s.replace(anchor,swipe,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit KING fix
+        shell: bash
+        run: |
+          if git diff --quiet -- king.html; then echo 'No change'; exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king.html
+          git commit -m 'Show only current month events and add swipe month navigation'
+          git push origin main
