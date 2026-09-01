@@ -1,0 +1,52 @@
+name: Add KING construction monthly schedule
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-king-construction-monthly-schedule.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add leader construction schedule without changing existing save logic
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king.html')
+          s=p.read_text(encoding='utf-8')
+          marker='id="kingConstructionSchedule"'
+          if marker in s:
+              print('Already installed')
+              raise SystemExit(0)
+
+          css='''\n/* ===== KING 取引先別 月間スケジュール 2026-09-01 ===== */\n.king-construction-schedule{margin-top:14px;padding:18px;background:rgba(255,255,255,.96);border:2px solid #6da6d7;border-radius:20px;box-shadow:0 7px 18px rgba(45,68,100,.08)}\n.kcs-head{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:10px}.kcs-head h2{margin:0;font-size:22px;color:#123b66}.kcs-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.kcs-controls button{border:1px solid #cdd9e7;background:#fff;color:#123b66;border-radius:10px;padding:8px 12px;font-weight:900}.kcs-month{font-size:20px;font-weight:950;min-width:130px;text-align:center}.kcs-grid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid #dbe3ed;border-top:1px solid #dbe3ed}.kcs-dow,.kcs-day{border-right:1px solid #dbe3ed;border-bottom:1px solid #dbe3ed}.kcs-dow{padding:7px;text-align:center;font-weight:950;background:#f5f8fc;font-size:12px}.kcs-day{min-height:86px;padding:5px;background:#fff}.kcs-num{font-weight:950;font-size:13px}.kcs-out{background:#f8fafc;color:#a0a8b4}.kcs-entry{margin-top:4px;padding:5px 6px;border-radius:7px;background:#eaf4ff;border-left:4px solid #2b78c5;font-size:10px;line-height:1.35;font-weight:800;color:#17324d}.kcs-entry.maeda{background:#eef9ee;border-left-color:#4b9b55}.kcs-empty{padding:18px;text-align:center;color:#647188;font-weight:800}.kcs-note{margin-top:9px;font-size:11px;color:#647188;font-weight:750}@media(max-width:700px){.kcs-day{min-height:72px;padding:3px}.kcs-entry{font-size:9px;padding:4px}.kcs-head{align-items:flex-start;flex-direction:column}}\n'''
+          s=s.replace('</style>',css+'</style>',1)
+
+          anchor='''      <a class="hub-card personal" href="miyu.html"><div><div class="hub-top"><div class="hub-icon">👩‍💼</div><div class="hub-title">MIYU</div></div><div class="hub-desc">AI統括パートナーに相談する</div></div><div class="hub-open">話しかける ›</div></a>\n    </div>'''
+          block='''      <a class="hub-card personal" href="miyu.html"><div><div class="hub-top"><div class="hub-icon">👩‍💼</div><div class="hub-title">MIYU</div></div><div class="hub-desc">AI統括パートナーに相談する</div></div><div class="hub-open">話しかける ›</div></a>\n    </div>\n    <section class="king-construction-schedule" id="kingConstructionSchedule">\n      <div class="kcs-head"><h2>🏗️ 取引先別 月間スケジュール表</h2><span class="hub-note">建設日報から自動表示</span></div>\n      <div class="kcs-controls"><button type="button" onclick="moveKingConstructionMonth(-1)">‹ 前月</button><div class="kcs-month" id="kcsMonthTitle"></div><button type="button" onclick="moveKingConstructionMonth(1)">次月 ›</button><button type="button" onclick="resetKingConstructionMonth()">今月</button></div>\n      <div class="kcs-grid" id="kcsCalendar"></div>\n      <div class="kcs-note">表示対象：優成建設・前田建設のみ。建設アプリの日報は変更せず、KING側で読み取り表示します。</div>\n    </section>'''
+          if anchor not in s:
+              raise SystemExit('KING hub anchor not found; refusing to modify')
+          s=s.replace(anchor,block,1)
+
+          js='''\n// ===== KING 建設日報 月間スケジュール（優成建設・前田建設のみ） =====\nlet kingConstructionReports=[];\nlet kingConstructionMonth=new Date(); kingConstructionMonth.setDate(1);\nfunction kcsEsc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}\nfunction isKingConstructionTarget(r){const n=String(r.client||r.clientName||r.customer||r.customerName||'');return n.includes('優成建設')||n.includes('前田建設')}\nfunction loadKingConstructionSchedule(){\n  if(typeof firebase==='undefined')return;\n  firebase.database().ref('fujiwara/construction/reports').on('value',snap=>{\n    const v=snap.val()||{}; kingConstructionReports=Object.entries(v).map(([id,x])=>({id,...(x||{}) })).filter(isKingConstructionTarget); renderKingConstructionSchedule();\n  },()=>renderKingConstructionSchedule());\n}\nfunction moveKingConstructionMonth(n){kingConstructionMonth.setMonth(kingConstructionMonth.getMonth()+n);renderKingConstructionSchedule()}\nfunction resetKingConstructionMonth(){kingConstructionMonth=new Date();kingConstructionMonth.setDate(1);renderKingConstructionSchedule()}\nfunction renderKingConstructionSchedule(){\n  const box=document.getElementById('kcsCalendar'), title=document.getElementById('kcsMonthTitle'); if(!box||!title)return;\n  const y=kingConstructionMonth.getFullYear(),m=kingConstructionMonth.getMonth(); title.textContent=`${y}年 ${m+1}月`;\n  const dows=['日','月','火','水','木','金','土']; let html=dows.map((d,i)=>`<div class="kcs-dow" style="${i===0?'color:#d33':i===6?'color:#1670c5':''}">${d}</div>`).join('');\n  const first=new Date(y,m,1), start=new Date(y,m,1-first.getDay());\n  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const inMonth=d.getMonth()===m;const rows=kingConstructionReports.filter(r=>String(r.date||r.rDate||'').slice(0,10)===ds);\n    html+=`<div class="kcs-day ${inMonth?'':'kcs-out'}"><div class="kcs-num">${d.getDate()}</div>`+rows.map(r=>{const client=String(r.client||r.clientName||r.customer||r.customerName||'');const site=r.site||r.siteName||r.place||r.rSite||'現場名未入力';const people=r.people||r.peopleCount||r.rPeople||'';const st=r.start||r.startTime||r.rStart||'';const en=r.end||r.endTime||r.rEnd||'';const cls=client.includes('前田建設')?'maeda':'';const time=(st||en)?`<br>${kcsEsc(st||'-')}〜${kcsEsc(en||'-')}`:'';const pc=people?` / ${kcsEsc(people)}名`:'';return `<div class="kcs-entry ${cls}"><b>${kcsEsc(client)}</b><br>${kcsEsc(site)}${pc}${time}</div>`}).join('')+'</div>';\n  } box.innerHTML=html;\n}\nsetTimeout(loadKingConstructionSchedule,500);\n'''
+          s=s.replace('</script>',js+'</script>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit KING schedule
+        shell: bash
+        run: |
+          if git diff --quiet -- king.html; then echo 'No change'; exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king.html
+          git commit -m 'Add KING monthly schedule for Yusei and Maeda construction reports'
+          git push origin main
