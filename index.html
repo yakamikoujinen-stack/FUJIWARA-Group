@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.42 担当者在庫履歴表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.41 開催日表示修正版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -65,10 +65,6 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .rb-staff{background:rgba(46,204,138,.12);color:var(--green);border:1px solid rgba(46,204,138,.3);}
 .rb-user{background:rgba(119,119,160,.12);color:var(--text2);border:1px solid var(--border);}
 .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#7a5c00);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;}
-.king-return-btn{display:none;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 11px;border:1.5px solid var(--gold);border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;text-decoration:none;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 10px rgba(200,168,75,.22);}
-.king-return-btn:active{transform:scale(.97);}
-@media(max-width:520px){.king-return-btn{height:34px;padding:0 9px;font-size:10px}.king-return-btn .king-return-label{display:none}.king-return-btn .king-return-short{display:inline}}
-@media(min-width:521px){.king-return-btn .king-return-short{display:none}}
 .main-content{flex:1;padding-bottom:66px;}
 
 /* BOTTOM NAV */
@@ -162,43 +158,6 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
   .inventory-write-meta{display:grid;grid-template-columns:auto 1fr}
   .inventory-write-meta .iwm-value{margin-right:0}
 }
-
-
-/* ===== v4.3.42 担当者アプリ専用：在庫履歴表示 ===== */
-.manager-inventory-only{display:none}
-body.manager-inventory-view .manager-inventory-only{display:initial}
-body.manager-inventory-view .main-inventory-only{display:none!important}
-.manager-inv-meta{
-  min-width:150px;
-  font-size:10px;
-  line-height:1.55;
-  color:#5f4a16;
-  white-space:normal;
-}
-.manager-inv-meta .date{font-weight:900;color:#241900}
-.manager-inv-meta .user{font-weight:900;color:#6d5a2b}
-.manager-inv-num{
-  font-weight:900;
-  font-variant-numeric:tabular-nums;
-  white-space:nowrap;
-}
-.manager-inv-diff.plus{color:var(--green);font-weight:950}
-.manager-inv-diff.minus{color:var(--red);font-weight:950}
-.manager-inv-diff.zero{color:var(--text2);font-weight:900}
-body.manager-inventory-view .inv-table{min-width:900px}
-body.manager-inventory-view .manager-inv-update-head{min-width:150px}
-.manager-stock-summary{
-  display:none;
-  background:#fff8df;
-  border:1.5px solid #d8bf75;
-  border-radius:12px;
-  padding:10px 12px;
-  margin-bottom:12px;
-  font-size:12px;
-  font-weight:900;
-  color:#241900;
-}
-body.manager-inventory-view .manager-stock-summary{display:block}
 
 /* INVENTORY */
 .inv-cat-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
@@ -417,7 +376,7 @@ input:focus,select:focus,textarea:focus{
   font-size:23px !important;
   font-weight:900 !important;
 }
-/* ===== v4.3.42 カレンダー曜日色（日祝=赤・土=青） ===== */
+/* ===== v4.3.43 カレンダー曜日色（日祝=赤・土=青） ===== */
 .cal-dlabel.sun, .cal-day.sun .cdate, .cal-day.holiday .cdate{
   color:#d32f2f !important;
 }
@@ -662,6 +621,18 @@ body::before,#app::before,.page::before{
 .purchase-mini-row{display:grid;grid-template-columns:1fr 120px 44px;gap:7px;margin:8px 0}
 .purchase-mini-row input{width:100%;padding:10px;border:1.5px solid #d8bf75;border-radius:9px;font-size:16px;background:#fff}
 .purchase-mini-total{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:950;padding:12px 4px;border-top:2px solid #d8bf75;margin-top:10px}
+
+
+/* ===== v4.3.43 責任者4名色分け・出勤者名拡大 ===== */
+.resp-chip{font-weight:950!important;border-width:2px!important;}
+.resp-fujiwara{background:#fff1f1!important;border-color:#d64242!important;color:#9f1d1d!important;}
+.resp-sho{background:#eef6ff!important;border-color:#2f80ed!important;color:#1457a6!important;}
+.resp-bunta{background:#eefbf2!important;border-color:#168a58!important;color:#0d6a40!important;}
+.resp-shige{background:#fff4df!important;border-color:#d88b16!important;color:#8a5400!important;}
+.event-staff-names{font-size:13.5px!important;font-weight:900!important;line-height:1.8!important;}
+.event-staff-name{display:inline-block;margin-right:2px;}
+.event-staff-name.resp-fujiwara,.event-staff-name.resp-sho,.event-staff-name.resp-bunta,.event-staff-name.resp-shige{padding:1px 5px;border-radius:7px;border:1px solid currentColor;}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -705,7 +676,6 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
-      <a class="king-return-btn" href="king.html" aria-label="KINGアプリへ戻る">👑 <span class="king-return-label">KINGへ戻る</span><span class="king-return-short">KING</span></a>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -817,15 +787,12 @@ body::before,#app::before,.page::before{
           </div>
           <div class="scroll-x">
             <table class="inv-table">
-              <thead>
-<tr class="main-inventory-only"><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th></th></tr>
-<tr class="manager-inventory-only"><th>品目</th><th>カテゴリ</th><th>前回在庫</th><th>今回在庫</th><th>差額</th><th>保存場所</th><th></th><th class="manager-inv-update-head">更新日・入力者</th></tr>
-</thead>
+              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th></th></tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table>
           </div>
           <div style="margin-top:14px">
-            <button class="btn btn-green btn-sm main-inventory-only" onclick="confirmInventoryCarryOut()">✅ 持出し確定</button>
+            <button class="btn btn-green btn-sm" onclick="confirmInventoryCarryOut()">✅ 持出し確定</button>
           </div>
           </div>
         </div>
@@ -1171,16 +1138,8 @@ body::before,#app::before,.page::before{
       <button class="modal-close-btn" onclick="closeModal('modal-stock')">✕</button>
     </div>
     <input type="hidden" id="stock-id">
-    <div class="main-inventory-only">
-      <div class="fg"><label>今回の持出し数</label><input type="number" id="stock-hakobi" min="0"></div>
-      <div class="fg"><label>在庫数（倉庫）</label><input type="number" id="stock-stock" min="0"></div>
-    </div>
-    <div class="manager-inventory-only">
-      <div class="manager-stock-summary">担当者在庫入力：前回在庫を残して今回在庫との差額を自動記録します。</div>
-      <div class="fg"><label>前回在庫数</label><input type="number" id="stock-prev-manager" readonly style="background:#f3efe2"></div>
-      <div class="fg"><label>今回在庫数</label><input type="number" id="stock-current-manager" min="0" oninput="updateManagerStockDiffPreview()"></div>
-      <div class="fg"><label>差額数（自動）</label><input type="text" id="stock-diff-manager" readonly style="background:#f3efe2;font-weight:950"></div>
-    </div>
+    <div class="fg"><label>今回の持出し数</label><input type="number" id="stock-hakobi" min="0"></div>
+    <div class="fg"><label>在庫数（倉庫）</label><input type="number" id="stock-stock" min="0"></div>
     <button class="btn btn-gold btn-full" onclick="saveStockAdjust()">更新する</button>
   </div>
 </div>
@@ -1500,16 +1459,6 @@ var state = {
   auditLogs: [],
   inventoryMeta: { updatedAt:'', updatedBy:'', action:'' },
 };
-
-
-// 担当者アプリ専用在庫表示。
-// 通常のメインアプリでは false のため、従来画面をそのまま維持する。
-var managerInventoryView = (new URLSearchParams(location.search).get('manager') === '1');
-function applyManagerInventoryViewClass(){
-  if(document.body){
-    document.body.classList.toggle('manager-inventory-view', managerInventoryView);
-  }
-}
 
 // ════ NAV ════
 var NAV = {
@@ -1850,14 +1799,11 @@ function doLogout() {
 
 // ════ INIT ════
 function initApp() {
-  applyManagerInventoryViewClass();
   var badge = document.getElementById('role-badge');
   var labels = {leader:'👑 リーダー', staff:'🏷️ 担当者', user:'👤 一般'};
   var cls    = {leader:'rb-leader', staff:'rb-staff', user:'rb-user'};
   badge.textContent = labels[role];
   badge.className = 'role-badge ' + cls[role];
-  var kingReturnBtn = document.querySelector('.king-return-btn');
-  if (kingReturnBtn) kingReturnBtn.style.display = (role === 'leader') ? 'inline-flex' : 'none';
   document.getElementById('user-avatar').textContent = userName.charAt(0)||'F';
 
   buildNav();
@@ -2743,7 +2689,7 @@ function renderEventList(dateFilter) {
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
-      +'<div class="ev-meta">👥 担当 '+staffStr+(getEventRequiredStaffForDate(ev,displayDs)?'　🧑‍🍳 体制 '+getEventRequiredStaffForDate(ev,displayDs)+'人':'')+'</div>'
+      +'<div class="ev-meta event-staff-names">👥 担当 '+eventStaffHtml(displayStaff)+(getEventRequiredStaffForDate(ev,displayDs)?'　🧑‍🍳 体制 '+getEventRequiredStaffForDate(ev,displayDs)+'人':'')+'</div>'
       +(typeof renderAvailabilitySummary==='function'?'<div class="ev-meta">出勤回答 '+renderAvailabilitySummaryForDate(ev,displayDs)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailabilityForDate(ev,displayDs)):'')+'</div>':'')
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+renderSettlementTags(ev)+'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
@@ -3199,6 +3145,23 @@ function inferEventEndDate(ev){
 function escHtml(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function escAttr(v){ return escHtml(v).replace(/`/g,'&#96;'); }
 
+function responsibleStaffClass(name){
+  name=String(name||'').trim();
+  if(name==='藤原' || name==='藤原明裕') return 'resp-fujiwara';
+  if(name==='将') return 'resp-sho';
+  if(name==='文太') return 'resp-bunta';
+  if(name==='繁充') return 'resp-shige';
+  return '';
+}
+function eventStaffHtml(staff){
+  staff=Array.isArray(staff)?staff:[];
+  if(!staff.length) return '<span class="event-staff-name">未設定</span>';
+  return staff.map(function(name){
+    var cls=responsibleStaffClass(name);
+    return '<span class="event-staff-name '+cls+'">'+escHtml(name)+'</span>';
+  }).join('・');
+}
+
 
 // ════ DAY-BY-DAY STAFF HELPERS ════
 var eventDayStaffDraft={};
@@ -3247,7 +3210,7 @@ function renderEventDayStaffEditor(){
     var rec=eventDayStaffDraft[ds]||{staff:baseStaff.slice(),requiredStaff:baseReq};
     var chips=(state.staffList||[]).map(function(name){
       var chk=rec.staff.indexOf(name)>=0?'checked':'';
-      return '<label class="day-staff-chip"><input type="checkbox" value="'+escAttr(name)+'" '+chk+' style="width:auto;margin:0"> '+escHtml(name)+'</label>';
+      var rcls=responsibleStaffClass(name); return '<label class="day-staff-chip '+(rcls?'resp-chip '+rcls:'')+'"><input type="checkbox" value="'+escAttr(name)+'" '+chk+' style="width:auto;margin:0"> '+escHtml(name)+'</label>';
     }).join('');
     return '<div class="day-staff-box" data-date="'+ds+'"><div class="day-staff-head"><span>📅 '+ds.slice(5).replace('-','/')+'</span><span class="day-badge">日別設定</span></div>'+
       '<div class="fg"><label>必要人数</label><input type="number" min="0" value="'+(rec.requiredStaff||0)+'" placeholder="例：6"></div>'+
@@ -3383,15 +3346,13 @@ function deleteEvent() {
 function inventoryWriterName(){
   return userName || (typeof roleLabel==='function' ? roleLabel(role) : '') || '未入力';
 }
-function markInventoryEdited(item, action, detail){
+function markInventoryEdited(item, action){
   var now=new Date().toISOString();
   var by=inventoryWriterName();
   state.inventoryMeta={updatedAt:now,updatedBy:by,action:action||''};
   if(item){
     item.inventoryUpdatedAt=now;
     item.inventoryUpdatedBy=by;
-    item.inventoryUpdatedAction=action||'';
-    if(detail!==undefined) item.inventoryUpdatedDetail=detail||'';
   }
   renderInventoryWriteMeta();
 }
@@ -3427,43 +3388,6 @@ function confirmInventoryCarryOut(){
   fbSave();
 }
 
-
-function inventoryPreviousStock(item){
-  if(!item) return 0;
-  if(item.previousStock===undefined || item.previousStock===null || item.previousStock===''){
-    return Number(item.stock)||0;
-  }
-  return Number(item.previousStock)||0;
-}
-function inventoryCurrentStock(item){
-  return Number(item&&item.stock)||0;
-}
-function inventoryStockDiff(item){
-  return inventoryCurrentStock(item)-inventoryPreviousStock(item);
-}
-function inventoryDiffHtml(item){
-  var d=inventoryStockDiff(item);
-  var cls=d>0?'plus':(d<0?'minus':'zero');
-  var sign=d>0?'+':'';
-  return '<span class="manager-inv-diff '+cls+'">'+sign+d.toLocaleString('ja-JP')+'</span>';
-}
-function managerInventoryMetaHtml(item){
-  if(!item || !item.inventoryUpdatedAt){
-    return '<div class="manager-inv-meta"><span class="muted">更新記録なし</span></div>';
-  }
-  return '<div class="manager-inv-meta">'
-    +'<div class="date">📅 '+formatInventoryWriteDate(item.inventoryUpdatedAt)+'</div>'
-    +'<div class="user">👤 '+(item.inventoryUpdatedBy||'未記入')+'</div>'
-    +'</div>';
-}
-function updateManagerStockDiffPreview(){
-  var prev=Number(document.getElementById('stock-prev-manager')&&document.getElementById('stock-prev-manager').value)||0;
-  var cur=Number(document.getElementById('stock-current-manager')&&document.getElementById('stock-current-manager').value)||0;
-  var d=cur-prev;
-  var el=document.getElementById('stock-diff-manager');
-  if(el) el.value=(d>0?'+':'')+d;
-}
-
 function renderInventory() {
   if(role==='user') return;
   renderInventoryWriteMeta();
@@ -3492,16 +3416,6 @@ function renderInventory() {
     var editBtns='';
     editBtns='<button class="btn btn-icon btn-ghost" onclick="openStockModal(\''+item.id+'\')">±</button>';
     editBtns+='<button class="btn btn-icon btn-ghost" onclick="openInvItemForm(\''+item.id+'\')" style="margin-top:2px">✏️</button>';
-    if(managerInventoryView){
-      return '<tr><td style="font-weight:500">'+item.name+'</td>'
-        +'<td><span class="cat-tag">'+(item.cat||'')+'</span><br><span class="muted" style="font-size:10px">📍 '+(item.loc||'未設定')+'</span></td>'
-        +'<td><span class="mono manager-inv-num">'+inventoryPreviousStock(item).toLocaleString('ja-JP')+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
-        +'<td><span class="mono manager-inv-num" style="color:'+(item.stock<5?'var(--red)':'var(--green)')+'">'+inventoryCurrentStock(item).toLocaleString('ja-JP')+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
-        +'<td>'+inventoryDiffHtml(item)+'</td>'
-        +'<td>'+warehouseLocationSelectHtml(item)+'</td>'
-        +'<td>'+editBtns+'</td>'
-        +'<td>'+managerInventoryMetaHtml(item)+'</td></tr>';
-    }
     return '<tr><td style="font-weight:500">'+item.name+'</td>'
       +'<td><span class="cat-tag">'+(item.cat||'')+'</span><br><span class="muted" style="font-size:10px">📍 '+(item.loc||'未設定')+'</span></td>'
       +'<td><span class="mono" style="font-weight:700">'+item.hakobi+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
@@ -3545,7 +3459,7 @@ function updateInvItemLocation(id, loc){
   if(!item) return;
   var oldLoc=item.loc||'未設定';
   item.loc=loc||'未設定';
-  markInventoryEdited(item,'保存場所変更',oldLoc+' → '+item.loc);
+  markInventoryEdited(item,'保存場所変更');
   addAudit('在庫保存場所変更', item.name+'｜'+oldLoc+'→'+item.loc+'｜記入者 '+inventoryWriterName());
   renderInventory();
   toast('📍 '+item.name+' を '+item.loc+' に設定しました');
@@ -3644,11 +3558,6 @@ function openStockModal(id) {
   document.getElementById('stock-id').value=id;
   document.getElementById('stock-hakobi').value=item.hakobi;
   document.getElementById('stock-stock').value=item.stock;
-  if(managerInventoryView){
-    document.getElementById('stock-prev-manager').value=Number(item.stock)||0;
-    document.getElementById('stock-current-manager').value=Number(item.stock)||0;
-    document.getElementById('stock-diff-manager').value='0';
-  }
   openModal('modal-stock');
 }
 
@@ -3658,26 +3567,10 @@ function saveStockAdjust() {
   for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(id)){ item=state.invItems[i]; break; } }
   if(!item) return;
   var oldHakobi=item.hakobi||0;
-  var oldStock=Number(item.stock)||0;
-  item.previousStock=oldStock;
-  if(managerInventoryView){
-    var newStock=parseInt(document.getElementById('stock-current-manager').value);
-    if(isNaN(newStock) || newStock<0){ toast('⚠️ 今回在庫数を確認してください'); return; }
-    item.stock=newStock;
-    var diff=item.stock-item.previousStock;
-    var detail='前回 '+item.previousStock+' → 今回 '+item.stock+' / 差額 '+(diff>0?'+':'')+diff;
-    markInventoryEdited(item,'在庫数量修正',detail);
-    addAudit('在庫数量修正', item.name+'｜'+detail+'｜記入者 '+inventoryWriterName());
-    closeModal('modal-stock');
-    renderInventory();
-    toast('✅ '+item.name+' を更新しました');
-    fbSave();
-    notifyLeaderEmail('在庫', item.name+'｜'+detail);
-    return;
-  }
+  var oldStock=item.stock||0;
   item.hakobi=parseInt(document.getElementById('stock-hakobi').value)||0;
   item.stock=parseInt(document.getElementById('stock-stock').value)||0;
-  markInventoryEdited(item,'在庫数量修正','在庫 '+oldStock+' → '+item.stock+' / 持出 '+oldHakobi+' → '+item.hakobi);
+  markInventoryEdited(item,'在庫数量修正');
   addAudit('在庫数量修正', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock+'｜記入者 '+inventoryWriterName());
   closeModal('modal-stock');
   renderInventory();
@@ -3709,22 +3602,12 @@ function saveInvItemForm() {
   var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,loc:document.getElementById('iif-location').value||'未設定',stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
     var editedItem=null;
-    for(var i=0;i<state.invItems.length;i++){
-      if(String(state.invItems[i].id)===String(rawId)){
-        var beforeStock=Number(state.invItems[i].stock)||0;
-        if(beforeStock!==Number(data.stock||0)) data.previousStock=beforeStock;
-        else if(state.invItems[i].previousStock!==undefined) data.previousStock=state.invItems[i].previousStock;
-        Object.assign(state.invItems[i],data);
-        editedItem=state.invItems[i];
-        break;
-      }
-    }
+    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ Object.assign(state.invItems[i],data); editedItem=state.invItems[i]; break; } }
     markInventoryEdited(editedItem,'品目編集');
     addAudit('在庫品目編集', name+'｜記入者 '+inventoryWriterName());
     toast('✅ 品目を更新しました');
   } else {
     data.id=String(Date.now());
-    data.previousStock=Number(data.stock)||0;
     state.invItems.push(data);
     markInventoryEdited(data,'品目追加');
     addAudit('在庫品目追加', name+'｜記入者 '+inventoryWriterName());
