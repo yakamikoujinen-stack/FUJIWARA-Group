@@ -1,0 +1,52 @@
+name: Restore leader-only KING return button
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/restore-leader-king-button.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - name: Patch index only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'id="king-back-btn"' in s:
+              print('KING button already present')
+              raise SystemExit(0)
+
+          css_anchor='.role-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #dbc98f; }'
+          css_add=css_anchor+'\n.king-back-btn{border:1px solid #b88912;background:linear-gradient(180deg,#dfae24,#c58e08);color:#3b2a00;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(120,80,0,.18);white-space:nowrap;align-items:center;justify-content:center}'
+          if css_anchor not in s:
+              raise SystemExit('CSS anchor not found; refusing to change index.html')
+          s=s.replace(css_anchor,css_add,1)
+
+          html_anchor='''<div style="display:flex; align-items:center; gap:8px;">\n    <button class="bell-btn" onclick="showNotificationModal()">🔔</button>'''
+          html_add='''<div style="display:flex; align-items:center; gap:8px;">\n    <button id="king-back-btn" class="king-back-btn" type="button" onclick="location.href='king.html'" style="display:none">👑 KINGへ戻る</button>\n    <button class="bell-btn" onclick="showNotificationModal()">🔔</button>'''
+          if html_anchor not in s:
+              raise SystemExit('Header anchor not found; refusing to change index.html')
+          s=s.replace(html_anchor,html_add,1)
+
+          js_anchor="document.getElementById('role-badge').className = 'role-badge ' + (role==='admin'?'role-admin':role==='staff'?'role-staff':'role-general');"
+          js_add=js_anchor+"\n  const kingBackBtn = document.getElementById('king-back-btn');\n  if (kingBackBtn) kingBackBtn.style.display = role === 'admin' ? 'inline-flex' : 'none';"
+          if js_anchor not in s:
+              raise SystemExit('Role anchor not found; refusing to change index.html')
+          s=s.replace(js_anchor,js_add,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then echo 'No change'; exit 0; fi
+          git config user.name 'FUJIWARA App Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Restore KING return button for leaders only'
+          git push origin main
