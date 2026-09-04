@@ -11,34 +11,88 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {ref: main}
-      - name: Patch index only
+      - name: Patch current index safely
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          if 'id="king-back-btn"' in s:
-              print('KING button already present')
+
+          marker='FUJIWARA_KING_BACK_LEADER_ONLY_V2'
+          if marker in s:
+              print('KING return button patch already installed')
               raise SystemExit(0)
 
-          css_anchor='.role-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #dbc98f; }'
-          css_add=css_anchor+'\n.king-back-btn{border:1px solid #b88912;background:linear-gradient(180deg,#dfae24,#c58e08);color:#3b2a00;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(120,80,0,.18);white-space:nowrap;align-items:center;justify-content:center}'
-          if css_anchor not in s:
-              raise SystemExit('CSS anchor not found; refusing to change index.html')
-          s=s.replace(css_anchor,css_add,1)
+          css='''
+/* FUJIWARA_KING_BACK_LEADER_ONLY_V2 */
+#king-back-btn{
+  display:none;
+  position:fixed;
+  top:8px;
+  right:105px;
+  z-index:10050;
+  border:1.5px solid #9c6b00;
+  background:linear-gradient(180deg,#e1b029,#c88d05);
+  color:#3b2a00;
+  border-radius:11px;
+  padding:9px 13px;
+  min-height:38px;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:950;
+  box-shadow:0 3px 10px rgba(80,55,0,.22);
+  white-space:nowrap;
+  align-items:center;
+  justify-content:center;
+}
+#king-back-btn.show{display:inline-flex}
+@media(max-width:520px){#king-back-btn{right:92px;padding:8px 10px;font-size:11px}}
+'''
+          if '</style>' not in s:
+              raise SystemExit('style closing tag not found; refusing to modify')
+          s=s.replace('</style>',css+'\n</style>',1)
 
-          html_anchor='''<div style="display:flex; align-items:center; gap:8px;">\n    <button class="bell-btn" onclick="showNotificationModal()">🔔</button>'''
-          html_add='''<div style="display:flex; align-items:center; gap:8px;">\n    <button id="king-back-btn" class="king-back-btn" type="button" onclick="location.href='king.html'" style="display:none">👑 KINGへ戻る</button>\n    <button class="bell-btn" onclick="showNotificationModal()">🔔</button>'''
-          if html_anchor not in s:
-              raise SystemExit('Header anchor not found; refusing to change index.html')
-          s=s.replace(html_anchor,html_add,1)
-
-          js_anchor="document.getElementById('role-badge').className = 'role-badge ' + (role==='admin'?'role-admin':role==='staff'?'role-staff':'role-general');"
-          js_add=js_anchor+"\n  const kingBackBtn = document.getElementById('king-back-btn');\n  if (kingBackBtn) kingBackBtn.style.display = role === 'admin' ? 'inline-flex' : 'none';"
-          if js_anchor not in s:
-              raise SystemExit('Role anchor not found; refusing to change index.html')
-          s=s.replace(js_anchor,js_add,1)
+          js='''
+<script>
+/* FUJIWARA_KING_BACK_LEADER_ONLY_V2 */
+(function(){
+  function ensureKingBackButton(){
+    var btn=document.getElementById('king-back-btn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='king-back-btn';
+      btn.type='button';
+      btn.textContent='👑 KINGへ戻る';
+      btn.setAttribute('aria-label','KINGアプリへ戻る');
+      btn.addEventListener('click',function(){ location.href='king.html'; });
+      document.body.appendChild(btn);
+    }
+    var badge=document.querySelector('.role-badge');
+    var label=badge ? String(badge.textContent||'').trim() : '';
+    var isLeader=/リーダー|leader/i.test(label);
+    btn.classList.toggle('show',isLeader);
+  }
+  function startKingBackWatch(){
+    ensureKingBackButton();
+    var badge=document.querySelector('.role-badge');
+    if(badge){
+      new MutationObserver(ensureKingBackButton).observe(badge,{childList:true,subtree:true,characterData:true,attributes:true});
+    }
+    var app=document.getElementById('app');
+    if(app){
+      new MutationObserver(ensureKingBackButton).observe(app,{attributes:true,attributeFilter:['style','class']});
+    }
+    setInterval(ensureKingBackButton,1200);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',startKingBackWatch);
+  else startKingBackWatch();
+})();
+</script>
+'''
+          if '</body>' not in s:
+              raise SystemExit('body closing tag not found; refusing to modify')
+          s=s.replace('</body>',js+'\n</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Commit
@@ -48,5 +102,5 @@ jobs:
           git config user.name 'FUJIWARA App Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add index.html
-          git commit -m 'Restore KING return button for leaders only'
+          git commit -m 'Restore KING return button for leader only'
           git push origin main
