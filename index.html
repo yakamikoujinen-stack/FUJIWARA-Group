@@ -633,6 +633,29 @@ body::before,#app::before,.page::before{
 .event-staff-name{display:inline-block;margin-right:2px;}
 .event-staff-name.resp-fujiwara,.event-staff-name.resp-sho,.event-staff-name.resp-bunta,.event-staff-name.resp-shige{padding:1px 5px;border-radius:7px;border:1px solid currentColor;}
 
+
+/* ===== リーダー専用 KINGへ戻るボタン 2026-09-04 ===== */
+#king-back-btn{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:7px 10px;
+  border:1.5px solid #b8860b;
+  border-radius:10px;
+  background:linear-gradient(135deg,#ffd866,#d6a634);
+  color:#241900;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(80,55,0,.16);
+}
+#king-back-btn.show{display:inline-flex;}
+@media(max-width:520px){
+  #king-back-btn{padding:7px 8px;font-size:10px}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -676,6 +699,7 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
+      <button id="king-back-btn" type="button" onclick="location.href='king.html'">👑 KINGへ戻る</button>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -5398,5 +5422,31 @@ document.addEventListener('click',function(e){
   <button type="button" class="btn btn-gold" style="width:100%;margin-top:8px" onclick="applyPurchaseMini()">この明細を反映</button>
  </div>
 </div>
+
+<script>
+/* ===== リーダー専用 KINGへ戻る表示制御 2026-09-04 ===== */
+(function(){
+  function syncKingBackButton(){
+    var btn=document.getElementById('king-back-btn');
+    var badge=document.getElementById('role-badge');
+    if(!btn||!badge)return;
+    var label=String(badge.textContent||'').trim();
+    var leader=/リーダー|leader/i.test(label)||badge.classList.contains('rb-leader');
+    btn.classList.toggle('show',leader);
+  }
+  window.syncKingBackButton=syncKingBackButton;
+  document.addEventListener('DOMContentLoaded',function(){
+    syncKingBackButton();
+    var badge=document.getElementById('role-badge');
+    if(badge){
+      new MutationObserver(syncKingBackButton).observe(badge,{
+        childList:true,subtree:true,characterData:true,attributes:true
+      });
+    }
+  });
+  setInterval(syncKingBackButton,800);
+})();
+</script>
+
 </body>
 </html>
