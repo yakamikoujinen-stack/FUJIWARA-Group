@@ -21,49 +21,215 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu G
 .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}.tab{border:1px solid #bfd4ea;background:#fff;color:#1767c5;border-radius:999px;padding:13px 24px;font-weight:900;font-size:15px}.tab.active{background:#176bd1;color:#fff}
 .panel{display:none}.panel.active{display:block}h2{margin-top:0;color:#15315f}.table-wrap{overflow:auto}
 table{width:100%;border-collapse:collapse;min-width:700px}th,td{border-bottom:1px solid #e8edf3;padding:13px 10px;text-align:left}th{font-size:13px;color:#6b778c;background:#fafcff}.num{text-align:right}.paid{color:#168a58;font-weight:900}.unpaid{color:#bd5a00;font-weight:900}.empty{text-align:center;padding:45px 15px;color:#68758c;font-weight:800}
+.meta{margin-top:8px;font-size:12px;color:#5b6c82;font-weight:800}
 @media(max-width:720px){.wrap{padding:12px 12px 60px}.header{grid-template-columns:auto 1fr auto}.header h1{font-size:25px}.btn{padding:10px 14px;font-size:13px}.kpis{grid-template-columns:1fr}.kpi b{font-size:34px}.card{padding:16px}}
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="wrap">
-<div class="header"><div><button class="btn" onclick="location.href='king.html'">‹ KINGへ戻る</button></div><h1>💴 賃金台帳</h1><div class="right"><button class="btn" onclick="reloadData()">更新</button></div></div>
-<div class="card"><div class="kpis"><div class="kpi"><small>総労務費</small><b id="totalLabor">¥0</b></div><div class="kpi"><small>イベント数</small><b id="eventCount">0</b></div><div class="kpi"><small>未払い</small><b id="unpaidCount">0件</b></div></div><div id="status" class="status wait">メインアプリの賃金データへ接続しています...</div></div>
-<div class="tabs"><button class="tab active" onclick="showTab('person',this)">個人別</button><button class="tab" onclick="showTab('month',this)">月別</button><button class="tab" onclick="showTab('event',this)">イベント別</button><button class="tab" onclick="showTab('unpaid',this)">未払い</button><button class="tab" onclick="showTab('paid',this)">支払済</button></div>
-<div class="card panel active" id="person"></div><div class="card panel" id="month"></div><div class="card panel" id="event"></div><div class="card panel" id="unpaid"></div><div class="card panel" id="paid"></div>
+<div class="header">
+  <div><button class="btn" onclick="location.href='king.html'">‹ KINGへ戻る</button></div>
+  <h1>💴 賃金台帳</h1>
+  <div class="right"><button class="btn" onclick="reloadData()">更新</button></div>
 </div>
+
+<div class="card">
+  <div class="kpis">
+    <div class="kpi"><small>総労務費</small><b id="totalLabor">¥0</b></div>
+    <div class="kpi"><small>イベント数</small><b id="eventCount">0</b></div>
+    <div class="kpi"><small>未払い</small><b id="unpaidCount">0件</b></div>
+  </div>
+  <div id="status" class="status wait">メインアプリの最新賃金データへ接続しています...</div>
+  <div id="sourceMeta" class="meta"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('person',this)">個人別</button>
+  <button class="tab" onclick="showTab('month',this)">月別</button>
+  <button class="tab" onclick="showTab('event',this)">イベント別</button>
+  <button class="tab" onclick="showTab('unpaid',this)">未払い</button>
+  <button class="tab" onclick="showTab('paid',this)">支払済</button>
+</div>
+<div class="card panel active" id="person"></div>
+<div class="card panel" id="month"></div>
+<div class="card panel" id="event"></div>
+<div class="card panel" id="unpaid"></div>
+<div class="card panel" id="paid"></div>
+</div>
+
 <script>
-var config={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
-if(!firebase.apps.length)firebase.initializeApp(config);
-var db=firebase.database(),current=[];
+var config={
+ apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+ authDomain:"fujiwara-group-3a600.firebaseapp.com",
+ databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+ projectId:"fujiwara-group-3a600",
+ storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+ messagingSenderId:"709887362301",
+ appId:"1:709887362301:web:5ec6b7e2a2165066956a94"
+};
+if(!firebase.apps.length) firebase.initializeApp(config);
+var db=firebase.database(), current=[], lastSource='';
+
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
 function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP');}
 function arr(v){if(!v)return[];if(Array.isArray(v))return v;return typeof v==='object'?Object.values(v).filter(Boolean):[];}
-function showTab(id,b){document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('active')});document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});document.getElementById(id).classList.add('active');b.classList.add('active');}
-function setStatus(t,c){var e=document.getElementById('status');e.className='status '+c;e.textContent=t;}
-function paymentsOf(e){return arr(e.payments||e.staffPayments||e.labor||e.wages);}
-function staffName(p){return p.staffName||p.name||p.staff||p.workerName||'名前未設定';}
-function amount(p){return Number(p.amount||p.pay||p.wage||p.salary||0)||0;}
-function isPaid(p){return p.paid===true||p.status==='paid'||p.status==='支払済'||p.paymentStatus==='paid';}
-function normalizeKingDaily(v){return arr(v).map(function(r){return{id:r.id||((r.eventId||'')+'__'+(r.date||'')),eventId:r.eventId||'',eventName:r.eventName||r.name||'',name:r.eventName||r.name||'',date:r.date||r.eventDate||'',place:r.place||'',payments:arr(r.payments).map(function(p){return Object.assign({},p,{date:p.date||r.date||''});})};});}
-function normalizeShared(v){var root=v||{};return arr(root.events||root).map(function(r){return{id:r.id||((r.eventId||'')+'__'+(r.date||r.eventDate||'')),eventId:r.eventId||'',eventName:r.eventName||r.name||'',name:r.eventName||r.name||'',date:r.date||r.eventDate||'',place:r.place||'',payments:arr(r.payments||r.staffPayments)};});}
-function render(events){
- current=events||[];var people={},months={},unpaid=[],paid=[],total=0,eventWithPay=0;
- current.forEach(function(e){var ps=paymentsOf(e);if(ps.length)eventWithPay++;ps.forEach(function(p){var a=amount(p),n=staffName(p),d=p.date||e.date||'',m=String(d).slice(0,7)||'未設定';total+=a;people[n]=(people[n]||0)+a;months[m]=(months[m]||0)+a;var row={date:d,event:e.eventName||e.name||'',place:e.place||'',staff:n,amount:a,paid:isPaid(p),dueDate:p.dueDate||'',paidDate:p.paidDate||''};(row.paid?paid:unpaid).push(row);});});
- totalLabor.textContent=yen(total);eventCount.textContent=eventWithPay;unpaidCount.textContent=unpaid.length+'件';
- var pRows=Object.entries(people).sort(function(a,b){return b[1]-a[1]}).map(function(x){return '<tr><td>'+esc(x[0])+'</td><td class="num">'+yen(x[1])+'</td></tr>';}).join('');
- person.innerHTML=pRows?'<h2>個人別給与台帳</h2><div class="table-wrap"><table><thead><tr><th>スタッフ</th><th class="num">累計</th></tr></thead><tbody>'+pRows+'</tbody></table></div>':'<div class="empty">個人別データはありません。</div>';
- var mRows=Object.entries(months).sort(function(a,b){return b[0].localeCompare(a[0])}).map(function(x){return '<tr><td>'+esc(x[0])+'</td><td class="num">'+yen(x[1])+'</td></tr>';}).join('');
- month.innerHTML=mRows?'<h2>月別集計</h2><div class="table-wrap"><table><thead><tr><th>月</th><th class="num">労務費</th></tr></thead><tbody>'+mRows+'</tbody></table></div>':'<div class="empty">月別データはありません。</div>';
- var eRows=current.filter(function(e){return paymentsOf(e).length;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).map(function(e){var sum=paymentsOf(e).reduce(function(s,p){return s+amount(p)},0);return '<tr><td>'+esc(e.date)+'</td><td>'+esc(e.eventName||e.name)+'</td><td>'+esc(e.place)+'</td><td class="num">'+yen(sum)+'</td></tr>';}).join('');
- event.innerHTML=eRows?'<h2>イベント別労務費</h2><div class="table-wrap"><table><thead><tr><th>日付</th><th>イベント</th><th>場所</th><th class="num">労務費</th></tr></thead><tbody>'+eRows+'</tbody></table></div>':'<div class="empty">イベント別データはありません。</div>';
- function payTable(title,rows,paidMode){if(!rows.length)return '<div class="empty">'+title+'はありません。</div>';rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date));});return '<h2>'+title+'</h2><div class="table-wrap"><table><thead><tr><th>日付</th><th>イベント</th><th>スタッフ</th><th class="num">金額</th><th>状況</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.event)+'</td><td>'+esc(r.staff)+'</td><td class="num">'+yen(r.amount)+'</td><td class="'+(paidMode?'paid':'unpaid')+'">'+(paidMode?'支払済 '+esc(r.paidDate):'未払い '+esc(r.dueDate))+'</td></tr>';}).join('')+'</tbody></table></div>';}
- document.getElementById('unpaid').innerHTML=payTable('未払い一覧',unpaid,false);document.getElementById('paid').innerHTML=payTable('支払済一覧',paid,true);
+function numberOf(v){var n=Number(String(v==null?'':v).replace(/,/g,''));return Number.isFinite(n)?n:0}
+function showTab(id,b){
+ document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('active')});
+ document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+ var p=document.getElementById(id); if(p)p.classList.add('active');
+ if(b)b.classList.add('active');
 }
-function loadOnce(){setStatus('メインアプリの賃金データを読込中です...','wait');return db.ref('fujiwara/laborLedgerShared').once('value').then(function(s){var shared=normalizeShared(s.val());if(shared.length){render(shared);setStatus('メインアプリとFirebase共有中：'+shared.length+'日分を表示しています。','ok');return;}return db.ref('fujiwara/kingDailyFinance').once('value').then(function(k){var daily=normalizeKingDaily(k.val());render(daily);if(daily.length)setStatus('メインアプリの日別データを表示中：'+daily.length+'日分。次回メインアプリ保存時に完全共有へ切り替わります。','ok');else setStatus('賃金データがありません。メインアプリでスタッフ賃金を入力して「保存」を押してください。','warn');});}).catch(function(e){setStatus('Firebase読込エラー：'+(e.message||e),'warn');});}
-function reloadData(){loadOnce();}
-db.ref('fujiwara/laborLedgerShared').on('value',function(s){var shared=normalizeShared(s.val());if(shared.length){render(shared);setStatus('メインアプリとリアルタイム共有中：'+shared.length+'日分','ok');}else loadOnce();},function(e){setStatus('Firebase接続エラー：'+(e.message||e),'warn');});
+function setStatus(t,c){var e=document.getElementById('status');e.className='status '+c;e.textContent=t;}
+function setSource(t){document.getElementById('sourceMeta').textContent=t||'';}
+
+function paymentsOf(e){return arr(e.payments||e.staffPayments||e.labor||e.wages);}
+function staffName(p){return p.staffName||p.name||p.staff||p.workerName||p.person||p.employeeName||'名前未設定';}
+function amount(p){
+ var vals=[p.amount,p.pay,p.laborCost,p.cost,p.total,p.rate,p.wage,p.salary,p.price,p.payment];
+ for(var i=0;i<vals.length;i++){var n=numberOf(vals[i]); if(n!==0)return n;}
+ return 0;
+}
+function isPaid(p){return p.paid===true||p.status==='paid'||p.status==='支払済'||p.paymentStatus==='paid';}
+
+function normalizeKingDaily(v){
+ return arr(v).map(function(r){
+   return {
+     id:r.id||((r.eventId||'')+'__'+(r.date||'')),
+     eventId:r.eventId||'',
+     eventName:r.eventName||r.name||'',
+     name:r.eventName||r.name||'',
+     date:r.date||r.eventDate||'',
+     place:r.place||'',
+     updatedAt:r.updatedAt||'',
+     payments:arr(r.payments||r.staffPayments).map(function(p){
+       return Object.assign({},p,{date:p.date||r.date||''});
+     })
+   };
+ }).filter(function(r){return r.date||r.eventName||r.payments.length;});
+}
+function normalizeShared(v){
+ var root=v||{};
+ return arr(root.events||root).map(function(r){
+   return {
+     id:r.id||((r.eventId||'')+'__'+(r.date||r.eventDate||'')),
+     eventId:r.eventId||'',
+     eventName:r.eventName||r.name||'',
+     name:r.eventName||r.name||'',
+     date:r.date||r.eventDate||'',
+     place:r.place||'',
+     updatedAt:r.updatedAt||root.updatedAt||'',
+     payments:arr(r.payments||r.staffPayments||r.labor||r.wages)
+   };
+ });
+}
+
+function render(events){
+ current=events||[];
+ var people={},months={},unpaid=[],paid=[],total=0,eventWithPay=0;
+
+ current.forEach(function(e){
+   var ps=paymentsOf(e);
+   if(ps.length)eventWithPay++;
+   ps.forEach(function(p){
+     var a=amount(p), n=staffName(p), d=p.date||e.date||'', m=String(d).slice(0,7)||'未設定';
+     total+=a;
+     people[n]=(people[n]||0)+a;
+     months[m]=(months[m]||0)+a;
+     var row={date:d,event:e.eventName||e.name||'',place:e.place||'',staff:n,amount:a,paid:isPaid(p),dueDate:p.dueDate||'',paidDate:p.paidDate||p.paymentDate||''};
+     (row.paid?paid:unpaid).push(row);
+   });
+ });
+
+ document.getElementById('totalLabor').textContent=yen(total);
+ document.getElementById('eventCount').textContent=eventWithPay;
+ document.getElementById('unpaidCount').textContent=unpaid.length+'件';
+
+ var pRows=Object.entries(people).sort(function(a,b){return b[1]-a[1]}).map(function(x){
+   return '<tr><td>'+esc(x[0])+'</td><td class="num">'+yen(x[1])+'</td></tr>';
+ }).join('');
+ document.getElementById('person').innerHTML=pRows
+   ?'<h2>個人別給与台帳</h2><div class="table-wrap"><table><thead><tr><th>スタッフ</th><th class="num">累計</th></tr></thead><tbody>'+pRows+'</tbody></table></div>'
+   :'<div class="empty">個人別データはありません。</div>';
+
+ var mRows=Object.entries(months).sort(function(a,b){return b[0].localeCompare(a[0])}).map(function(x){
+   return '<tr><td>'+esc(x[0])+'</td><td class="num">'+yen(x[1])+'</td></tr>';
+ }).join('');
+ document.getElementById('month').innerHTML=mRows
+   ?'<h2>月別集計</h2><div class="table-wrap"><table><thead><tr><th>月</th><th class="num">労務費</th></tr></thead><tbody>'+mRows+'</tbody></table></div>'
+   :'<div class="empty">月別データはありません。</div>';
+
+ var eRows=current.filter(function(e){return paymentsOf(e).length;})
+   .sort(function(a,b){return String(b.date).localeCompare(String(a.date));})
+   .map(function(e){
+     var sum=paymentsOf(e).reduce(function(s,p){return s+amount(p)},0);
+     return '<tr><td>'+esc(e.date||'')+'</td><td>'+esc(e.eventName||e.name||'')+'</td><td>'+esc(e.place||'')+'</td><td class="num">'+yen(sum)+'</td></tr>';
+   }).join('');
+
+ /* 重要: window.event と衝突しないよう必ず要素IDで取得 */
+ document.getElementById('event').innerHTML=eRows
+   ?'<h2>イベント別労務費</h2><div class="table-wrap"><table><thead><tr><th>日付</th><th>イベント</th><th>場所</th><th class="num">労務費</th></tr></thead><tbody>'+eRows+'</tbody></table></div>'
+   :'<div class="empty">イベント別データはありません。</div>';
+
+ function payTable(title,rows,paidMode){
+   if(!rows.length)return '<div class="empty">'+title+'はありません。</div>';
+   rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+   return '<h2>'+title+'</h2><div class="table-wrap"><table><thead><tr><th>日付</th><th>イベント</th><th>スタッフ</th><th class="num">金額</th><th>状況</th></tr></thead><tbody>'
+     +rows.map(function(r){
+       return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.event)+'</td><td>'+esc(r.staff)+'</td><td class="num">'+yen(r.amount)+'</td><td class="'+(paidMode?'paid':'unpaid')+'">'+(paidMode?'支払済 '+esc(r.paidDate):'未払い '+esc(r.dueDate))+'</td></tr>';
+     }).join('')+'</tbody></table></div>';
+ }
+ document.getElementById('unpaid').innerHTML=payTable('未払い一覧',unpaid,false);
+ document.getElementById('paid').innerHTML=payTable('支払済一覧',paid,true);
+}
+
+/* 最新メインアプリが保存する kingDailyFinance を最優先。
+   古い laborLedgerShared はバックアップとしてのみ利用。 */
+function loadLatest(){
+ setStatus('メインアプリの最新賃金データを読込中です...','wait');
+ return db.ref('fujiwara/kingDailyFinance').once('value').then(function(k){
+   var daily=normalizeKingDaily(k.val());
+   if(daily.length){
+     render(daily);
+     lastSource='kingDailyFinance';
+     setStatus('メインアプリとリアルタイム共有中：'+daily.length+'日分','ok');
+     setSource('読込元：メインアプリ最新日別データ');
+     return true;
+   }
+   return db.ref('fujiwara/laborLedgerShared').once('value').then(function(s){
+     var shared=normalizeShared(s.val());
+     render(shared);
+     lastSource='laborLedgerShared';
+     if(shared.length){
+       setStatus('旧共有データを表示中：'+shared.length+'日分','warn');
+       setSource('読込元：旧共有データ（メインアプリ最新データが空の場合のみ）');
+     }else{
+       setStatus('賃金データがありません。メインアプリでスタッフ支払を入力し保存してください。','warn');
+       setSource('');
+     }
+     return !!shared.length;
+   });
+ }).catch(function(e){
+   setStatus('Firebase読込エラー：'+(e.message||e),'warn');
+   return false;
+ });
+}
+function reloadData(){return loadLatest();}
+
+/* メインアプリ保存のたびに自動更新 */
+db.ref('fujiwara/kingDailyFinance').on('value',function(s){
+ var daily=normalizeKingDaily(s.val());
+ if(daily.length){
+   render(daily);
+   lastSource='kingDailyFinance';
+   setStatus('メインアプリとリアルタイム共有中：'+daily.length+'日分','ok');
+   setSource('読込元：メインアプリ最新日別データ');
+ }else{
+   loadLatest();
+ }
+},function(e){setStatus('Firebase接続エラー：'+(e.message||e),'warn');});
 </script>
 </body>
 </html>
