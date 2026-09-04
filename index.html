@@ -656,6 +656,66 @@ body::before,#app::before,.page::before{
   #king-back-btn{padding:7px 8px;font-size:10px}
 }
 
+
+/* ===== リーダー専用 氏名重視 出勤一覧 2026-09-04 ===== */
+.leader-att-toolbar{
+  display:flex;gap:8px;align-items:end;flex-wrap:wrap;
+  padding:12px;background:#fffaf0;border-bottom:1px solid var(--border);
+}
+.leader-att-toolbar .lat-field{min-width:160px;flex:1}
+.leader-att-toolbar label{font-size:10px;font-weight:900;color:#6d5a2b;margin-bottom:4px}
+.leader-att-table-wrap{overflow-x:auto;background:#fffdfa}
+.leader-att-table{
+  width:100%;min-width:760px;border-collapse:collapse;background:#fffdfa;
+}
+.leader-att-table th{
+  position:sticky;top:0;z-index:2;
+  padding:10px 8px;background:#fff3d6;color:#4d3a00;
+  font-size:11px;font-weight:950;text-align:left;border-bottom:2px solid #d8bf75;
+}
+.leader-att-table td{
+  padding:11px 8px;border-bottom:1px solid #ead8a8;
+  vertical-align:top;font-size:12px;color:#241900;
+}
+.leader-att-table tr.lat-ended{background:#efefef;opacity:.82}
+.lat-date{font-size:13px;font-weight:950;white-space:nowrap}
+.lat-event{font-size:13px;font-weight:950;line-height:1.45}
+.lat-place{font-size:10px;color:#6d5a2b;margin-top:3px;line-height:1.4}
+.lat-count{text-align:center;font-weight:950;white-space:nowrap}
+.lat-names{
+  display:flex;flex-wrap:wrap;gap:5px;min-width:250px;
+}
+.lat-name{
+  display:inline-flex;align-items:center;padding:5px 8px;
+  border-radius:9px;background:#fff;border:1.5px solid #d8bf75;
+  color:#111;font-size:14px;font-weight:950;line-height:1.2;
+  box-shadow:0 2px 6px rgba(80,55,0,.06);
+}
+.lat-name.resp-fujiwara{background:#fff1f1!important;border-color:#d64242!important;color:#9f1d1d!important}
+.lat-name.resp-sho{background:#eef6ff!important;border-color:#2f80ed!important;color:#1457a6!important}
+.lat-name.resp-bunta{background:#eefbf2!important;border-color:#168a58!important;color:#0d6a40!important}
+.lat-name.resp-shige{background:#fff4df!important;border-color:#d88b16!important;color:#8a5400!important}
+.lat-shortage{
+  display:inline-flex;padding:4px 8px;border-radius:999px;
+  background:#fee8e8;border:1px solid #ef9a9a;color:#c62828;font-size:11px;font-weight:950;
+  white-space:nowrap;
+}
+.lat-ok{
+  display:inline-flex;padding:4px 8px;border-radius:999px;
+  background:#e6f6ee;border:1px solid #91d5b3;color:#107247;font-size:11px;font-weight:950;
+  white-space:nowrap;
+}
+.lat-answer{
+  font-size:10px;line-height:1.55;color:#6d5a2b;min-width:145px;
+}
+.lat-answer .bad{color:#c62828;font-weight:900}
+.lat-answer .good{color:#168a58;font-weight:900}
+@media(max-width:700px){
+  .leader-att-toolbar{padding:9px}
+  .leader-att-table{min-width:700px}
+  .lat-name{font-size:13px;padding:5px 7px}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -4554,7 +4614,136 @@ function renderAttendancePage(){
   var sub=document.querySelector('#page-attendance .page-sub');
   if(title) title.textContent=role==='user'?'👥 日別出勤表':'👥 スタッフ出勤一覧';
   if(sub) sub.textContent=role==='user'?'連日イベントも、日付ごとの出勤スタッフを確認できます。':'イベントごとの参加スタッフ・出勤回答・未回答を確認できます。';
-  renderEventStaffListTo('attendance-list-area');
+  if(role==='leader') renderLeaderNameAttendanceTo('attendance-list-area');
+  else renderEventStaffListTo('attendance-list-area');
+}
+
+
+/* ===== リーダー専用 氏名重視 出勤一覧 描画 2026-09-04 ===== */
+function leaderAttNameClass(name){
+  var n=String(name||'').trim();
+  if(n==='藤原' || n==='藤原明裕' || n==='藤原明広') return 'resp-fujiwara';
+  if(n==='将') return 'resp-sho';
+  if(n==='文太') return 'resp-bunta';
+  if(n==='繁充') return 'resp-shige';
+  return '';
+}
+function renderLeaderNameAttendanceTo(targetId){
+  var el=document.getElementById(targetId);
+  if(!el) return;
+
+  var today=new Date(); today.setHours(0,0,0,0);
+  function toDateOnly(v){
+    if(!v) return null;
+    var d=new Date(String(v)+'T00:00:00');
+    if(isNaN(d.getTime())) return null;
+    d.setHours(0,0,0,0); return d;
+  }
+
+  var rows=[];
+  (state.events||[]).forEach(function(ev){
+    dateListForEvent(ev).forEach(function(ds){
+      var staff=getEventStaffForDate(ev,ds).slice();
+      if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
+      if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
+
+      var av=getEventAvailabilityForDate(ev,ds);
+      var ok=[],maybe=[],no=[],unanswered=[];
+      staff.forEach(function(name){
+        if(av[name]==='ok') ok.push(name);
+        else if(av[name]==='maybe') maybe.push(name);
+        else if(av[name]==='no') no.push(name);
+        else unanswered.push(name);
+      });
+
+      var required=getEventRequiredStaffForDate(ev,ds);
+      var shortage=required ? Math.max(required-staff.length,0) : 0;
+      var ended=(ev.status==='done'||ev.status==='ended'||ev.finished===true)||(toDateOnly(ds)<today);
+
+      rows.push({
+        ev:ev,ds:ds,staff:staff,required:required,shortage:shortage,
+        ok:ok,maybe:maybe,no:no,unanswered:unanswered,ended:ended
+      });
+    });
+  });
+
+  rows.sort(function(a,b){
+    if(a.ended!==b.ended) return a.ended?1:-1;
+    return String(a.ds).localeCompare(String(b.ds));
+  });
+
+  var staffSet={};
+  rows.forEach(function(r){ r.staff.forEach(function(n){ if(n) staffSet[n]=1; }); });
+  var staffNames=Object.keys(staffSet).sort(function(a,b){ return String(a).localeCompare(String(b),'ja'); });
+
+  var html='<div class="leader-att-toolbar">'
+    +'<div class="lat-field"><label>参加者で絞り込み</label>'
+    +'<select id="leader-att-name-filter" onchange="applyLeaderAttendanceFilter()">'
+    +'<option value="">すべての参加者</option>'
+    +staffNames.map(function(n){return '<option value="'+escHtml(n)+'">'+escHtml(n)+'</option>';}).join('')
+    +'</select></div>'
+    +'<div class="lat-field"><label>イベント検索</label>'
+    +'<input id="leader-att-search" type="search" placeholder="イベント名・場所" oninput="applyLeaderAttendanceFilter()"></div>'
+    +'</div>';
+
+  if(!rows.length){
+    html+='<div style="padding:14px;font-size:12px;color:var(--text2)">イベント未登録</div>';
+    el.innerHTML=html; return;
+  }
+
+  html+='<div class="leader-att-table-wrap"><table class="leader-att-table">'
+    +'<thead><tr><th>日付</th><th>イベント</th><th>必要</th><th>参加者</th><th>不足</th><th>回答状況</th></tr></thead><tbody>';
+
+  rows.forEach(function(r){
+    var dateText=String(r.ds||'').slice(5).replace('-','/');
+    var names=r.staff.length
+      ? r.staff.map(function(n){
+          return '<span class="lat-name '+leaderAttNameClass(n)+'">'+escHtml(n)+'</span>';
+        }).join('')
+      : '<span class="lat-name" style="color:var(--red)">未設定</span>';
+
+    var shortage=r.ended
+      ? '<span style="color:#777;font-weight:900">終了</span>'
+      : (r.shortage>0
+          ? '<span class="lat-shortage">🔴 '+r.shortage+'人不足</span>'
+          : '<span class="lat-ok">人員OK</span>');
+
+    var answer='<div class="lat-answer">'
+      +'⭕ <span class="good">'+(r.ok.length?escHtml(r.ok.join('・')):'なし')+'</span><br>'
+      +'△ '+(r.maybe.length?escHtml(r.maybe.join('・')):'なし')+'<br>'
+      +'❌ <span class="bad">'+(r.no.length?escHtml(r.no.join('・')):'なし')+'</span><br>'
+      +'未回答：<span class="'+(r.unanswered.length?'bad':'')+'">'+(r.unanswered.length?escHtml(r.unanswered.join('・')):'なし')+'</span>'
+      +'</div>';
+
+    var searchText=[r.ev.name||'',r.ev.place||'',r.ev.zone||'',r.staff.join(' ')].join(' ').toLowerCase();
+
+    html+='<tr class="'+(r.ended?'lat-ended':'')+'" data-staff="'+escHtml(r.staff.join('|'))+'" data-search="'+escHtml(searchText)+'">'
+      +'<td class="lat-date">'+escHtml(dateText)+'</td>'
+      +'<td><div class="lat-event">'+escHtml(r.ev.name||'名称未設定')+'</div>'
+      +'<div class="lat-place">📍 '+escHtml(r.ev.place||'場所未設定')+'　発注先：'+escHtml(r.ev.zone||'未設定')+'</div></td>'
+      +'<td class="lat-count">'+(r.required?escHtml(String(r.required))+'人':'—')+'</td>'
+      +'<td><div class="lat-names">'+names+'</div>'
+      +'<div style="margin-top:5px;font-size:10px;color:#6d5a2b">配置 '+r.staff.length+'人</div></td>'
+      +'<td>'+shortage+'</td>'
+      +'<td>'+answer+'</td>'
+      +'</tr>';
+  });
+
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+function applyLeaderAttendanceFilter(){
+  var nameEl=document.getElementById('leader-att-name-filter');
+  var searchEl=document.getElementById('leader-att-search');
+  var name=nameEl?String(nameEl.value||''):'';
+  var q=searchEl?String(searchEl.value||'').trim().toLowerCase():'';
+  document.querySelectorAll('#attendance-list-area .leader-att-table tbody tr').forEach(function(tr){
+    var staff=String(tr.getAttribute('data-staff')||'').split('|');
+    var hay=String(tr.getAttribute('data-search')||'');
+    var okName=!name || staff.indexOf(name)>=0;
+    var okSearch=!q || hay.indexOf(q)>=0;
+    tr.style.display=(okName&&okSearch)?'':'none';
+  });
 }
 
 function renderEventStaffListTo(targetId){
