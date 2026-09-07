@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>在庫・発注・購入 管理センター v1.0</title>
+<meta name="theme-color" content="#17324d">
+<style>
+:root{
+  --navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;
+  --bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--sub:#eef6fb;
+  --shadow:0 10px 28px rgba(18,46,72,.10)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(180deg,#f8fbfe,#eef6fb);color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+.app{max-width:1180px;margin:0 auto;padding:0 14px 90px}
+header{margin:0 -14px 16px;padding:18px 16px 16px;background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;
+border-radius:0 0 24px 24px;box-shadow:var(--shadow)}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:clamp(22px,5vw,34px);margin:0;font-weight:950}
+.subtitle{margin:7px 0 0;color:#dcecff;font-size:13px;line-height:1.6}
+.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#fff0c7;color:#765300;font-size:11px;font-weight:900}
+.back{border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:10px 12px;font-weight:900}
+.notice{background:#fff8df;border:1px solid #f2d47b;border-radius:16px;padding:12px 14px;margin-bottom:14px;color:#5c4914;font-size:13px;line-height:1.7;font-weight:800}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px}
+.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;color:#425568;border-radius:999px;padding:10px 14px;font-weight:900}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 10px;font-size:20px}
+.card h3{margin:0 0 8px;font-size:16px}
+.muted{color:var(--muted);font-size:12px;line-height:1.6}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;text-align:center}
+.kpi small{display:block;color:var(--muted);font-weight:800}.kpi b{font-size:24px}
+.toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:10px}
+.field{flex:1;min-width:150px}
+label{display:block;font-size:11px;font-weight:900;color:#425568;margin:0 0 4px}
+input,select,textarea{width:100%;border:1.5px solid #cddbe6;background:#fff;border-radius:11px;padding:10px 11px;font-size:15px}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:11px;padding:10px 13px;font-weight:900}
+.btn-primary{background:var(--navy);color:#fff}.btn-green{background:var(--green);color:#fff}.btn-soft{background:#eef3f7;color:#294055}
+.btn-danger{background:#fff0f0;color:var(--red);border:1px solid #efc6c6}
+.btn-gold{background:linear-gradient(135deg,#d5a62c,#f3c95e);color:#2d2100}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;min-width:700px;background:#fff}
+th,td{padding:10px 9px;border-bottom:1px solid #edf1f5;text-align:left;font-size:12px;vertical-align:middle}
+th{position:sticky;top:0;background:#f4f8fb;color:#425568;font-size:11px;z-index:1}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:950;border:1px solid}
+.p-main{background:#fff3cd;color:#7a5600;border-color:#e4bd45}
+.p-sub{background:#eaf4ff;color:#155a96;border-color:#9cc9ee}
+.p-common{background:#e9f7ed;color:#146b35;border-color:#9fd5ad}
+.p-other{background:#f1f1f1;color:#666;border-color:#ccc}
+.status{font-size:11px;font-weight:900}.ok{color:var(--green)}.warn{color:#b26a00}.bad{color:var(--red)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.empty{text-align:center;padding:28px;color:var(--muted)}
+.row-actions{display:flex;gap:5px;flex-wrap:wrap}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{width:100%;max-width:560px;background:#fff;border-radius:22px 22px 0 0;padding:18px;max-height:90vh;overflow:auto}
+.modal h2{margin-top:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.footerbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.94);border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:50}
+.footerbar .btn{min-width:150px}
+@media(max-width:800px){.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.card{padding:13px}}
+@media print{
+  header,.tabs,.notice,.footerbar,.no-print{display:none!important}
+  .app{padding:0}.page{display:none!important}#page-week{display:block!important}
+  body{background:#fff}.card{box-shadow:none;border:1px solid #ccc}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="topline">
+    <div>
+      <h1>📦 在庫・発注・購入 管理センター</h1>
+      <div class="subtitle">KING統合前の安全版｜今の在庫管理は変更せず、既存データを読み取り専用で利用</div>
+    </div>
+    <button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button>
+  </div>
+</header>
+
+<div class="notice">
+  🔒 <b>安全設計：</b>メインアプリの <b>fujiwara/invItems</b> は読み取り専用です。<br>
+  この画面で変更する「主力・サブ分類」「材料設定」「単価・購入先」などは
+  <b>fujiwara/inventory_order_center_v1</b> に別保存します。
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-page="inventory" onclick="showPage('inventory',this)">📦 在庫確認</button>
+  <button class="tab" data-page="neta" onclick="showPage('neta',this)">🍢 主力・サブ分類</button>
+  <button class="tab" data-page="materials" onclick="showPage('materials',this)">🔗 材料ひも付け</button>
+  <button class="tab" data-page="week" onclick="showPage('week',this)">📅 今週早見表</button>
+</div>
+
+<section id="page-inventory" class="page active">
+  <div class="kpis">
+    <div class="kpi"><small>在庫品目</small><b id="kpiInv">0</b></div>
+    <div class="kpi"><small>分類候補</small><b id="kpiCat">0</b></div>
+    <div class="kpi"><small>最終更新</small><b id="kpiDate" style="font-size:14px">-</b></div>
+    <div class="kpi"><small>記入者</small><b id="kpiUser" style="font-size:16px">-</b></div>
+  </div>
+  <div class="card">
+    <h2>📦 現在の在庫</h2>
+    <div class="muted">メインアプリの在庫をそのまま表示しています。この画面から在庫数は変更しません。</div>
+    <div class="toolbar">
+      <div class="field"><label>検索</label><input id="invSearch" placeholder="品目・カテゴリ・保管場所" oninput="renderInventory()"></div>
+      <div class="field"><label>カテゴリ</label><select id="invCat" onchange="renderInventory()"><option value="">すべて</option></select></div>
+      <button class="btn btn-soft no-print" onclick="loadAll()">🔄 再読込</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>品目</th><th>カテゴリ</th><th>在庫</th><th>持出し</th><th>保管場所</th><th>在庫更新者</th></tr></thead>
+      <tbody id="invBody"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="page-neta" class="page">
+  <div class="card">
+    <div class="toolbar">
+      <div style="flex:1">
+        <h2>🍢 主力ネタ・サブネタ分類</h2>
+        <div class="muted">最初は在庫カテゴリを「ネタ候補」として自動表示します。相棒の実際の分類に合わせて自由に修正できます。</div>
+      </div>
+      <button class="btn btn-gold no-print" onclick="openNetaModal()">＋ ネタ追加</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>表示順</th><th>ネタ名</th><th>分類</th><th>使用</th><th>備考</th><th>操作</th></tr></thead>
+      <tbody id="netaBody"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="page-materials" class="page">
+  <div class="card">
+    <div class="toolbar">
+      <div style="flex:1">
+        <h2>🔗 ネタ別 必要材料</h2>
+        <div class="muted">各ネタに在庫品目をひも付けます。必要数・単価・購入先はここで別管理します。既存在庫データは書き換えません。</div>
+      </div>
+      <button class="btn btn-gold no-print" onclick="openMaterialModal()">＋ 材料設定</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>ネタ</th><th>分類</th><th>材料</th><th>基準必要数</th><th>単位</th><th>単価</th><th>購入先</th><th>操作</th></tr></thead>
+      <tbody id="matBody"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="page-week" class="page">
+  <div class="card">
+    <div class="toolbar">
+      <div style="flex:1">
+        <h2>📅 今週の全イベント 購入早見一覧</h2>
+        <div class="muted" id="weekRange">-</div>
+      </div>
+      <button class="btn btn-soft no-print" onclick="window.print()">🖨️ 印刷</button>
+    </div>
+    <div class="notice" style="margin:8px 0 14px">
+      現段階は「イベント予定」と「ネタ分類」の土台までです。イベントごとの販売予定数を接続後、
+      <b>必要数 − 現在庫 ＝ 購入数</b>を自動計算します。
+    </div>
+    <div class="two">
+      <div class="card" style="margin:0">
+        <h3>⭐ 主力ネタ</h3>
+        <div id="mainSummary" class="empty">設定された主力ネタを集計します</div>
+      </div>
+      <div class="card" style="margin:0">
+        <h3>🔹 サブネタ</h3>
+        <div id="subSummary" class="empty">設定されたサブネタを集計します</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>🛒 購入候補一覧</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>分類</th><th>ネタ</th><th>材料</th><th>現在庫</th><th>必要数</th><th>不足数</th><th>単価</th><th>予定金額</th><th>購入先</th></tr></thead>
+        <tbody id="weekBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="footerbar">
+  <button class="btn btn-primary" onclick="location.href='king.html'">👑 KINGへ</button>
+  <button class="btn btn-green" onclick="location.href='index.html?open=inventory&manager=1'">📦 在庫管理へ</button>
+</div>
+
+<div id="netaModal" class="modal-bg" onclick="if(event.target===this)closeModal('netaModal')">
+  <div class="modal">
+    <h2 id="netaModalTitle">ネタ追加</h2>
+    <input type="hidden" id="netaId">
+    <div class="grid2">
+      <div><label>ネタ名</label><input id="netaName"></div>
+      <div><label>分類</label><select id="netaClass">
+        <option value="主力">主力</option><option value="サブ">サブ</option><option value="共通">共通</option><option value="その他">その他</option>
+      </select></div>
+      <div><label>表示順</label><input id="netaOrder" type="number" value="10"></div>
+      <div><label>使用状態</label><select id="netaActive"><option value="1">使用中</option><option value="0">停止</option></select></div>
+    </div>
+    <div style="margin-top:9px"><label>備考</label><textarea id="netaNote" rows="3"></textarea></div>
+    <div class="row-actions" style="margin-top:12px">
+      <button class="btn btn-green" onclick="saveNeta()">保存</button>
+      <button class="btn btn-soft" onclick="closeModal('netaModal')">キャンセル</button>
+      <button id="netaDeleteBtn" class="btn btn-danger" onclick="deleteNeta()">削除</button>
+    </div>
+  </div>
+</div>
+
+<div id="matModal" class="modal-bg" onclick="if(event.target===this)closeModal('matModal')">
+  <div class="modal">
+    <h2 id="matModalTitle">材料設定</h2>
+    <input type="hidden" id="matId">
+    <div class="grid2">
+      <div><label>ネタ</label><select id="matNeta"></select></div>
+      <div><label>在庫品目</label><select id="matInv"></select></div>
+      <div><label>基準必要数</label><input id="matQty" type="number" step="0.01" value="1"></div>
+      <div><label>単位</label><input id="matUnit"></div>
+      <div><label>単価（円）</label><input id="matPrice" type="number" min="0" value="0"></div>
+      <div><label>購入先</label><input id="matSupplier" placeholder="例：業務スーパー"></div>
+    </div>
+    <div style="margin-top:9px"><label>備考</label><textarea id="matNote" rows="3"></textarea></div>
+    <div class="row-actions" style="margin-top:12px">
+      <button class="btn btn-green" onclick="saveMaterial()">保存</button>
+      <button class="btn btn-soft" onclick="closeModal('matModal')">キャンセル</button>
+      <button id="matDeleteBtn" class="btn btn-danger" onclick="deleteMaterial()">削除</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={
+ apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",
+ authDomain:"fujiwara-group-3a600.firebaseapp.com",
+ databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",
+ projectId:"fujiwara-group-3a600",
+ storageBucket:"fujiwara-group-3a600.firebasestorage.app",
+ messagingSenderId:"709887362301",
+ appId:"1:709887362301:web:8ff756d645bc0398956a94"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const CFG_PATH='fujiwara/inventory_order_center_v1';
+
+let inventory=[];
+let inventoryMeta={};
+let events=[];
+let cfg={neta:[],materials:[],version:1,updatedAt:''};
+
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function uid(){return String(Date.now())+'_'+Math.random().toString(36).slice(2,7)}
+function clsPill(c){
+ const k=c==='主力'?'p-main':c==='サブ'?'p-sub':c==='共通'?'p-common':'p-other';
+ return '<span class="pill '+k+'">'+esc(c||'その他')+'</span>';
+}
+function showPage(name,btn){
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ document.getElementById('page-'+name).classList.add('active');
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ (btn||document.querySelector('.tab[data-page="'+name+'"]')).classList.add('active');
+ if(name==='week')renderWeek();
+}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function openModal(id){document.getElementById(id).classList.add('show')}
+
+async function loadAll(){
+ const snap=await db.ref('fujiwara').once('value');
+ const d=snap.val()||{};
+ inventory=(Array.isArray(d.invItems)?d.invItems:Object.values(d.invItems||{})).filter(Boolean).map(x=>({...x,id:String(x.id||uid())}));
+ inventoryMeta=d.inventoryMeta||{};
+ events=(Array.isArray(d.events)?d.events:Object.values(d.events||{})).filter(Boolean);
+ const cs=await db.ref(CFG_PATH).once('value');
+ const c=cs.val()||{};
+ cfg={
+   version:1,
+   neta:(Array.isArray(c.neta)?c.neta:Object.values(c.neta||{})).filter(Boolean),
+   materials:(Array.isArray(c.materials)?c.materials:Object.values(c.materials||{})).filter(Boolean),
+   updatedAt:c.updatedAt||''
+ };
+ seedNetaFromInventoryCategories();
+ renderAll();
+}
+
+function seedNetaFromInventoryCategories(){
+ const cats=[...new Set(inventory.map(x=>String(x.cat||'').trim()).filter(Boolean))];
+ let changed=false;
+ cats.forEach((name,i)=>{
+   if(!cfg.neta.some(n=>String(n.name).trim()===name)){
+     cfg.neta.push({id:uid(),name,classification:'その他',order:(i+1)*10,active:true,note:'在庫カテゴリから自動候補'});
+     changed=true;
+   }
+ });
+ if(changed)saveCfg();
+}
+function saveCfg(){
+ cfg.updatedAt=new Date().toISOString();
+ return db.ref(CFG_PATH).set(cfg);
+}
+function renderAll(){
+ renderInventory();
+ renderNeta();
+ renderMaterials();
+ renderWeek();
+}
+function renderInventory(){
+ document.getElementById('kpiInv').textContent=inventory.length;
+ const cats=[...new Set(inventory.map(x=>x.cat).filter(Boolean))];
+ document.getElementById('kpiCat').textContent=cats.length;
+ document.getElementById('kpiDate').textContent=inventoryMeta.updatedAt?new Date(inventoryMeta.updatedAt).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'-';
+ document.getElementById('kpiUser').textContent=inventoryMeta.updatedBy||'-';
+ const sel=document.getElementById('invCat'), cur=sel.value;
+ sel.innerHTML='<option value="">すべて</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+ if(cats.includes(cur))sel.value=cur;
+ const q=(document.getElementById('invSearch').value||'').trim().toLowerCase();
+ const cat=sel.value;
+ const rows=inventory.filter(x=>{
+   const txt=[x.name,x.cat,x.loc].join(' ').toLowerCase();
+   return (!q||txt.includes(q))&&(!cat||x.cat===cat);
+ });
+ document.getElementById('invBody').innerHTML=rows.length?rows.map(x=>`<tr>
+   <td><b>${esc(x.name||'')}</b></td><td>${esc(x.cat||'')}</td>
+   <td><b>${Number(x.stock||0)}</b> ${esc(x.unit||'')}</td>
+   <td>${Number(x.hakobi||0)} ${esc(x.unit||'')}</td>
+   <td>📍 ${esc(x.loc||'未設定')}</td>
+   <td>${esc(x.inventoryUpdatedBy||inventoryMeta.updatedBy||'-')}</td>
+ </tr>`).join(''):'<tr><td colspan="6" class="empty">該当なし</td></tr>';
+}
+function renderNeta(){
+ const list=cfg.neta.slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0)||String(a.name).localeCompare(String(b.name),'ja'));
+ document.getElementById('netaBody').innerHTML=list.length?list.map(n=>`<tr>
+  <td>${Number(n.order||0)}</td><td><b>${esc(n.name||'')}</b></td><td>${clsPill(n.classification)}</td>
+  <td>${n.active!==false?'<span class="status ok">使用中</span>':'<span class="status bad">停止</span>'}</td>
+  <td>${esc(n.note||'')}</td>
+  <td><button class="btn btn-soft" onclick="openNetaModal('${esc(n.id)}')">編集</button></td>
+ </tr>`).join(''):'<tr><td colspan="6" class="empty">まだありません</td></tr>';
+ fillNetaSelect();
+}
+function openNetaModal(id=''){
+ const n=cfg.neta.find(x=>String(x.id)===String(id));
+ document.getElementById('netaModalTitle').textContent=n?'ネタ編集':'ネタ追加';
+ document.getElementById('netaId').value=n?n.id:'';
+ document.getElementById('netaName').value=n?n.name:'';
+ document.getElementById('netaClass').value=n?n.classification:'主力';
+ document.getElementById('netaOrder').value=n?Number(n.order||10):10;
+ document.getElementById('netaActive').value=n&&n.active===false?'0':'1';
+ document.getElementById('netaNote').value=n?n.note||'':'';
+ document.getElementById('netaDeleteBtn').style.display=n?'':'none';
+ openModal('netaModal');
+}
+async function saveNeta(){
+ const name=document.getElementById('netaName').value.trim();
+ if(!name)return alert('ネタ名を入力してください');
+ const id=document.getElementById('netaId').value||uid();
+ const obj={id,name,classification:document.getElementById('netaClass').value,order:Number(document.getElementById('netaOrder').value||0),
+  active:document.getElementById('netaActive').value==='1',note:document.getElementById('netaNote').value.trim()};
+ const i=cfg.neta.findIndex(x=>String(x.id)===String(id));
+ if(i>=0)cfg.neta[i]=obj;else cfg.neta.push(obj);
+ await saveCfg();closeModal('netaModal');renderAll();
+}
+async function deleteNeta(){
+ const id=document.getElementById('netaId').value;if(!id)return;
+ const n=cfg.neta.find(x=>String(x.id)===String(id));
+ if(!confirm('「'+(n?.name||'')+'」を分類マスタから削除しますか？\n既存在庫は削除されません。'))return;
+ cfg.neta=cfg.neta.filter(x=>String(x.id)!==String(id));
+ cfg.materials=cfg.materials.filter(x=>String(x.netaId)!==String(id));
+ await saveCfg();closeModal('netaModal');renderAll();
+}
+function fillNetaSelect(){
+ const list=cfg.neta.filter(n=>n.active!==false).sort((a,b)=>Number(a.order||0)-Number(b.order||0));
+ document.getElementById('matNeta').innerHTML=list.map(n=>`<option value="${esc(n.id)}">${esc(n.name)}（${esc(n.classification)}）</option>`).join('');
+}
+function renderMaterials(){
+ const body=document.getElementById('matBody');
+ const list=cfg.materials.slice().sort((a,b)=>{
+   const na=cfg.neta.find(n=>String(n.id)===String(a.netaId))?.order||0;
+   const nb=cfg.neta.find(n=>String(n.id)===String(b.netaId))?.order||0;
+   return Number(na)-Number(nb);
+ });
+ body.innerHTML=list.length?list.map(m=>{
+  const n=cfg.neta.find(x=>String(x.id)===String(m.netaId))||{};
+  const inv=inventory.find(x=>String(x.id)===String(m.invId))||{};
+  return `<tr><td><b>${esc(n.name||'未設定')}</b></td><td>${clsPill(n.classification)}</td>
+    <td>${esc(inv.name||m.materialName||'')}</td><td>${Number(m.qty||0)}</td><td>${esc(m.unit||inv.unit||'')}</td>
+    <td>${yen(m.price)}</td><td>${esc(m.supplier||'')}</td>
+    <td><button class="btn btn-soft" onclick="openMaterialModal('${esc(m.id)}')">編集</button></td></tr>`;
+ }).join(''):'<tr><td colspan="8" class="empty">まだ材料設定がありません</td></tr>';
+}
+function openMaterialModal(id=''){
+ fillNetaSelect();
+ document.getElementById('matInv').innerHTML=inventory.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ja')).map(x=>
+  `<option value="${esc(x.id)}">${esc(x.name)}｜${esc(x.cat||'')}｜在庫${Number(x.stock||0)}${esc(x.unit||'')}</option>`).join('');
+ const m=cfg.materials.find(x=>String(x.id)===String(id));
+ document.getElementById('matModalTitle').textContent=m?'材料設定 編集':'材料設定 追加';
+ document.getElementById('matId').value=m?m.id:'';
+ if(m){document.getElementById('matNeta').value=m.netaId;document.getElementById('matInv').value=m.invId;}
+ document.getElementById('matQty').value=m?Number(m.qty||0):1;
+ document.getElementById('matUnit').value=m?m.unit||'':'';
+ document.getElementById('matPrice').value=m?Number(m.price||0):0;
+ document.getElementById('matSupplier').value=m?m.supplier||'':'';
+ document.getElementById('matNote').value=m?m.note||'':'';
+ document.getElementById('matDeleteBtn').style.display=m?'':'none';
+ if(!m)syncMatUnit();
+ document.getElementById('matInv').onchange=syncMatUnit;
+ openModal('matModal');
+}
+function syncMatUnit(){
+ const x=inventory.find(i=>String(i.id)===String(document.getElementById('matInv').value));
+ if(x)document.getElementById('matUnit').value=x.unit||'';
+}
+async function saveMaterial(){
+ const id=document.getElementById('matId').value||uid();
+ const inv=inventory.find(x=>String(x.id)===String(document.getElementById('matInv').value))||{};
+ const obj={id,netaId:document.getElementById('matNeta').value,invId:document.getElementById('matInv').value,
+  materialName:inv.name||'',qty:Number(document.getElementById('matQty').value||0),unit:document.getElementById('matUnit').value.trim(),
+  price:Number(document.getElementById('matPrice').value||0),supplier:document.getElementById('matSupplier').value.trim(),
+  note:document.getElementById('matNote').value.trim()};
+ const i=cfg.materials.findIndex(x=>String(x.id)===String(id));if(i>=0)cfg.materials[i]=obj;else cfg.materials.push(obj);
+ await saveCfg();closeModal('matModal');renderAll();
+}
+async function deleteMaterial(){
+ const id=document.getElementById('matId').value;if(!id)return;
+ if(!confirm('この材料設定を削除しますか？\n在庫品目そのものは削除されません。'))return;
+ cfg.materials=cfg.materials.filter(x=>String(x.id)!==String(id));
+ await saveCfg();closeModal('matModal');renderAll();
+}
+function weekBounds(){
+ const n=new Date();n.setHours(0,0,0,0);
+ const day=n.getDay();const diff=(day===0?-6:1-day);
+ const s=new Date(n);s.setDate(n.getDate()+diff);
+ const e=new Date(s);e.setDate(s.getDate()+6);
+ return [s,e];
+}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function renderWeek(){
+ const [s,e]=weekBounds();
+ document.getElementById('weekRange').textContent=`${iso(s)} ～ ${iso(e)}`;
+ const activeNeta=cfg.neta.filter(n=>n.active!==false);
+ const main=activeNeta.filter(n=>n.classification==='主力');
+ const sub=activeNeta.filter(n=>n.classification==='サブ');
+ document.getElementById('mainSummary').innerHTML=main.length?main.map(n=>`<div style="padding:7px 0;border-bottom:1px solid #edf1f5"><b>${esc(n.name)}</b></div>`).join(''):'<div class="empty">主力ネタ未設定</div>';
+ document.getElementById('subSummary').innerHTML=sub.length?sub.map(n=>`<div style="padding:7px 0;border-bottom:1px solid #edf1f5"><b>${esc(n.name)}</b></div>`).join(''):'<div class="empty">サブネタ未設定</div>';
+
+ // Phase 1: no event sales-plan quantity source yet. Show configured materials with stock and placeholders.
+ const rows=cfg.materials.map(m=>{
+   const n=cfg.neta.find(x=>String(x.id)===String(m.netaId))||{};
+   const inv=inventory.find(x=>String(x.id)===String(m.invId))||{};
+   return `<tr><td>${clsPill(n.classification)}</td><td>${esc(n.name||'')}</td><td>${esc(inv.name||m.materialName||'')}</td>
+   <td>${Number(inv.stock||0)} ${esc(inv.unit||m.unit||'')}</td><td class="muted">次段階で自動</td><td class="muted">次段階で自動</td>
+   <td>${yen(m.price)}</td><td class="muted">次段階で自動</td><td>${esc(m.supplier||'')}</td></tr>`;
+ });
+ document.getElementById('weekBody').innerHTML=rows.length?rows.join(''):'<tr><td colspan="9" class="empty">材料設定をするとここに表示されます</td></tr>';
+}
+loadAll().catch(e=>{console.error(e);alert('Firebaseの読込に失敗しました：'+e.message)});
+</script>
+</body></html>
