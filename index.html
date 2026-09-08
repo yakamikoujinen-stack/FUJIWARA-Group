@@ -5457,7 +5457,8 @@ document.addEventListener('click',function(e){
     if(!arr.length){box.innerHTML='<div class="empty-state"><div class="ei">🚪</div>現在入国中のスタッフはいません</div>';return;}
     box.innerHTML=arr.map(function(p){
       var tm='';try{tm=new Date(Number(p.lastSeen||Date.now())).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});}catch(e){}
-      return '<div class="entry-presence-row"><div><div class="entry-presence-name">'+presenceEsc(p.name)+'</div><div class="entry-presence-meta">'+presenceEsc(presenceRoleLabel(p.role))+(tm?' ・ 最終確認 '+tm:'')+'</div></div><div class="entry-presence-live">入国中</div></div>';
+      var where=String(p.location||p.app||'メインアプリ');
+      return '<div class="entry-presence-row"><div><div class="entry-presence-name">'+presenceEsc(p.name)+'</div><div class="entry-presence-meta">'+presenceEsc(presenceRoleLabel(p.role))+' ・ 📍 '+presenceEsc(where)+(tm?' ・ 最終確認 '+tm:'')+'</div></div><div class="entry-presence-live">入国中</div></div>';
     }).join('');
   }
   window.openEntryPresence=function(){
@@ -5480,9 +5481,9 @@ document.addEventListener('click',function(e){
     var key=presenceSafe(presenceDeviceId());
     presenceRef=firebase.database().ref(PRESENCE_PATH+'/'+key);
     try{presenceRef.onDisconnect().remove();}catch(e){}
-    presenceRef.set({name:userName,role:role,deviceId:key,lastSeen:firebase.database.ServerValue.TIMESTAMP});
+    presenceRef.set({name:userName,role:role,deviceId:key,app:'メインアプリ',location:'メインアプリ',lastSeen:firebase.database.ServerValue.TIMESTAMP});
     if(presenceTimer)clearInterval(presenceTimer);
-    presenceTimer=setInterval(function(){if(presenceRef)presenceRef.update({name:userName,role:role,lastSeen:firebase.database.ServerValue.TIMESTAMP});},60000);
+    presenceTimer=setInterval(function(){if(presenceRef)presenceRef.update({name:userName,role:role,app:'メインアプリ',location:'メインアプリ',lastSeen:firebase.database.ServerValue.TIMESTAMP});},60000);
     if(role==='leader')startLeaderPresenceListener(); else stopLeaderPresenceListener();
     updatePresenceFab();
     return true;
