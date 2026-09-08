@@ -1,0 +1,79 @@
+name: Patch KING money multi-day totals
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-king-money-multiday.yml'
+      - 'king-money.html'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch king-money.html safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king-money.html')
+          s=p.read_text(encoding='utf-8')
+          old="""function splitForRow(row){
+  const rec=allocationForEvent(row.eventId),ct=rec.companyTotals||{};let fs=0,as=0,fc=0,ac=0;
+  if(ct.fujiwara||ct.amagasaki){const f=ct.fujiwara||{},a=ct.amagasaki||{};fs=n(f.sales);as=n(a.sales);fc=n(f.cost!=null?f.cost:(f.expense!=null?f.expense:f.expenses));ac=n(a.cost!=null?a.cost:(a.expense!=null?a.expense:a.expenses));}
+  else Object.values(rec.items||{}).forEach(it=>{if(!it)return;const k=it.company==='fujiwara'?'fujiwara':((it.company==='amagasaki'||it.company==='ama')?'amagasaki':'');if(!k)return;const s=n(it.sales),c=n(it.cost!=null?it.cost:(it.expense!=null?it.expense:it.expenses));if(k==='fujiwara'){fs+=s;fc+=c}else{as+=s;ac+=c}});
+  const allocatedSales=fs+as,allocatedCost=fc+ac;
+  if(row.sales>allocatedSales)fs+=row.sales-allocatedSales;
+  if(row.expense>allocatedCost)fc+=row.expense-allocatedCost;
+  return{fujiSales:fs,amaSales:as,fujiCost:fc,amaCost:ac};
+}"""
+          new="""function splitForRow(row){
+  const rec=allocationForEvent(row.eventId),ct=rec.companyTotals||{};let fs=0,as=0,fc=0,ac=0;
+  if(ct.fujiwara||ct.amagasaki){const f=ct.fujiwara||{},a=ct.amagasaki||{};fs=n(f.sales);as=n(a.sales);fc=n(f.cost!=null?f.cost:(f.expense!=null?f.expense:f.expenses));ac=n(a.cost!=null?a.cost:(a.expense!=null?a.expense:a.expenses));}
+  else Object.values(rec.items||{}).forEach(it=>{if(!it)return;const k=it.company==='fujiwara'?'fujiwara':((it.company==='amagasaki'||it.company==='ama')?'amagasaki':'');if(!k)return;const s=n(it.sales),c=n(it.cost!=null?it.cost:(it.expense!=null?it.expense:it.expenses));if(k==='fujiwara'){fs+=s;fc+=c}else{as+=s;ac+=c}});
+
+  // companyTotals / items はイベント全体の金額。
+  // 連日イベントの日別行へ同じ総額を毎日そのまま足すと月間合計が重複するため、
+  // イベント全日の日別実績比率で按分してから、この1日の金額だけ返す。
+  const siblings=allRows().filter(r=>String(r.eventId)===String(row.eventId));
+  const eventSales=siblings.reduce((sum,r)=>sum+n(r.sales),0);
+  const eventCost=siblings.reduce((sum,r)=>sum+n(r.expense),0);
+
+  let allocatedSales=fs+as,allocatedCost=fc+ac;
+  if(allocatedSales<=0){fs=eventSales;as=0;allocatedSales=eventSales;}
+  else if(allocatedSales<eventSales){fs+=eventSales-allocatedSales;allocatedSales=eventSales;}
+  else if(eventSales>=0 && allocatedSales>eventSales && allocatedSales>0){const q=eventSales/allocatedSales;fs*=q;as*=q;allocatedSales=eventSales;}
+
+  if(allocatedCost<=0){fc=eventCost;ac=0;allocatedCost=eventCost;}
+  else if(allocatedCost<eventCost){fc+=eventCost-allocatedCost;allocatedCost=eventCost;}
+  else if(eventCost>=0 && allocatedCost>eventCost && allocatedCost>0){const q=eventCost/allocatedCost;fc*=q;ac*=q;allocatedCost=eventCost;}
+
+  const salesRatio=eventSales>0?n(row.sales)/eventSales:(siblings.length?1/siblings.length:1);
+  const costRatio=eventCost>0?n(row.expense)/eventCost:(siblings.length?1/siblings.length:1);
+  return{fujiSales:fs*salesRatio,amaSales:as*salesRatio,fujiCost:fc*costRatio,amaCost:ac*costRatio};
+}"""
+          marker='連日イベントの日別行へ同じ総額を毎日そのまま足すと月間合計が重複するため'
+          if marker in s:
+              print('Already patched')
+          elif old not in s:
+              raise SystemExit('Target function did not match; aborting without changes')
+          else:
+              s=s.replace(old,new,1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch if needed
+        run: |
+          if git diff --quiet -- king-money.html; then
+            echo "No change needed"
+            exit 0
+          fi
+          git config user.name "FUJIWARA safe patch"
+          git config user.email "actions@users.noreply.github.com"
+          git add king-money.html
+          git commit -m "Fix KING monthly totals for multi-day events"
+          git push
