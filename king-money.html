@@ -45,7 +45,7 @@
 
 <section class="office-entry"><div><strong>🏢 事務所・会社経費</strong><small>電気代・光熱費・作業着・買掛・その他雑費を管理</small><span id="officePeriodTotal" class="office-total">事務所経費 ¥0</span><small>会社最終利益 ＝ FUJIWARA現場利益 − 事務所・会社経費</small></div><button onclick="location.href='king-office-expense.html'">経費管理を開く ›</button></section>
 
-<section class="panel"><div class="table-wrap"><table><thead><tr><th>日付</th><th>イベント</th><th>売上</th><th>経費</th><th>利益</th><th>預金</th><th>手元残</th><th>未精算</th><th>状態</th></tr></thead><tbody id="rows"></tbody></table></div><div class="notice">①〜⑦と下段集計は同じ対象期間を使います。会社別はイベント早見精算のFUJIWARA／尼崎区分を優先し、未区分分はFUJIWARAとして補完します。割当データに日付が無い場合でもイベント本体の日付で月・年を判定するため、他月の売上が混ざりません。既存Firebaseデータは変更しません。</div></section>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>日付</th><th>イベント</th><th>売上</th><th>経費</th><th>利益</th><th>預金</th><th>手元残</th><th>未精算</th><th>状態</th></tr></thead><tbody id="rows"></tbody></table></div><div class="notice">①〜⑦と下段集計は同じ対象期間を使います。会社別はイベント早見精算のFUJIWARA／尼崎区分を優先し、未区分分はFUJIWARAとして補完します。連日イベントは日別実績を正として集計し、イベント全体の会社別割当は日別実績比率で按分するため二重計上しません。既存Firebaseデータは変更しません。</div></section>
 </div>
 <nav class="bottom"><button onclick="location.href='king.html'">♛ キングへ戻る</button><button class="refresh" onclick="load()">🔄 更新</button></nav>
 
@@ -72,10 +72,23 @@ function splitForRow(row){
   const rec=allocationForEvent(row.eventId),ct=rec.companyTotals||{};let fs=0,as=0,fc=0,ac=0;
   if(ct.fujiwara||ct.amagasaki){const f=ct.fujiwara||{},a=ct.amagasaki||{};fs=n(f.sales);as=n(a.sales);fc=n(f.cost!=null?f.cost:(f.expense!=null?f.expense:f.expenses));ac=n(a.cost!=null?a.cost:(a.expense!=null?a.expense:a.expenses));}
   else Object.values(rec.items||{}).forEach(it=>{if(!it)return;const k=it.company==='fujiwara'?'fujiwara':((it.company==='amagasaki'||it.company==='ama')?'amagasaki':'');if(!k)return;const s=n(it.sales),c=n(it.cost!=null?it.cost:(it.expense!=null?it.expense:it.expenses));if(k==='fujiwara'){fs+=s;fc+=c}else{as+=s;ac+=c}});
-  const allocatedSales=fs+as,allocatedCost=fc+ac;
-  if(row.sales>allocatedSales)fs+=row.sales-allocatedSales;
-  if(row.expense>allocatedCost)fc+=row.expense-allocatedCost;
-  return{fujiSales:fs,amaSales:as,fujiCost:fc,amaCost:ac};
+
+  const siblings=allRows().filter(r=>String(r.eventId)===String(row.eventId));
+  const eventSales=siblings.reduce((sum,r)=>sum+n(r.sales),0);
+  const eventCost=siblings.reduce((sum,r)=>sum+n(r.expense),0);
+  let allocatedSales=fs+as,allocatedCost=fc+ac;
+
+  if(allocatedSales<=0){fs=eventSales;as=0;allocatedSales=eventSales;}
+  else if(allocatedSales<eventSales){fs+=eventSales-allocatedSales;allocatedSales=eventSales;}
+  else if(allocatedSales>eventSales&&allocatedSales>0){const q=eventSales/allocatedSales;fs*=q;as*=q;allocatedSales=eventSales;}
+
+  if(allocatedCost<=0){fc=eventCost;ac=0;allocatedCost=eventCost;}
+  else if(allocatedCost<eventCost){fc+=eventCost-allocatedCost;allocatedCost=eventCost;}
+  else if(allocatedCost>eventCost&&allocatedCost>0){const q=eventCost/allocatedCost;fc*=q;ac*=q;allocatedCost=eventCost;}
+
+  const salesRatio=eventSales>0?n(row.sales)/eventSales:(siblings.length?1/siblings.length:1);
+  const costRatio=eventCost>0?n(row.expense)/eventCost:(siblings.length?1/siblings.length:1);
+  return{fujiSales:fs*salesRatio,amaSales:as*salesRatio,fujiCost:fc*costRatio,amaCost:ac*costRatio};
 }
 function periodRows(period){return allRows().filter(r=>inPeriod(r.date,period))}
 function officeExpenseTotal(period){return officeExpenses.filter(r=>inPeriod(r.date,period)).reduce((s,r)=>s+n(r.amount),0)}
