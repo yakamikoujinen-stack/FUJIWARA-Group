@@ -1,0 +1,49 @@
+name: Patch main leader KING back button
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-main-king-back.yml'
+      - 'index.html'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch index.html safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='id="king-back-btn"'
+          if marker not in s:
+              bell='      <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>'
+              btn='      <button id="king-back-btn" class="btn btn-ghost" onclick="location.href=\'king.html\'" style="display:none;padding:7px 11px;font-size:11px;white-space:nowrap">👑 KINGへ戻る</button>\n'
+              if bell not in s:
+                  raise SystemExit('Header bell anchor not found; aborting without changes')
+              s=s.replace(bell,btn+bell,1)
+              hook='''\n<script id="king-back-leader-only">\n(function(){\n  function syncKingBack(){\n    var b=document.getElementById('king-back-btn');\n    if(!b)return;\n    b.style.display=(typeof role!=='undefined' && role==='leader')?'inline-flex':'none';\n  }\n  setInterval(syncKingBack,300);\n  document.addEventListener('click',function(){setTimeout(syncKingBack,0);});\n  syncKingBack();\n})();\n</script>\n'''
+              if '</body>' not in s:
+                  raise SystemExit('body close not found; aborting without changes')
+              s=s.replace('</body>',hook+'</body>',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch if needed
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No change needed"
+            exit 0
+          fi
+          git config user.name "FUJIWARA safe patch"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore leader-only KING return button in main app"
+          git push
