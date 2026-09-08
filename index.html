@@ -633,89 +633,6 @@ body::before,#app::before,.page::before{
 .event-staff-name{display:inline-block;margin-right:2px;}
 .event-staff-name.resp-fujiwara,.event-staff-name.resp-sho,.event-staff-name.resp-bunta,.event-staff-name.resp-shige{padding:1px 5px;border-radius:7px;border:1px solid currentColor;}
 
-
-/* ===== リーダー専用 KINGへ戻るボタン 2026-09-04 ===== */
-#king-back-btn{
-  display:none;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-  padding:7px 10px;
-  border:1.5px solid #b8860b;
-  border-radius:10px;
-  background:linear-gradient(135deg,#ffd866,#d6a634);
-  color:#241900;
-  font-size:11px;
-  font-weight:900;
-  white-space:nowrap;
-  cursor:pointer;
-  box-shadow:0 2px 8px rgba(80,55,0,.16);
-}
-#king-back-btn.show{display:inline-flex;}
-@media(max-width:520px){
-  #king-back-btn{padding:7px 8px;font-size:10px}
-}
-
-
-/* ===== リーダー専用 氏名重視 出勤一覧 2026-09-04 ===== */
-.leader-att-toolbar{
-  display:flex;gap:8px;align-items:end;flex-wrap:wrap;
-  padding:12px;background:#fffaf0;border-bottom:1px solid var(--border);
-}
-.leader-att-toolbar .lat-field{min-width:160px;flex:1}
-.leader-att-toolbar label{font-size:10px;font-weight:900;color:#6d5a2b;margin-bottom:4px}
-.leader-att-table-wrap{overflow-x:auto;background:#fffdfa}
-.leader-att-table{
-  width:100%;min-width:760px;border-collapse:collapse;background:#fffdfa;
-}
-.leader-att-table th{
-  position:sticky;top:0;z-index:2;
-  padding:10px 8px;background:#fff3d6;color:#4d3a00;
-  font-size:11px;font-weight:950;text-align:left;border-bottom:2px solid #d8bf75;
-}
-.leader-att-table td{
-  padding:11px 8px;border-bottom:1px solid #ead8a8;
-  vertical-align:top;font-size:12px;color:#241900;
-}
-.leader-att-table tr.lat-ended{background:#efefef;opacity:.82}
-.lat-date{font-size:13px;font-weight:950;white-space:nowrap}
-.lat-event{font-size:13px;font-weight:950;line-height:1.45}
-.lat-place{font-size:10px;color:#6d5a2b;margin-top:3px;line-height:1.4}
-.lat-count{text-align:center;font-weight:950;white-space:nowrap}
-.lat-names{
-  display:flex;flex-wrap:wrap;gap:5px;min-width:250px;
-}
-.lat-name{
-  display:inline-flex;align-items:center;padding:5px 8px;
-  border-radius:9px;background:#fff;border:1.5px solid #d8bf75;
-  color:#111;font-size:14px;font-weight:950;line-height:1.2;
-  box-shadow:0 2px 6px rgba(80,55,0,.06);
-}
-.lat-name.resp-fujiwara{background:#fff1f1!important;border-color:#d64242!important;color:#9f1d1d!important}
-.lat-name.resp-sho{background:#eef6ff!important;border-color:#2f80ed!important;color:#1457a6!important}
-.lat-name.resp-bunta{background:#eefbf2!important;border-color:#168a58!important;color:#0d6a40!important}
-.lat-name.resp-shige{background:#fff4df!important;border-color:#d88b16!important;color:#8a5400!important}
-.lat-shortage{
-  display:inline-flex;padding:4px 8px;border-radius:999px;
-  background:#fee8e8;border:1px solid #ef9a9a;color:#c62828;font-size:11px;font-weight:950;
-  white-space:nowrap;
-}
-.lat-ok{
-  display:inline-flex;padding:4px 8px;border-radius:999px;
-  background:#e6f6ee;border:1px solid #91d5b3;color:#107247;font-size:11px;font-weight:950;
-  white-space:nowrap;
-}
-.lat-answer{
-  font-size:10px;line-height:1.55;color:#6d5a2b;min-width:145px;
-}
-.lat-answer .bad{color:#c62828;font-weight:900}
-.lat-answer .good{color:#168a58;font-weight:900}
-@media(max-width:700px){
-  .leader-att-toolbar{padding:9px}
-  .leader-att-table{min-width:700px}
-  .lat-name{font-size:13px;padding:5px 7px}
-}
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -759,7 +676,6 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
-      <button id="king-back-btn" type="button" onclick="location.href='king.html'">👑 KINGへ戻る</button>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -4614,136 +4530,7 @@ function renderAttendancePage(){
   var sub=document.querySelector('#page-attendance .page-sub');
   if(title) title.textContent=role==='user'?'👥 日別出勤表':'👥 スタッフ出勤一覧';
   if(sub) sub.textContent=role==='user'?'連日イベントも、日付ごとの出勤スタッフを確認できます。':'イベントごとの参加スタッフ・出勤回答・未回答を確認できます。';
-  if(role==='leader') renderLeaderNameAttendanceTo('attendance-list-area');
-  else renderEventStaffListTo('attendance-list-area');
-}
-
-
-/* ===== リーダー専用 氏名重視 出勤一覧 描画 2026-09-04 ===== */
-function leaderAttNameClass(name){
-  var n=String(name||'').trim();
-  if(n==='藤原' || n==='藤原明裕' || n==='藤原明広') return 'resp-fujiwara';
-  if(n==='将') return 'resp-sho';
-  if(n==='文太') return 'resp-bunta';
-  if(n==='繁充') return 'resp-shige';
-  return '';
-}
-function renderLeaderNameAttendanceTo(targetId){
-  var el=document.getElementById(targetId);
-  if(!el) return;
-
-  var today=new Date(); today.setHours(0,0,0,0);
-  function toDateOnly(v){
-    if(!v) return null;
-    var d=new Date(String(v)+'T00:00:00');
-    if(isNaN(d.getTime())) return null;
-    d.setHours(0,0,0,0); return d;
-  }
-
-  var rows=[];
-  (state.events||[]).forEach(function(ev){
-    dateListForEvent(ev).forEach(function(ds){
-      var staff=getEventStaffForDate(ev,ds).slice();
-      if(ev.bsLeader && staff.indexOf(ev.bsLeader)<0) staff.push(ev.bsLeader);
-      if(ev.bsHelper && staff.indexOf(ev.bsHelper)<0) staff.push(ev.bsHelper);
-
-      var av=getEventAvailabilityForDate(ev,ds);
-      var ok=[],maybe=[],no=[],unanswered=[];
-      staff.forEach(function(name){
-        if(av[name]==='ok') ok.push(name);
-        else if(av[name]==='maybe') maybe.push(name);
-        else if(av[name]==='no') no.push(name);
-        else unanswered.push(name);
-      });
-
-      var required=getEventRequiredStaffForDate(ev,ds);
-      var shortage=required ? Math.max(required-staff.length,0) : 0;
-      var ended=(ev.status==='done'||ev.status==='ended'||ev.finished===true)||(toDateOnly(ds)<today);
-
-      rows.push({
-        ev:ev,ds:ds,staff:staff,required:required,shortage:shortage,
-        ok:ok,maybe:maybe,no:no,unanswered:unanswered,ended:ended
-      });
-    });
-  });
-
-  rows.sort(function(a,b){
-    if(a.ended!==b.ended) return a.ended?1:-1;
-    return String(a.ds).localeCompare(String(b.ds));
-  });
-
-  var staffSet={};
-  rows.forEach(function(r){ r.staff.forEach(function(n){ if(n) staffSet[n]=1; }); });
-  var staffNames=Object.keys(staffSet).sort(function(a,b){ return String(a).localeCompare(String(b),'ja'); });
-
-  var html='<div class="leader-att-toolbar">'
-    +'<div class="lat-field"><label>参加者で絞り込み</label>'
-    +'<select id="leader-att-name-filter" onchange="applyLeaderAttendanceFilter()">'
-    +'<option value="">すべての参加者</option>'
-    +staffNames.map(function(n){return '<option value="'+escHtml(n)+'">'+escHtml(n)+'</option>';}).join('')
-    +'</select></div>'
-    +'<div class="lat-field"><label>イベント検索</label>'
-    +'<input id="leader-att-search" type="search" placeholder="イベント名・場所" oninput="applyLeaderAttendanceFilter()"></div>'
-    +'</div>';
-
-  if(!rows.length){
-    html+='<div style="padding:14px;font-size:12px;color:var(--text2)">イベント未登録</div>';
-    el.innerHTML=html; return;
-  }
-
-  html+='<div class="leader-att-table-wrap"><table class="leader-att-table">'
-    +'<thead><tr><th>日付</th><th>イベント</th><th>必要</th><th>参加者</th><th>不足</th><th>回答状況</th></tr></thead><tbody>';
-
-  rows.forEach(function(r){
-    var dateText=String(r.ds||'').slice(5).replace('-','/');
-    var names=r.staff.length
-      ? r.staff.map(function(n){
-          return '<span class="lat-name '+leaderAttNameClass(n)+'">'+escHtml(n)+'</span>';
-        }).join('')
-      : '<span class="lat-name" style="color:var(--red)">未設定</span>';
-
-    var shortage=r.ended
-      ? '<span style="color:#777;font-weight:900">終了</span>'
-      : (r.shortage>0
-          ? '<span class="lat-shortage">🔴 '+r.shortage+'人不足</span>'
-          : '<span class="lat-ok">人員OK</span>');
-
-    var answer='<div class="lat-answer">'
-      +'⭕ <span class="good">'+(r.ok.length?escHtml(r.ok.join('・')):'なし')+'</span><br>'
-      +'△ '+(r.maybe.length?escHtml(r.maybe.join('・')):'なし')+'<br>'
-      +'❌ <span class="bad">'+(r.no.length?escHtml(r.no.join('・')):'なし')+'</span><br>'
-      +'未回答：<span class="'+(r.unanswered.length?'bad':'')+'">'+(r.unanswered.length?escHtml(r.unanswered.join('・')):'なし')+'</span>'
-      +'</div>';
-
-    var searchText=[r.ev.name||'',r.ev.place||'',r.ev.zone||'',r.staff.join(' ')].join(' ').toLowerCase();
-
-    html+='<tr class="'+(r.ended?'lat-ended':'')+'" data-staff="'+escHtml(r.staff.join('|'))+'" data-search="'+escHtml(searchText)+'">'
-      +'<td class="lat-date">'+escHtml(dateText)+'</td>'
-      +'<td><div class="lat-event">'+escHtml(r.ev.name||'名称未設定')+'</div>'
-      +'<div class="lat-place">📍 '+escHtml(r.ev.place||'場所未設定')+'　発注先：'+escHtml(r.ev.zone||'未設定')+'</div></td>'
-      +'<td class="lat-count">'+(r.required?escHtml(String(r.required))+'人':'—')+'</td>'
-      +'<td><div class="lat-names">'+names+'</div>'
-      +'<div style="margin-top:5px;font-size:10px;color:#6d5a2b">配置 '+r.staff.length+'人</div></td>'
-      +'<td>'+shortage+'</td>'
-      +'<td>'+answer+'</td>'
-      +'</tr>';
-  });
-
-  html+='</tbody></table></div>';
-  el.innerHTML=html;
-}
-function applyLeaderAttendanceFilter(){
-  var nameEl=document.getElementById('leader-att-name-filter');
-  var searchEl=document.getElementById('leader-att-search');
-  var name=nameEl?String(nameEl.value||''):'';
-  var q=searchEl?String(searchEl.value||'').trim().toLowerCase():'';
-  document.querySelectorAll('#attendance-list-area .leader-att-table tbody tr').forEach(function(tr){
-    var staff=String(tr.getAttribute('data-staff')||'').split('|');
-    var hay=String(tr.getAttribute('data-search')||'');
-    var okName=!name || staff.indexOf(name)>=0;
-    var okSearch=!q || hay.indexOf(q)>=0;
-    tr.style.display=(okName&&okSearch)?'':'none';
-  });
+  renderEventStaffListTo('attendance-list-area');
 }
 
 function renderEventStaffListTo(targetId){
@@ -5612,30 +5399,118 @@ document.addEventListener('click',function(e){
  </div>
 </div>
 
+
+<!-- ===== v4.3.44 リーダー専用：現在入国中 ===== -->
+<style>
+#entry-presence-fab{display:none;position:fixed;right:14px;bottom:calc(126px + env(safe-area-inset-bottom));z-index:165;border:none;border-radius:24px;padding:10px 14px;background:#e7f7ee;color:#12613f;border:1.5px solid #79c89f;font-family:inherit;font-size:12px;font-weight:900;box-shadow:0 4px 16px rgba(0,0,0,.18);cursor:pointer;}
+#entry-presence-fab.show{display:block;}
+#entry-presence-fab .presence-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#20a464;margin-right:5px;box-shadow:0 0 0 3px rgba(32,164,100,.13);}
+.entry-presence-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 10px;border-bottom:1px solid #ead8a8;background:#fffdf6;}
+.entry-presence-row:last-child{border-bottom:none;}
+.entry-presence-name{font-size:14px;font-weight:900;color:#111;}
+.entry-presence-meta{font-size:10px;color:#6d5a2b;margin-top:2px;}
+.entry-presence-live{font-size:10px;font-weight:900;color:#168a58;background:#e7f7ee;border:1px solid #9dd8b9;border-radius:999px;padding:3px 8px;white-space:nowrap;}
+</style>
+<button id="entry-presence-fab" type="button" onclick="openEntryPresence()"><span class="presence-dot"></span>現在入国中 <span id="entry-presence-count">0</span></button>
+<div class="modal-overlay" id="modal-entry-presence">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-top">
+      <div><h2 class="modal-title">🟢 現在入国中</h2><div style="font-size:11px;color:var(--text2);margin-top:3px">リーダーだけに表示されます</div></div>
+      <button class="modal-close-btn" onclick="closeModal('modal-entry-presence')">✕</button>
+    </div>
+    <div id="entry-presence-list"><div class="empty-state"><div class="ei">⏳</div>読み込み中...</div></div>
+  </div>
+</div>
 <script>
-/* ===== リーダー専用 KINGへ戻る表示制御 2026-09-04 ===== */
 (function(){
-  function syncKingBackButton(){
-    var btn=document.getElementById('king-back-btn');
-    var badge=document.getElementById('role-badge');
-    if(!btn||!badge)return;
-    var label=String(badge.textContent||'').trim();
-    var leader=/リーダー|leader/i.test(label)||badge.classList.contains('rb-leader');
-    btn.classList.toggle('show',leader);
+  var PRESENCE_PATH='fujiwara_security/main_presence';
+  var presenceRef=null, presenceTimer=null, presenceLeaderRef=null;
+  var presenceCache={};
+  function presenceReady(){return !!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.database);}
+  function presenceEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function presenceRoleLabel(r){return r==='leader'?'リーダー':(r==='staff'?'担当者':'一般');}
+  function presenceDeviceId(){
+    try{ if(typeof getEntryDeviceId==='function') return getEntryDeviceId(); }catch(e){}
+    var k='fg_presence_device_id_v1',id='';try{id=localStorage.getItem(k)||'';}catch(e){}
+    if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);try{localStorage.setItem(k,id);}catch(e){}}
+    return id;
   }
-  window.syncKingBackButton=syncKingBackButton;
-  document.addEventListener('DOMContentLoaded',function(){
-    syncKingBackButton();
-    var badge=document.getElementById('role-badge');
-    if(badge){
-      new MutationObserver(syncKingBackButton).observe(badge,{
-        childList:true,subtree:true,characterData:true,attributes:true
-      });
-    }
-  });
-  setInterval(syncKingBackButton,800);
+  function presenceSafe(v){return String(v||'').replace(/[.#$\[\]\/]/g,'_').slice(0,120);}
+  function updatePresenceFab(){
+    var b=document.getElementById('entry-presence-fab'); if(!b)return;
+    var app=document.getElementById('app');
+    b.classList.toggle('show',role==='leader'&&app&&app.style.display!=='none');
+  }
+  function renderPresence(){
+    if(role!=='leader')return;
+    var now=Date.now(), byName={};
+    Object.keys(presenceCache||{}).forEach(function(k){
+      var p=presenceCache[k]; if(!p||!p.name)return;
+      var t=Number(p.lastSeen||0); if(t&&now-t>180000)return;
+      var key=String(p.name).replace(/[\s　]+/g,'');
+      if(!byName[key] || Number(byName[key].lastSeen||0)<t) byName[key]=p;
+    });
+    var arr=Object.keys(byName).map(function(k){return byName[k];}).sort(function(a,b){return String(a.name).localeCompare(String(b.name),'ja');});
+    var c=document.getElementById('entry-presence-count'); if(c)c.textContent=String(arr.length);
+    var box=document.getElementById('entry-presence-list'); if(!box)return;
+    if(!arr.length){box.innerHTML='<div class="empty-state"><div class="ei">🚪</div>現在入国中のスタッフはいません</div>';return;}
+    box.innerHTML=arr.map(function(p){
+      var tm='';try{tm=new Date(Number(p.lastSeen||Date.now())).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});}catch(e){}
+      return '<div class="entry-presence-row"><div><div class="entry-presence-name">'+presenceEsc(p.name)+'</div><div class="entry-presence-meta">'+presenceEsc(presenceRoleLabel(p.role))+(tm?' ・ 最終確認 '+tm:'')+'</div></div><div class="entry-presence-live">入国中</div></div>';
+    }).join('');
+  }
+  window.openEntryPresence=function(){
+    if(role!=='leader')return;
+    renderPresence();
+    var m=document.getElementById('modal-entry-presence');if(m)m.classList.add('open');
+  };
+  function startLeaderPresenceListener(){
+    if(!presenceReady()||role!=='leader'||presenceLeaderRef)return;
+    presenceLeaderRef=firebase.database().ref(PRESENCE_PATH);
+    presenceLeaderRef.on('value',function(s){presenceCache=s.val()||{};renderPresence();updatePresenceFab();});
+  }
+  function stopLeaderPresenceListener(){
+    if(presenceLeaderRef){try{presenceLeaderRef.off();}catch(e){} presenceLeaderRef=null;}
+    presenceCache={};
+    var c=document.getElementById('entry-presence-count');if(c)c.textContent='0';
+  }
+  function writePresence(){
+    if(!presenceReady()||!userName)return false;
+    var key=presenceSafe(presenceDeviceId());
+    presenceRef=firebase.database().ref(PRESENCE_PATH+'/'+key);
+    try{presenceRef.onDisconnect().remove();}catch(e){}
+    presenceRef.set({name:userName,role:role,deviceId:key,lastSeen:firebase.database.ServerValue.TIMESTAMP});
+    if(presenceTimer)clearInterval(presenceTimer);
+    presenceTimer=setInterval(function(){if(presenceRef)presenceRef.update({name:userName,role:role,lastSeen:firebase.database.ServerValue.TIMESTAMP});},60000);
+    if(role==='leader')startLeaderPresenceListener(); else stopLeaderPresenceListener();
+    updatePresenceFab();
+    return true;
+  }
+  function startPresenceWithRetry(){
+    var tries=0,t=setInterval(function(){tries++;if(writePresence()||tries>40)clearInterval(t);},250);
+  }
+  function leavePresence(){
+    if(presenceTimer){clearInterval(presenceTimer);presenceTimer=null;}
+    if(presenceRef){try{presenceRef.remove();}catch(e){} presenceRef=null;}
+    stopLeaderPresenceListener();updatePresenceFab();
+  }
+  var oldFinish=window.finishLogin;
+  if(typeof oldFinish==='function'){
+    window.finishLogin=function(name,r,detail){
+      var ret=oldFinish.apply(this,arguments);
+      setTimeout(function(){if(document.getElementById('app')&&document.getElementById('app').style.display!=='none')startPresenceWithRetry();},150);
+      return ret;
+    };
+  }
+  var oldLogout=window.doLogout;
+  if(typeof oldLogout==='function'){
+    window.doLogout=function(){leavePresence();return oldLogout.apply(this,arguments);};
+  }
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&userName&&document.getElementById('app')&&document.getElementById('app').style.display!=='none')writePresence();});
+  window.addEventListener('beforeunload',function(){try{if(presenceRef)presenceRef.remove();}catch(e){}});
+  setTimeout(updatePresenceFab,500);
 })();
 </script>
-
 </body>
 </html>
