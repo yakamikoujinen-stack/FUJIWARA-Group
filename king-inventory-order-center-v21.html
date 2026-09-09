@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>在庫・発注・購入 管理センター v21.0</title>
+<title>在庫・発注・購入 管理センター v21.1</title>
 <meta name="theme-color" content="#17324d">
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;--bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--shadow:0 10px 28px rgba(18,46,72,.10)}
@@ -23,10 +23,10 @@
 </head>
 <body>
 <div class="app">
-<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.0</h1><div class="sub">買い物メモを追加し、発注品・近くで買う品をそのまま持ち歩ける一覧へ</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.1</h1><div class="sub">単価・購入先をまとめて保存。未入力の0表示をなくし、入力途中の内容が消えないよう改善</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
 
 <div class="notice safe">🔒 <b>メイン・KING・現在庫・材料マスターは書き換えません。</b><br>
-このv21では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
+このv21.1では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
 <b>「🛒 買い物メモ」</b>を追加しました。<br>
 発注する物と近くで買う物だけを一覧化し、印刷してそのまま持って行けます。<br>
 旧「材料マスター確認」は通常メニューから外しますが、互換用データとして内部には残し、既存計算を壊しません。</div>
@@ -67,6 +67,7 @@
         </div>
       </div>
       <button class="btn btn-soft no-print" onclick="renderPurchase()">🔄 再表示</button>
+      <button class="btn btn-green no-print" onclick="savePurchaseAll()">💾 まとめて保存</button>
     </div>
 
     <div class="toolbar">
@@ -90,11 +91,15 @@
         <thead>
           <tr>
             <th>品目</th><th>カテゴリ</th><th>現在庫</th><th>持出し</th><th>保管場所</th>
-            <th>単価</th><th>購入先</th><th>入数</th><th>購入単位</th><th>発注方法</th><th>備考</th><th>保存</th>
+            <th>単価</th><th>購入先</th><th>入数</th><th>購入単位</th><th>発注方法</th><th>備考</th>
           </tr>
         </thead>
         <tbody id="purchaseBody"></tbody>
       </table>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-green no-print" onclick="savePurchaseAll()">💾 入力した内容をまとめて保存</button>
+      <span id="purchaseSavedInfo" class="plan-save">入力後にまとめて保存してください</span>
     </div>
   </div>
 </section>
@@ -1034,44 +1039,65 @@ function renderPurchase(){
 
  body.innerHTML=rows.length?rows.map(x=>{
    const p=purchaseInfo(x.name);
-   const key=encodeURIComponent(x.name||'');
-   return `<tr>
+   const k=purchaseKey(x.name);
+   const price=Number(p.unitPrice||0)>0?Number(p.unitPrice):'';
+   const pack=Number(p.packQty||0)>0?Number(p.packQty):'';
+   return `<tr class="purchase-row" data-item="${esc(encodeURIComponent(x.name||''))}">
      <td><b>${esc(x.name||'')}</b><div class="usage-note">更新者：${esc(x.inventoryUpdatedBy||meta.updatedBy||'-')}<br>${esc(x.inventoryUpdatedAt||meta.updatedAt||'')}</div></td>
      <td>${esc(x.cat||'')}</td>
      <td><b>${Number(x.stock||0)}</b> ${esc(x.unit||'')}</td>
      <td>${Number(x.hakobi||0)} ${esc(x.unit||'')}</td>
      <td>${esc(x.loc||'未設定')}</td>
-     <td class="edit-cell"><input class="purchase-input" id="price_${purchaseKey(x.name)}" type="number" min="0" step="1" value="${Number(p.unitPrice||0)}" placeholder="0"></td>
-     <td class="edit-cell"><input class="purchase-input" id="supplier_${purchaseKey(x.name)}" value="${esc(p.supplier||'')}" placeholder="例 業務スーパー"></td>
-     <td class="edit-cell"><input class="purchase-input" id="pack_${purchaseKey(x.name)}" type="number" min="0" step="0.01" value="${p.packQty??''}" placeholder="例 12"></td>
-     <td class="edit-cell"><input class="purchase-input" id="punit_${purchaseKey(x.name)}" value="${esc(p.purchaseUnit||x.unit||'')}" placeholder="箱・袋・本"></td>
-     <td class="edit-cell"><select id="method_${purchaseKey(x.name)}">
+     <td class="edit-cell"><input class="purchase-input purchase-price" type="number" min="0" step="1" value="${price}" placeholder="単価"></td>
+     <td class="edit-cell"><input class="purchase-input purchase-supplier" value="${esc(p.supplier||'')}" placeholder="例 業務スーパー"></td>
+     <td class="edit-cell"><input class="purchase-input purchase-pack" type="number" min="0" step="0.01" value="${pack}" placeholder="入数"></td>
+     <td class="edit-cell"><input class="purchase-input purchase-unit" value="${esc(p.purchaseUnit||x.unit||'')}" placeholder="箱・袋・本"></td>
+     <td class="edit-cell"><select class="purchase-method">
        <option value="" ${!p.orderMethod?'selected':''}>未設定</option>
        <option value="早めに発注" ${p.orderMethod==='早めに発注'?'selected':''}>早めに発注</option>
        <option value="近くで購入" ${p.orderMethod==='近くで購入'?'selected':''}>近くで購入</option>
      </select></td>
-     <td class="edit-cell"><input class="purchase-input" id="note_${purchaseKey(x.name)}" value="${esc(p.note||'')}" placeholder="備考"></td>
-     <td><button class="btn btn-green" onclick="savePurchaseItem('${key}')">保存</button></td>
+     <td class="edit-cell"><input class="purchase-input purchase-note" value="${esc(p.note||'')}" placeholder="備考"></td>
    </tr>`;
- }).join(''):'<tr><td colspan="12" class="empty">該当する在庫品目がありません</td></tr>';
+ }).join(''):'<tr><td colspan="11" class="empty">該当する在庫品目がありません</td></tr>';
 }
+async function savePurchaseAll(){
+ const trs=[...document.querySelectorAll('#purchaseBody .purchase-row')];
+ if(!trs.length)return alert('保存する品目がありません');
+ const updates={};
+ const now=new Date().toISOString();
+ trs.forEach(tr=>{
+   const name=decodeURIComponent(tr.dataset.item||'');
+   if(!name)return;
+   const key=purchaseKey(name);
+   const info={
+     itemName:name,
+     unitPrice:Number(tr.querySelector('.purchase-price')?.value||0),
+     supplier:(tr.querySelector('.purchase-supplier')?.value||'').trim(),
+     packQty:Number(tr.querySelector('.purchase-pack')?.value||0),
+     purchaseUnit:(tr.querySelector('.purchase-unit')?.value||'').trim(),
+     orderMethod:tr.querySelector('.purchase-method')?.value||'',
+     note:(tr.querySelector('.purchase-note')?.value||'').trim(),
+     updatedAt:now
+   };
+   purchaseMaster[key]=info;
+   updates[key]=info;
+ });
+ const infoEl=document.getElementById('purchaseSavedInfo');
+ try{
+   if(infoEl)infoEl.textContent='保存中...';
+   await db.ref(PURCHASE_PATH).update(updates);
+   if(infoEl)infoEl.textContent='保存済み：'+new Date().toLocaleString('ja-JP');
+   renderUsageRows();renderFunds();renderWeek();
+   alert(trs.length+'件をまとめて保存しました');
+ }catch(e){
+   if(infoEl)infoEl.textContent='保存失敗：'+(e.message||e);
+   alert('保存に失敗しました：'+(e.message||e));
+ }
+}
+
 async function savePurchaseItem(nameEnc){
- const name=decodeURIComponent(nameEnc);
- const key=purchaseKey(name);
- const info={
-   itemName:name,
-   unitPrice:Number(document.getElementById('price_'+key)?.value||0),
-   supplier:(document.getElementById('supplier_'+key)?.value||'').trim(),
-   packQty:Number(document.getElementById('pack_'+key)?.value||0),
-   purchaseUnit:(document.getElementById('punit_'+key)?.value||'').trim(),
-   orderMethod:document.getElementById('method_'+key)?.value||'',
-   note:(document.getElementById('note_'+key)?.value||'').trim(),
-   updatedAt:new Date().toISOString()
- };
- purchaseMaster[key]=info;
- await db.ref(PURCHASE_PATH+'/'+key).set(info);
- renderPurchase();renderUsageRows();renderFunds();renderWeek();
- alert(name+' の仕入情報を保存しました');
+  return savePurchaseAll();
 }
 
 function renderInventory(){
@@ -1146,8 +1172,6 @@ function renderRoles(){
    `📦 <b>参照する在庫カテゴリ：</b> ${esc(sourceCats)}<br>`+
    `🔹 <b>サブ材料：</b> 同カテゴリ内の主力材料以外を自動表示`;
 
- // サブ候補は「在庫管理で選択ネタと同じカテゴリ」の品目だけ。
- // 例：からあげ → 唐揚げカテゴリ → 鶏肉以外（醤油・にんにく・しょうが…）
  const byName=new Map();
  inventory.forEach(x=>{
    const name=String(x.name||'').trim();
@@ -1188,7 +1212,6 @@ function renderWeek(){
  const weekSales=document.getElementById('weekSalesSummary');
  if(weekSales)weekSales.innerHTML=renderTargetSalesCards(wevents);
 
- // v18/v19のイベント予定設定を最優先
  const plannedRows=buildProcurementRowsFromPlan(wevents);
  let rows=plannedRows;
  let source='管理センター v21 予定設定販売金額＋材料計算基準';
@@ -1372,7 +1395,6 @@ function buildProcurementRows(recs){
    const roles=[...x.roles].filter(Boolean);
    let role=roles.length===1?roles[0]:'混在';
    if(role==='混在'){
-     // 一つでも主力材料なら早めに発注扱い
      if(roles.includes('主力材料'))role='主力材料';
      else if(roles.includes('サブ材料'))role='サブ材料';
    }
@@ -1429,7 +1451,6 @@ function renderMemo(){
  const local=buyRows.filter(x=>x.role==='サブ材料');
  const other=buyRows.filter(x=>x.role!=='主力材料'&&x.role!=='サブ材料');
 
- // 未分類は「近くで購入」に混ぜず、発注方法が未設定なら近くで購入側末尾に表示
  const localAll=[...local,...other];
 
  document.getElementById('memoEvents').innerHTML=
@@ -1520,6 +1541,7 @@ function renderFunds(){
    if(!evs.length){
      parts.push('<span class="bad">対象イベントがありません。</span>');
    }else{
+     const shop=procurementRowsFromShopping(evs);
      shop.diagnostics.forEach(d=>{
        const e=eventIdentity(d.event);
        if(d.hits.length){
