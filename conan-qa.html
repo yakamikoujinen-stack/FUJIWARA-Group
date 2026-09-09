@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#17324d">
+<title>コナンプロデュース様 質疑応答表</title>
+<style>
+:root{--navy:#17324d;--blue:#1677e8;--bg:#f4f6f8;--line:#d8dde5;--text:#172033;--sub:#667085;--answer:#eef7ff;--final:#eefbf2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+.wrap{max-width:1300px;margin:auto;padding:16px 12px 100px}
+.hero{background:linear-gradient(135deg,#17324d,#2c6495);color:white;border-radius:22px;padding:18px}
+.hero h1{margin:0;font-size:clamp(24px,4vw,38px)}.hero p{margin:7px 0 0;color:#dbeafe;font-weight:800}
+.panel{margin-top:15px;background:#fff;border:1px solid #e6ebf1;border-radius:18px;padding:14px;box-shadow:0 7px 20px rgba(20,40,70,.05)}
+.topline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#docTitle{flex:1;min-width:260px;font-size:24px;font-weight:950;border:1px solid #cfd7e2;border-radius:12px;padding:10px 12px}
+button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;background:#e7edf5;color:#1f2937}
+button.primary{background:var(--blue);color:#fff}button.danger{background:#feecec;color:#b42318}
+.note{font-size:12px;color:var(--sub);margin-top:8px}
+.status{font-size:12px;color:#176b3a;font-weight:900;margin-top:6px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin-top:12px}
+table{width:100%;min-width:1100px;border-collapse:collapse}
+th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;vertical-align:top;background:#fff}
+th{background:#edf2f7;text-align:center;padding:12px 8px;font-size:16px}
+td input,td textarea{width:100%;border:0;outline:0;padding:10px;font:inherit;background:transparent}
+td textarea{min-height:78px;resize:vertical;line-height:1.5}
+.date{width:115px}.event{min-width:220px}.items{min-width:220px}.question{min-width:280px}.answer{min-width:300px;background:var(--answer)}.final{min-width:220px;background:var(--final)}
+.footer-note{margin-top:12px;font-size:12px;color:#667085}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:center;gap:10px;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+@media print{
+  body{background:#fff}.hero,.actions,.note,.status,.bottom,.del{display:none!important}
+  .wrap{padding:0}.panel{border:0;box-shadow:none;margin:0;padding:0}
+  #docTitle{border:0;padding:0 0 12px;font-size:20pt}
+  .tablewrap{overflow:visible;border:0}
+  table{min-width:0;font-size:9.5pt}
+  th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  td.answer,td.final{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  td textarea{min-height:0;resize:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="hero">
+  <h1>📄 コナンプロデュース様 質疑応答表</h1>
+  <p>イベントごとの質疑・即答・最終回答を整理してPDF送付できます</p>
+</section>
+
+<section class="panel">
+  <div class="topline">
+    <input id="docTitle" value="コナンプロデュース様　質疑応答表" oninput="saveAll()">
+    <div class="actions">
+      <button class="primary" onclick="addRow()">＋ 質疑を追加</button>
+      <button onclick="sortRows()">↕ 日付順</button>
+      <button onclick="window.print()">🖨 PDF / 印刷</button>
+      <button onclick="backup()">📦 バックアップ</button>
+    </div>
+  </div>
+  <div id="status" class="status">自動保存ON</div>
+  <div class="note">「応答」はその場での返答、「結果回答」は確認後の最終回答として使えます。</div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>イベント名</th>
+          <th>項目</th>
+          <th>質疑</th>
+          <th>応答</th>
+          <th>結果回答</th>
+          <th class="del">削除</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="footer-note">※PDF送付時は削除ボタン等の操作部分は自動で非表示になります。</div>
+</section>
+</div>
+
+<div class="bottom">
+  <button onclick="location.href='./conan-event-import.html'">← コナン予定表へ戻る</button>
+  <button onclick="location.href='./index.html'">👑 KINGへ戻る</button>
+</div>
+
+<script>
+const KEY='fujiwara_conan_qa_v1';
+let rows=[];
+
+const SAMPLE=[{
+  date:'11/21',
+  event:'JA兵庫西佐用',
+  items:'① とんかつ・からあげ\n② フルーツ飴',
+  question:'① 2台以外に追加キッチンカー出来ますか？',
+  answer:'① 即答として1台は大丈夫です。\nその他の店舗は何を出されますか？',
+  final:'焼きそばです。'
+}];
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function saveAll(){
+  localStorage.setItem(KEY,JSON.stringify({
+    title:document.getElementById('docTitle').value,
+    rows,
+    updatedAt:new Date().toISOString()
+  }));
+  document.getElementById('status').textContent='保存済み：'+new Date().toLocaleString('ja-JP');
+}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(d&&Array.isArray(d.rows)){
+      rows=d.rows;
+      if(d.title)document.getElementById('docTitle').value=d.title;
+      return;
+    }
+  }catch(e){}
+  rows=SAMPLE.map(x=>({...x}));
+  saveAll();
+}
+function render(){
+  document.getElementById('tbody').innerHTML=rows.map((r,i)=>`<tr>
+    <td class="date"><input value="${esc(r.date||'')}" oninput="edit(${i},'date',this.value)"></td>
+    <td class="event"><textarea oninput="edit(${i},'event',this.value)">${esc(r.event||'')}</textarea></td>
+    <td class="items"><textarea oninput="edit(${i},'items',this.value)">${esc(r.items||'')}</textarea></td>
+    <td class="question"><textarea oninput="edit(${i},'question',this.value)">${esc(r.question||'')}</textarea></td>
+    <td class="answer"><textarea oninput="edit(${i},'answer',this.value)">${esc(r.answer||'')}</textarea></td>
+    <td class="final"><textarea oninput="edit(${i},'final',this.value)">${esc(r.final||'')}</textarea></td>
+    <td class="del"><button class="danger" onclick="delRow(${i})">削除</button></td>
+  </tr>`).join('');
+}
+function edit(i,k,v){rows[i][k]=v;saveAll()}
+function addRow(){rows.push({date:'',event:'',items:'',question:'',answer:'',final:''});saveAll();render()}
+function delRow(i){if(!confirm('この質疑を削除しますか？'))return;rows.splice(i,1);saveAll();render()}
+function rank(s){const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})/);return m?Number(m[1])*100+Number(m[2]):9999}
+function sortRows(){rows=rows.map((r,i)=>({r,i})).sort((a,b)=>rank(a.r.date)-rank(b.r.date)||a.i-b.i).map(x=>x.r);saveAll();render()}
+function backup(){
+  saveAll();
+  const d={type:'fujiwara_conan_qa',version:1,title:document.getElementById('docTitle').value,rows};
+  const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download='コナン質疑応答バックアップ.json';a.click();URL.revokeObjectURL(a.href)
+}
+load();render();
+</script>
+</body>
+</html>
