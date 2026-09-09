@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#6f3d8f">
-<title>準備アプリ｜全員Firebase共有版 v1.6</title>
+<title>準備アプリ｜全員Firebase共有版 v1.7</title>
 <style>
 :root{
   --main:#6f3d8f;--main2:#9b65b7;--pale:#f5eef9;--gold:#b88418;
@@ -58,12 +58,16 @@ textarea{min-height:70px;resize:vertical}
  .item-row{grid-template-columns:38px 1fr 70px 45px}
  .item-row .checker{grid-column:2/4}
 }
+
+.packing-staff-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.packing-staff-btn{border:1.5px solid var(--line);background:#fff;color:#5c4668;padding:10px 16px;border-radius:12px;font-weight:900}
+.packing-staff-btn.active{background:var(--main);color:#fff;border-color:var(--main)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ v1.6</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト｜Firebase全員共有</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ v1.7</h1><div class="sub">積込み担当：将・文太・繁充｜メイン出店ネタ全反映｜Firebase全員共有</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
@@ -85,7 +89,10 @@ textarea{min-height:70px;resize:vertical}
 <div class="grid3">
 <div><label>イベント名</label><input id="eventName" placeholder="例：柳まつり"></div>
 <div><label>日付</label><input id="eventDate" type="date"></div>
-<div><label>積込み担当</label><input id="staffName" value="繁充"></div>
+<div><label>積込み担当（将・文太・繁充のみ）</label>
+<input type="hidden" id="staffName" value="繁充">
+<div id="packingStaffButtons" class="packing-staff-buttons"></div>
+</div>
 </div>
 <div class="grid2" style="margin-top:10px">
 <div><label>会場</label><input id="place" placeholder="例：柳まつり会場"></div>
@@ -153,6 +160,7 @@ const STORAGE_KEY="fujiwara_preparation_events_v2";
 const OLD_KEY="fujiwara_preparation_app_v1";
 const PREPARATION_SHARE_LOCAL_KEY="fujiwara_preparation_shared_events_v1";
 const CHECKERS=["社長","将","文太","繁充"];
+const PACKING_STAFF=["将","文太","繁充"];
 const PREPARATION_CHECKLIST_FB_PATH="fujiwara/preparation_checklists_v1";
 let preparationDatabase=null;
 let preparationRemoteApplying=false;
@@ -182,6 +190,34 @@ function today(){return new Date().toISOString().slice(0,10)}
 function get(id){return document.getElementById(id)}
 function val(id){return get(id)?.value??""}
 function toast(msg){const t=get("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)}
+
+function parsePackingStaff(v){
+ const vals=String(v||'').split(/[・、,\s]+/).map(x=>x.trim()).filter(Boolean);
+ const filtered=PACKING_STAFF.filter(n=>vals.includes(n));
+ return filtered.length?filtered:["繁充"];
+}
+function renderPackingStaffButtons(){
+ const box=get("packingStaffButtons"); if(!box)return;
+ const selected=parsePackingStaff(val("staffName"));
+ box.innerHTML=PACKING_STAFF.map(n=>`<button type="button" class="packing-staff-btn ${selected.includes(n)?"active":""}" onclick="togglePackingStaff('${n}')">${n}</button>`).join("");
+}
+function togglePackingStaff(name){
+ let selected=parsePackingStaff(val("staffName"));
+ if(selected.includes(name)){
+   selected=selected.filter(x=>x!==name);
+ }else{
+   selected.push(name);
+ }
+ if(!selected.length) selected=["繁充"];
+ get("staffName").value=PACKING_STAFF.filter(n=>selected.includes(n)).join("・");
+ renderPackingStaffButtons();
+ const e=currentEvent();
+ if(e){e.staff=get("staffName").value;e.updatedAt=Date.now();persist();}
+}
+function sanitizePackingStaffValue(v){
+ return parsePackingStaff(v).join("・");
+}
+
 function checkerButtonsHtml(selected,onClick){return CHECKERS.map(n=>`<button type="button" class="checker-btn ${selected===n?"active":""}" onclick="${onClick}('${n}')">${n}</button>`).join("")}
 function selectManualChecker(name){get("manualChecker").value=name;renderManualCheckerButtons()}
 function renderManualCheckerButtons(){const box=get("manualCheckerButtons");if(box)box.innerHTML=checkerButtonsHtml(val("manualChecker"),"selectManualChecker")}
@@ -300,7 +336,7 @@ function syncSharedCategoriesToEvent(e,src,quiet=true){
  e.sourceMainId=String(src.mainId||src.id||e.sourceMainId||'');
  const oldByKey={};(e.items||[]).forEach(it=>oldByKey[(it.category||'')+'||'+(it.name||'')]=it);
  e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
- cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
+ cats.forEach(c=>categoryItemsFor(c).forEach(x=>{
    const key=c+'||'+x[0],old=oldByKey[key];
    e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
  }));
@@ -334,7 +370,9 @@ function newEvent(){
 function openEvent(id){
  currentId=id;const e=currentEvent();if(!e)return;
  get("eventId").value=e.id;get("eventName").value=e.name||"";get("eventDate").value=e.date||"";
- get("staffName").value=e.staff||"繁充";get("place").value=e.place||"";get("vehicle").value=e.vehicle||"";get("eventMemo").value=e.memo||"";
+ e.staff=sanitizePackingStaffValue(e.staff||"繁充");
+ get("staffName").value=e.staff;renderPackingStaffButtons();
+ get("place").value=e.place||"";get("vehicle").value=e.vehicle||"";get("eventMemo").value=e.memo||"";
  get("eventListSec").classList.add("hidden");get("editor").classList.remove("hidden");
  selectedCategories.clear();const src=sharedForEvent(e);if(src)syncSharedCategoriesToEvent(e,src,false);renderCategories();renderManualCheckerButtons();renderItems();window.scrollTo({top:0,behavior:"smooth"})
 }
@@ -342,7 +380,7 @@ function closeEditor(){saveCurrentEvent(false);showEventList()}
 function showEventList(){get("editor").classList.add("hidden");get("eventListSec").classList.remove("hidden");renderEventList();window.scrollTo({top:0,behavior:"smooth"})}
 function saveCurrentEvent(show=true){
  const e=currentEvent();if(!e){if(show)toast("先にイベントを作ってください");return}
- e.name=val("eventName").trim();e.date=val("eventDate");e.staff=val("staffName").trim();e.place=val("place").trim();e.vehicle=val("vehicle").trim();e.memo=val("eventMemo").trim();e.updatedAt=Date.now();
+ e.name=val("eventName").trim();e.date=val("eventDate");e.staff=sanitizePackingStaffValue(val("staffName"));get("staffName").value=e.staff;e.place=val("place").trim();e.vehicle=val("vehicle").trim();e.memo=val("eventMemo").trim();e.updatedAt=Date.now();
  persist();renderEventList();if(show)toast("このイベントを保存しました")
 }
 async function deleteCurrentEvent(){
@@ -364,9 +402,20 @@ function addItem(name,qty,category,checker=""){
  e.updatedAt=Date.now()
 }
 function addSelectedCategories(){
- if(!selectedCategories.size){toast("カテゴリーを選んでください");return}
- selectedCategories.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>addItem(x[0],x[1],c)));
- selectedCategories.clear();persist();renderCategories();renderItems();toast("カテゴリーの準備品を追加しました")
+ const e=currentEvent();if(!e)return;
+ let added=0;
+ selectedCategories.forEach(c=>{
+   const template=categoryItemsFor(c);
+   if(template.length){
+     template.forEach(x=>{const before=(e.items||[]).length;addItem(x[0],x[1],c);if((e.items||[]).length>before)added++;});
+   }else{
+     // メインに存在する新しいネタはカテゴリーとして残し、準備品は手動登録できるようにする
+     if(!Array.isArray(e.sharedCategories))e.sharedCategories=[];
+     if(!e.sharedCategories.includes(c))e.sharedCategories.push(c);
+   }
+ });
+ e.updatedAt=Date.now();persist();selectedCategories.clear();renderCategories();renderItems();
+ toast(added?`${added}件追加しました`:"カテゴリーを反映しました。準備品は手動追加できます");
 }
 function addAllCommon(){COMMON.forEach(x=>addItem(x[0],x[1],"共通備品"));persist();renderItems();toast("共通備品を追加しました")}
 function addManualItem(){
@@ -511,8 +560,14 @@ const CATEGORY_ALIASES={
  '肉巻きおにぎり':['肉巻きおにぎり','肉巻おにぎり','肉巻き','肉巻','肉巻きおむすび']
 };
 function categoryFromMenu(name){
- const raw=String(name||'').replace(/[\s　]+/g,'');
- return Object.keys(CATEGORY_ITEMS).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||null;
+ const original=String(name||'').trim();
+ if(!original)return null;
+ const raw=original.replace(/[\s　]+/g,'');
+ const known=Object.keys(CATEGORY_ITEMS).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))));
+ return known||original;
+}
+function categoryItemsFor(name){
+ return Array.isArray(CATEGORY_ITEMS[name])?CATEGORY_ITEMS[name]:[];
 }
 function categoriesFromShared(src){
  const found=[];
@@ -536,12 +591,12 @@ function importSharedEvent(mainId){
  const src=Object.values(sharedEvents).find(x=>String(x.mainId||x.id)===String(mainId)); if(!src)return;
  let e=db.events.find(x=>String(x.sourceMainId||'')===String(mainId));
  if(!e){ e=blankEvent(); e.sourceMainId=String(mainId); db.events.push(e); }
- e.name=src.name||e.name; e.date=src.date||e.date; e.place=src.place||e.place; e.vehicle=src.vehicle||e.vehicle; e.memo=src.memo||e.memo; e.staff=(Array.isArray(src.staff)&&src.staff.length?src.staff.join('・'):'繁充');
+ e.name=src.name||e.name; e.date=src.date||e.date; e.place=src.place||e.place; e.vehicle=src.vehicle||e.vehicle; e.memo=src.memo||e.memo; e.staff=sanitizePackingStaffValue(e.staff||'繁充');
  const cats=categoriesFromShared(src);
  // メインアプリ由来のカテゴリーだけを最新状態へ同期し、手動追加・共通備品・チェック状態は残します。
  const oldByKey={}; (e.items||[]).forEach(it=>{oldByKey[(it.category||'')+'||'+(it.name||'')]=it;});
  e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
- cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
+ cats.forEach(c=>categoryItemsFor(c).forEach(x=>{
    const key=c+'||'+x[0], old=oldByKey[key];
    e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
  }));
@@ -646,7 +701,7 @@ function startSharedEventSync(){
  }catch(e){sharedEvents={...readLocalSharedEvents()};renderSharedEvents();}
 }
 
-loadDB();renderCategories();renderManualCheckerButtons();renderEventList();sharedEvents=readLocalSharedEvents();renderSharedEvents();startPreparationChecklistSync();startSharedEventSync();
+loadDB();renderCategories();renderManualCheckerButtons();renderPackingStaffButtons();renderEventList();sharedEvents=readLocalSharedEvents();renderSharedEvents();startPreparationChecklistSync();startSharedEventSync();
 </script>
 </body>
 </html>
