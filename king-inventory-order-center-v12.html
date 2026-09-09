@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>在庫・発注・購入 管理センター v12.0</title>
+<meta name="theme-color" content="#17324d">
+<style>
+:root{--navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;--bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--shadow:0 10px 28px rgba(18,46,72,.10)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:linear-gradient(180deg,#f8fbfe,#eef6fb);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+.app{max-width:1180px;margin:auto;padding:0 14px 90px}header{margin:0 -14px 16px;padding:18px 16px;background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-radius:0 0 24px 24px;box-shadow:var(--shadow)}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:center}h1{font-size:clamp(22px,5vw,34px);margin:0;font-weight:950}.sub{margin-top:7px;color:#dcecff;font-size:13px;line-height:1.6}.back{border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:10px 12px;font-weight:900}
+.notice{background:#fff8df;border:1px solid #f2d47b;border-radius:16px;padding:12px 14px;margin-bottom:14px;color:#5c4914;font-size:13px;line-height:1.7;font-weight:800}.safe{background:#eaf7ef;border-color:#9fd5ad;color:#176541}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;color:#425568;border-radius:999px;padding:10px 14px;font-weight:900}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.page{display:none}.page.active{display:block}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}.card h2{margin:0 0 10px;font-size:20px}.muted{color:var(--muted);font-size:12px;line-height:1.6}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;text-align:center}.kpi small{display:block;color:var(--muted);font-weight:800}.kpi b{font-size:24px}
+.toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:10px}.field{flex:1;min-width:150px}label{display:block;font-size:11px;font-weight:900;color:#425568;margin:0 0 4px}input,select{width:100%;border:1.5px solid #cddbe6;background:#fff;border-radius:11px;padding:10px 11px;font-size:15px}.btn{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:pointer}.btn-primary{background:var(--navy);color:#fff}.btn-green{background:var(--green);color:#fff}.btn-soft{background:#eef3f7;color:#294055}.btn-gold{background:linear-gradient(135deg,#d5a62c,#f3c95e);color:#2d2100}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}th,td{padding:10px 9px;border-bottom:1px solid #edf1f5;text-align:left;font-size:12px;vertical-align:middle}th{position:sticky;top:0;background:#f4f8fb;color:#425568;font-size:11px;z-index:1}
+.pill{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:950;border:1px solid}.p-main{background:#fff3cd;color:#7a5600;border-color:#e4bd45}.p-sub{background:#eaf4ff;color:#155a96;border-color:#9cc9ee}.p-common{background:#e9f7ed;color:#146b35;border-color:#9fd5ad}.p-other{background:#f1f1f1;color:#666;border-color:#ccc}.p-mix{background:#f6eaff;color:#6b3c8d;border-color:#c9a9df}.role-select-main{background:#fff9dc;border-color:#e4bd45}.role-select-sub{background:#eef7ff;border-color:#9cc9ee}.role-select-common{background:#eef9f1;border-color:#9fd5ad}
+.empty{text-align:center;padding:28px;color:var(--muted)}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.money{font-size:28px;font-weight:950;color:#176541}.money.red{color:#b42318}.money.blue{color:#155a96}.money.gold{color:#8a5a00}.procure-chip{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:950}.procure-order{background:#fff3cd;color:#7a5600;border:1px solid #e4bd45}.procure-local{background:#eaf4ff;color:#155a96;border:1px solid #9cc9ee}.fund-note{background:#fff7df;border:1px solid #e5c96a;border-radius:14px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}.diag{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px;font-size:12px;line-height:1.7}.diag .bad{color:#b42318;font-weight:900}.diag .good{color:#176541;font-weight:900}.plan-grid{display:grid;grid-template-columns:1fr 170px 120px;gap:8px;align-items:center}.plan-row{padding:10px 0;border-bottom:1px solid #edf1f5}.plan-row:last-child{border-bottom:0}.plan-name{font-weight:950}.plan-meta{font-size:11px;color:var(--muted);margin-top:3px}.plan-save{background:#eaf7ef;border:1px solid #9fd5ad;color:#176541;border-radius:12px;padding:10px;font-size:12px;font-weight:900}@media(max-width:650px){.plan-grid{grid-template-columns:1fr}}.event-list{display:flex;gap:7px;flex-wrap:wrap}.ev{padding:7px 10px;border-radius:10px;background:#f4f8fb;border:1px solid var(--line);font-size:12px;font-weight:900}
+.footer{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:50}.footer .btn{min-width:150px}
+@media(max-width:800px){.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}@media print{header,.tabs,.notice,.footer,.no-print{display:none!important}.app{padding:0}.page{display:none!important}#page-week{display:block!important}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v12</h1><div class="sub">メインアプリの出店ネタだけを自動表示し、ネタ別の予定設定販売金額から仕入計画へ連動</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
+
+<div class="notice safe">🔒 <b>メイン・KING・現在庫・材料マスターは書き換えません。</b><br>
+このv12では、イベントを選ぶと<b>メインアプリに登録されている出店ネタだけ</b>を表示します。
+各ネタには「予定販売数」ではなく<b>予定設定販売金額</b>を表示・保存します。
+材料マスターに販売単価があるネタは、設定金額÷販売単価で予定販売数へ換算し、必要材料・発注・購入・仕入資金へ連動します。
+現在庫そのものは書き換えません。</div>
+<div class="notice"><b>⭐ 表示方法を改善：</b>
+ネタを選ぶと、在庫管理の<b>同じカテゴリ</b>にある品目を自動取得します。
+例：からあげ → 主力材料「鶏肉」／それ以外はすべてサブ材料。今後在庫管理に品目を追加しても自動反映します。
+</div>
+
+<div class="tabs">
+<button class="tab active" onclick="showPage('inventory',this)">📦 在庫</button>
+<button class="tab" onclick="showPage('roles',this)">🍢 ネタ別 材料分類</button>
+<button class="tab" onclick="showPage('master',this)">📚 材料マスター確認</button>
+<button class="tab" onclick="showPage('plan',this)">📝 イベント予定設定</button>
+<button class="tab" onclick="showPage('week',this)">📅 今週早見表</button>
+<button class="tab" onclick="showPage('funds',this)">💰 発注・購入・仕入資金</button>
+</div>
+
+<section id="page-inventory" class="page active">
+<div class="kpis"><div class="kpi"><small>在庫品目</small><b id="invCount">0</b></div><div class="kpi"><small>ネタ</small><b id="netaCount">0</b></div><div class="kpi"><small>材料設定</small><b id="matCount">0</b></div><div class="kpi"><small>今週イベント</small><b id="eventCount">0</b></div></div>
+<div class="card"><h2>📦 現在庫（読み取り専用）</h2><div class="muted">メインアプリの在庫を表示。ここから数量変更はしません。</div>
+<div class="toolbar"><div class="field"><label>検索</label><input id="invSearch" oninput="renderInventory()" placeholder="品目・カテゴリ・保管場所"></div><button class="btn btn-soft no-print" onclick="loadAll()">🔄 最新読込</button></div>
+<div class="table-wrap"><table><thead><tr><th>品目</th><th>カテゴリ</th><th>在庫</th><th>保管場所</th><th>更新者</th></tr></thead><tbody id="invBody"></tbody></table></div></div>
+</section>
+
+<section id="page-roles" class="page">
+<div class="card">
+  <div class="toolbar">
+    <div style="flex:1">
+      <h2>🍢 ネタ別 主力材料・サブ材料</h2>
+      <div class="muted">
+        ネタを選ぶと、主力材料は上に固定表示します。
+        下には在庫管理の「選択したネタと同じカテゴリ」から、主力材料以外をサブ材料候補として表示します。
+      </div>
+    </div>
+    <button class="btn btn-soft no-print" onclick="renderRoles()">🔄 再表示</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="field">
+      <label>ネタを選択</label>
+      <select id="roleNeta" onchange="renderRoles()"></select>
+    </div>
+    <div class="field">
+      <label>サブ材料を検索</label>
+      <input id="roleSearch" placeholder="例：キャベツ、ソース、油" oninput="renderRoles()">
+    </div>
+  </div>
+
+  <div id="mainMaterialBox" class="notice" style="margin-top:8px"></div>
+
+  <div class="card" style="margin:12px 0 0;background:#f7fbff;box-shadow:none">
+    <h3>🔹 サブ材料（在庫管理から自動反映）</h3>
+    <div class="muted" style="margin-bottom:10px">
+      主力材料は除外しています。同じ在庫カテゴリのその他品目は、自動的にサブ材料として表示します。
+    </div>
+    <div id="subMaterialSummary" class="notice" style="margin-bottom:10px"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>在庫品目</th><th>カテゴリ</th><th>現在庫</th><th>保管場所</th><th>状態</th><th>操作</th></tr></thead>
+        <tbody id="rolesBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</section>
+<section id="page-master" class="page">
+<div class="card"><div class="toolbar"><div style="flex:1"><h2>📚 現行 材料マスター</h2><div class="muted">使用資材・1単位で作れる数・発注先・単価・最低在庫は、既存の材料マスターを正とします。</div></div><button class="btn btn-gold" onclick="location.href='material-master.html'">材料マスターを編集</button></div>
+<div class="table-wrap"><table><thead><tr><th>ネタ</th><th>現行区分</th><th>品目</th><th>単位</th><th>1単位で作れる数</th><th>発注先</th><th>単価</th><th>最低在庫</th></tr></thead><tbody id="masterBody"></tbody></table></div></div>
+</section>
+
+
+<section id="page-plan" class="page">
+  <div class="card">
+    <div class="toolbar">
+      <div style="flex:1">
+        <h2>📝 イベント別 出店ネタ・予定設定販売金額</h2>
+        <div class="muted">イベントを選ぶと、メインアプリの出店ネタだけを表示します。ネタごとの予定設定販売金額を確認・入力して保存します。</div>
+      </div>
+      <button class="btn btn-soft no-print" onclick="renderPlan()">🔄 再表示</button>
+    </div>
+    <div class="toolbar">
+      <div class="field"><label>イベントを選択</label><select id="planEvent" onchange="renderPlanRows()"></select></div>
+    </div>
+    <div class="notice">💡 予定設定販売金額 ÷ 材料マスターの販売単価 ＝ 予定販売数として計算します。販売単価または「1単位で作れる数」が未設定のものは自動計算できません。</div>
+    <div class="card" style="box-shadow:none;background:#fbfdff"><div id="planRows"></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="savePlan()">💾 予定設定販売金額を保存</button>
+      <button class="btn btn-soft" onclick="clearPlan()">入力をクリア</button>
+    </div>
+    <div id="planSavedInfo" class="plan-save" style="margin-top:10px">まだ保存していません</div>
+  </div>
+</section>
+<section id="page-week" class="page">
+<div class="card"><div class="toolbar"><div style="flex:1"><h2>📅 今週の全イベント 早見一覧</h2><div id="weekRange" class="muted"></div></div><button class="btn btn-soft no-print" onclick="window.print()">🖨️ 印刷</button></div><div id="weekEvents" class="event-list"></div></div>
+<div class="two">
+<div class="card"><small>⭐ 主力材料 必要金額（在庫差引前）</small><div class="money" id="mainMoney">¥0</div></div>
+<div class="card"><small>🔹 サブ材料 必要金額（在庫差引前）</small><div class="money" id="subMoney">¥0</div></div>
+</div>
+<div class="kpis"><div class="kpi"><small>全必要材料数</small><b id="needTotal">0</b></div><div class="kpi"><small>購入対象品目</small><b id="buyItems">0</b></div><div class="kpi"><small>購入予定数量</small><b id="buyQty">0</b></div><div class="kpi"><small>購入予定金額</small><b id="buyMoney" style="font-size:19px">¥0</b></div></div>
+<div class="card"><h2>🛒 今週 何を何個買うか</h2><div class="muted">主力ネタ一覧に今週分を保存済みのイベントを集計します。必要数はイベント別記録、在庫は現在庫、単価・購入先は材料マスターから取得します。</div>
+<div class="table-wrap"><table><thead><tr><th>材料</th><th>使用ネタ</th><th>材料分類</th><th>必要数</th><th>現在庫</th><th>購入数</th><th>単価</th><th>購入予定額</th><th>購入先</th></tr></thead><tbody id="weekBody"></tbody></table></div></div>
+<div class="notice" id="weekNote">今週の販売数・必要材料が保存されていないイベントは自動計算に入りません。材料の主力/サブ判定は、このv12の自動材料分類を使います。</div>
+</section>
+</div>
+
+
+<section id="page-funds" class="page">
+  <div class="card">
+    <div class="toolbar">
+      <div style="flex:1">
+        <h2>💰 発注・購入・仕入資金 管理</h2>
+        <div class="muted">次回・今週イベントの必要材料を、主力材料＝早めに発注／サブ材料＝近くで購入として自動振り分けします。</div>
+      </div>
+      <button class="btn btn-soft no-print" onclick="renderFunds()">🔄 再計算</button>
+      <button class="btn btn-soft no-print" onclick="window.print()">🖨️ 印刷</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="field">
+        <label>対象期間</label>
+        <select id="fundRange" onchange="renderFunds()">
+          <option value="next">次回イベント</option>
+          <option value="week" selected>今週の全イベント</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="fundEvents" class="event-list" style="margin-bottom:12px"></div>
+
+    <div class="kpis">
+      <div class="kpi"><small>早めに発注</small><b id="fundOrderCount">0</b></div>
+      <div class="kpi"><small>近くで購入</small><b id="fundLocalCount">0</b></div>
+      <div class="kpi"><small>購入予定合計</small><b id="fundBuyTotal" style="font-size:19px">¥0</b></div>
+      <div class="kpi"><small>確保する仕入資金</small><b id="fundReserve" style="font-size:19px">¥0</b></div>
+    </div>
+
+    <div class="two">
+      <div class="card" style="margin:0;background:#fffaf0">
+        <small>⭐ 主力材料＝早めに発注</small>
+        <div class="money gold" id="fundMainMoney">¥0</div>
+        <div class="muted">時間がかかる・欠品すると困る材料</div>
+      </div>
+      <div class="card" style="margin:0;background:#f5faff">
+        <small>🔹 サブ材料＝近くで購入</small>
+        <div class="money blue" id="fundSubMoney">¥0</div>
+        <div class="muted">近隣店舗・業務スーパー等で購入する材料</div>
+      </div>
+    </div>
+
+    <div class="fund-note" style="margin-top:14px">
+      💡 <b>仕入資金の確保額</b>は、在庫差引後の購入予定金額の合計です。
+      発注済・購入済の管理は次段階で追加できます。
+    </div>
+    <div id="fundDiag" class="diag">🔎 保存データ照合を確認中...</div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>📦 調達一覧</h3>
+      <div class="muted" style="margin-bottom:8px">管理センターv12で保存した予定設定販売金額を最優先し、未保存時はイベント別仕入管理、その次に主力ネタ一覧から補完します。</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>材料</th><th>使用ネタ</th><th>調達方法</th><th>必要数</th><th>現在庫</th><th>購入数</th><th>単価</th><th>予定額</th><th>購入先</th></tr></thead>
+          <tbody id="fundBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="footer"><button class="btn btn-primary" onclick="location.href='king.html'">👑 KINGへ</button><button class="btn btn-green" onclick="location.href='index.html?open=inventory&manager=1'">📦 在庫管理へ</button></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);const db=firebase.database();
+const MASTER_PATH='fujiwara/mainNetaSalesSharedV1';
+const ROLE_PATH='fujiwara/inventory_order_center_v1/materialRolesV4';
+const PLAN_PATH='fujiwara/inventory_order_center_v1/eventPlansV11';
+let inventory=[],events=[],meta={},master={records:[],customMaster:{}},materialRoles={links:[],updatedAt:''},shoppingListsRaw={},shoppingLists=[],eventPlans={};
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').trim().replace(/\s+/g,'').toLowerCase();
+const arr=v=>Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]);
+const yen=n=>'¥'+Math.round(Number(n||0)).toLocaleString('ja-JP');
+function pill(c){let k=c==='主力材料'?'p-main':c==='サブ材料'?'p-sub':c==='共通'?'p-common':c==='混在'?'p-mix':'p-other';return `<span class="pill ${k}">${esc(c||'未設定')}</span>`}
+function showPage(n,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+n).classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(n==='plan')renderPlan();if(n==='week')renderWeek();if(n==='funds')renderFunds()}
+
+function safeKey(s){return String(s||'').replace(/[.#$/\[\]]/g,'_')}
+function planKeyForEvent(e){
+ const id=String(e.id||'').trim();
+ if(id)return 'id_'+safeKey(id);
+ return 'd_'+safeKey(String(e.date||'').slice(0,10))+'_n_'+safeKey(normalizeEventName(e.name||''));
+}
+function planForEvent(e){return eventPlans[planKeyForEvent(e)]||null}
+
+function eventNetaNamesV12(ev){
+ const out=[];
+ const raw=String(ev.itemsText||ev.itemsName||ev.menu||'').normalize('NFKC');
+ const aliases={
+  '焼きそば・ホルそば':['焼きそば','焼そば','ホルそば','焼きそば・ホルそば'],
+  '串':['串','牛串','牛たん串','豚タン串','ねぎま','鶏皮','砂ずり','ぼんじり','ホルモン'],
+  'かき氷':['かき氷','カキ氷'],
+  'チーズハットグ':['チーズハットグ','ハットグ'],
+  'かまぼこ':['かまぼこ'],
+  'いか焼き':['いか焼き','イカ焼き'],
+  'ポテト':['ポテト','フライドポテト'],
+  'かすてら':['かすてら','カステラ','ベビーカステラ'],
+  'コットンキャンディ':['コットンキャンディ','コットンキャンディー','わたあめ','綿菓子'],
+  'だんご':['だんご','団子'],
+  '肉巻きおにぎり':['肉巻きおにぎり','肉巻き'],
+  'らーめん':['らーめん','ラーメン'],
+  'チョコバナナ':['チョコバナナ'],
+  'とんかつスティック':['とんかつスティック','とんかつ'],
+  'からあげ':['からあげ','唐揚げ','唐揚'],
+  '10円パン':['10円パン','10円玉のパン']
+ };
+ Object.entries(aliases).forEach(([name,list])=>{
+   if(list.some(a=>raw.includes(a))&&!out.includes(name))out.push(name);
+ });
+ return out;
+}
+function saleUnitPriceFor(neta){
+ const sales=rowsFor(neta).filter(r=>(r.type||'sale')!=='material' && Number(r.unitPrice||0)>0);
+ if(!sales.length)return 0;
+ // 同じネタ内に複数商品がある場合は、最初に登録された販売単価を代表値として使用
+ sales.sort((a,b)=>(Number(a.order)||999)-(Number(b.order)||999));
+ return Number(sales[0].unitPrice||0);
+}
+function matchedShoppingListForEvent(e){
+ const result=shoppingListsForEvents([e]);
+ return result.matched && result.matched[0] ? result.matched[0] : null;
+}
+function inheritedTargetAmount(e,neta){
+ const s=matchedShoppingListForEvent(e);
+ if(s && s.prices && typeof s.prices==='object' && Number(s.prices[neta]||0)>0)return Number(s.prices[neta]||0);
+ return 0;
+}
+
+function renderPlan(){
+ const sel=document.getElementById('planEvent'); if(!sel)return;
+ const current=sel.value;
+ const list=events.slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+ sel.innerHTML=list.map((e,i)=>`<option value="${i}">${esc(String(e.date||'').slice(0,10))} ${esc(e.name||'')}</option>`).join('');
+ sel.dataset.list=JSON.stringify(list.map(e=>({id:e.id||'',date:e.date||'',name:e.name||''})));
+ if(current!==''&&Number(current)<list.length)sel.value=current;
+ renderPlanRows();
+}
+function currentPlanEvent(){
+ const sel=document.getElementById('planEvent'); if(!sel)return null;
+ let list=[];try{list=JSON.parse(sel.dataset.list||'[]')}catch(e){}
+ return list[Number(sel.value||0)]||null;
+}
+function renderPlanRows(){
+ const e=currentPlanEvent(); if(!e)return;
+ const plan=planForEvent(e)||{items:{},updatedAt:''};
+ const netas=eventNetaNamesV12(e);
+ if(!netas.length){
+   document.getElementById('planRows').innerHTML='<div class="empty">メインアプリの出店ネタが登録されていません</div>';
+   document.getElementById('planSavedInfo').textContent='メインアプリのイベント編集で出店ネタを登録してください';
+   return;
+ }
+ document.getElementById('planRows').innerHTML=netas.map((name,idx)=>{
+   const neta=CANONICAL_MAIN_NETA.find(x=>x.name===name)||{name,items:[]};
+   const saved=Number(plan.items?.[name]||0);
+   const inherited=inheritedTargetAmount(e,name);
+   const amount=saved||inherited||0;
+   const salePrice=saleUnitPriceFor(name);
+   const estQty=salePrice>0&&amount>0?Math.floor(amount/salePrice):0;
+   const mats=rowsFor(name).filter(r=>r.type==='material').length;
+   return `<div class="plan-row"><div class="plan-grid">
+     <div>
+       <div class="plan-name">${idx+1}. ${esc(name)}</div>
+       <div class="plan-meta">主力材料：${esc((neta.items||[]).join('・')||'未設定')} / 材料マスター ${mats}件</div>
+       <div class="plan-meta">販売単価：${salePrice?yen(salePrice):'未設定'}${estQty?` / 推定販売数 ${estQty}`:''}</div>
+     </div>
+     <div><label>予定設定販売金額</label><input class="planQty" data-neta="${esc(name)}" type="number" min="0" step="100" value="${amount||''}" placeholder="0"></div>
+     <div style="align-self:end">円</div>
+   </div></div>`;
+ }).join('');
+ document.getElementById('planSavedInfo').textContent=plan.updatedAt?'保存済み：'+new Date(plan.updatedAt).toLocaleString('ja-JP'):'このイベントの予定設定販売金額はまだ保存されていません';
+}
+async function savePlan(){
+ const e=currentPlanEvent(); if(!e)return alert('イベントを選択してください');
+ const items={};
+ document.querySelectorAll('.planQty').forEach(inp=>{const v=Number(inp.value||0);if(v>0)items[inp.dataset.neta]=v});
+ const key=planKeyForEvent(e);
+ eventPlans[key]={eventId:e.id||'',eventDate:String(e.date||'').slice(0,10),eventName:e.name||'',items,mode:'targetAmount',updatedAt:new Date().toISOString()};
+ await db.ref(PLAN_PATH+'/'+key).set(eventPlans[key]);
+ renderPlanRows();renderWeek();renderFunds();
+ alert('予定設定販売金額を保存しました');
+}
+async function clearPlan(){
+ const e=currentPlanEvent(); if(!e)return;
+ if(!confirm('このイベントの予定設定販売金額をクリアしますか？'))return;
+ const key=planKeyForEvent(e);
+ delete eventPlans[key];
+ await db.ref(PLAN_PATH+'/'+key).remove();
+ renderPlanRows();renderWeek();renderFunds();
+}
+function materialNeedFromPlan(netaName,targetAmount){
+ const salePrice=saleUnitPriceFor(netaName);
+ const salesQty=salePrice>0?Math.floor(Number(targetAmount||0)/salePrice):0;
+ return rowsFor(netaName).filter(r=>r.type==='material').map(r=>{
+   const yieldQty=Number(r.yieldQty||0);
+   return {neta:netaName,item:r.name||'',unit:r.unit||'',need:yieldQty>0?Math.ceil(salesQty/yieldQty):0,unitPrice:Number(r.unitPrice||0),supplier:r.supplier||'',yieldQty,salesQty,targetAmount:Number(targetAmount||0),salePrice};
+ }).filter(x=>x.item);
+}
+function planRecordsForEvents(evs){
+ const out=[];
+ evs.forEach(e=>{
+   const p=planForEvent(e); if(!p||!p.items)return;
+   Object.entries(p.items).forEach(([neta,qty])=>{
+     materialNeedFromPlan(neta,qty).forEach(m=>out.push({eventId:e.id||'',date:String(e.date||'').slice(0,10),eventName:e.name||'',category:neta,subItem:m.item,rowType:'material',qty:m.need,unit:m.unit,unitPrice:m.unitPrice,supplier:m.supplier,source:'v11Plan'}));
+   });
+ });
+ return out;
+}
+
+function weekBounds(){const n=new Date();n.setHours(0,0,0,0);const d=n.getDay(),diff=d===0?-6:1-d;const s=new Date(n);s.setDate(n.getDate()+diff);const e=new Date(s);e.setDate(s.getDate()+6);return[s,e]}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function categories(){
+ const s=new Set(CANONICAL_MAIN_NETA.map(x=>x.name));
+ Object.keys(master.customMaster||{}).forEach(x=>s.add(x));
+ (master.records||[]).forEach(r=>r.category&&s.add(r.category));
+ return [...s].filter(Boolean).sort((a,b)=>{
+   const ia=CANONICAL_MAIN_NETA.findIndex(x=>x.name===a), ib=CANONICAL_MAIN_NETA.findIndex(x=>x.name===b);
+   if(ia>=0&&ib>=0)return ia-ib;
+   if(ia>=0)return -1;
+   if(ib>=0)return 1;
+   return a.localeCompare(b,'ja');
+ });
+}
+function roleOf(neta,material){
+ const c=CANONICAL_MAIN_NETA.find(x=>x.name===neta);
+ if(c&&c.items.some(x=>norm(x)===norm(material)))return '主力材料';
+ const inv=inventory.find(x=>norm(x.name)===norm(material)&&categoryMatchesNeta(x.cat||'',neta));
+ if(inv)return 'サブ材料';
+ return '未設定';
+}
+function setRoleLocal(neta,material,role){
+ materialRoles.links=(materialRoles.links||[]).filter(x=>!(x.neta===neta&&norm(x.material)===norm(material)));
+ if(role && role!=='未設定') materialRoles.links.push({neta,material,role});
+}
+async function saveRole(neta,material,role){
+ setRoleLocal(neta,material,role);
+ materialRoles.updatedAt=new Date().toISOString();
+ await db.ref(ROLE_PATH).set(materialRoles);
+ renderRoles();
+ renderWeek();
+}
+function rowsFor(cat){return arr(master.customMaster?.[cat]).slice().sort((a,b)=>(Number(a.order)||999)-(Number(b.order)||999))}
+function masterRow(cat,name){let rows=rowsFor(cat),n=norm(name);return rows.find(r=>norm(r.name)===n)||null}
+function invFor(name){let n=norm(name);return inventory.filter(x=>norm(x.name)===n)}
+function stockFor(name){return invFor(name).reduce((s,x)=>s+Number(x.stock||0),0)}
+
+
+const CANONICAL_MAIN_NETA = [
+ {name:'焼きそば・ホルそば',items:['麺','豚肉']},
+ {name:'串',items:['牛串','牛たん串','豚タン串','ねぎま','鶏皮','砂ずり','ぼんじり','ホルモン']},
+ {name:'かき氷',items:['ブロック氷','フラワーカップ']},
+ {name:'チーズハットグ',items:['チーズハットグ']},
+ {name:'かまぼこ',items:['ネギ生姜','とり軟骨','ベーコンチーズ','たこネギ','えだまめ','ごぼう','かに']},
+ {name:'いか焼き',items:['姿','ゲソ']},
+ {name:'ポテト',items:['ポテト','のり塩','醤油マヨ','えび塩','カレー','コンソメ','チーズ','明太マヨ','ガーリック','バーベキュー']},
+ {name:'かすてら',items:['バイオレット','三温糖','上白糖','たまご']},
+ {name:'コットンキャンディ',items:['カップ','ざらめ(白)','ざらめ(ピンク)','ざらめ(青)','ざらめ(緑)','ざらめ(紫)','ざらめ(オレンジ)','ざらめ(黄)']},
+ {name:'だんご',items:['だんご(白)','だんご(草)','だんご(桜)','だんご(かぼちゃ)','みたらしあん']},
+ {name:'肉巻きおにぎり',items:['肉巻き']},
+ {name:'らーめん',items:['麺','焼豚','鶏ガラ','どんぶり']},
+ {name:'チョコバナナ',items:['バナナ','チョコレート(茶)','チョコレート(白)','カラースプレー']},
+ {name:'とんかつスティック',items:['豚肉']},
+ {name:'からあげ',items:['鶏肉']},
+ {name:'10円パン',items:['ミックス粉','三温糖','たまご']}
+];
+
+// 在庫管理側のカテゴリ名と、正規ネタ名の表記ゆれを吸収
+const NETA_CATEGORY_ALIASES = {
+ '焼きそば・ホルそば':['焼きそば・ホルそば','焼きそば ホルそば','焼きそば　ホルそば','焼きそば/ホルそば','焼きそば','焼そば','ホルそば'],
+ '串':['串'],
+ 'かき氷':['かき氷'],
+ 'チーズハットグ':['チーズハットグ'],
+ 'かまぼこ':['かまぼこ'],
+ 'いか焼き':['いか焼き'],
+ 'ポテト':['ポテト'],
+ 'かすてら':['かすてら','カステラ'],
+ 'コットンキャンディ':['コットンキャンディ'],
+ 'だんご':['だんご','団子'],
+ '肉巻きおにぎり':['肉巻きおにぎり'],
+ 'らーめん':['らーめん','ラーメン'],
+ 'チョコバナナ':['チョコバナナ'],
+ 'とんかつスティック':['とんかつスティック'],
+ 'からあげ':['からあげ','唐揚げ','から揚げ'],
+ '10円パン':['10円パン','10円玉のパン']
+};
+function catNorm(s){
+ return String(s||'')
+   .normalize('NFKC')
+   .toLowerCase()
+   .replace(/[\s　・･\/／_\-ー―—.,，。()（）【】\[\]]+/g,'');
+}
+function categoryMatchesNeta(cat,neta){
+ const c=catNorm(cat);
+ const aliases=NETA_CATEGORY_ALIASES[neta]||[neta];
+ return aliases.some(a=>{
+   const x=catNorm(a);
+   return c===x || (x && c.includes(x)) || (c && x.includes(c));
+ });
+}
+
+
+function seedCanonicalMainRoles(){ return false; }
+
+async function loadAll(){
+ try{
+  const [fs,ms,rs,ss,ps]=await Promise.all([db.ref('fujiwara').once('value'),db.ref(MASTER_PATH).once('value'),db.ref(ROLE_PATH).once('value'),db.ref('fujiwara/shoppingLists').once('value'),db.ref(PLAN_PATH).once('value')]);
+  const f=fs.val()||{},m=ms.val()||{};
+  inventory=arr(f.invItems);events=arr(f.events);meta=f.inventoryMeta||{};
+  master={records:arr(m.records),customMaster:m.customMaster&&typeof m.customMaster==='object'?m.customMaster:{}};
+  materialRoles=rs.val()||{links:[],updatedAt:''};
+  shoppingListsRaw=ss.val()||{};
+  shoppingLists=Object.entries(shoppingListsRaw).map(([key,val])=>({__key:key,...(val||{})}));
+  eventPlans=ps.val()||{};
+  if(!Array.isArray(materialRoles.links)) materialRoles.links=arr(materialRoles.links);
+  const canonChanged=seedCanonicalMainRoles();
+  if(canonChanged) await db.ref(ROLE_PATH).set(materialRoles);
+  renderAll();
+ }catch(e){alert('読込に失敗しました：'+(e.message||e))}
+}
+function renderAll(){
+ document.getElementById('invCount').textContent=inventory.length;
+ document.getElementById('netaCount').textContent=categories().length;
+ document.getElementById('matCount').textContent=categories().reduce((s,c)=>s+rowsFor(c).filter(r=>r.type==='material').length,0);
+ const [ws,we]=weekBounds();document.getElementById('eventCount').textContent=events.filter(e=>String(e.date||'')>=iso(ws)&&String(e.date||'')<=iso(we)).length;
+ renderInventory();renderRoleNetaSelect();renderRoles();renderMaster();renderPlan();renderWeek();
+}
+function renderInventory(){
+ const q=norm(document.getElementById('invSearch').value);
+ const list=inventory.filter(x=>!q||norm([x.name,x.cat,x.loc].join(' ')).includes(q));
+ document.getElementById('invBody').innerHTML=list.length?list.map(x=>`<tr><td><b>${esc(x.name||'')}</b></td><td>${esc(x.cat||'')}</td><td><b>${Number(x.stock||0)}</b> ${esc(x.unit||'')}</td><td>${esc(x.loc||'未設定')}</td><td>${esc(x.inventoryUpdatedBy||meta.updatedBy||'-')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">該当なし</td></tr>';
+}
+function renderRoleNetaSelect(){
+ const sel=document.getElementById('roleNeta'); if(!sel)return;
+ const current=sel.value;
+ sel.innerHTML=CANONICAL_MAIN_NETA.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+ if(CANONICAL_MAIN_NETA.some(x=>x.name===current)) sel.value=current;
+}
+
+function canonicalMainItems(neta){
+ const x=CANONICAL_MAIN_NETA.find(v=>v.name===neta);
+ return x?x.items.slice():[];
+}
+
+function roleLink(neta,material){
+ return (materialRoles.links||[]).find(x=>x.neta===neta&&norm(x.material)===norm(material));
+}
+
+function isMainMaterial(neta,material){
+ const canonical=canonicalMainItems(neta).some(x=>norm(x)===norm(material));
+ const saved=roleLink(neta,material);
+ if(saved && saved.role==='サブ材料') return false;
+ if(saved && saved.role==='主力材料') return true;
+ return canonical;
+}
+
+function isSubMaterial(neta,material){
+ const saved=roleLink(neta,material);
+ return !!(saved && saved.role==='サブ材料');
+}
+
+async function setSubMaterial(netaEnc,materialEnc,on){
+ const neta=decodeURIComponent(netaEnc), material=decodeURIComponent(materialEnc);
+ materialRoles.links=(materialRoles.links||[]).filter(x=>!(x.neta===neta&&norm(x.material)===norm(material)));
+ if(on){
+   materialRoles.links.push({neta,material,role:'サブ材料'});
+ }
+ materialRoles.updatedAt=new Date().toISOString();
+ await db.ref(ROLE_PATH).set(materialRoles);
+ renderRoles();
+ renderWeek();
+}
+
+function renderRoles(){
+ const sel=document.getElementById('roleNeta'); if(!sel)return;
+ if(!sel.options.length) renderRoleNetaSelect();
+ const neta=sel.value||CANONICAL_MAIN_NETA[0].name;
+ const q=norm(document.getElementById('roleSearch')?.value||'');
+
+ const mainNames=canonicalMainItems(neta);
+ const existingMain=mainNames.map(name=>{
+   const invs=inventory.filter(x=>norm(x.name)===norm(name));
+   const total=invs.reduce((s,x)=>s+Number(x.stock||0),0);
+   const unit=invs.find(x=>x.unit)?.unit||'';
+   return {name,total,unit,found:invs.length>0};
+ });
+
+ document.getElementById('mainMaterialBox').innerHTML =
+   `<b>${esc(neta)}</b><br>`+
+   `⭐ <b>主力材料：</b> `+
+   (existingMain.length
+     ? existingMain.map(x=>`${esc(x.name)}${x.found?`（在庫 ${x.total}${esc(x.unit)}）`:'（在庫未登録）'}`).join('・')
+     : '未設定');
+
+ const sourceCats=(NETA_CATEGORY_ALIASES[neta]||[neta]).join(' / ');
+ document.getElementById('subMaterialSummary').innerHTML =
+   `📦 <b>参照する在庫カテゴリ：</b> ${esc(sourceCats)}<br>`+
+   `🔹 <b>サブ材料：</b> 同カテゴリ内の主力材料以外を自動表示`;
+
+ // サブ候補は「在庫管理で選択ネタと同じカテゴリ」の品目だけ。
+ // 例：からあげ → 唐揚げカテゴリ → 鶏肉以外（醤油・にんにく・しょうが…）
+ const byName=new Map();
+ inventory.forEach(x=>{
+   const name=String(x.name||'').trim();
+   if(!name || !categoryMatchesNeta(x.cat||'',neta) || isMainMaterial(neta,name)) return;
+   const key=norm(name);
+   if(!byName.has(key)) byName.set(key,{name,cat:x.cat||'',stock:0,unit:x.unit||'',locs:new Set()});
+   const g=byName.get(key);
+   g.stock+=Number(x.stock||0);
+   if(!g.unit && x.unit)g.unit=x.unit;
+   if(x.loc)g.locs.add(x.loc);
+   if(!g.cat && x.cat)g.cat=x.cat;
+ });
+
+ const list=[...byName.values()]
+   .filter(x=>!q||norm([x.name,x.cat,[...x.locs].join(' ')].join(' ')).includes(q))
+   .sort((a,b)=>String(a.name).localeCompare(String(b.name),'ja'));
+
+ document.getElementById('rolesBody').innerHTML=list.length?list.map(x=>`<tr>
+    <td><b>${esc(x.name)}</b></td>
+    <td>${esc(x.cat||'')}</td>
+    <td>${Number(x.stock||0)} ${esc(x.unit||'')}</td>
+    <td>${esc([...x.locs].join('・')||'未設定')}</td>
+    <td><span class="pill p-sub">サブ材料</span></td>
+    <td><span class="muted">自動反映</span></td>
+   </tr>`).join(''):'<tr><td colspan="6" class="empty">このネタの在庫カテゴリに、主力材料以外の品目がありません</td></tr>';
+}
+function renderMaster(){
+ let out=[];categories().forEach(cat=>rowsFor(cat).forEach(r=>out.push(`<tr><td><b>${esc(cat)}</b></td><td>${r.type==='material'?'<span class="pill p-main">使用資材</span>':'売上商品'}</td><td>${esc(r.name||'')}</td><td>${esc(r.unit||'')}</td><td>${r.type==='material'?Number(r.yieldQty||0):'-'}</td><td>${esc(r.supplier||'')}</td><td>${yen(r.unitPrice)}</td><td>${Number(r.minStock||0)}</td></tr>`)));
+ document.getElementById('masterBody').innerHTML=out.join('')||'<tr><td colspan="8" class="empty">材料マスター未登録</td></tr>';
+}
+function renderWeek(){
+ const [s,e]=weekBounds(),ss=iso(s),ee=iso(e);document.getElementById('weekRange').textContent=ss+' ～ '+ee;
+ const wevents=events.filter(x=>String(x.date||'')>=ss&&String(x.date||'')<=ee).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ document.getElementById('weekEvents').innerHTML=wevents.length?wevents.map(x=>`<span class="ev">${esc(x.date||'')} ${esc(x.name||'')}</span>`).join(''):'<span class="muted">今週イベントなし</span>';
+ const recs=(master.records||[]).filter(r=>String(r.date||'')>=ss&&String(r.date||'')<=ee&&r.rowType==='material'&&Number(r.qty)>0);
+ let mainMoney=0,subMoney=0,totalNeed=0;
+ recs.forEach(r=>{const mr=masterRow(r.category,r.subItem)||{};const amount=Number(r.qty||0)*Number(mr.unitPrice||0);const role=roleOf(r.category,r.subItem);if(role==='主力材料')mainMoney+=amount;if(role==='サブ材料')subMoney+=amount;totalNeed+=Number(r.qty||0)});
+ document.getElementById('mainMoney').textContent=yen(mainMoney);document.getElementById('subMoney').textContent=yen(subMoney);document.getElementById('needTotal').textContent=totalNeed.toLocaleString('ja-JP');
+
+ // 同じ材料名は全イベント・全ネタで合算し、現在庫は一度だけ差し引く
+ const map={};
+ recs.forEach(r=>{
+  const key=norm(r.subItem);if(!key)return;
+  const mr=masterRow(r.category,r.subItem)||{};
+  if(!map[key])map[key]={name:r.subItem,need:0,cats:new Set(),roles:new Set(),unit:r.unit||mr.unit||'',price:0,supplier:new Set()};
+  const x=map[key];x.need+=Number(r.qty||0);x.cats.add(r.category);x.roles.add(roleOf(r.category,r.subItem));if(Number(mr.unitPrice)>0)x.price=Number(mr.unitPrice);if(mr.supplier)x.supplier.add(mr.supplier);
+ });
+ let buyItems=0,buyQty=0,buyMoney=0;
+ const rows=Object.values(map).sort((a,b)=>a.name.localeCompare(b.name,'ja')).map(x=>{
+  const stock=stockFor(x.name),buy=Math.max(Math.ceil(x.need-stock),0),amount=buy*x.price; if(buy>0){buyItems++;buyQty+=buy;buyMoney+=amount}
+  const cl=[...x.roles].filter(Boolean);const c=cl.length===1?cl[0]:'混在';
+  return `<tr><td><b>${esc(x.name)}</b></td><td>${esc([...x.cats].join('・'))}</td><td>${pill(c)}</td><td>${x.need} ${esc(x.unit)}</td><td>${stock} ${esc(x.unit)}</td><td><b style="color:${buy>0?'#c62828':'#208c3d'}">${buy}</b> ${esc(x.unit)}</td><td>${yen(x.price)}</td><td><b>${yen(amount)}</b></td><td>${esc([...x.supplier].join('・')||'未設定')}</td></tr>`;
+ });
+ document.getElementById('weekBody').innerHTML=rows.length?rows.join(''):'<tr><td colspan="9" class="empty">今週の主力ネタ一覧に、使用資材の保存記録がまだありません</td></tr>';
+ document.getElementById('buyItems').textContent=buyItems;document.getElementById('buyQty').textContent=buyQty.toLocaleString('ja-JP');document.getElementById('buyMoney').textContent=yen(buyMoney);
+ document.getElementById('weekNote').textContent=`今週イベント ${wevents.length}件／主力ネタ一覧の使用資材記録 ${recs.length}件。未保存イベントは集計対象外です。`;
+}
+
+
+
+function normalizeEventName(s){
+ return String(s||'').normalize('NFKC').toLowerCase().replace(/[\s　・･\/／_\-ー―—.,，。()（）【】\[\]「」『』]+/g,'');
+}
+function eventIdentity(e){
+ return {id:String(e.id||e.eventId||''),date:String(e.date||e.eventDate||'').slice(0,10),
+   name:String(e.name||e.eventName||''),normName:normalizeEventName(e.name||e.eventName||'')};
+}
+function shoppingIdentity(s){
+ return {key:String(s.__key||''),id:String(s.eventId||s.id||''),date:String(s.eventDate||s.date||'').slice(0,10),
+   name:String(s.eventName||s.name||''),normName:normalizeEventName(s.eventName||s.name||'')};
+}
+function matchShoppingToEvent(s,e){
+ const a=shoppingIdentity(s), b=eventIdentity(e);
+ if(a.id&&b.id&&a.id===b.id)return {matched:true,reason:'eventId一致'};
+ if(a.date&&b.date&&a.date===b.date&&a.normName&&b.normName&&a.normName===b.normName)return {matched:true,reason:'日付＋イベント名一致'};
+ if(a.date&&b.date&&a.date===b.date&&(!a.normName||!b.normName))return {matched:true,reason:'日付一致（名称不足）'};
+ if(a.normName&&b.normName&&a.normName===b.normName&&(!a.date||!b.date))return {matched:true,reason:'イベント名一致（日付不足）'};
+ return {matched:false,reason:'不一致'};
+}
+function shoppingListsForEvents(evs){
+ const matched=[], diagnostics=[];
+ evs.forEach(e=>{
+   const hits=shoppingLists.filter(s=>matchShoppingToEvent(s,e).matched);
+   diagnostics.push({event:e,hits});
+   hits.forEach(s=>matched.push(s));
+ });
+ return {matched:[...new Map(matched.map(x=>[x.__key||JSON.stringify(x),x])).values()],diagnostics};
+}
+function extractShoppingRows(s){
+ const rows=Array.isArray(s.rows)?s.rows:arr(s.rows);
+ return rows.map(r=>({
+   item:String(r.item||r.name||r.material||'').trim(),
+   need:Number(r.need??r.requiredQty??r.required??0),
+   add:Number(r.add??r.additionalQty??r.orderQty??0),
+   stock:Number(r.stock??r.currentStock??0),
+   unit:String(r.unit||''),
+   unitPrice:Number(r.unitPrice??r.price??0),
+   supplier:String(r.supplier||r.purchaseFrom||r.vendor||'').trim(),
+   neta:String(r.neta||r.category||r.mainNeta||'').trim()
+ })).filter(r=>r.item);
+}
+function procurementRowsFromShopping(evs){
+ const result=shoppingListsForEvents(evs), map={};
+ result.matched.forEach(s=>{
+   extractShoppingRows(s).forEach(r=>{
+     const key=norm(r.item); if(!key)return;
+     if(!map[key])map[key]={name:r.item,need:0,add:0,cats:new Set(),roles:new Set(),unit:r.unit||'',price:0,suppliers:new Set(),sourceKeys:new Set()};
+     const x=map[key];
+     x.need+=Number(r.need||0); x.add+=Number(r.add||0);
+     if(r.neta)x.cats.add(r.neta);
+     x.roles.add(roleOf(r.neta,r.item));
+     if(Number(r.unitPrice)>0)x.price=Number(r.unitPrice);
+     if(r.supplier)x.suppliers.add(r.supplier);
+     if(!x.unit&&r.unit)x.unit=r.unit;
+     x.sourceKeys.add(s.__key||'');
+   });
+ });
+ const rows=Object.values(map).map(x=>{
+   const stock=stockFor(x.name);
+   const buy=x.need>0?Math.max(Math.ceil(x.need-stock),0):Math.max(Math.ceil(x.add),0);
+   const amount=buy*x.price;
+   const roles=[...x.roles].filter(Boolean);
+   const role=roles.includes('主力材料')?'主力材料':roles.includes('サブ材料')?'サブ材料':'未設定';
+   return {...x,stock,buy,amount,role,supplier:[...x.suppliers].join('・')||'未設定',sourceKeys:[...x.sourceKeys]};
+ });
+ return {rows,diagnostics:result.diagnostics,matchedLists:result.matched};
+}
+
+function eventDateValue(e){return String(e.date||'').slice(0,10)}
+function nextEventDate(){
+ const today=iso(new Date());
+ const dates=[...new Set(events.map(eventDateValue).filter(d=>d>=today))].sort();
+ return dates[0]||'';
+}
+function recordsForRange(mode){
+ if(mode==='next'){
+   const d=nextEventDate();
+   return (master.records||[]).filter(r=>String(r.date||'').slice(0,10)===d && r.rowType==='material' && Number(r.qty)>0);
+ }
+ const [s,e]=weekBounds(),ss=iso(s),ee=iso(e);
+ return (master.records||[]).filter(r=>String(r.date||'').slice(0,10)>=ss&&String(r.date||'').slice(0,10)<=ee&&r.rowType==='material'&&Number(r.qty)>0);
+}
+function eventsForRange(mode){
+ if(mode==='next'){
+   const d=nextEventDate();
+   return events.filter(x=>eventDateValue(x)===d);
+ }
+ const [s,e]=weekBounds(),ss=iso(s),ee=iso(e);
+ return events.filter(x=>eventDateValue(x)>=ss&&eventDateValue(x)<=ee).sort((a,b)=>eventDateValue(a).localeCompare(eventDateValue(b)));
+}
+
+function buildProcurementRowsFromPlan(evs){
+ const recs=planRecordsForEvents(evs),map={};
+ recs.forEach(r=>{
+   const key=norm(r.subItem);if(!key)return;
+   if(!map[key])map[key]={name:r.subItem,need:0,cats:new Set(),roles:new Set(),unit:r.unit||'',price:0,suppliers:new Set()};
+   const x=map[key];x.need+=Number(r.qty||0);x.cats.add(r.category||'');x.roles.add(roleOf(r.category,r.subItem));
+   if(Number(r.unitPrice)>0)x.price=Number(r.unitPrice);if(r.supplier)x.suppliers.add(r.supplier);if(!x.unit&&r.unit)x.unit=r.unit;
+ });
+ return Object.values(map).map(x=>{
+   const stock=stockFor(x.name),buy=Math.max(Math.ceil(x.need-stock),0),amount=buy*x.price;
+   const roles=[...x.roles].filter(Boolean);const role=roles.includes('主力材料')?'主力材料':roles.includes('サブ材料')?'サブ材料':'未設定';
+   return {...x,stock,buy,amount,role,supplier:[...x.suppliers].join('・')||'未設定'};
+ });
+}
+
+function buildProcurementRows(recs){
+ const map={};
+ recs.forEach(r=>{
+   const key=norm(r.subItem); if(!key)return;
+   const mr=masterRow(r.category,r.subItem)||{};
+   if(!map[key])map[key]={name:r.subItem,need:0,cats:new Set(),roles:new Set(),unit:r.unit||mr.unit||'',price:0,suppliers:new Set()};
+   const x=map[key];
+   x.need+=Number(r.qty||0);
+   x.cats.add(r.category||'');
+   x.roles.add(roleOf(r.category,r.subItem));
+   if(Number(mr.unitPrice)>0)x.price=Number(mr.unitPrice);
+   if(mr.supplier)x.suppliers.add(mr.supplier);
+ });
+ return Object.values(map).map(x=>{
+   const stock=stockFor(x.name);
+   const buy=Math.max(Math.ceil(x.need-stock),0);
+   const amount=buy*x.price;
+   const roles=[...x.roles].filter(Boolean);
+   let role=roles.length===1?roles[0]:'混在';
+   if(role==='混在'){
+     // 一つでも主力材料なら早めに発注扱い
+     if(roles.includes('主力材料'))role='主力材料';
+     else if(roles.includes('サブ材料'))role='サブ材料';
+   }
+   return {...x,stock,buy,amount,role,supplier:[...x.suppliers].join('・')||'未設定'};
+ }).sort((a,b)=>{
+   const ao=a.role==='主力材料'?0:1, bo=b.role==='主力材料'?0:1;
+   return ao-bo || a.name.localeCompare(b.name,'ja');
+ });
+}
+function renderFunds(){
+ const mode=document.getElementById('fundRange')?.value||'week';
+ const evs=eventsForRange(mode);
+ const planRows=buildProcurementRowsFromPlan(evs);
+ const shop=procurementRowsFromShopping(evs);
+
+ let rows=planRows;
+ let sourceLabel='管理センター v12 予定設定販売金額';
+ if(!rows.length){
+   rows=shop.rows;
+   sourceLabel='イベント別仕入管理';
+ }
+ if(!rows.length){
+   rows=buildProcurementRows(recordsForRange(mode));
+   sourceLabel='主力ネタ一覧';
+ }
+
+ fundEvents.innerHTML=evs.length
+   ? evs.map(x=>`<span class="ev">${esc(eventDateValue(x))} ${esc(x.name||'')}</span>`).join('')
+   : '<span class="muted">対象イベントなし</span>';
+
+ let mainMoney=0,subMoney=0,total=0,orderCount=0,localCount=0;
+ rows.forEach(x=>{
+   if(x.buy<=0)return;
+   total+=x.amount;
+   if(x.role==='主力材料'){mainMoney+=x.amount;orderCount++}
+   else if(x.role==='サブ材料'){subMoney+=x.amount;localCount++}
+ });
+ fundMainMoney.textContent=yen(mainMoney);
+ fundSubMoney.textContent=yen(subMoney);
+ fundBuyTotal.textContent=yen(total);
+ fundReserve.textContent=yen(total);
+ fundOrderCount.textContent=orderCount;
+ fundLocalCount.textContent=localCount;
+
+ fundBody.innerHTML=rows.length?rows.map(x=>{
+   const procurement=x.role==='主力材料'
+     ? '<span class="procure-chip procure-order">早めに発注</span>'
+     : x.role==='サブ材料'
+       ? '<span class="procure-chip procure-local">近くで購入</span>'
+       : '<span class="pill p-other">未分類</span>';
+   return `<tr>
+     <td><b>${esc(x.name)}</b></td>
+     <td>${esc([...x.cats].filter(Boolean).join('・'))}</td>
+     <td>${procurement}</td>
+     <td>${Number(x.need||0)} ${esc(x.unit||'')}</td>
+     <td>${Number(x.stock||0)} ${esc(x.unit||'')}</td>
+     <td><b style="color:${x.buy>0?'#c62828':'#208c3d'}">${Number(x.buy||0)}</b> ${esc(x.unit||'')}</td>
+     <td>${yen(x.price)}</td>
+     <td><b>${yen(x.amount)}</b></td>
+     <td>${esc(x.supplier||'未設定')}</td>
+   </tr>`;
+ }).join(''):'<tr><td colspan="9" class="empty">対象イベントの必要材料データがまだありません</td></tr>';
+
+ const note=document.querySelector('#page-funds .fund-note');
+ if(note){
+   note.innerHTML=`📡 <b>計算元：</b>${esc(sourceLabel)}<br>`+
+     `💡 <b>仕入資金の確保額：</b>在庫差引後の購入予定金額の合計です。`+
+     (rows.some(x=>Number(x.price||0)===0)?'<br>⚠️ 単価未設定の品目は金額に入っていません。':'');
+ }
+
+ const diag=document.getElementById('fundDiag');
+ if(diag){
+   const parts=[];
+   if(!evs.length){
+     parts.push('<span class="bad">対象イベントがありません。</span>');
+   }else{
+     shop.diagnostics.forEach(d=>{
+       const e=eventIdentity(d.event);
+       if(d.hits.length){
+         parts.push(`<div>✅ <b>${esc(e.date)} ${esc(e.name)}</b>：<span class="good">${d.hits.length}件一致</span>（${d.hits.map(x=>esc(x.__key||'')).join('、')}）</div>`);
+       }else{
+         const sameDate=shoppingLists.filter(s=>shoppingIdentity(s).date===e.date).slice(0,5);
+         parts.push(`<div>❌ <b>${esc(e.date)} ${esc(e.name)}</b>：<span class="bad">一致する shoppingLists がありません</span>`+
+           (sameDate.length?`<br>同じ日付の保存候補：${sameDate.map(s=>{const q=shoppingIdentity(s);return esc((q.name||'名称なし')+' ['+q.key+']')}).join('、')}`:'')+
+           `</div>`);
+       }
+     });
+   }
+   parts.push(`<div style="margin-top:8px">📦 shoppingLists 保存件数：${shoppingLists.length}</div>`);
+   diag.innerHTML=parts.join('');
+ }
+}
+
+loadAll();
+</script>
+</body></html>
