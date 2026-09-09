@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#6f3d8f">
-<title>準備アプリ｜イベント別チェックリスト v1.1</title>
+<title>準備アプリ｜全員Firebase共有版 v1.6</title>
 <style>
 :root{
   --main:#6f3d8f;--main2:#9b65b7;--pale:#f5eef9;--gold:#b88418;
@@ -63,12 +63,13 @@ textarea{min-height:70px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<header><div class="top"><div><h1>📦 準備アプリ v2.0</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト｜イベント別保存｜全出店ネタ同期｜同一ネタ準備テンプレート共有</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 準備アプリ v1.6</h1><div class="sub">担当：繁充｜イベント別・積込みチェックリスト｜Firebase全員共有</div></div><button class="back" onclick="goBack()">← 戻る</button></div></header>
 
 <div class="wrap">
 <section class="card" id="eventListSec">
   <h2>イベント別チェックリスト</h2>
   <div class="note">イベントごとに内容とチェック状態を別々に保存します。</div>
+  <div id="prepSyncStatus" class="note" style="margin-top:8px;padding:9px 11px;border-radius:10px;background:#fff4df;color:#8a5a00;font-weight:900">☁️ 準備表の共有データを確認中…</div>
   <div class="toolbar">
     <button class="primary" onclick="newEvent()">＋ 新しいイベントを作る</button>
   </div>
@@ -152,7 +153,11 @@ const STORAGE_KEY="fujiwara_preparation_events_v2";
 const OLD_KEY="fujiwara_preparation_app_v1";
 const PREPARATION_SHARE_LOCAL_KEY="fujiwara_preparation_shared_events_v1";
 const CHECKERS=["社長","将","文太","繁充"];
-const CATEGORY_TEMPLATE_KEY="fujiwara_preparation_category_templates_v1";
+const PREPARATION_CHECKLIST_FB_PATH="fujiwara/preparation_checklists_v1";
+let preparationDatabase=null;
+let preparationRemoteApplying=false;
+let preparationSyncStarted=false;
+let preparationSaveTimer=null;
 
 const CATEGORY_ITEMS={
 "チーズハットグ":[["ガス台",1],["ガスボンベ",2],["油",1],["チーズ",1],["ソーセージ",1],["ミックス粉",1],["パン粉",1],["ケチャップ",1],["マスタード",1],["串",1],["袋",1]],
@@ -165,20 +170,6 @@ const CATEGORY_ITEMS={
 "りんご飴":[["りんご",1],["砂糖",1],["水あめ",1],["食紅",1],["串",1],["袋",1],["鍋",1],["温度計",1]],
 "肉巻きおにぎり":[["焼き台",1],["ガス台",1],["ガスボンベ",2],["ごはん",1],["豚バラ",1],["タレ",1],["海苔",1],["トング",2],["容器",1]]
 };
-function loadCategoryTemplates(){try{return JSON.parse(localStorage.getItem(CATEGORY_TEMPLATE_KEY)||"{}")||{}}catch(e){return {}}}
-function saveCategoryTemplates(v){try{localStorage.setItem(CATEGORY_TEMPLATE_KEY,JSON.stringify(v||{}))}catch(e){}}
-function categoryItems(category){
- const base=Array.isArray(CATEGORY_ITEMS[category])?CATEGORY_ITEMS[category]:[];
- const custom=Array.isArray(loadCategoryTemplates()[category])?loadCategoryTemplates()[category]:[];
- const merged=[];[...base,...custom].forEach(x=>{if(Array.isArray(x)&&x[0]&&!merged.some(y=>y[0]===x[0]))merged.push([x[0],Number(x[1]||1)])});
- return merged;
-}
-function rememberCategoryItem(category,name,qty){
- if(!category||category==="手動追加"||category==="共通備品"||!name)return;
- const all=loadCategoryTemplates(), list=Array.isArray(all[category])?all[category]:[];
- const hit=list.find(x=>x[0]===name);if(hit)hit[1]=Number(qty||1);else list.push([name,Number(qty||1)]);
- all[category]=list;saveCategoryTemplates(all);
-}
 const COMMON=[["テント",1],["机",2],["イス",2],["発電機",1],["延長コード",2],["消火器",1],["ゴミ袋",1],["手袋",1],["キッチンペーパー",1],["看板",1],["釣銭",1]];
 
 let db={events:[]};
@@ -195,7 +186,47 @@ function checkerButtonsHtml(selected,onClick){return CHECKERS.map(n=>`<button ty
 function selectManualChecker(name){get("manualChecker").value=name;renderManualCheckerButtons()}
 function renderManualCheckerButtons(){const box=get("manualCheckerButtons");if(box)box.innerHTML=checkerButtonsHtml(val("manualChecker"),"selectManualChecker")}
 function selectItemChecker(id,name){updateItem(id,"checker",name)}
-function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(db))}
+function setPrepSyncStatus(type,text){
+ const el=get("prepSyncStatus"); if(!el)return;
+ const map={
+  ok:["#e2f5ea","#126d40"],
+  warn:["#fff4df","#8a5a00"],
+  error:["#fbe7ea","#a32636"]
+ };
+ const c=map[type]||map.warn;
+ el.style.background=c[0];el.style.color=c[1];el.textContent=text;
+}
+function preparationEventFirebaseKey(e){
+ const raw=String((e&&e.sourceMainId)|| (e&&e.id) || "");
+ return raw.replace(/[.#$\[\]\/]/g,"_");
+}
+function persist(){
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+ if(!preparationRemoteApplying) queuePreparationFirebaseSave();
+}
+function queuePreparationFirebaseSave(){
+ if(!preparationDatabase||!preparationSyncStarted)return;
+ if(preparationSaveTimer)clearTimeout(preparationSaveTimer);
+ preparationSaveTimer=setTimeout(()=>savePreparationEventsToFirebase(),220);
+}
+async function savePreparationEventsToFirebase(){
+ if(!preparationDatabase||preparationRemoteApplying)return;
+ const updates={};
+ (db.events||[]).forEach(e=>{
+   const key=preparationEventFirebaseKey(e);
+   if(key)updates[key]={...e,sharedUpdatedAt:firebase.database.ServerValue.TIMESTAMP};
+ });
+ if(!Object.keys(updates).length)return;
+ try{
+   setPrepSyncStatus("warn","☁️ 準備表を全員へ共有中…");
+   await preparationDatabase.ref(PREPARATION_CHECKLIST_FB_PATH).update(updates);
+   setPrepSyncStatus("ok","✅ Firebase全員共有中｜他の担当者端末にも反映されます");
+ }catch(err){
+   console.error("preparation firebase save",err);
+   setPrepSyncStatus("error","⚠️ Firebase共有に失敗しました｜この端末には保存済みです");
+ }
+}
+
 
 function loadDB(){
   try{
@@ -269,7 +300,7 @@ function syncSharedCategoriesToEvent(e,src,quiet=true){
  e.sourceMainId=String(src.mainId||src.id||e.sourceMainId||'');
  const oldByKey={};(e.items||[]).forEach(it=>oldByKey[(it.category||'')+'||'+(it.name||'')]=it);
  e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
- cats.forEach(c=>categoryItems(c).forEach(x=>{
+ cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
    const key=c+'||'+x[0],old=oldByKey[key];
    e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
  }));
@@ -314,10 +345,15 @@ function saveCurrentEvent(show=true){
  e.name=val("eventName").trim();e.date=val("eventDate");e.staff=val("staffName").trim();e.place=val("place").trim();e.vehicle=val("vehicle").trim();e.memo=val("eventMemo").trim();e.updatedAt=Date.now();
  persist();renderEventList();if(show)toast("このイベントを保存しました")
 }
-function deleteCurrentEvent(){
+async function deleteCurrentEvent(){
  const e=currentEvent();if(!e)return;
  if(!confirm(`「${e.name||"名称未入力"}」を削除しますか？`))return;
- db.events=db.events.filter(x=>x.id!==e.id);persist();currentId=null;showEventList();toast("イベントを削除しました")
+ db.events=db.events.filter(x=>x.id!==e.id);
+ preparationRemoteApplying=true;
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+ preparationRemoteApplying=false;
+ await deletePreparationEventFromFirebase(e);
+ currentId=null;showEventList();toast("イベントを全員共有から削除しました")
 }
 
 function addItem(name,qty,category,checker=""){
@@ -329,25 +365,22 @@ function addItem(name,qty,category,checker=""){
 }
 function addSelectedCategories(){
  if(!selectedCategories.size){toast("カテゴリーを選んでください");return}
- selectedCategories.forEach(c=>categoryItems(c).forEach(x=>addItem(x[0],x[1],c)));
- const empty=[...selectedCategories].filter(c=>categoryItems(c).length===0);selectedCategories.clear();persist();renderCategories();renderItems();toast(empty.length?"カテゴリーを反映しました。準備品は手動追加すると次回から共通利用できます":"カテゴリーの準備品を追加しました")
+ selectedCategories.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>addItem(x[0],x[1],c)));
+ selectedCategories.clear();persist();renderCategories();renderItems();toast("カテゴリーの準備品を追加しました")
 }
 function addAllCommon(){COMMON.forEach(x=>addItem(x[0],x[1],"共通備品"));persist();renderItems();toast("共通備品を追加しました")}
 function addManualItem(){
  const name=val("manualName").trim();if(!name){toast("項目名を入力してください");return}
- const category=val("manualCategory").trim()||"手動追加";
- const qty=Number(val("manualQty")||1);
- addItem(name,qty,category,val("manualChecker").trim());
- rememberCategoryItem(category,name,qty);
+ addItem(name,Number(val("manualQty")||1),val("manualCategory").trim()||"手動追加",val("manualChecker").trim());
  persist();get("manualName").value="";get("manualQty").value=1;get("manualChecker").value="";renderManualCheckerButtons();renderItems();toast("項目を追加しました")
 }
 function updateItem(id,field,value){
  const e=currentEvent(),it=e?.items.find(x=>x.id===id);if(!it)return;
  it[field]=field==="qty"?Number(value||0):field==="done"?Boolean(value):value;e.updatedAt=Date.now();persist();renderItems()
 }
-function deleteItem(id){const e=currentEvent();if(!e)return;e.items=e.items.filter(x=>x.id!==id);persist();renderItems()}
-function checkAll(){const e=currentEvent();if(!e)return;e.items.forEach(x=>x.done=true);persist();renderItems()}
-function uncheckAll(){const e=currentEvent();if(!e)return;e.items.forEach(x=>x.done=false);persist();renderItems()}
+function deleteItem(id){const e=currentEvent();if(!e)return;e.items=e.items.filter(x=>x.id!==id);e.updatedAt=Date.now();persist();renderItems()}
+function checkAll(){const e=currentEvent();if(!e)return;e.items.forEach(x=>x.done=true);e.updatedAt=Date.now();persist();renderItems()}
+function uncheckAll(){const e=currentEvent();if(!e)return;e.items.forEach(x=>x.done=false);e.updatedAt=Date.now();persist();renderItems()}
 
 function renderItems(){
  const e=currentEvent();const box=get("items");if(!e)return;
@@ -367,6 +400,102 @@ function renderItems(){
 function goBack(){if(!get("editor").classList.contains("hidden"))showEventList();else if(history.length>1)history.back();else location.href="manager-app.html"}
 
 
+
+function mergePreparationEventsFromFirebase(remoteRaw){
+ const remoteList=toArray(remoteRaw);
+ const localList=Array.isArray(db.events)?db.events:[];
+ const byKey={};
+
+ // local first
+ localList.forEach(e=>{
+   if(!e)return;
+   const key=preparationEventFirebaseKey(e);
+   if(key)byKey[key]=e;
+ });
+
+ // remote: newer updatedAt wins. Remote-only events are added.
+ remoteList.forEach(r=>{
+   if(!r)return;
+   const key=preparationEventFirebaseKey(r);
+   if(!key)return;
+   const local=byKey[key];
+   if(!local || Number(r.updatedAt||0)>=Number(local.updatedAt||0)){
+     byKey[key]=r;
+   }
+ });
+
+ const merged=Object.values(byKey).filter(Boolean);
+ merged.sort((a,b)=>(b.date||"").localeCompare(a.date||"") || Number(b.updatedAt||0)-Number(a.updatedAt||0));
+
+ preparationRemoteApplying=true;
+ db.events=merged;
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+ preparationRemoteApplying=false;
+
+ // If current event was updated remotely, keep editor on the same event/source.
+ if(currentId){
+   const cur=db.events.find(e=>String(e.id)===String(currentId));
+   if(!cur){
+     const previous=localList.find(e=>String(e.id)===String(currentId));
+     if(previous&&previous.sourceMainId){
+       const replacement=db.events.find(e=>String(e.sourceMainId||"")===String(previous.sourceMainId));
+       if(replacement)currentId=replacement.id;
+     }
+   }
+ }
+
+ renderEventList();
+ if(currentId && currentEvent()){
+   const e=currentEvent();
+   get("eventId").value=e.id;
+   get("eventName").value=e.name||"";
+   get("eventDate").value=e.date||"";
+   get("staffName").value=e.staff||"繁充";
+   get("place").value=e.place||"";
+   get("vehicle").value=e.vehicle||"";
+   get("eventMemo").value=e.memo||"";
+   renderCategories();
+   renderItems();
+ }
+ renderSharedEvents();
+}
+
+function startPreparationChecklistSync(){
+ try{
+   const cfg={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+   if(!firebase.apps.length)firebase.initializeApp(cfg);
+   preparationDatabase=firebase.database();
+   preparationSyncStarted=true;
+   setPrepSyncStatus("warn","☁️ Firebaseの準備表を読み込み中…");
+
+   preparationDatabase.ref(PREPARATION_CHECKLIST_FB_PATH).on("value",snap=>{
+     const remote=snap.val()||{};
+     mergePreparationEventsFromFirebase(remote);
+     setPrepSyncStatus("ok","✅ Firebase全員共有中｜他の担当者端末にも反映されます");
+
+     // Upload any local-only events after first merge.
+     queuePreparationFirebaseSave();
+   },err=>{
+     console.error("preparation firebase read",err);
+     setPrepSyncStatus("error","⚠️ Firebase共有を読み込めません｜端末内データで表示中");
+   });
+ }catch(err){
+   console.error("preparation firebase init",err);
+   setPrepSyncStatus("error","⚠️ Firebase共有を開始できません｜端末内データで表示中");
+ }
+}
+
+async function deletePreparationEventFromFirebase(e){
+ if(!preparationDatabase||!e)return;
+ const key=preparationEventFirebaseKey(e);
+ if(!key)return;
+ try{
+   await preparationDatabase.ref(PREPARATION_CHECKLIST_FB_PATH+"/"+key).remove();
+ }catch(err){
+   console.error("preparation firebase delete",err);
+ }
+}
+
 const PREPARATION_FB_PATH="fujiwara/preparation_shared_events";
 let sharedEvents={};
 function splitMenus(text){ return String(text||'').split(/[・、,\/\n]+/).map(x=>x.trim()).filter(Boolean); }
@@ -383,7 +512,7 @@ const CATEGORY_ALIASES={
 };
 function categoryFromMenu(name){
  const raw=String(name||'').replace(/[\s　]+/g,'');
- return Object.keys(CATEGORY_ALIASES).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||String(name||'').trim()||null;
+ return Object.keys(CATEGORY_ITEMS).find(k=>(CATEGORY_ALIASES[k]||[k]).some(a=>raw.includes(String(a).replace(/[\s　]+/g,''))))||null;
 }
 function categoriesFromShared(src){
  const found=[];
@@ -412,7 +541,7 @@ function importSharedEvent(mainId){
  // メインアプリ由来のカテゴリーだけを最新状態へ同期し、手動追加・共通備品・チェック状態は残します。
  const oldByKey={}; (e.items||[]).forEach(it=>{oldByKey[(it.category||'')+'||'+(it.name||'')]=it;});
  e.items=(e.items||[]).filter(it=>!it.fromMainCategory);
- cats.forEach(c=>categoryItems(c).forEach(x=>{
+ cats.forEach(c=>CATEGORY_ITEMS[c].forEach(x=>{
    const key=c+'||'+x[0], old=oldByKey[key];
    e.items.push({id:(old&&old.id)||uid(),name:x[0],qty:Number((old&&old.qty)||x[1]||1),category:c,checker:(old&&old.checker)||'',done:!!(old&&old.done),fromMainCategory:true});
  }));
@@ -517,7 +646,7 @@ function startSharedEventSync(){
  }catch(e){sharedEvents={...readLocalSharedEvents()};renderSharedEvents();}
 }
 
-loadDB();renderCategories();renderManualCheckerButtons();renderEventList();sharedEvents=readLocalSharedEvents();renderSharedEvents();startSharedEventSync();
+loadDB();renderCategories();renderManualCheckerButtons();renderEventList();sharedEvents=readLocalSharedEvents();renderSharedEvents();startPreparationChecklistSync();startSharedEventSync();
 </script>
 </body>
 </html>
