@@ -1,0 +1,33 @@
+name: Fix citizens holiday in staff schedule
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-staff-schedule-citizens-holiday.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch holiday detection safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king-staff-schedule.html')
+          s=p.read_text(encoding='utf-8')
+          old="if(m===3&&day===spring())return'春分の日';if(m===9&&day===autumn())return'秋分の日';let prev=new Date(y,m-1,day-1);if(day>1&&jpHolidayNameBase(prev)&&d.getDay()===1)return'振替休日';return''}"
+          new="if(m===3&&day===spring())return'春分の日';if(m===9&&day===autumn())return'秋分の日';let prev=new Date(y,m-1,day-1),next=new Date(y,m-1,day+1);if(jpHolidayNameBase(prev)&&jpHolidayNameBase(next))return'国民の休日';if(day>1&&jpHolidayNameBase(prev)&&d.getDay()===1)return'振替休日';return''}"
+          if old not in s:
+              raise SystemExit('Holiday anchor not found; no changes made')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "FUJIWARA safe patch"
+          git config user.email "actions@users.noreply.github.com"
+          git add king-staff-schedule.html
+          git commit -m "Recognize Citizens Holiday in staff schedule"
+          git push
