@@ -1,0 +1,36 @@
+name: Add staff schedule to manager app
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-staff-schedule-to-manager.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add card safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('manager-app.html')
+          s=p.read_text(encoding='utf-8')
+          if 'king-staff-schedule.html' in s:
+              print('already present')
+          else:
+              needle='const DEFAULTS=[\n'
+              item='{key:"staffSchedule",icon:"👥",title:"配置スタッフスケジュール",owner:"担当者",desc:"イベント・建設・その他予定を配置スタッフ付きの月間表で確認",url:"king-staff-schedule.html?from=manager"},\n'
+              if needle not in s: raise SystemExit('DEFAULTS anchor not found')
+              s=s.replace(needle,needle+item,1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          if git diff --quiet -- manager-app.html; then exit 0; fi
+          git config user.name "FUJIWARA safe patch"
+          git config user.email "actions@users.noreply.github.com"
+          git add manager-app.html
+          git commit -m "Add staff schedule to manager app"
+          git push
