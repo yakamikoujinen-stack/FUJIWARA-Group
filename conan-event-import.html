@@ -50,8 +50,18 @@ td input,td textarea{width:100%;border:0;outline:0;padding:10px;font:inherit;bac
     <h2>予定表一覧</h2>
     <button class="primary" onclick="createSheet()">＋ 新規予定表</button>
   </div>
-  <div class="note">例：「2026秋」「2027春」など。今後、予定表が増えてもここから選んで開けます。</div>
-  <div id="sheetGrid" class="grid"></div>
+  <div class="note">「📄 質疑応答表」と、年度・季節ごとの予定表をここから開けます。例：「2026秋」「2027春」。</div>
+  <div class="grid" style="margin-bottom:12px">
+  <div class="sheet" style="border:2px solid #cfe0f3;background:#f8fbff">
+    <div class="sheet-icon">📄</div>
+    <h3>質疑応答表</h3>
+    <div class="meta">コナンプロデュース様との質疑・応答・結果回答を整理<br>PDF送付用</div>
+    <div class="actions">
+      <button class="primary" onclick="location.href='./conan-qa.html'">開く</button>
+    </div>
+  </div>
+</div>
+<div id="sheetGrid" class="grid"></div>
 </section>
 
 <section class="panel" id="editor">
