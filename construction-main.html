@@ -33,6 +33,12 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
  .card{box-shadow:none;border:0;padding:0}.admin-table{font-size:11px}.admin-table th{background:#eee!important;color:#000!important}
  #admin{display:block!important}
 }
+
+.leader-note{margin-top:5px;padding:4px 6px;border-radius:7px;background:#fff4db;color:#8a5a00;font-size:11px;font-weight:800;line-height:1.3}
+.note-admin-list{display:grid;gap:8px}
+.note-admin-item{border:1px solid #e5eaf1;border-radius:12px;padding:10px;background:#fbfdff}
+.note-admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -47,8 +53,8 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 
 <main>
 <section class="card no-print">
-<h3>🏗️ 建設管理（管理者用）</h3>
-<p class="small">予定・日報・取引先別集計・請求確認を管理します。保存データはこれまでと同じFirebaseを使用します。</p>
+<h3>🏗️ 建設管理（リーダー／管理者用）</h3>
+<p class="small">予定・スタッフ共有予定・日報・取引先別集計・請求確認を管理します。保存データはこれまでと同じFirebaseを使用します。</p>
 <span id="cloudStatus" class="status">Firebase接続中...</span>
 <button class="green" onclick="syncLocalMastersToFirebase()">この端末の作業員・取引先を共有へ反映</button>
 </section>
@@ -77,6 +83,23 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <button onclick="addJob()">予定を保存</button>
 </div>
 <div class="card"><h3>選択日の予定・日報</h3><div id="dayList">日付を選択してください</div></div>
+
+<div class="card">
+  <h3>🗓️ スタッフ共有予定（リーダー編集可）</h3>
+  <p class="small">スタッフが「予定」タブから記入した共有予定です。リーダーは追加・修正・削除できます。</p>
+  <div class="row">
+    <input id="leaderNoteDate" type="date">
+    <select id="leaderNoteWriter"></select>
+  </div>
+  <input id="leaderNoteText" placeholder="例：現場休工予定">
+  <input id="leaderNoteId" type="hidden">
+  <div class="row">
+    <button class="green" onclick="saveLeaderNote()">共有予定を保存</button>
+    <button class="soft" onclick="clearLeaderNoteForm()">入力をクリア</button>
+  </div>
+  <div id="leaderNoteList" class="note-admin-list" style="margin-top:12px"></div>
+</div>
+
 </section>
 
 <section id="rep" style="display:none">
@@ -168,7 +191,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database(), base="fujiwara/construction";
-let current=new Date(),selectedDate="",jobsData=[],reportsData=[],workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])),clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]));
+let current=new Date(),selectedDate="",jobsData=[],reportsData=[],staffScheduleData=[],workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])),clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]));
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
 const clientMarks=["🔴","🟡","🟢","🔵","🟣","🟠","🟤","⚫","⚪"];
 function R(p){return db.ref(base+"/"+p)}
@@ -189,6 +212,7 @@ function startFirebase(){
  seed();
  R("jobs").on("value",s=>{jobsData=asArray(s.val());renderAll()});
  R("reports").on("value",s=>{reportsData=asArray(s.val());renderAll()});
+ R("staffScheduleNotes").on("value",s=>{staffScheduleData=asArray(s.val());renderAll()});
  R("workers").on("value",s=>{workersData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")).concat(["藤原","山田","田中","繁充"]));renderAll()});
  R("clients").on("value",s=>{clientsData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]));renderAll()});
 }
@@ -213,6 +237,11 @@ function renderSelects(){
  rCompany.innerHTML=companiesData.map(x=>`<option>${esc(x)}</option>`).join("");
  rReporter.innerHTML='<option value="">当社の日報入力者を選択</option>'+workersData.map(x=>`<option>${esc(x)}</option>`).join("");
  rWorker.innerHTML='<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${esc(x)}</option>`).join("");
+ if(typeof leaderNoteWriter!=="undefined"){
+   const lw=leaderNoteWriter.value;
+   leaderNoteWriter.innerHTML='<option value="">記入者を選択</option>'+workersData.map(x=>`<option>${esc(x)}</option>`).join("");
+   if(workersData.includes(lw))leaderNoteWriter.value=lw;
+ }
  if(clientsData.includes(jc))jClient.value=jc;if(clientsData.includes(rc))rClient.value=rc;if(workersData.includes(rr))rReporter.value=rr;if(workersData.includes(rw))rWorker.value=rw;
 }
 function addJob(){if(!jDate.value||!jSite.value)return alert("日付と現場名を入力してください");R("jobs").push({date:jDate.value,site:jSite.value,client:jClient.value,start:jStart.value,workers:jWorkers.value,work:jWork.value,createdAt:new Date().toISOString()}).then(()=>{jSite.value=jStart.value=jWorkers.value=jWork.value="";alert("予定をFirebaseへ保存しました")}).catch(e=>alert("保存エラー: "+e.message))}
@@ -229,11 +258,56 @@ function showDay(ds){
  rs.map(r=>`<div class="card"><b>${clientMark(r.client)} 日報：${esc(r.site)}</b><br><span class="small">${r.approved?"承認済み":"未承認"} / 当社：${esc(r.company||"-")} / 入力者：${esc(r.reporter||"-")}</span><br>取引先：${esc(r.client||"-")}　担当者：${esc(r.clientPerson||"-")}<br>作業員：${esc(r.worker||"-")}<br>現場入場：${esc(r.start)} 現場退場：${esc(r.end)}<br><div style="margin-top:8px;padding:8px 10px;background:#fff4db;border-radius:8px;font-weight:bold">🕒 日報打刻時間：${formatSavedAt(r)}</div>内容：${esc(r.work)}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">日報削除</button></div>`).join("")
  :"予定・日報なし";
 }
+
+function clearLeaderNoteForm(){
+ leaderNoteId.value="";
+ leaderNoteDate.value=fmt(new Date());
+ leaderNoteWriter.value="";
+ leaderNoteText.value="";
+}
+function editLeaderNote(id){
+ const n=staffScheduleData.find(x=>x.id===id);
+ if(!n)return;
+ leaderNoteId.value=id;
+ leaderNoteDate.value=n.date||fmt(new Date());
+ leaderNoteWriter.value=n.writer||"";
+ leaderNoteText.value=n.text||"";
+ window.scrollTo({top:leaderNoteDate.getBoundingClientRect().top+window.scrollY-120,behavior:"smooth"});
+}
+function saveLeaderNote(){
+ const date=leaderNoteDate.value,writer=leaderNoteWriter.value,text=leaderNoteText.value.trim(),id=leaderNoteId.value;
+ if(!date)return alert("日付を入力してください");
+ if(!writer)return alert("記入者を選択してください");
+ if(!text)return alert("予定内容を入力してください");
+ const data={date,writer,text,updatedAt:new Date().toISOString(),updatedBy:"leader"};
+ const op=id?R("staffScheduleNotes/"+id).update(data):R("staffScheduleNotes").push({...data,createdAt:new Date().toISOString()});
+ op.then(()=>{alert(id?"共有予定を更新しました":"共有予定を追加しました");clearLeaderNoteForm()}).catch(e=>alert("保存エラー: "+e.message));
+}
+function deleteLeaderNote(id){
+ if(!confirm("この共有予定を削除しますか？"))return;
+ R("staffScheduleNotes/"+id).remove().catch(e=>alert("削除エラー: "+e.message));
+}
+function renderLeaderNotes(){
+ if(typeof leaderNoteList==="undefined")return;
+ const ym=fmt(current).slice(0,7);
+ const arr=staffScheduleData.filter(x=>(x.date||"").startsWith(ym)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+ leaderNoteList.innerHTML=arr.length?arr.map(n=>`<div class="note-admin-item"><b>${esc(n.date||"")}　${esc(n.text||"")}</b><br><span class="small">記入者：${esc(n.writer||"-")}</span><div class="note-admin-actions"><button onclick="editLeaderNote('${n.id}')">編集</button><button class="red" onclick="deleteLeaderNote('${n.id}')">削除</button></div></div>`).join(""):'<div class="small">この月の共有予定はありません。</div>';
+}
+
 function renderLegend(){const used=unique(jobsData.concat(reportsData).map(x=>x.client||"未登録"));clientLegend.innerHTML=used.map(x=>`<span>${clientMark(x)} ${esc(x)}</span>`).join("")}
 function renderCalendar(){
  let y=current.getFullYear(),m=current.getMonth();monthTitle.textContent=y+"年 "+(m+1)+"月";calHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="head">${x}</div>`).join("");
  renderLegend();let first=new Date(y,m,1),last=new Date(y,m+1,0),html="";for(let i=0;i<first.getDay();i++)html+="<div></div>";
- for(let d=1;d<=last.getDate();d++){let ds=fmt(new Date(y,m,d)),items=jobsData.filter(x=>x.date===ds).concat(reportsData.filter(x=>x.date===ds));html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b><div class="dot-row">`+items.slice(0,6).map(x=>`<span class="cal-dot" title="${esc(x.site||"")}">${clientMark(x.client)}</span>`).join("")+"</div></div>"}
+ for(let d=1;d<=last.getDate();d++){
+   let ds=fmt(new Date(y,m,d));
+   let items=jobsData.filter(x=>x.date===ds).concat(reportsData.filter(x=>x.date===ds));
+   let notes=staffScheduleData.filter(x=>x.date===ds);
+   html+=`<div class="day" onclick="showDay('${ds}')"><b>${d}</b><div class="dot-row">`+
+     items.slice(0,6).map(x=>`<span class="cal-dot" title="${esc(x.site||"")}">${clientMark(x.client)}</span>`).join("")+
+     `</div>`+
+     notes.slice(0,2).map(n=>`<div class="leader-note">${esc(n.text||"")}<br>記入者：${esc(n.writer||"-")}</div>`).join("")+
+     `</div>`;
+ }
  calendar.innerHTML=html;
 }
 function renderReports(){let a=reportsData.slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${esc(r.date)} ${esc(r.site)}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${esc(r.company||"-")} / 入力者：${esc(r.reporter||"-")}</span><br>取引先：${esc(r.client||"-")}　担当者：${esc(r.clientPerson||"-")}<br>作業員：${esc(r.worker||"-")}　人数：${esc(r.people)}<br>現場入場：${esc(r.start)} 現場退場：${esc(r.end)} 休憩：${esc(r.breakMin||0)}分<br><div style="margin-top:8px;padding:8px 10px;background:#fff4db;border-radius:8px;font-weight:bold">🕒 日報打刻時間：${formatSavedAt(r)}</div>作業内容：${esc(r.work)}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">削除</button></div>`).join(""):"日報なし"}
@@ -287,8 +361,8 @@ function createConstructionInvoice(){
  location.href="fujiwara-invoice.html?new=1";
 }
 
-function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance()}
-let t=fmt(new Date());jDate.value=t;rDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
+function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance();renderLeaderNotes()}
+let t=fmt(new Date());jDate.value=t;rDate.value=t;leaderNoteDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
 </script>
 </body>
 </html>
