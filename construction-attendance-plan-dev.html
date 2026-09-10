@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>建設 出欠予定表（単独開発版）</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f3a5f">
+<style>
+:root{--navy:#1f3a5f;--bg:#eef2f7;--card:#fff;--line:#cfd7e3;--red:#e5484d;--sun:#fff0e6;--text:#172033;--muted:#667085}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text)}
+main{max-width:1300px;margin:auto;padding:16px}.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #00000010}
+h1{margin:0 0 6px;font-size:28px}.small{font-size:13px;color:var(--muted);line-height:1.6}.row3{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:10px}
+input,button{width:100%;font-size:16px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#fff}button{background:var(--navy);color:#fff;border:0;font-weight:800}.green{background:#0a7a2f}.gray{background:#60758f}
+.toolbar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.months{display:grid;grid-template-columns:1fr 1fr;gap:14px}.month-card{background:#fff;border:2px solid #333}.month-title{text-align:center;font-size:22px;font-weight:900;padding:10px 4px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr)}.week{border-top:2px solid #333;border-right:1px solid #333;border-bottom:1px dotted #555;min-height:54px;display:flex;align-items:center;justify-content:center;font-size:15px}.week:last-child{border-right:0}.sunhead{background:var(--sun)}
+.day{min-height:115px;border-top:1px dotted #555;border-right:1px solid #333;padding:6px;position:relative;cursor:pointer;background:#fff}.day:nth-child(7n+1){background:var(--sun)}.day:nth-child(7n){border-right:0}.day.empty{background:#fafafa}.date{font-size:15px;text-align:right}.day:nth-child(7n+1) .date{color:var(--red)}
+.mark{font-size:25px;font-weight:900;color:var(--red);text-align:center;line-height:1.1;margin-top:6px}.note{font-size:15px;color:var(--red);text-align:center;font-weight:700;line-height:1.25;white-space:pre-wrap;word-break:break-word}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}.legend span{padding:7px 10px;background:#f8fafc;border-radius:999px;font-weight:700}.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.modal.open{display:flex}.dialog{width:min(520px,100%);background:#fff;border-radius:18px;padding:18px}
+.mark-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}.mark-btn{background:#fff;color:var(--red);border:1px solid var(--line);font-size:24px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}#clientTitle{text-align:center;font-size:26px;margin-bottom:12px}
+@media(max-width:820px){.months{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr}.day{min-height:95px}}
+@media print{body{background:#fff}main{max-width:none;padding:0}.no-print{display:none!important}.card{box-shadow:none;padding:0;margin:0}#clientTitle{font-size:22px;margin:8px 0 10px}.months{grid-template-columns:1fr 1fr;gap:10px}.day{min-height:82px}.month-title{font-size:18px}@page{size:A4 landscape;margin:8mm}}
+</style>
+</head>
+<body>
+<main>
+<section class="card no-print"><h1>🏗️ 出欠予定表（単独開発版）</h1><div class="small">参考写真のような「毎月取引先へ提出する出欠予定表」です。今は建設アプリへ融合せず、この単独版だけで完成度を上げます。</div></section>
+<section class="card no-print">
+<div class="row3">
+<div><div class="small"><b>表のタイトル／宛先</b></div><input id="titleInput" value="優成建設へのお願い" oninput="saveSettings();render()"></div>
+<div><div class="small"><b>左の月</b></div><input id="month1" type="month" onchange="saveSettings();render()"></div>
+<div><div class="small"><b>右の月</b></div><input id="month2" type="month" onchange="saveSettings();render()"></div>
+</div>
+<div class="legend"><span>◎ 出勤可</span><span>○ 出勤可</span><span>△ 未定</span><span>× 休み／不可</span><span>空白 未入力</span></div>
+</section>
+<section class="card no-print"><div class="toolbar">
+<button onclick="shiftMonths(-1)">← 1か月戻す</button><button onclick="shiftMonths(1)">1か月進める →</button><button class="gray" onclick="clearDisplayed()">表示2か月をクリア</button><button class="green" onclick="window.print()">印刷 / PDF</button><button onclick="exportText()">提出内容をコピー</button>
+</div></section>
+<section class="card"><div id="clientTitle">優成建設へのお願い</div><div class="months">
+<div class="month-card"><div class="month-title" id="monthTitle1"></div><div class="calendar" id="cal1"></div></div>
+<div class="month-card"><div class="month-title" id="monthTitle2"></div><div class="calendar" id="cal2"></div></div>
+</div></section>
+</main>
+
+<div class="modal" id="modal"><div class="dialog">
+<h3 id="editDateTitle">日付編集</h3><div class="small">出欠記号を選んで、必要なら「鳥取」「滋賀」「お盆休暇」などのメモを入れます。</div>
+<div class="mark-grid"><button class="mark-btn" onclick="setMark('◎')">◎</button><button class="mark-btn" onclick="setMark('○')">○</button><button class="mark-btn" onclick="setMark('△')">△</button><button class="mark-btn" onclick="setMark('×')">×</button><button class="mark-btn" onclick="setMark('')">空白</button></div>
+<div class="small"><b>メモ</b></div><input id="noteInput" placeholder="例：鳥取 / 滋賀 / お盆休暇 / エース" oninput="tempNote=this.value">
+<div class="actions"><button class="gray" onclick="closeModal()">キャンセル</button><button class="green" onclick="saveDay()">保存</button></div>
+</div></div>
+
+<script>
+const KEY="fujiwara_construction_attendance_plan_dev_v1";
+let store={title:"優成建設へのお願い",month1:"",month2:"",days:{}},editingDate="",tempMark="",tempNote="";
+function pad(n){return String(n).padStart(2,"0")}function ym(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||"null");if(x&&typeof x==="object")store={...store,...x,days:x.days||{}}}catch(e){}const now=new Date();if(!store.month1)store.month1=ym(now);if(!store.month2)store.month2=ym(new Date(now.getFullYear(),now.getMonth()+1,1));titleInput.value=store.title||"";month1.value=store.month1;month2.value=store.month2}
+function persist(){localStorage.setItem(KEY,JSON.stringify(store))}
+function saveSettings(){store.title=titleInput.value;store.month1=month1.value;store.month2=month2.value;persist()}
+function addMonth(s,n){const [y,m]=s.split("-").map(Number);return ym(new Date(y,m-1+n,1))}
+function shiftMonths(n){store.month1=addMonth(store.month1,n);store.month2=addMonth(store.month2,n);month1.value=store.month1;month2.value=store.month2;persist();render()}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function renderMonth(s,target,titleTarget){const [y,m]=s.split("-").map(Number);document.getElementById(titleTarget).textContent=m+"月";const el=document.getElementById(target),labels=["日","月","火","水","木","金","土"];el.innerHTML=labels.map((x,i)=>`<div class="week ${i===0?"sunhead":""}">${x}</div>`).join("");const first=new Date(y,m-1,1),last=new Date(y,m,0);for(let i=0;i<first.getDay();i++)el.insertAdjacentHTML("beforeend",'<div class="day empty"></div>');for(let d=1;d<=last.getDate();d++){const ds=`${y}-${pad(m)}-${pad(d)}`,v=store.days[ds]||{};el.insertAdjacentHTML("beforeend",`<div class="day" onclick="editDay('${ds}')"><div class="date">${d}</div><div class="note">${esc(v.note||"")}</div><div class="mark">${esc(v.mark||"")}</div></div>`)}const used=first.getDay()+last.getDate();for(let i=used;i<42;i++)el.insertAdjacentHTML("beforeend",'<div class="day empty"></div>')}
+function render(){clientTitle.textContent=store.title||"";renderMonth(store.month1,"cal1","monthTitle1");renderMonth(store.month2,"cal2","monthTitle2")}
+function editDay(ds){editingDate=ds;tempMark=(store.days[ds]||{}).mark||"";tempNote=(store.days[ds]||{}).note||"";editDateTitle.textContent=ds+" の出欠予定";noteInput.value=tempNote;modal.classList.add("open")}
+function setMark(m){tempMark=m}function closeModal(){modal.classList.remove("open")}
+function saveDay(){if(!editingDate)return;if(!tempMark&&!tempNote)delete store.days[editingDate];else store.days[editingDate]={mark:tempMark,note:tempNote};persist();closeModal();render()}
+function clearDisplayed(){if(!confirm("表示している2か月分だけクリアしますか？"))return;[...Object.keys(store.days)].forEach(k=>{if(k.startsWith(store.month1)||k.startsWith(store.month2))delete store.days[k]});persist();render()}
+function exportText(){const lines=[store.title,""];[store.month1,store.month2].forEach(m=>{lines.push(m.replace("-","年")+"月");Object.keys(store.days).filter(k=>k.startsWith(m)).sort().forEach(k=>{const v=store.days[k];lines.push(`${k}　${v.note||""}　${v.mark||""}`.trim())});lines.push("")});navigator.clipboard.writeText(lines.join("\n")).then(()=>alert("提出内容をコピーしました")).catch(()=>alert(lines.join("\n")))}
+load();render();
+</script>
+</body>
+</html>
