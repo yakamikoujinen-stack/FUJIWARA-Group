@@ -37,6 +37,18 @@ button:disabled{opacity:.55}
 .staff-tab.active{background:#1f3a5f;color:#fff}
 .staff-frame{width:100%;height:78vh;min-height:720px;border:1px solid #d7dee8;border-radius:14px;background:#fff}
 
+
+.staff-calendar-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.staff-cal-head,.staff-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.staff-head,.staff-day{border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}
+.staff-head{background:#1f3a5f;color:#fff;text-align:center;font-weight:900}
+.staff-day{min-height:82px;background:#fff}
+.staff-dot-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.staff-cal-dot{font-size:22px;line-height:1}
+.staff-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.staff-legend span{background:#f8fafc;border-radius:999px;padding:6px 10px;font-size:12px}
+@media(max-width:680px){.staff-day{min-height:70px}.staff-calendar-nav{grid-template-columns:1fr 1fr}}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -46,7 +58,7 @@ button:disabled{opacity:.55}
   <div class="hero">
     <div class="title">🏗️ 建設スタッフ 日報</div>
     <div class="sub">FUJIWARA Group</div>
-    <div class="badge">スタッフ専用・日報入力＋出欠予定表閲覧</div>
+    <div class="badge">スタッフ専用・予定確認＋日報入力＋出欠予定表閲覧</div>
   </div>
 </header>
 
@@ -54,16 +66,30 @@ button:disabled{opacity:.55}
   <section class="card">
     <div><span id="cloudStatus" class="status">Firebase接続中...</span></div>
     <div class="notice small">
-      この画面では日報入力と出欠予定表の閲覧ができます。集計・取引先管理・削除・承認・請求書などの管理機能は表示しません。
+      この画面では予定カレンダー確認・日報入力・出欠予定表の閲覧ができます。集計・取引先管理・削除・承認・請求書などの管理機能は表示しません。
     </div>
   </section>
 
 
   <section class="card">
-    <div class="staff-tabs">
-      <button id="staffRepTab" class="staff-tab active" onclick="showStaffPage('report')">📝 日報入力</button>
-      <button id="staffPlanTab" class="staff-tab" onclick="showStaffPage('plan')">📅 出欠予定表</button>
+    <div class="staff-tabs" style="grid-template-columns:repeat(3,1fr)">
+      <button id="staffCalTab" class="staff-tab active" onclick="showStaffPage('calendar')">📅 予定</button>
+      <button id="staffRepTab" class="staff-tab" onclick="showStaffPage('report')">📝 日報</button>
+      <button id="staffPlanTab" class="staff-tab" onclick="showStaffPage('plan')">📆 出欠予定表</button>
     </div>
+  </section>
+
+  <section id="staffCalendarPage" class="card">
+    <h2>📅 予定カレンダー</h2>
+    <p class="small">管理者が登録した建設予定を閲覧できます。スタッフ側から予定の追加・編集・削除はできません。</p>
+    <div class="staff-calendar-nav">
+      <button style="background:#1f3a5f" onclick="moveStaffMonth(-1)">← 前月</button>
+      <button style="background:#1f3a5f" onclick="moveStaffMonth(1)">翌月 →</button>
+    </div>
+    <h2 id="staffMonthTitle" style="margin-top:14px"></h2>
+    <div id="staffLegend" class="staff-legend"></div>
+    <div id="staffCalHead" class="staff-cal-head"></div>
+    <div id="staffCalendar" class="staff-cal-grid"></div>
   </section>
 
   <section id="staffPlanPage" class="card" style="display:none">
@@ -75,7 +101,7 @@ button:disabled{opacity:.55}
       src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-staff-view.html?v=20260911-0648"></iframe>
   </section>
 
-  <section id="staffReportPage" class="card">
+  <section id="staffReportPage" class="card" style="display:none">
     <h2>📝 日報入力</h2>
     <p class="small"><span class="required">＊</span> は必須項目です。保存した内容は管理者の建設管理へ即時共有されます。</p>
 
@@ -141,13 +167,40 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const base="fujiwara/construction";
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
-let workersData=[],clientsData=[];
+let workersData=[],clientsData=[],jobsData=[],reportsData=[],staffCurrentMonth=new Date();
 
 function R(p){return db.ref(base+"/"+p)}
 function unique(a){return [...new Set((a||[]).filter(Boolean))]}
 function asArray(v){if(!v)return[];return Object.entries(v).map(([id,val])=>({id,...val}))}
 function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function setStatus(text,cls){cloudStatus.textContent=text;cloudStatus.className="status "+(cls||"")}
+
+const clientMarks=["🔴","🟡","🟢","🔵","🟣","🟠","🟤","⚫","⚪"];
+function clientMark(name){
+  const n=name||"未登録";
+  let i=clientsData.indexOf(n);
+  if(i<0){clientsData.push(n);i=clientsData.length-1}
+  return clientMarks[i%clientMarks.length];
+}
+function renderStaffCalendar(){
+  const y=staffCurrentMonth.getFullYear(),m=staffCurrentMonth.getMonth();
+  staffMonthTitle.textContent=y+"年 "+(m+1)+"月";
+  staffCalHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="staff-head">${x}</div>`).join("");
+  const used=unique(jobsData.concat(reportsData).map(x=>x.client||"未登録"));
+  staffLegend.innerHTML=used.map(x=>`<span>${clientMark(x)} ${x}</span>`).join("");
+  const first=new Date(y,m,1),last=new Date(y,m+1,0);
+  let html="";
+  for(let i=0;i<first.getDay();i++)html+="<div></div>";
+  for(let d=1;d<=last.getDate();d++){
+    const ds=fmt(new Date(y,m,d));
+    const items=jobsData.filter(x=>x.date===ds).concat(reportsData.filter(x=>x.date===ds));
+    html+=`<div class="staff-day"><b>${d}</b><div class="staff-dot-row">`+
+      items.slice(0,6).map(x=>`<span class="staff-cal-dot" title="${x.site||""}">${clientMark(x.client)}</span>`).join("")+
+      `</div></div>`;
+  }
+  staffCalendar.innerHTML=html;
+}
+function moveStaffMonth(n){staffCurrentMonth.setMonth(staffCurrentMonth.getMonth()+n);renderStaffCalendar()}
 
 function renderSelects(){
   const oldReporter=rReporter.value,oldClient=rClient.value,oldWorker=rWorker.value;
@@ -171,18 +224,32 @@ function start(){
   R("clients").on("value",s=>{
     clientsData=unique(asArray(s.val()).map(x=>x.name).concat(["未登録","前田建設株式会社"]));
     renderSelects();
+    renderStaffCalendar();
+  });
+  R("jobs").on("value",s=>{
+    jobsData=asArray(s.val());
+    renderStaffCalendar();
+  });
+  R("reports").on("value",s=>{
+    reportsData=asArray(s.val());
+    renderStaffCalendar();
   });
 }
 
 function showStaffPage(page){
+  const isCalendar=page==="calendar";
   const isReport=page==="report";
+  const isPlan=page==="plan";
+  staffCalendarPage.style.display=isCalendar?"block":"none";
   staffReportPage.style.display=isReport?"block":"none";
-  staffPlanPage.style.display=isReport?"none":"block";
+  staffPlanPage.style.display=isPlan?"block":"none";
+  staffCalTab.className=isCalendar?"staff-tab active":"staff-tab";
   staffRepTab.className=isReport?"staff-tab active":"staff-tab";
-  staffPlanTab.className=isReport?"staff-tab":"staff-tab active";
-  if(!isReport && staffPlanFrame){
-    staffPlanFrame.src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-staff-view.html?v=20260911-0648";
+  staffPlanTab.className=isPlan?"staff-tab active":"staff-tab";
+  if(isPlan && staffPlanFrame){
+    staffPlanFrame.src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-staff-view.html?v=20260911-0701";
   }
+  if(isCalendar)renderStaffCalendar();
 }
 
 function saveReport(){
@@ -241,6 +308,7 @@ function saveReport(){
 
 rDate.value=fmt(new Date());
 renderSelects();
+renderStaffCalendar();
 start();
 </script>
 </body>
