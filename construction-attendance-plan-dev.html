@@ -12,12 +12,18 @@
   --sun:#f7ece5;--text:#172033;--muted:#667085;--green:#0a7a2f;--blue:#2457a7;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text)}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  background:var(--bg);color:var(--text)
+}
 main{max-width:1300px;margin:auto;padding:16px}
 .card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #00000010}
 h1{margin:0 0 6px;font-size:28px}
 .small{font-size:13px;color:var(--muted);line-height:1.6}
-input,button{width:100%;font-size:16px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#fff}
+input,button{
+  width:100%;font-size:16px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#fff
+}
 button{background:var(--navy);color:#fff;border:0;font-weight:800}
 .green{background:var(--green)}
 .gray{background:#60758f}
@@ -26,15 +32,28 @@ button{background:var(--navy);color:#fff;border:0;font-weight:800}
 .status{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;background:#fff4db;color:#9a6700}
 .status.ok{background:#e9f9ef;color:#0a7a2f}
 .status.ng{background:#ffe4e6;color:#b00020}
+
+#calendarWrap{page-break-inside:avoid;break-inside:avoid}
+
+.title-block{
+  text-align:center;font-size:26px;font-weight:900;margin-bottom:10px
+}
 .month-editor{border:2px solid #333;background:#fff}
-.month-title{text-align:center;font-size:22px;font-weight:900;padding:10px 4px}
+.month-title{text-align:center;font-size:22px;font-weight:900;padding:10px 4px;border-bottom:1px solid #333}
 .calendar{display:grid;grid-template-columns:repeat(7,1fr)}
-.week{border-top:2px solid #333;border-right:1px solid #333;border-bottom:1px dotted #555;min-height:48px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.week{
+  border-right:1px solid #333;border-bottom:1px dotted #555;min-height:48px;
+  display:flex;align-items:center;justify-content:center;font-size:15px
+}
 .week:last-child{border-right:0}
 .week.sun{color:var(--red);background:var(--sun)}
 .week.sat{color:var(--blue)}
-.week.hol{color:var(--red)}
-.day{min-height:152px;border-top:1px dotted #555;border-right:1px solid #333;padding:6px;position:relative;background:#fff;cursor:pointer}
+.week.hol{color:var(--red);background:var(--sun)}
+
+.day{
+  min-height:152px;border-top:1px dotted #555;border-right:1px solid #333;
+  padding:6px;position:relative;background:#fff;cursor:pointer
+}
 .day.sun,.day.hol{background:var(--sun)}
 .day.sat{background:#fff}
 .day:nth-child(7n){border-right:0}
@@ -43,33 +62,67 @@ button{background:var(--navy);color:#fff;border:0;font-weight:800}
 .date.sun,.date.hol{color:var(--red)}
 .date.sat{color:var(--blue)}
 .event-list{margin-top:4px}
-.event-chip{display:block;font-size:11px;font-weight:800;color:#2457a7;background:#edf4ff;border-radius:6px;padding:3px 4px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.event-chip{
+  display:block;font-size:11px;font-weight:800;color:#2457a7;background:#edf4ff;
+  border-radius:6px;padding:3px 4px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
 .mark{font-size:30px;font-weight:900;color:var(--red);text-align:center;line-height:1.1;margin-top:16px}
 .note{font-size:15px;color:var(--red);text-align:center;font-weight:700;line-height:1.25;white-space:pre-wrap;word-break:break-word;margin-top:7px}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
 .legend span{padding:7px 10px;background:#f8fafc;border-radius:999px;font-weight:700}
-.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+
+.modal{
+  position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:10
+}
 .modal.open{display:flex}
 .dialog{width:min(520px,100%);background:#fff;border-radius:18px;padding:18px}
 .mark-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
 .mark-btn{background:#fff;color:var(--red);border:1px solid var(--line);font-size:24px}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-#clientTitle{text-align:center;font-size:26px;margin-bottom:12px}
-.print-head{display:none}
+
 @media(max-width:820px){
   .row,.toolbar{grid-template-columns:1fr}
-  .day{min-height:120px}
+  .day{min-height:118px}
 }
+
 @media print{
-  body{background:#fff}
-  main{max-width:none;padding:0}
-  .no-print{display:none!important}
-  .screen-only-event{display:none!important}
-  .card{box-shadow:none;padding:0;margin:0}
-  .print-head{display:block;text-align:center;font-size:22px;font-weight:900;margin:0 0 10px}
-  .day{min-height:110px}
-  .month-title{font-size:28px;padding:10px 0}
-  @page{size:A4 landscape;margin:8mm}
+  html,body{width:100%;height:auto;background:#fff}
+  main{max-width:none;padding:0;margin:0}
+  .no-print,.screen-only-event,.modal{display:none !important}
+  .card{box-shadow:none;padding:0;margin:0;background:#fff;border-radius:0}
+  #calendarWrap{
+    width:100%;
+    margin:0;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .title-block{
+    font-size:18pt;
+    margin:0 0 6mm;
+    text-align:center;
+  }
+  .month-editor{border:1.5px solid #333}
+  .month-title{
+    font-size:22pt;
+    padding:3mm 0;
+    border-bottom:1px solid #333;
+  }
+  .week{
+    min-height:10mm;
+    font-size:10.5pt;
+  }
+  .day{
+    min-height:28mm;
+    height:28mm;
+    padding:2.4mm;
+  }
+  .date{font-size:10.5pt}
+  .mark{font-size:24pt;margin-top:5mm}
+  .note{font-size:10pt;margin-top:2mm}
+  @page{
+    size:A4 landscape;
+    margin:8mm;
+  }
 }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -87,10 +140,10 @@ button{background:var(--navy);color:#fff;border:0;font-weight:800}
     <div class="row">
       <div>
         <div class="small"><b>① 題名／宛先（編集可能）</b></div>
-        <input id="titleInput" placeholder="例：優成建設へのお願い">
+        <input id="titleInput" placeholder="例：優成建設へ / 前田建設株式会社へ / 〇〇株式会社 御中">
       </div>
       <div>
-        <div class="small"><b>③ 月ごとの編集画面</b></div>
+        <div class="small"><b>編集する月</b></div>
         <input id="editMonth" type="month">
       </div>
       <div style="align-self:end">
@@ -108,9 +161,8 @@ button{background:var(--navy);color:#fff;border:0;font-weight:800}
     </div>
   </section>
 
-  <section class="card">
-    <div class="print-head" id="printTitle"></div>
-    <div id="clientTitle"></div>
+  <section id="calendarWrap" class="card">
+    <div id="clientTitle" class="title-block"></div>
     <div class="month-editor">
       <div class="month-title" id="editMonthTitle"></div>
       <div class="calendar" id="editCalendar"></div>
@@ -158,8 +210,8 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const BASE="fujiwara/construction/attendancePlanDev";
-const LOCAL="fujiwara_construction_attendance_plan_dev_v3";
-let store={title:"優成建設へのお願い",editMonth:"",days:{}};
+const LOCAL="fujiwara_construction_attendance_plan_dev_v4";
+let store={title:"優成建設へ",editMonth:"",days:{}};
 let editingDate="",tempMark="",mainEvents=[];
 
 function pad(n){return String(n).padStart(2,"0")}
@@ -173,7 +225,7 @@ function normalizeEvent(e){
   const title=e.title||e.name||e.eventName||e.event||e.placeName||"";
   const start=(e.date||e.startDate||e.start||e.eventDate||e.from||"").toString().slice(0,10);
   const end=(e.dateEnd||e.endDate||e.end||e.to||start).toString().slice(0,10);
-  if(!title||!/^\d{4}-\d{2}-\d{2}$/.test(start))return null;
+  if(!title||!/^\d{4}-\d{2}-\d{2}$/.test(start)) return null;
   return {title,start,end:/^\d{4}-\d{2}-\d{2}$/.test(end)?end:start};
 }
 function eventsOn(ds){return mainEvents.filter(e=>e.start<=ds && e.end>=ds).map(e=>e.title)}
@@ -184,16 +236,27 @@ function mergeEvents(arr){
 }
 function readLocalMainEvents(){
   const keys=["events","fujiwara_events","fg_events","main_events","events_v4","fujiwara_main_events"];
-  keys.forEach(k=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");if(v)mergeEvents(asArray(v))}catch(e){}});
+  keys.forEach(k=>{
+    try{
+      const v=JSON.parse(localStorage.getItem(k)||"null");
+      if(v) mergeEvents(asArray(v));
+    }catch(e){}
+  });
 }
 function syncMainEvents(){
-  mainEvents=[]; readLocalMainEvents();
+  mainEvents=[];
+  readLocalMainEvents();
   const paths=["fujiwara/events","fujiwara/main/events","fujiwara/main_app/events","events"];
   let done=0;
-  paths.forEach(p=>db.ref(p).once("value").then(s=>{mergeEvents(asArray(s.val()))}).finally(()=>{
-    done++;
-    if(done===paths.length){renderAll();alert("メインアプリ予定の読み込みを更新しました")}
-  }));
+  paths.forEach(p=>{
+    db.ref(p).once("value").then(s=>{mergeEvents(asArray(s.val()))}).finally(()=>{
+      done++;
+      if(done===paths.length){
+        renderAll();
+        alert("メインアプリ予定の読み込みを更新しました");
+      }
+    });
+  });
 }
 
 function saveLocal(){localStorage.setItem(LOCAL,JSON.stringify(store))}
@@ -201,11 +264,12 @@ function applyInputs(){titleInput.value=store.title;editMonth.value=store.editMo
 function load(){
   try{
     const x=JSON.parse(localStorage.getItem(LOCAL)||"null");
-    if(x)store={...store,...x,days:x.days||{}};
+    if(x) store={...store,...x,days:x.days||{}};
   }catch(e){}
   const now=new Date();
-  if(!store.editMonth)store.editMonth=ym(now);
+  if(!store.editMonth) store.editMonth=ym(now);
   applyInputs();
+
   db.ref(BASE).once("value").then(s=>{
     if(s.exists()){
       const x=s.val();
@@ -214,10 +278,14 @@ function load(){
         editMonth:x.editMonth||store.editMonth,
         days:x.days||store.days||{}
       };
-      saveLocal(); applyInputs(); renderAll();
+      saveLocal();
+      applyInputs();
+      renderAll();
     }
     setStatus("Firebase接続OK / 保存共有","ok");
-  }).catch(()=>setStatus("端末内保存で動作中","ng"));
+  }).catch(()=>{
+    setStatus("端末内保存で動作中","ng");
+  });
 }
 function saveSettings(){
   store.title=titleInput.value.trim()||"出欠予定表";
@@ -228,10 +296,10 @@ function saveCloud(message){
   saveSettings();
   db.ref(BASE).set({...store,updatedAt:new Date().toISOString()}).then(()=>{
     setStatus("保存済み / Firebase共有","ok");
-    if(message)alert(message);
+    if(message) alert(message);
   }).catch(e=>{
     setStatus("端末内には保存済み","ng");
-    if(message)alert("端末には保存しました。通信保存エラー: "+e.message);
+    if(message) alert("端末には保存しました。通信保存エラー: "+e.message);
   });
 }
 function saveMonth(){saveCloud((editMonth.value||store.editMonth)+" を保存しました")}
@@ -257,7 +325,7 @@ function vernalEquinox(year){
 function autumnEquinox(year){
   return Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
 }
-function holidayName(y,m,d){
+function baseHolidayName(y,m,d){
   const fixed={
     "1-1":"元日","2-11":"建国記念の日","2-23":"天皇誕生日",
     "4-29":"昭和の日","5-3":"憲法記念日","5-4":"みどりの日","5-5":"こどもの日",
@@ -273,17 +341,37 @@ function holidayName(y,m,d){
   if(m===9 && d===autumnEquinox(y)) return "秋分の日";
   return "";
 }
-function isHolidayDate(date){
+function isBaseHoliday(date){
+  return !!baseHolidayName(date.getFullYear(), date.getMonth()+1, date.getDate());
+}
+function holidayNameForDate(date){
   const y=date.getFullYear(), m=date.getMonth()+1, d=date.getDate();
-  const direct=holidayName(y,m,d);
+  const direct=baseHolidayName(y,m,d);
   if(direct) return direct;
+
+  // 振替休日
   const prev=new Date(y,m-1,d-1);
-  const prevName=holidayName(prev.getFullYear(), prev.getMonth()+1, prev.getDate());
-  if(date.getDay()===1 && prev.getDay()===0 && prevName) return "振替休日";
+  if(date.getDay()===1 && isBaseHoliday(prev) && prev.getDay()===0){
+    return "振替休日";
+  }
+
+  // 国民の休日（前日と翌日が祝日）
+  const prev2=new Date(y,m-1,d-1);
+  const next2=new Date(y,m-1,d+1);
+  if(date.getDay()!==0 && !isBaseHoliday(date) && isHolidayLike(prev2) && isHolidayLike(next2)){
+    return "国民の休日";
+  }
   return "";
 }
+function isHolidayLike(date){
+  if(isBaseHoliday(date)) return true;
+  const y=date.getFullYear(), m=date.getMonth()+1, d=date.getDate();
+  const prev=new Date(y,m-1,d-1);
+  if(date.getDay()===1 && isBaseHoliday(prev) && prev.getDay()===0) return true;
+  return false;
+}
 function dateClass(date){
-  const hol=isHolidayDate(date);
+  const hol=holidayNameForDate(date);
   if(hol) return "hol";
   if(date.getDay()===0) return "sun";
   if(date.getDay()===6) return "sat";
@@ -291,18 +379,27 @@ function dateClass(date){
 }
 
 function renderMonth(s,target,titleTarget){
-  const [y,m]=s.split("-").map(Number),el=document.getElementById(target);
+  const [y,m]=s.split("-").map(Number);
+  const el=document.getElementById(target);
   document.getElementById(titleTarget).textContent=y+"年 "+m+"月";
-  printTitle.textContent=store.title||"";
   const labels=["日","月","火","水","木","金","土"];
   el.innerHTML=labels.map((x,i)=>`<div class="week ${i===0?"sun":i===6?"sat":""}">${x}</div>`).join("");
   const first=new Date(y,m-1,1), last=new Date(y,m,0);
-  for(let i=0;i<first.getDay();i++) el.insertAdjacentHTML("beforeend",'<div class="day empty"></div>');
+
+  for(let i=0;i<first.getDay();i++){
+    el.insertAdjacentHTML("beforeend",'<div class="day empty"></div>');
+  }
+
   for(let d=1; d<=last.getDate(); d++){
     const dateObj=new Date(y,m-1,d);
-    const ds=`${y}-${pad(m)}-${pad(d)}`, v=store.days[ds]||{}, ev=eventsOn(ds);
+    const ds=`${y}-${pad(m)}-${pad(d)}`;
+    const v=store.days[ds]||{};
+    const ev=eventsOn(ds);
     const cls=dateClass(dateObj);
-    const evHtml=ev.length?`<div class="event-list screen-only-event">${ev.slice(0,3).map(x=>`<span class="event-chip">${esc(x)}</span>`).join("")}</div>`:"";
+    const evHtml=ev.length
+      ? `<div class="event-list screen-only-event">${ev.slice(0,3).map(x=>`<span class="event-chip">${esc(x)}</span>`).join("")}</div>`
+      : "";
+
     el.insertAdjacentHTML("beforeend",
       `<div class="day ${cls}" onclick="editDay('${ds}')">
         <div class="date ${cls}">${d}</div>
@@ -311,8 +408,11 @@ function renderMonth(s,target,titleTarget){
         <div class="mark">${esc(v.mark||"")}</div>
       </div>`);
   }
+
   const used=first.getDay()+last.getDate();
-  for(let i=used;i<42;i++) el.insertAdjacentHTML("beforeend",'<div class="day empty"></div>');
+  for(let i=used;i<42;i++){
+    el.insertAdjacentHTML("beforeend",'<div class="day empty"></div>');
+  }
 }
 function renderAll(){
   saveSettings();
@@ -325,13 +425,13 @@ function editDay(ds){
   noteInput.value=(store.days[ds]||{}).note||"";
   editDateTitle.textContent=ds+" の出欠予定";
   const ev=eventsOn(ds);
-  modalEvents.innerHTML=ev.length?"メイン予定："+ev.map(esc).join(" / "):"メイン予定：なし";
+  modalEvents.innerHTML=ev.length ? "メイン予定："+ev.map(esc).join(" / ") : "メイン予定：なし";
   modal.classList.add("open");
 }
 function setMark(m){tempMark=m}
 function closeModal(){modal.classList.remove("open")}
 function saveDay(){
-  if(!editingDate)return;
+  if(!editingDate) return;
   const note=noteInput.value.trim();
   if(!tempMark && !note) delete store.days[editingDate];
   else store.days[editingDate]={mark:tempMark, note};
@@ -343,7 +443,9 @@ function saveDay(){
 titleInput.addEventListener("change",()=>{saveCloud("題名を保存しました");renderAll()});
 editMonth.addEventListener("change",()=>{saveSettings();renderAll()});
 firebase.database().ref(".info/connected").on("value",s=>setStatus(s.val()?"Firebase接続OK":"通信確認中...",s.val()?"ok":""));
-load(); syncMainEvents(); renderAll();
+load();
+syncMainEvents();
+renderAll();
 </script>
 </body>
 </html>
