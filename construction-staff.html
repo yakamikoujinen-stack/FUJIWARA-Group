@@ -31,6 +31,12 @@ button:disabled{opacity:.55}
 .done{display:none;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;border-radius:13px;padding:14px;font-weight:800;line-height:1.6;margin-top:14px}
 .required{color:#b00020}
 @media(max-width:680px){.row{grid-template-columns:1fr}.title{font-size:24px}.hero{padding:20px 18px}}
+
+.staff-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.staff-tab{background:#dbe7f7;color:#1f3a5f;border:0;font-weight:900;min-height:52px}
+.staff-tab.active{background:#1f3a5f;color:#fff}
+.staff-frame{width:100%;height:78vh;min-height:720px;border:1px solid #d7dee8;border-radius:14px;background:#fff}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -54,12 +60,22 @@ button:disabled{opacity:.55}
 
 
   <section class="card">
-    <h2>📅 出欠予定表を見る</h2>
-    <p class="small">管理者が作成した取引先別の出欠予定表を閲覧できます。スタッフ側から編集・削除はできません。</p>
-    <button style="background:#1f3a5f" onclick="location.href='construction-attendance-plan-staff-view.html'">👷 出欠予定表を閲覧</button>
+    <div class="staff-tabs">
+      <button id="staffRepTab" class="staff-tab active" onclick="showStaffPage('report')">📝 日報入力</button>
+      <button id="staffPlanTab" class="staff-tab" onclick="showStaffPage('plan')">📅 出欠予定表</button>
+    </div>
   </section>
 
-  <section class="card">
+  <section id="staffPlanPage" class="card" style="display:none">
+    <h2>📅 出欠予定表</h2>
+    <p class="small">管理者が作成・保存した出欠予定表の閲覧専用画面です。編集・削除はできません。</p>
+    <iframe
+      id="staffPlanFrame"
+      class="staff-frame"
+      src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-staff-view.html?v=20260911-0648"></iframe>
+  </section>
+
+  <section id="staffReportPage" class="card">
     <h2>📝 日報入力</h2>
     <p class="small"><span class="required">＊</span> は必須項目です。保存した内容は管理者の建設管理へ即時共有されます。</p>
 
@@ -156,6 +172,17 @@ function start(){
     clientsData=unique(asArray(s.val()).map(x=>x.name).concat(["未登録","前田建設株式会社"]));
     renderSelects();
   });
+}
+
+function showStaffPage(page){
+  const isReport=page==="report";
+  staffReportPage.style.display=isReport?"block":"none";
+  staffPlanPage.style.display=isReport?"none":"block";
+  staffRepTab.className=isReport?"staff-tab active":"staff-tab";
+  staffPlanTab.className=isReport?"staff-tab":"staff-tab active";
+  if(!isReport && staffPlanFrame){
+    staffPlanFrame.src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-staff-view.html?v=20260911-0648";
+  }
 }
 
 function saveReport(){

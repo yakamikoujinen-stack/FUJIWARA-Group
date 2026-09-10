@@ -14,7 +14,7 @@
 <style>
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef2f7;color:#172033}
 main{max-width:1000px;margin:auto;padding:14px}.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tab{background:#dbe7f7;color:#1f3a5f}.active{background:#1f3a5f!important;color:#fff!important}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tab{background:#dbe7f7;color:#1f3a5f}.active{background:#1f3a5f!important;color:#fff!important}
 button,input,select,textarea{box-sizing:border-box;width:100%;font-size:16px;padding:11px;margin-top:8px;border-radius:10px;border:1px solid #ccd3dd}
 button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background:#0a7a2f}.red{background:#b00020}.soft{background:#60758f}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
@@ -57,6 +57,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button>
 <button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button>
 <button id="bAdmin" class="tab" onclick="showTab('admin')">⚙️ 管理者</button>
+<button id="bAttendance" class="tab" onclick="showTab('attendance')">📆 出欠予定表</button>
 </div>
 
 <section id="cal">
@@ -102,7 +103,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <div class="card no-print">
   <h3>📅 取引先 出欠予定表</h3>
   <p class="small">取引先ごとの月間出欠予定表を新規作成・編集・保存・PDF出力できます。スタッフ側には閲覧専用で共有されます。</p>
-  <button class="green" onclick="location.href='construction-attendance-plan-dev.html'">📚 出欠予定表を管理する</button>
+  <button class="green" onclick="location.href='https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-dev.html?v=20260911-0648'">📚 出欠予定表を管理する</button>
 </div>
 <div class="card no-print">
 <h3>⚙️ 管理者ページ</h3>
@@ -148,6 +149,19 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 </div>
 </div>
 </section>
+
+<section id="attendance" style="display:none">
+  <div class="card">
+    <h3>📆 取引先 出欠予定表</h3>
+    <p class="small">完成済みの出欠予定表を建設アプリ内で直接表示しています。これまで保存した取引先別・月別データは同じFirebaseをそのまま使用します。</p>
+    <iframe
+      id="attendanceFrame"
+      src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-dev.html"
+      style="width:100%;height:78vh;min-height:760px;border:1px solid #d6dde8;border-radius:14px;background:#fff"
+      loading="lazy"></iframe>
+  </div>
+</section>
+
 </main>
 
 <script>
@@ -178,7 +192,20 @@ function startFirebase(){
  R("workers").on("value",s=>{workersData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_workers")).concat(["藤原","山田","田中","繁充"]));renderAll()});
  R("clients").on("value",s=>{clientsData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]));renderAll()});
 }
-function showTab(t){cal.style.display=t==="cal"?"block":"none";rep.style.display=t==="rep"?"block":"none";admin.style.display=t==="admin"?"block":"none";bCal.className=t==="cal"?"tab active":"tab";bRep.className=t==="rep"?"tab active":"tab";bAdmin.className=t==="admin"?"tab active":"tab";renderAll()}
+function showTab(t){
+ cal.style.display=t==="cal"?"block":"none";
+ rep.style.display=t==="rep"?"block":"none";
+ admin.style.display=t==="admin"?"block":"none";
+ attendance.style.display=t==="attendance"?"block":"none";
+ bCal.className=t==="cal"?"tab active":"tab";
+ bRep.className=t==="rep"?"tab active":"tab";
+ bAdmin.className=t==="admin"?"tab active":"tab";
+ bAttendance.className=t==="attendance"?"tab active":"tab";
+ if(t==="attendance" && attendanceFrame){
+   attendanceFrame.src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-dev.html?v=20260911-0648";
+ }
+ renderAll();
+}
 function renderSelects(){
  const jc=jClient.value,rc=rClient.value,rr=rReporter.value,rw=rWorker.value;
  jClient.innerHTML='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${esc(x)}</option>`).join("");
