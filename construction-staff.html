@@ -66,7 +66,7 @@ button:disabled{opacity:.55}
   <section class="card">
     <div><span id="cloudStatus" class="status">Firebase接続中...</span></div>
     <div class="notice small">
-      この画面では予定カレンダー確認・日報入力・出欠予定表の閲覧ができます。集計・取引先管理・削除・承認・請求書などの管理機能は表示しません。
+      この画面では「管理者が登録した予定の確認」「日報入力」「出欠予定表の閲覧」ができます。予定カレンダーには日報実績を混ぜません。集計・取引先管理・削除・承認・請求書などの管理機能は表示しません。
     </div>
   </section>
 
@@ -81,7 +81,7 @@ button:disabled{opacity:.55}
 
   <section id="staffCalendarPage" class="card">
     <h2>📅 予定カレンダー</h2>
-    <p class="small">管理者が登録した建設予定を閲覧できます。スタッフ側から予定の追加・編集・削除はできません。</p>
+    <p class="small">管理者が登録した建設予定だけを閲覧できます。日報実績はこのカレンダーには表示しません。スタッフ側から予定の追加・編集・削除はできません。</p>
     <div class="staff-calendar-nav">
       <button style="background:#1f3a5f" onclick="moveStaffMonth(-1)">← 前月</button>
       <button style="background:#1f3a5f" onclick="moveStaffMonth(1)">翌月 →</button>
@@ -186,14 +186,14 @@ function renderStaffCalendar(){
   const y=staffCurrentMonth.getFullYear(),m=staffCurrentMonth.getMonth();
   staffMonthTitle.textContent=y+"年 "+(m+1)+"月";
   staffCalHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="staff-head">${x}</div>`).join("");
-  const used=unique(jobsData.concat(reportsData).map(x=>x.client||"未登録"));
+  const used=unique(jobsData.map(x=>x.client||"未登録"));
   staffLegend.innerHTML=used.map(x=>`<span>${clientMark(x)} ${x}</span>`).join("");
   const first=new Date(y,m,1),last=new Date(y,m+1,0);
   let html="";
   for(let i=0;i<first.getDay();i++)html+="<div></div>";
   for(let d=1;d<=last.getDate();d++){
     const ds=fmt(new Date(y,m,d));
-    const items=jobsData.filter(x=>x.date===ds).concat(reportsData.filter(x=>x.date===ds));
+    const items=jobsData.filter(x=>x.date===ds);
     html+=`<div class="staff-day"><b>${d}</b><div class="staff-dot-row">`+
       items.slice(0,6).map(x=>`<span class="staff-cal-dot" title="${x.site||""}">${clientMark(x.client)}</span>`).join("")+
       `</div></div>`;
