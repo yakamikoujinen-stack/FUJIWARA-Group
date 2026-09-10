@@ -39,6 +39,18 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 .note-admin-item{border:1px solid #e5eaf1;border-radius:12px;padding:10px;background:#fbfdff}
 .note-admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 
+
+.king-report-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.king-report-head,.king-report-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.king-report-week,.king-report-day{border:1px solid #d6dde8;border-radius:10px;padding:6px;font-size:13px}
+.king-report-week{background:#1f3a5f;color:#fff;text-align:center;font-weight:800}
+.king-report-day{min-height:82px;background:#fff;cursor:pointer}
+.king-report-dotrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.king-report-dot{font-size:22px;line-height:1}
+.king-report-legend{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.king-report-legend span{background:#f8fafc;border-radius:999px;padding:6px 10px;font-size:12px}
+@media(max-width:720px){.king-report-day{min-height:70px}}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -103,6 +115,20 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 </section>
 
 <section id="rep" style="display:none">
+
+<div class="card">
+  <h3>📅 日報カレンダー</h3>
+  <p class="small">保存済みの日報を取引先名別の色マークで表示します。日付をタップすると、その日の日報内容を確認できます。</p>
+  <div class="king-report-nav">
+    <button onclick="moveKingReportMonth(-1)">← 前月</button>
+    <button onclick="moveKingReportMonth(1)">翌月 →</button>
+  </div>
+  <h2 id="kingReportMonthTitle"></h2>
+  <div id="kingReportLegend" class="king-report-legend"></div>
+  <div id="kingReportHead" class="king-report-head"></div>
+  <div id="kingReportCalendar" class="king-report-grid"></div>
+  <div id="kingReportDayList" class="small" style="margin-top:12px">日付を選択してください。</div>
+</div>
 <div class="card">
 <h3>日報入力</h3>
 <div class="row"><input id="rDate" type="date"><input id="rSite" placeholder="現場名"></div>
@@ -191,7 +217,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 const firebaseConfig={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94",measurementId:"G-1VHX1GQV0C"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database(), base="fujiwara/construction";
-let current=new Date(),selectedDate="",jobsData=[],reportsData=[],staffScheduleData=[],workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])),clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]));
+let current=new Date(),selectedDate="",jobsData=[],reportsData=[],staffScheduleData=[],kingReportMonth=new Date(),workersData=unique(readLocal("fks_construction_workers").concat(["藤原","山田","田中","繁充"])),clientsData=unique(readLocal("fks_construction_clients").concat(["未登録","前田建設株式会社"]));
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
 const clientMarks=["🔴","🟡","🟢","🔵","🟣","🟠","🟤","⚫","⚪"];
 function R(p){return db.ref(base+"/"+p)}
@@ -225,6 +251,7 @@ function showTab(t){
  bRep.className=t==="rep"?"tab active":"tab";
  bAdmin.className=t==="admin"?"tab active":"tab";
  bAttendance.className=t==="attendance"?"tab active":"tab";
+ if(t==="rep")renderKingReportCalendar();
  if(t==="attendance" && attendanceFrame){
    attendanceFrame.src="https://yakamikoujinen-stack.github.io/FUJIWARA-Group/construction-attendance-plan-dev.html?v=20260911-0648";
  }
@@ -310,6 +337,39 @@ function renderCalendar(){
  }
  calendar.innerHTML=html;
 }
+
+function renderKingReportCalendar(){
+ if(typeof kingReportCalendar==="undefined")return;
+ const y=kingReportMonth.getFullYear(),m=kingReportMonth.getMonth();
+ kingReportMonthTitle.textContent=y+"年 "+(m+1)+"月";
+ kingReportHead.innerHTML=["日","月","火","水","木","金","土"].map(x=>`<div class="king-report-week">${x}</div>`).join("");
+ const prefix=y+"-"+String(m+1).padStart(2,"0");
+ const usedClients=unique(reportsData.filter(r=>(r.date||"").startsWith(prefix)).map(r=>r.client||"未登録"));
+ kingReportLegend.innerHTML=usedClients.map(c=>`<span>${clientMark(c)} ${esc(c)}</span>`).join("");
+ const first=new Date(y,m,1),last=new Date(y,m+1,0);
+ let html="";
+ for(let i=0;i<first.getDay();i++)html+="<div></div>";
+ for(let d=1;d<=last.getDate();d++){
+   const ds=fmt(new Date(y,m,d));
+   const rs=reportsData.filter(r=>r.date===ds);
+   html+=`<div class="king-report-day" onclick="showKingReportDay('${ds}')"><b>${d}</b><div class="king-report-dotrow">`+
+     rs.slice(0,6).map(r=>`<span class="king-report-dot" title="${esc(r.client||"未登録")}">${clientMark(r.client)}</span>`).join("")+
+     `</div></div>`;
+ }
+ kingReportCalendar.innerHTML=html;
+}
+function moveKingReportMonth(n){kingReportMonth.setMonth(kingReportMonth.getMonth()+n);renderKingReportCalendar()}
+function showKingReportDay(ds){
+ const rs=reportsData.filter(r=>r.date===ds);
+ kingReportDayList.innerHTML=rs.length?rs.map(r=>`
+   <div class="card" style="margin-top:8px">
+     <b>${clientMark(r.client)} ${esc(r.client||"未登録")} / ${esc(r.site||"-")}</b><br>
+     <span class="small">入力者：${esc(r.reporter||"-")} / 作業員：${esc(r.worker||"-")} / 人数：${esc(r.people||0)}</span><br>
+     現場入場：${esc(r.start||"-")}　現場退場：${esc(r.end||"-")}<br>
+     作業内容：${esc(r.work||"-")}
+   </div>`).join(""):"この日の日報はありません。";
+}
+
 function renderReports(){let a=reportsData.slice().reverse();reportList.innerHTML=a.length?a.map(r=>`<div class="card"><b>${esc(r.date)} ${esc(r.site)}</b><br><span class="small">${r.approved?"✅ 承認済み":"🟡 未承認"} / 当社：${esc(r.company||"-")} / 入力者：${esc(r.reporter||"-")}</span><br>取引先：${esc(r.client||"-")}　担当者：${esc(r.clientPerson||"-")}<br>作業員：${esc(r.worker||"-")}　人数：${esc(r.people)}<br>現場入場：${esc(r.start)} 現場退場：${esc(r.end)} 休憩：${esc(r.breakMin||0)}分<br><div style="margin-top:8px;padding:8px 10px;background:#fff4db;border-radius:8px;font-weight:bold">🕒 日報打刻時間：${formatSavedAt(r)}</div>作業内容：${esc(r.work)}<br><button onclick="approve('${r.id}')">承認</button><button class="red" onclick="delReport('${r.id}')">削除</button></div>`).join(""):"日報なし"}
 function timeToMin(t){if(!t)return null;const p=String(t).split(":").map(Number);if(p.length<2||isNaN(p[0])||isNaN(p[1]))return null;return p[0]*60+p[1]}
 function reportHours(r){const s=timeToMin(r.start),e=timeToMin(r.end);if(s===null||e===null)return 0;let diff=e-s;if(diff<0)diff+=24*60;return Math.max(0,(diff-Number(r.breakMin||0))/60)}
@@ -361,7 +421,7 @@ function createConstructionInvoice(){
  location.href="fujiwara-invoice.html?new=1";
 }
 
-function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance();renderLeaderNotes()}
+function renderAll(){renderSelects();renderCalendar();renderReports();renderKingReportCalendar();renderAdminAttendance();renderLeaderNotes()}
 let t=fmt(new Date());jDate.value=t;rDate.value=t;leaderNoteDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
 </script>
 </body>
