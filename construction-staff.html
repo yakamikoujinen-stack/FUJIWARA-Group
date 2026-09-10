@@ -127,7 +127,7 @@ button:disabled{opacity:.55}
 
     <div style="margin-top:14px;padding:14px;background:#f8fafc;border:1px solid #e8edf3;border-radius:12px">
       <h3 style="margin:0 0 8px">📅 日報カレンダー</h3>
-      <p class="small">保存済みの日報がある日を表示します。日付をタップすると、その日の日報内容を確認できます。</p>
+      <p class="small">保存済みの日報を取引先別の色マークで表示します。日付をタップすると、その日の日報内容を確認できます。</p>
       <div class="staff-calendar-nav">
         <button style="background:#1f3a5f" onclick="moveReportMonth(-1)">← 前月</button>
         <button style="background:#1f3a5f" onclick="moveReportMonth(1)">翌月 →</button>
@@ -312,8 +312,8 @@ function renderReportCalendar(){
   for(let d=1;d<=last.getDate();d++){
     const ds=fmt(new Date(y,m,d));
     const rs=reportsData.filter(r=>r.date===ds);
-    html+=`<div class="staff-day" onclick="showReportDay('${ds}')"><b>${d}</b><div>`+
-      rs.map(()=>`<span class="report-dot"></span>`).join("")+
+    html+=`<div class="staff-day" onclick="showReportDay('${ds}')"><b>${d}</b><div class="staff-dot-row">`+
+      rs.slice(0,6).map(r=>`<span class="staff-cal-dot" title="${(r.client||"未登録")}">${clientMark(r.client)}</span>`).join("")+
       `</div></div>`;
   }
   reportCalendar.innerHTML=html;
