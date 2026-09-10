@@ -40,7 +40,7 @@ button:disabled{opacity:.55}
   <div class="hero">
     <div class="title">🏗️ 建設スタッフ 日報</div>
     <div class="sub">FUJIWARA Group</div>
-    <div class="badge">スタッフ専用・日報入力のみ</div>
+    <div class="badge">スタッフ専用・日報入力＋出欠予定表閲覧</div>
   </div>
 </header>
 
@@ -48,8 +48,15 @@ button:disabled{opacity:.55}
   <section class="card">
     <div><span id="cloudStatus" class="status">Firebase接続中...</span></div>
     <div class="notice small">
-      この画面では日報入力だけできます。予定・集計・取引先管理・削除・承認・請求書機能は表示しません。
+      この画面では日報入力と出欠予定表の閲覧ができます。集計・取引先管理・削除・承認・請求書などの管理機能は表示しません。
     </div>
+  </section>
+
+
+  <section class="card">
+    <h2>📅 出欠予定表を見る</h2>
+    <p class="small">管理者が作成した取引先別の出欠予定表を閲覧できます。スタッフ側から編集・削除はできません。</p>
+    <button style="background:#1f3a5f" onclick="location.href='construction-attendance-plan-staff-view.html'">👷 出欠予定表を閲覧</button>
   </section>
 
   <section class="card">

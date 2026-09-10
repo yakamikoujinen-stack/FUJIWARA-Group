@@ -47,8 +47,8 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 
 <main>
 <section class="card no-print">
-<h3>スタッフ用</h3>
-<p class="small">予定確認と日報入力のみ使用できます。保存データはこれまでと同じFirebaseを使用します。</p>
+<h3>🏗️ 建設管理（管理者用）</h3>
+<p class="small">予定・日報・取引先別集計・請求確認を管理します。保存データはこれまでと同じFirebaseを使用します。</p>
 <span id="cloudStatus" class="status">Firebase接続中...</span>
 <button class="green" onclick="syncLocalMastersToFirebase()">この端末の作業員・取引先を共有へ反映</button>
 </section>
@@ -98,6 +98,12 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 </section>
 
 <section id="admin" style="display:none">
+
+<div class="card no-print">
+  <h3>📅 取引先 出欠予定表</h3>
+  <p class="small">取引先ごとの月間出欠予定表を新規作成・編集・保存・PDF出力できます。スタッフ側には閲覧専用で共有されます。</p>
+  <button class="green" onclick="location.href='construction-attendance-plan-dev.html'">📚 出欠予定表を管理する</button>
+</div>
 <div class="card no-print">
 <h3>⚙️ 管理者ページ</h3>
 <p class="small">取引先別・月別の出勤実績を一覧にして、請求書作成前の確認に使えます。</p>
@@ -135,6 +141,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <button onclick="copyAdminCSV()">一覧をCSVコピー</button>
 <button class="green" onclick="window.print()">この月間一覧を印刷 / PDF</button>
 </div>
+
 <div class="no-print">
 <button class="green" onclick="createConstructionInvoice()">🧾 この月の請求書を作る</button>
 <div class="small">選択中の取引先・対象月・日報明細を正規のFUJIWARA請求書へ引き継ぎます。単価・金額は請求書側で入力してください。</div>
@@ -159,7 +166,7 @@ function normalizeNameArray(arr){return unique((arr||[]).map(x=>typeof x==="stri
 function formatSavedAt(r){const raw=r.createdAt||r.created||"";if(!raw)return"-";const d=new Date(raw);if(isNaN(d.getTime()))return String(raw);return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function clientMark(name){const n=name||"未登録";let i=clientsData.indexOf(n);if(i<0){clientsData.push(n);i=clientsData.length-1}return clientMarks[i%clientMarks.length]}
-function syncList(path,names){const updates={};names.forEach(name=>{const safe=String(name).replace(/[.#$\[\]\/]/g,"_");updates[safe]={name,updatedAt:new Date().toISOString()}});return R(path).update(updates)}
+function syncList(path,names){const updates={};names.forEach(name=>{const safe=String(name).replace(/[.#$\\[\\]/]/g,"_");updates[safe]={name,updatedAt:new Date().toISOString()}});return R(path).update(updates)}
 function syncLocalMastersToFirebase(){const ws=normalizeNameArray(readLocal("fks_construction_workers").concat(workersData));const cs=normalizeNameArray(readLocal("fks_construction_clients").concat(clientsData));Promise.all([syncList("workers",ws),syncList("clients",cs)]).then(()=>alert("作業員・取引先をFirebase共有へ反映しました")).catch(e=>alert("共有エラー: "+e.message))}
 function setStatus(t,c){cloudStatus.textContent=t;cloudStatus.className="status "+(c||"")}
 function seed(){R("workers").once("value").then(s=>{if(!s.exists())R("workers").set({w1:{name:"藤原"},w2:{name:"山田"},w3:{name:"田中"},w4:{name:"繁充"}})});R("clients").once("value").then(s=>{if(!s.exists())R("clients").set({c1:{name:"未登録"},c2:{name:"前田建設株式会社"}})})}
@@ -228,6 +235,7 @@ function copyAdminCSV(){
  const arr=filteredAdminReports();const csv=["日付","取引先名","取引先担当者","現場名","入力者","作業員","人数","現場入場","現場退場","時間","天気","保存日時"].map(csvCell).join(",")+"\n"+arr.map(r=>[r.date,r.client,r.clientPerson,r.site,r.reporter,r.worker,r.people,r.start,r.end,reportHours(r).toFixed(2),r.weather,formatSavedAt(r)].map(csvCell).join(",")).join("\n");
  navigator.clipboard.writeText(csv).then(()=>alert("月間一覧をCSVコピーしました")).catch(()=>alert("コピーできない場合は長押しコピーしてください"));
 }
+
 function createConstructionInvoice(){
  const arr=filteredAdminReports();
  if(!arr.length)return alert("請求書に入れる日報がありません");
@@ -251,6 +259,7 @@ function createConstructionInvoice(){
  localStorage.setItem("fujiwara_construction_invoice_prefill_v1",JSON.stringify(prefill));
  location.href="fujiwara-invoice.html?new=1";
 }
+
 function renderAll(){renderSelects();renderCalendar();renderReports();renderAdminAttendance()}
 let t=fmt(new Date());jDate.value=t;rDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
 </script>
