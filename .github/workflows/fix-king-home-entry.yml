@@ -1,0 +1,42 @@
+name: Fix KING home entry
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-king-home-entry.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch king-app loader target only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('king-app.html')
+          s = p.read_text(encoding='utf-8')
+          old = "fetch('king.html?laborDev=' + Date.now(), {cache:'no-store'})"
+          new = "fetch('king(20260909-inventory-center).html?laborDev=' + Date.now(), {cache:'no-store'})"
+          if old not in s:
+              raise SystemExit('Expected loader target not found; aborting without changes')
+          s = s.replace(old, new, 1)
+          s = s.replace('本番の king.html を安全に読み込み、労務費集計だけを追加しています。','最新の正規KINGを安全に読み込み、既存の労務費機能を維持しています。',1)
+          s = s.replace('king.htmlを読み込めません', '最新KINGを読み込めません', 1)
+          s = s.replace('このファイルを <b>king.html と同じ場所</b> にアップロードしてください。','最新KING本体の読み込みを確認してください。',1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit only king-app.html if changed
+        run: |
+          if git diff --quiet -- king-app.html; then
+            echo 'No change needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add king-app.html
+          git commit -m 'Point KING home launcher to latest canonical KING'
+          git push
