@@ -1,7 +1,7 @@
 {
   "name": "FUJIWARA KING SYSTEM",
   "short_name": "KING",
-  "start_url": "king-app.html",
+  "start_url": "king(20260909-inventory-center).html?home=1",
   "display": "standalone",
   "background_color": "#081a33",
   "theme_color": "#081a33",
