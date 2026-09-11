@@ -1,0 +1,50 @@
+name: Force KING home canonical
+
+on:
+  push:
+    paths:
+      - '.github/workflows/force-king-home-canonical.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Point installed KING launcher to canonical KING
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          target='king(20260909-inventory-center).html'
+
+          p=Path('king-app.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- KING_HOME_CANONICAL_REDIRECT -->'
+          redirect=f'''{marker}\n<script>\n(function(){{\n  var target='{target}?home=1&v=20260911-1645';\n  if(!location.pathname.endsWith('/{target}')) location.replace(target);\n}})();\n</script>\n'''
+          if marker not in s:
+              pos=s.lower().find('<body')
+              if pos<0: raise SystemExit('body tag not found; abort')
+              end=s.find('>',pos)
+              if end<0: raise SystemExit('body tag malformed; abort')
+              s=s[:end+1]+'\n'+redirect+s[end+1:]
+              p.write_text(s,encoding='utf-8')
+
+          m=Path('king-manifest.webmanifest')
+          import json
+          data=json.loads(m.read_text(encoding='utf-8'))
+          data['start_url']=target+'?home=1'
+          m.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit launcher-only changes
+        run: |
+          if git diff --quiet -- king-app.html king-manifest.webmanifest; then
+            echo 'No change needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add king-app.html king-manifest.webmanifest
+          git commit -m 'Force home-screen KING to latest canonical KING'
+          git push
