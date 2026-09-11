@@ -1,0 +1,82 @@
+name: Add KING back button to main login screen
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-login-king-back.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add login-only KING button safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='id="login-king-back"'
+          if marker in s:
+              print('login KING button already present')
+          else:
+              block=r'''<script id="login-king-back-script">
+(function(){
+  function addLoginKingBack(){
+    var screen=document.getElementById('login-screen');
+    if(!screen || document.getElementById('login-king-back')) return;
+    var a=document.createElement('a');
+    a.id='login-king-back';
+    a.href='king.html?v=20260911';
+    a.setAttribute('aria-label','KINGに戻る');
+    a.textContent='👑 KINGに戻る';
+    Object.assign(a.style,{
+      position:'fixed',
+      top:'calc(18px + env(safe-area-inset-top))',
+      right:'22px',
+      zIndex:'1200',
+      display:'inline-flex',
+      alignItems:'center',
+      justifyContent:'center',
+      gap:'7px',
+      padding:'11px 16px',
+      border:'1.5px solid #c8a84b',
+      borderRadius:'999px',
+      background:'rgba(255,255,255,.94)',
+      color:'#5e4500',
+      boxShadow:'0 8px 22px rgba(80,55,0,.18)',
+      fontFamily:'inherit',
+      fontSize:'14px',
+      fontWeight:'900',
+      textDecoration:'none',
+      WebkitBackdropFilter:'blur(10px)',
+      backdropFilter:'blur(10px)'
+    });
+    if(window.matchMedia && window.matchMedia('(max-width:560px)').matches){
+      a.style.top='calc(10px + env(safe-area-inset-top))';
+      a.style.right='10px';
+      a.style.padding='9px 12px';
+      a.style.fontSize='12px';
+    }
+    screen.appendChild(a);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addLoginKingBack);
+  else addLoginKingBack();
+})();
+</script>'''
+              if '</body>' not in s:
+                  raise SystemExit('body closing tag not found; refusing to modify')
+              s=s.replace('</body>',block+'\n</body>',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit only index.html
+        run: |
+          if git diff --quiet -- index.html; then echo 'No change needed'; exit 0; fi
+          git config user.name 'FUJIWARA safe patch'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Add KING back button to login screen'
+          git push origin main
