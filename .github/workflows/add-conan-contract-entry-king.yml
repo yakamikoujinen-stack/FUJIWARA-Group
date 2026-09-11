@@ -1,0 +1,39 @@
+name: Add Conan contract entry to KING
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-conan-contract-entry-king.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Conan subcontract leader card
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('king(20260909-inventory-center).html')
+          s=p.read_text(encoding='utf-8')
+          if 'family-conan-contract-dev.html' in s:
+              print('already patched')
+          else:
+              marker='''      <a class="hub-card conan-fixed" href="conan-event-import.html"><div><div class="hub-top"><div class="hub-icon">📋</div><div class="hub-title">コナン予定取込</div></div><div class="hub-desc">コナンプロデュースから届いた予定を貼り付けて一覧表に変換・保存</div></div><div class="hub-open">開く ›</div></a>'''
+              card='''\n      <a class="hub-card conan-fixed" href="family-conan-contract-dev.html"><div><div class="hub-top"><div class="hub-icon">🤝</div><div class="hub-title">コナン請負振分</div></div><div class="hub-desc">メインイベントのネタをFUJIWARA Group・まゆみ・龍来・想良・FUJIWARAスタッフへ振り分け</div></div><div class="hub-open">振分管理を開く ›</div></a>'''
+              if marker not in s:
+                  raise SystemExit('target marker not found')
+              s=s.replace(marker,marker+card,1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit change
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'king(20260909-inventory-center).html'
+          git commit -m 'Add Conan subcontract leader entry to KING'
+          git push
