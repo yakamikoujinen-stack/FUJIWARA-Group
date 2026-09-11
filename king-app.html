@@ -153,7 +153,7 @@ body.labor-app-open{overflow:hidden}
 <div id="devLoader">
   <div class="loading-card">
     <h1>👷 KING 労務費集計・開発版</h1>
-    <p>本番の king.html を安全に読み込み、労務費集計だけを追加しています。</p>
+    <p>最新の正規KINGを安全に読み込み、既存の労務費機能を維持しています。</p>
   </div>
 </div>
 
@@ -494,9 +494,9 @@ window.renderLaborKing=function(){
   })();
   <\/script>`;
 
-  fetch('king.html?laborDev=' + Date.now(), {cache:'no-store'})
+  fetch('king(20260909-inventory-center).html?laborDev=' + Date.now(), {cache:'no-store'})
     .then(function(r){
-      if(!r.ok)throw new Error('king.htmlを読み込めません（HTTP '+r.status+'）');
+      if(!r.ok)throw new Error('最新KINGを読み込めません（HTTP '+r.status+'）');
       return r.text();
     })
     .then(function(source){
@@ -575,7 +575,7 @@ window.renderLaborKing=function(){
     .catch(function(err){
       document.getElementById('devLoader').innerHTML=
         '<div class="loading-card"><h1>⚠️ 読み込み失敗</h1>'+
-        '<p>このファイルを <b>king.html と同じ場所</b> にアップロードしてください。</p>'+
+        '<p>最新KING本体の読み込みを確認してください。</p>'+
         '<div class="error">'+String(err.message||err)+'</div></div>';
     });
 })();
