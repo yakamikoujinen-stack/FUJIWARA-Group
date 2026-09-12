@@ -676,6 +676,7 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
+      <button id="king-back-btn" class="btn btn-ghost" onclick="location.href='king.html'" style="display:none;padding:7px 11px;font-size:11px;white-space:nowrap">👑 KINGへ戻る</button>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -5542,6 +5543,19 @@ document.addEventListener('click',function(e){
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&userName&&document.getElementById('app')&&document.getElementById('app').style.display!=='none')writePresence();});
   window.addEventListener('beforeunload',function(){try{if(presenceRef)presenceRef.remove();}catch(e){}});
   setTimeout(updatePresenceFab,500);
+})();
+</script>
+
+<script id="king-back-leader-only">
+(function(){
+  function syncKingBack(){
+    var b=document.getElementById('king-back-btn');
+    if(!b)return;
+    b.style.display=(typeof role!=='undefined' && role==='leader')?'inline-flex':'none';
+  }
+  setInterval(syncKingBack,300);
+  document.addEventListener('click',function(){setTimeout(syncKingBack,0);});
+  syncKingBack();
 })();
 </script>
 </body>
