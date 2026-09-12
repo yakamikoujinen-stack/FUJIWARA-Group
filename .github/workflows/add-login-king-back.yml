@@ -30,7 +30,7 @@ jobs:
     if(!screen || document.getElementById('login-king-back')) return;
     var a=document.createElement('a');
     a.id='login-king-back';
-    a.href='king.html?v=20260911';
+    a.href='king.html?v=20260912';
     a.setAttribute('aria-label','KINGに戻る');
     a.textContent='👑 KINGに戻る';
     Object.assign(a.style,{
@@ -45,7 +45,7 @@ jobs:
       padding:'11px 16px',
       border:'1.5px solid #c8a84b',
       borderRadius:'999px',
-      background:'rgba(255,255,255,.94)',
+      background:'rgba(255,255,255,.96)',
       color:'#5e4500',
       boxShadow:'0 8px 22px rgba(80,55,0,.18)',
       fontFamily:'inherit',
@@ -80,3 +80,4 @@ jobs:
           git add index.html
           git commit -m 'Add KING back button to login screen'
           git push origin main
+# rerun 2026-09-12
