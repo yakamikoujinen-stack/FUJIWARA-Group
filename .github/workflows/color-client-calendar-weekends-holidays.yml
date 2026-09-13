@@ -1,0 +1,46 @@
+name: Color client calendar weekends and holidays
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/color-client-calendar-weekends-holidays.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch calendar date colors only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('king-client-schedule.html')
+          s=p.read_text(encoding='utf-8')
+          old='.dow{text-align:center;padding:8px;background:#f3f6fa;font-weight:950}.day{min-height:105px;padding:6px}.num{font-weight:950}'
+          new='.dow{text-align:center;padding:8px;background:#f3f6fa;font-weight:950}.dow.sun{color:#d93025}.dow.sat{color:#1769c2}.day{min-height:105px;padding:6px}.num{font-weight:950}.num.sun,.num.holiday{color:#d93025}.num.sat{color:#1769c2}'
+          if old in s:s=s.replace(old,new,1)
+          elif new not in s:raise SystemExit('CSS anchor missing')
+          anchor='function render(){'
+          helper="""function holidayBase(d){const y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate(),k=String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0'),fixed=['01-01','02-11','02-23','04-29','05-03','05-04','05-05','08-11','11-03','11-23'];if(fixed.includes(k))return true;const nth=(mm,n)=>{let x=new Date(y,mm-1,1);return 1+((8-x.getDay())%7)+(n-1)*7};if((m===1&&day===nth(1,2))||(m===7&&day===nth(7,3))||(m===9&&day===nth(9,3))||(m===10&&day===nth(10,2)))return true;let sp=Math.floor(20.8431+.242194*(y-1980)-Math.floor((y-1980)/4)),au=Math.floor(23.2488+.242194*(y-1980)-Math.floor((y-1980)/4));return(m===3&&day===sp)||(m===9&&day===au)}function isHoliday(d){if(holidayBase(d))return true;let prev=new Date(d);prev.setDate(d.getDate()-1);let next=new Date(d);next.setDate(d.getDate()+1);if(holidayBase(prev)&&holidayBase(next))return true;if(d.getDay()===1&&holidayBase(prev))return true;return false}"""
+          if 'function isHoliday(' not in s:
+              if anchor not in s:raise SystemExit('render anchor missing')
+              s=s.replace(anchor,helper+anchor,1)
+          oldhead="let html=['日','月','火','水','木','金','土'].map(x=>'<div class=\"dow\">'+x+'</div>').join('');"
+          newhead="let html=['日','月','火','水','木','金','土'].map((x,i)=>'<div class=\"dow '+(i===0?'sun':i===6?'sat':'')+'\">'+x+'</div>').join('');"
+          if oldhead in s:s=s.replace(oldhead,newhead,1)
+          elif newhead not in s:raise SystemExit('weekday header anchor missing')
+          oldday="let rr=inMonth?rows.filter(r=>r.date===ds):[];html+='<div class=\"day '+(inMonth?'':'empty')+'\"><div class=\"num\">'+(inMonth?d.getDate():'')+'</div>'"
+          newday="let rr=inMonth?rows.filter(r=>r.date===ds):[],hol=inMonth&&isHoliday(d),numClass=d.getDay()===0?'sun':hol?'holiday':d.getDay()===6?'sat':'';html+='<div class=\"day '+(inMonth?'':'empty')+'\"><div class=\"num '+numClass+'\">'+(inMonth?d.getDate():'')+'</div>'"
+          if oldday in s:s=s.replace(oldday,newday,1)
+          elif newday not in s:raise SystemExit('day render anchor missing')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit only client schedule
+        run: |
+          if git diff --quiet -- king-client-schedule.html; then exit 0; fi
+          git config user.name 'FUJIWARA safe patch'
+          git config user.email 'actions@users.noreply.github.com'
+          git add king-client-schedule.html
+          git commit -m 'Color Sundays holidays red and Saturdays blue'
+          git push origin main
