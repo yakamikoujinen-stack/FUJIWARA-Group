@@ -676,7 +676,6 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
-      <button id="king-back-btn" class="btn btn-ghost" onclick="location.href='king.html'" style="display:none;padding:7px 11px;font-size:11px;white-space:nowrap">👑 KINGへ戻る</button>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -1007,8 +1006,27 @@ body::before,#app::before,.page::before{
       </div>
     </div>
     <div class="fg"><label>場所</label><input type="text" id="ef-place" placeholder="例: ○○公園広場"></div>
-    <div class="fg"><label>ステータス</label>
-      <select id="ef-status"><option value="planned">予定</option><option value="active">開催中</option><option value="done">終了</option></select>
+    <!-- 出店形態：ステータス値は既存機能保護のため非表示で保持 -->
+    <select id="ef-status" style="display:none" aria-hidden="true"><option value="planned">予定</option><option value="active">開催中</option><option value="done">終了</option></select>
+    <div class="fg"><label>出店形態</label>
+      <div id="ef-booth-type-wrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);padding:9px 11px;border-radius:10px;cursor:pointer"><input type="radio" name="ef-booth-type" value="テキヤテント" style="width:auto;margin:0" onchange="updateBoothTypeUI()"> テキヤテント</label>
+        <label style="display:flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);padding:9px 11px;border-radius:10px;cursor:pointer"><input type="radio" name="ef-booth-type" value="ターフテント" style="width:auto;margin:0" onchange="updateBoothTypeUI()"> ターフテント</label>
+        <label style="display:flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);padding:9px 11px;border-radius:10px;cursor:pointer"><input type="radio" name="ef-booth-type" value="現地設営テント" style="width:auto;margin:0" onchange="updateBoothTypeUI()"> 現地設営テント</label>
+        <label style="display:flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);padding:9px 11px;border-radius:10px;cursor:pointer"><input type="radio" name="ef-booth-type" value="キッチンカー" style="width:auto;margin:0" onchange="updateBoothTypeUI()"> キッチンカー</label>
+      </div>
+      <div id="ef-tarp-size-wrap" style="display:none;margin-top:9px;padding:9px 11px;border:1px dashed var(--border);border-radius:10px;background:var(--surface2)">
+        <div style="font-size:12px;font-weight:800;margin-bottom:7px">ターフテントサイズ</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="3m" style="width:auto;margin:0"> 3m</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2.5×3×2" style="width:auto;margin:0"> 2.5×3×2</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2m" style="width:auto;margin:0"> 2m</label>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+        <input type="number" id="ef-booth-count" min="0" step="1" inputmode="numeric" placeholder="0" style="max-width:140px">
+        <b id="ef-booth-unit" style="font-size:15px">基</b><span style="font-size:12px;color:var(--text2)">（個数又は台数）</span>
+      </div>
     </div>
     <div class="fg"><label>出店アイテム（自由入力）</label>
       <textarea id="ef-items-text" placeholder="例: やきそば・串・かき氷"></textarea>
@@ -3233,6 +3251,31 @@ function dayStaffSummaryHtml(ev,ds){
 }
 
 // ════ EVENT FORM ════
+function updateBoothTypeUI(){
+  var checked=document.querySelector('input[name="ef-booth-type"]:checked');
+  var type=checked?checked.value:'';
+  var sizeWrap=document.getElementById('ef-tarp-size-wrap');
+  if(sizeWrap) sizeWrap.style.display=type==='ターフテント'?'block':'none';
+  var unit=document.getElementById('ef-booth-unit');
+  if(unit) unit.textContent=type==='キッチンカー'?'台':'基';
+}
+function setBoothFormValues(ev){
+  document.querySelectorAll('input[name="ef-booth-type"]').forEach(function(r){ r.checked=!!(ev&&ev.boothType===r.value); });
+  var sizes=ev&&Array.isArray(ev.tarpSizes)?ev.tarpSizes:[];
+  document.querySelectorAll('input[name="ef-tarp-size"]').forEach(function(c){ c.checked=sizes.indexOf(c.value)>=0; });
+  var count=document.getElementById('ef-booth-count');
+  if(count) count.value=ev&&ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!==''?ev.boothCount:'';
+  updateBoothTypeUI();
+}
+function getBoothFormValues(){
+  var checked=document.querySelector('input[name="ef-booth-type"]:checked');
+  var type=checked?checked.value:'';
+  var sizes=[];
+  if(type==='ターフテント') document.querySelectorAll('input[name="ef-tarp-size"]:checked').forEach(function(c){ sizes.push(c.value); });
+  var countEl=document.getElementById('ef-booth-count');
+  var raw=countEl?countEl.value:'';
+  return {boothType:type,tarpSizes:sizes,boothCount:raw===''?'':(parseInt(raw,10)||0)};
+}
 function openEventForm(id) {
   if(role==='user'){ toast('⛔ 権限がありません'); return; }
   var ev=null;
@@ -3244,6 +3287,7 @@ function openEventForm(id) {
   document.getElementById('ef-zone').value=ev?ev.zone:'A';
   document.getElementById('ef-place').value=ev?ev.place:'';
   document.getElementById('ef-status').value=ev?ev.status:'planned';
+  setBoothFormValues(ev);
   document.getElementById('ef-memo').value=ev?ev.memo:'';
   document.getElementById('ef-items-text').value=ev?ev.itemsText||'':'';
   document.getElementById('ef-date-end').value=ev?(inferEventEndDate(ev)||''):'';
@@ -3292,6 +3336,9 @@ function saveEventForm() {
     zone:document.getElementById('ef-zone').value,
     place:document.getElementById('ef-place').value,
     status:document.getElementById('ef-status').value,
+    boothType:getBoothFormValues().boothType,
+    tarpSizes:getBoothFormValues().tarpSizes,
+    boothCount:getBoothFormValues().boothCount,
     requiredStaff: parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0) || 0,
     memo:document.getElementById('ef-memo').value,
     itemsText:document.getElementById('ef-items-text').value.trim(),
@@ -5543,19 +5590,6 @@ document.addEventListener('click',function(e){
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&userName&&document.getElementById('app')&&document.getElementById('app').style.display!=='none')writePresence();});
   window.addEventListener('beforeunload',function(){try{if(presenceRef)presenceRef.remove();}catch(e){}});
   setTimeout(updatePresenceFab,500);
-})();
-</script>
-
-<script id="king-back-leader-only">
-(function(){
-  function syncKingBack(){
-    var b=document.getElementById('king-back-btn');
-    if(!b)return;
-    b.style.display=(typeof role!=='undefined' && role==='leader')?'inline-flex':'none';
-  }
-  setInterval(syncKingBack,300);
-  document.addEventListener('click',function(){setTimeout(syncKingBack,0);});
-  syncKingBack();
 })();
 </script>
 </body>
