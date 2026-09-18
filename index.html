@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.49 出店形態カード表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.50 出店形態カード表示確実版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -676,7 +676,6 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
-      <button id="king-back-btn" class="btn btn-ghost" onclick="location.href='king.html'" style="display:none;padding:7px 11px;font-size:11px;white-space:nowrap">👑 KINGへ戻る</button>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -3255,19 +3254,21 @@ function dayStaffSummaryHtml(ev,ds){
 // v4.3.49: イベントカードに出店形態を表示
 function renderBoothTypeSummary(ev){
   if(!ev) return '';
-  var type=String(ev.boothType||'').trim();
+  // v4.3.50: 現行保存キーを最優先。旧試作キーが残っていても表示だけ救済する。
+  var type=String(ev.boothType||ev.storeType||ev.stallType||'').trim();
   if(!type) return '';
+  var sizes=Array.isArray(ev.tarpSizes)?ev.tarpSizes:(Array.isArray(ev.boothSizes)?ev.boothSizes:[]);
   var detail='';
-  if(type==='ターフテント' && Array.isArray(ev.tarpSizes) && ev.tarpSizes.length){
-    detail='（'+ev.tarpSizes.join('・')+'）';
-  }
+  if(type==='ターフテント' && sizes.length){ detail='（'+sizes.join('・')+'）'; }
+  var rawCount=(ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!=='')?ev.boothCount:
+               ((ev.storeCount!==undefined&&ev.storeCount!==null&&ev.storeCount!=='')?ev.storeCount:'');
   var count='';
-  if(ev.boothCount!==undefined && ev.boothCount!==null && ev.boothCount!==''){
+  if(rawCount!==''){
     var unit=type==='キッチンカー'?'台':'基';
-    count=' × '+ev.boothCount+unit;
+    count=' × '+rawCount+unit;
   }
   var icon=type==='キッチンカー'?'🚚':'⛺';
-  return '<div class="ev-meta" style="margin-top:5px;font-weight:900;color:var(--text)">'+icon+' 出店形態　'+esc(type)+esc(detail)+esc(count)+'</div>';
+  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+esc(type)+esc(detail)+esc(count)+'</div>';
 }
 
 // ════ EVENT FORM ════
@@ -5610,19 +5611,6 @@ document.addEventListener('click',function(e){
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&userName&&document.getElementById('app')&&document.getElementById('app').style.display!=='none')writePresence();});
   window.addEventListener('beforeunload',function(){try{if(presenceRef)presenceRef.remove();}catch(e){}});
   setTimeout(updatePresenceFab,500);
-})();
-</script>
-
-<script id="king-back-leader-only">
-(function(){
-  function syncKingBack(){
-    var b=document.getElementById('king-back-btn');
-    if(!b)return;
-    b.style.display=(typeof role!=='undefined' && role==='leader')?'inline-flex':'none';
-  }
-  setInterval(syncKingBack,300);
-  document.addEventListener('click',function(){setTimeout(syncKingBack,0);});
-  syncKingBack();
 })();
 </script>
 </body>
