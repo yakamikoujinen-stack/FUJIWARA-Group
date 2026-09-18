@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>在庫・発注・購入 管理センター v21.1</title>
+<title>在庫・発注・購入 管理センター v21.2</title>
 <meta name="theme-color" content="#17324d">
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;--bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--shadow:0 10px 28px rgba(18,46,72,.10)}
@@ -23,10 +23,10 @@
 </head>
 <body>
 <div class="app">
-<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.1</h1><div class="sub">単価・購入先をまとめて保存。未入力の0表示をなくし、入力途中の内容が消えないよう改善</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.2</h1><div class="sub">メインアプリで変更・追加した出店ネタをそのまま予定設定へ自動反映</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
 
 <div class="notice safe">🔒 <b>メイン・KING・現在庫・材料マスターは書き換えません。</b><br>
-このv21.1では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
+このv21.2では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
 <b>「🛒 買い物メモ」</b>を追加しました。<br>
 発注する物と近くで買う物だけを一覧化し、印刷してそのまま持って行けます。<br>
 旧「材料マスター確認」は通常メニューから外しますが、互換用データとして内部には残し、既存計算を壊しません。</div>
@@ -398,8 +398,9 @@ function usageCandidates(neta){
 function renderUsage(){
  const sel=document.getElementById('usageNeta'); if(!sel)return;
  const cur=sel.value;
- sel.innerHTML=CANONICAL_MAIN_NETA.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
- if(cur&&CANONICAL_MAIN_NETA.some(x=>x.name===cur))sel.value=cur;
+ const list=allNetaNames();
+ sel.innerHTML=list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+ if(cur&&list.some(x=>x===cur))sel.value=cur;
  renderUsageRows();
 }
 function renderUsageRows(){
@@ -580,58 +581,79 @@ function eventNetaNamesV13(ev){
    .replace(/[・･／/、,＋+]/g,'')
    .toLowerCase();
 
- const addRaw=value=>{
-   const raw=normalize(value);
-   if(!raw)return;
-   Object.keys(aliases).forEach(name=>{
-     const hit=aliases[name].some(a=>raw.includes(normalize(a)));
-     if(hit&&!names.includes(name))names.push(name);
-   });
+ const cleanToken=s=>String(s||'').trim().replace(/^[・･／/、,＋+]+|[・･／/、,＋+。．.!！?？]+$/g,'');
+ const addName=name=>{
+   const v=cleanToken(name);
+   if(!v)return;
+   if(!names.some(x=>norm(x)===norm(v)))names.push(v);
  };
-
+ const canonicalFor=value=>{
+   const raw=normalize(value);
+   if(!raw)return '';
+   for(const [name,list] of Object.entries(aliases)){
+     if(list.some(a=>raw===normalize(a) || raw.includes(normalize(a))))return name;
+   }
+   return '';
+ };
+ const addToken=value=>{
+   const v=cleanToken(value);
+   if(!v)return;
+   const canon=canonicalFor(v);
+   addName(canon||v);
+ };
+ const addRaw=value=>{
+   String(value||'').split(/[\s\n\r\t、,，／/＋+]+/).map(cleanToken).filter(Boolean).forEach(addToken);
+ };
  const arr2=v=>Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]);
 
- // メインアプリの出店ネタ入力欄
+ // メインアプリの出店ネタ入力欄は、登録順のまま直接取り込む。
+ // 正規16ネタに無い新しいネタ名も、そのまま予定設定へ追加する。
  addRaw(ev.itemsText);
  addRaw(ev.itemsName);
 
- // 旧形式・将来形式
  ['neta','netas','menu','menus','products','productNames','shopItems','eventItems'].forEach(key=>{
    arr2(ev[key]).forEach(v=>{
-     if(v&&typeof v==='object') addRaw(v.name||v.title||v.cat||v.category||v.neta);
-     else addRaw(v);
+     if(v&&typeof v==='object') addToken(v.name||v.title||v.cat||v.category||v.neta);
+     else addToken(v);
    });
  });
 
- // 在庫ID / 在庫オブジェクトで保存された形式
  arr2(ev.items).forEach(v=>{
    if(v&&typeof v==='object'){
-     addRaw(v.name||v.title||v.cat||v.category);
+     addToken(v.name||v.title||v.cat||v.category);
      return;
    }
    const it=inventory.find(x=>String(x.id||'')===String(v));
    if(it){
-     addRaw(it.cat);
-     addRaw(it.name);
+     addToken(it.cat);
    }else{
-     addRaw(v);
+     addToken(v);
    }
  });
 
- // 売上表に登録されたネタ名
  const sales=ev.sales||{};
  const salesObjects=[sales.items,sales.itemSales,sales.simple&&sales.simple.items];
- salesObjects.forEach(obj=>{
-   Object.keys(obj||{}).forEach(addRaw);
- });
- Object.values(sales.days||{}).forEach(day=>{
-   Object.keys((day&&day.items)||{}).forEach(addRaw);
+ salesObjects.forEach(obj=>Object.keys(obj||{}).forEach(addToken));
+ Object.values(sales.days||{}).forEach(day=>Object.keys((day&&day.items)||{}).forEach(addToken));
+
+ // memo/note/description は誤検出防止のため、既知ネタだけ補完。
+ ['memo','note','description'].forEach(k=>{
+   const raw=String(ev[k]||'');
+   Object.entries(aliases).forEach(([name,list])=>{
+     if(list.some(a=>normalize(raw).includes(normalize(a))))addName(name);
+   });
  });
 
- // 念のためイベント直下の文字列項目も確認
- ['memo','note','description'].forEach(k=>addRaw(ev[k]));
+ return names;
+}
 
- return CANONICAL_MAIN_NETA.map(x=>x.name).filter(n=>names.includes(n));
+function allNetaNames(){
+ const out=[];
+ const add=v=>{const s=String(v||'').trim();if(s&&!out.some(x=>norm(x)===norm(s)))out.push(s)};
+ CANONICAL_MAIN_NETA.forEach(x=>add(x.name));
+ events.forEach(e=>eventNetaNamesV13(e).forEach(add));
+ inventory.forEach(x=>add(x.cat));
+ return out;
 }
 function saleUnitPriceFor(neta){
  const sales=rowsFor(neta).filter(r=>(r.type||'sale')!=='material' && Number(r.unitPrice||0)>0);
@@ -1108,8 +1130,9 @@ function renderInventory(){
 function renderRoleNetaSelect(){
  const sel=document.getElementById('roleNeta'); if(!sel)return;
  const current=sel.value;
- sel.innerHTML=CANONICAL_MAIN_NETA.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
- if(CANONICAL_MAIN_NETA.some(x=>x.name===current)) sel.value=current;
+ const list=allNetaNames();
+ sel.innerHTML=list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+ if(list.includes(current)) sel.value=current;
 }
 
 function canonicalMainItems(neta){
