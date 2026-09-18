@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>在庫・発注・購入 管理センター v21.2</title>
+<title>在庫・発注・購入 管理センター v21.3</title>
 <meta name="theme-color" content="#17324d">
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;--bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--shadow:0 10px 28px rgba(18,46,72,.10)}
@@ -23,7 +23,7 @@
 </head>
 <body>
 <div class="app">
-<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.2</h1><div class="sub">メインアプリで変更・追加した出店ネタをそのまま予定設定へ自動反映</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.3</h1><div class="sub">メインアプリの出店ネタだけを反映し、A〜Eなどの入力欄記号を除外</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
 
 <div class="notice safe">🔒 <b>メイン・KING・現在庫・材料マスターは書き換えません。</b><br>
 このv21.2では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
@@ -582,9 +582,13 @@ function eventNetaNamesV13(ev){
    .toLowerCase();
 
  const cleanToken=s=>String(s||'').trim().replace(/^[・･／/、,＋+]+|[・･／/、,＋+。．.!！?？]+$/g,'');
+ const isNoiseToken=v=>{
+   const s=String(v||'').trim();
+   return /^[A-EＡ-Ｅ]$/i.test(s) || /^(未設定|なし|無し|出店ネタ|精算先)$/i.test(s);
+ };
  const addName=name=>{
    const v=cleanToken(name);
-   if(!v)return;
+   if(!v || isNoiseToken(v))return;
    if(!names.some(x=>norm(x)===norm(v)))names.push(v);
  };
  const canonicalFor=value=>{
