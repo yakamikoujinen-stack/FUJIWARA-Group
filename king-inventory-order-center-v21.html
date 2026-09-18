@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>在庫・発注・購入 管理センター v21.4</title>
+<title>在庫・発注・購入 管理センター v21.5</title>
 <meta name="theme-color" content="#17324d">
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;--bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--shadow:0 10px 28px rgba(18,46,72,.10)}
@@ -19,11 +19,17 @@
 .empty{text-align:center;padding:28px;color:var(--muted)}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.money{font-size:28px;font-weight:950;color:#176541}.money.red{color:#b42318}.money.blue{color:#155a96}.money.gold{color:#8a5a00}.procure-chip{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:950}.procure-order{background:#fff3cd;color:#7a5600;border:1px solid #e4bd45}.procure-local{background:#eaf4ff;color:#155a96;border:1px solid #9cc9ee}.fund-note{background:#fff7df;border:1px solid #e5c96a;border-radius:14px;padding:12px;font-size:12px;line-height:1.7;font-weight:800}.diag{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px;font-size:12px;line-height:1.7}.diag .bad{color:#b42318;font-weight:900}.diag .good{color:#176541;font-weight:900}.plan-grid{display:grid;grid-template-columns:1fr 170px 120px;gap:8px;align-items:center}.plan-row{padding:10px 0;border-bottom:1px solid #edf1f5}.plan-row:last-child{border-bottom:0}.plan-name{font-weight:950}.plan-meta{font-size:11px;color:var(--muted);margin-top:3px}.plan-save{background:#eaf7ef;border:1px solid #9fd5ad;color:#176541;border-radius:12px;padding:10px;font-size:12px;font-weight:900}.usage-head{display:grid;grid-template-columns:1fr;gap:10px;align-items:end}.usage-main{background:#fff9e6}.usage-sub{background:#f4f9ff}.usage-input{max-width:140px}.usage-note{font-size:11px;color:var(--muted);line-height:1.5}.edit-cell{min-width:120px}.purchase-input{min-width:110px}.save-state{font-size:10px;font-weight:900;color:#176541}.readonly-chip{display:inline-flex;padding:3px 7px;border-radius:999px;background:#eef3f7;color:#425568;font-size:10px;font-weight:900}.calc-box{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:12px;line-height:1.65}.formula-main{color:#8a5a00;font-weight:900}.formula-sub{color:#155a96;font-weight:900}@media(max-width:650px){.plan-grid{grid-template-columns:1fr}.usage-head{grid-template-columns:1fr}}.event-list{display:flex;gap:7px;flex-wrap:wrap}.ev{padding:7px 10px;border-radius:10px;background:#f4f8fb;border:1px solid var(--line);font-size:12px;font-weight:900}
 .footer{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:50}.footer .btn{min-width:150px}
 @media(max-width:800px){.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}@media print{header,.tabs,.notice,.footer,.no-print{display:none!important}.app{padding:0}.page{display:none!important}#page-week{display:block!important}.card{box-shadow:none}}
-.memo-section{border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px;background:#fff}.memo-title{font-size:18px;font-weight:950;margin-bottom:8px}.memo-check{width:22px;height:22px}.memo-row-note{width:160px}.memo-print-head{display:none}.memo-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.memo-summary .kpi{min-height:82px}@media(max-width:650px){.memo-summary{grid-template-columns:1fr}}@media print{.no-print,.tabs,.footer,.top-notice,.hero .back{display:none!important}.memo-print-head{display:block!important}.page{display:none!important}#page-memo{display:block!important}.memo-section{break-inside:avoid}.memo-row-note{border:0!important}.memo-check{appearance:none;border:1px solid #555!important;width:16px;height:16px}}</style>
+.memo-section{border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px;background:#fff}.memo-title{font-size:18px;font-weight:950;margin-bottom:8px}.memo-check{width:22px;height:22px}.memo-row-note{width:160px}.memo-print-head{display:none}.memo-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.memo-summary .kpi{min-height:82px}@media(max-width:650px){.memo-summary{grid-template-columns:1fr}}@media print{.no-print,.tabs,.footer,.top-notice,.hero .back{display:none!important}.memo-print-head{display:block!important}.page{display:none!important}#page-memo{display:block!important}.memo-section{break-inside:avoid}.memo-row-note{border:0!important}.memo-check{appearance:none;border:1px solid #555!important;width:16px;height:16px}}
+.manual-add{background:#fff7ed;border:1px solid #fdba74;border-radius:14px;padding:12px;margin:10px 0}
+.manual-add-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr 2fr auto;gap:8px;align-items:end}
+.manual-row{background:#fff1f0!important}
+.manual-badge{display:inline-flex;padding:3px 7px;border-radius:999px;background:#ffe0dc;color:#a52b20;border:1px solid #f1a39a;font-size:10px;font-weight:950;margin-left:6px}
+@media(max-width:800px){.manual-add-grid{grid-template-columns:1fr 1fr}.manual-add-grid .wide{grid-column:1/-1}}
+</style>
 </head>
 <body>
 <div class="app">
-<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.4</h1><div class="sub">メインアプリの精算先に並ぶネタを正として、全イベント共通で予定設定へ反映</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.5</h1><div class="sub">買い物メモを担当者アプリ対応。近くで買う物は手入力追加・色分け・共有保存</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
 
 <div class="notice safe">🔒 <b>メイン・KING・現在庫・材料マスターは書き換えません。</b><br>
 このv21.2では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
@@ -276,6 +282,17 @@
 
     <div class="memo-section">
       <div class="memo-title">🔹 近くで購入する物</div>
+      <div class="manual-add no-print">
+        <div style="font-weight:950;margin-bottom:8px">✍️ 手入力で追加 <span class="manual-badge">手入力は色分け</span></div>
+        <div class="manual-add-grid">
+          <div class="wide"><label>品名</label><input id="manualMemoName" placeholder="例：紙皿、氷、飲料"></div>
+          <div><label>買う数</label><input id="manualMemoQty" type="number" min="0" step="0.01" placeholder="1"></div>
+          <div><label>単位</label><input id="manualMemoUnit" placeholder="個・本・袋"></div>
+          <div><label>購入先</label><input id="manualMemoSupplier" placeholder="業務スーパー等"></div>
+          <div class="wide"><label>メモ</label><input id="manualMemoNote" placeholder="銘柄・サイズなど"></div>
+          <button class="btn btn-gold" onclick="addManualMemo()">＋追加</button>
+        </div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>✓</th><th>材料</th><th>使用ネタ</th><th>必要数</th><th>在庫</th><th>買う数</th><th>購入単位</th><th>単価</th><th>予定額</th><th>購入先</th><th>メモ</th></tr></thead>
@@ -360,14 +377,15 @@ const ROLE_PATH='fujiwara/inventory_order_center_v1/materialRolesV4';
 const PLAN_PATH='fujiwara/inventory_order_center_v1/eventPlansV11';
 const USAGE_PATH='fujiwara/inventory_order_center_v1/materialUsageV16';
 const PURCHASE_PATH='fujiwara/inventory_order_center_v1/purchaseMasterV18';
-let inventory=[],events=[],meta={},master={records:[],customMaster:{}},materialRoles={links:[],updatedAt:''},shoppingListsRaw={},shoppingLists=[],eventPlans={},materialUsage={},purchaseMaster={};
+const MANUAL_MEMO_PATH='fujiwara/inventory_order_center_v1/manualShoppingMemoV1';
+let inventory=[],events=[],meta={},master={records:[],customMaster:{}},materialRoles={links:[],updatedAt:''},shoppingListsRaw={},shoppingLists=[],eventPlans={},materialUsage={},purchaseMaster={},manualShoppingMemo={};
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').trim().replace(/\s+/g,'').toLowerCase();
 const arr=v=>Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]);
 const yen=n=>'¥'+Math.round(Number(n||0)).toLocaleString('ja-JP');
 function pill(c){let k=c==='主力材料'?'p-main':c==='サブ材料'?'p-sub':c==='共通'?'p-common':c==='混在'?'p-mix':'p-other';return `<span class="pill ${k}">${esc(c||'未設定')}</span>`}
-function showPage(n,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+n).classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(n==='purchase')renderPurchase();if(n==='usage')renderUsage();if(n==='plan')renderPlan();if(n==='week')renderWeek();if(n==='memo')renderMemo();if(n==='funds')renderFunds()}
+function showPage(n,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));const pg=document.getElementById('page-'+n);if(pg)pg.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');else{const tabs=[...document.querySelectorAll('.tab')];const t=tabs.find(x=>String(x.getAttribute('onclick')||'').includes("'"+n+"'"));if(t)t.classList.add('active')}if(n==='purchase')renderPurchase();if(n==='usage')renderUsage();if(n==='plan')renderPlan();if(n==='week')renderWeek();if(n==='memo')renderMemo();if(n==='funds')renderFunds()}
 
 
 function usageKey(neta){return safeKey(neta)}
@@ -975,7 +993,7 @@ function seedCanonicalMainRoles(){ return false; }
 
 async function loadAll(){
  try{
-  const [fs,ms,rs,ss,ps,us,pm]=await Promise.all([db.ref('fujiwara').once('value'),db.ref(MASTER_PATH).once('value'),db.ref(ROLE_PATH).once('value'),db.ref('fujiwara/shoppingLists').once('value'),db.ref(PLAN_PATH).once('value'),db.ref(USAGE_PATH).once('value'),db.ref(PURCHASE_PATH).once('value')]);
+  const [fs,ms,rs,ss,ps,us,pm,mm]=await Promise.all([db.ref('fujiwara').once('value'),db.ref(MASTER_PATH).once('value'),db.ref(ROLE_PATH).once('value'),db.ref('fujiwara/shoppingLists').once('value'),db.ref(PLAN_PATH).once('value'),db.ref(USAGE_PATH).once('value'),db.ref(PURCHASE_PATH).once('value'),db.ref(MANUAL_MEMO_PATH).once('value')]);
   const f=fs.val()||{},m=ms.val()||{};
   inventory=arr(f.invItems);events=arr(f.events);meta=f.inventoryMeta||{};
   master={records:arr(m.records),customMaster:m.customMaster&&typeof m.customMaster==='object'?m.customMaster:{}};
@@ -985,6 +1003,7 @@ async function loadAll(){
   eventPlans=ps.val()||{};
   materialUsage=us.val()||{};
   purchaseMaster=pm.val()||{};
+  manualShoppingMemo=mm.val()||{};
   if(!Array.isArray(materialRoles.links)) materialRoles.links=arr(materialRoles.links);
   const canonChanged=seedCanonicalMainRoles();
   if(canonChanged) await db.ref(ROLE_PATH).set(materialRoles);
@@ -1452,6 +1471,54 @@ function memoRowHtml(x){
  </tr>`;
 }
 
+
+function memoScope(mode){
+ if(mode==='next'){
+   const d=nextEventDate()||todayISO();
+   return {start:d,end:d,label:'次回イベント'};
+ }
+ const b=mode==='nextweek'?nextWeekBounds():weekBounds();
+ return {start:iso(b[0]),end:iso(b[1]),label:mode==='nextweek'?'来週':'今週'};
+}
+function manualRowsForMode(mode){
+ const s=memoScope(mode);
+ return Object.entries(manualShoppingMemo||{}).map(([key,v])=>({key,...(v||{})}))
+   .filter(x=>String(x.startDate||'')===s.start && String(x.endDate||'')===s.end)
+   .sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+}
+async function addManualMemo(){
+ const mode=document.getElementById('memoRange')?.value||'week';
+ const name=(document.getElementById('manualMemoName')?.value||'').trim();
+ const qty=Number(document.getElementById('manualMemoQty')?.value||0);
+ const unit=(document.getElementById('manualMemoUnit')?.value||'').trim();
+ const supplier=(document.getElementById('manualMemoSupplier')?.value||'').trim();
+ const note=(document.getElementById('manualMemoNote')?.value||'').trim();
+ if(!name)return alert('品名を入力してください');
+ if(!(qty>0))return alert('買う数を入力してください');
+ const scope=memoScope(mode);
+ const ref=db.ref(MANUAL_MEMO_PATH).push();
+ const row={name,qty,unit,supplier,note,startDate:scope.start,endDate:scope.end,scopeLabel:scope.label,createdAt:new Date().toISOString(),manual:true};
+ await ref.set(row);
+ manualShoppingMemo[ref.key]=row;
+ ['manualMemoName','manualMemoQty','manualMemoUnit','manualMemoSupplier','manualMemoNote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+ renderMemo();
+}
+async function deleteManualMemo(key){
+ if(!confirm('この手入力品目を削除しますか？'))return;
+ await db.ref(MANUAL_MEMO_PATH+'/'+key).remove();
+ delete manualShoppingMemo[key];
+ renderMemo();
+}
+function manualMemoRowHtml(x){
+ return '<tr class="manual-row">'+
+   '<td><input class="memo-check" type="checkbox"></td>'+
+   '<td><b>'+esc(x.name)+'</b><span class="manual-badge">手入力</span></td>'+
+   '<td>手入力</td><td>'+Number(x.qty||0)+' '+esc(x.unit||'')+'</td><td>－</td>'+
+   '<td><b>'+Number(x.qty||0)+'</b></td><td>'+esc(x.unit||'')+'</td><td>－</td><td>－</td>'+
+   '<td>'+esc(x.supplier||'未設定')+'</td>'+
+   '<td>'+esc(x.note||'')+' <button class="btn btn-soft no-print" style="padding:5px 8px" onclick="deleteManualMemo(\''+esc(x.key)+'\')">削除</button></td></tr>';
+}
+
 function renderMemo(){
  const mode=document.getElementById('memoRange')?.value||'week';
  const label=mode==='next'?'次回イベント':mode==='nextweek'?'来週':'今週';
@@ -1463,6 +1530,7 @@ function renderMemo(){
  const other=buyRows.filter(x=>x.role!=='主力材料'&&x.role!=='サブ材料');
 
  const localAll=[...local,...other];
+ const manualRows=manualRowsForMode(mode);
 
  document.getElementById('memoEvents').innerHTML=
    `<span class="ev" style="background:#fff8df">${esc(label)}</span>`+
@@ -1472,11 +1540,11 @@ function renderMemo(){
  if(ms)ms.innerHTML=renderTargetSalesCards(evs);
 
  document.getElementById('memoOrderCount').textContent=order.length;
- document.getElementById('memoLocalCount').textContent=localAll.length;
+ document.getElementById('memoLocalCount').textContent=localAll.length+manualRows.length;
  document.getElementById('memoTotalMoney').textContent=yen(buyRows.reduce((s,x)=>s+Number(x.amount||0),0));
 
  document.getElementById('memoOrderBody').innerHTML=order.length?order.map(memoRowHtml).join(''):'<tr><td colspan="11" class="empty">発注する物はありません</td></tr>';
- document.getElementById('memoLocalBody').innerHTML=localAll.length?localAll.map(memoRowHtml).join(''):'<tr><td colspan="11" class="empty">近くで買う物はありません</td></tr>';
+ document.getElementById('memoLocalBody').innerHTML=(localAll.length||manualRows.length)?localAll.map(memoRowHtml).join('')+manualRows.map(manualMemoRowHtml).join(''):'<tr><td colspan="11" class="empty">近くで買う物はありません</td></tr>';
 
  const pd=document.getElementById('memoPrintDate');
  if(pd)pd.textContent=`${new Date().toLocaleString('ja-JP')} / ${label}`;
@@ -1570,6 +1638,9 @@ function renderFunds(){
  }
 }
 
-loadAll();
+loadAll().then(()=>{ 
+ const open=new URLSearchParams(location.search).get('open');
+ if(open==='memo')showPage('memo',null);
+});
 </script>
 </body></html>
