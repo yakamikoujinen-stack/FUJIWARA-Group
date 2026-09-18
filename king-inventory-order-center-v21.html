@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>在庫・発注・購入 管理センター v21.3</title>
+<title>在庫・発注・購入 管理センター v21.4</title>
 <meta name="theme-color" content="#17324d">
 <style>
 :root{--navy:#17324d;--blue:#2f6fa7;--gold:#d6a21c;--green:#208c3d;--red:#c62828;--bg:#f5f9fc;--card:#fff;--line:#dbe5ee;--text:#1c2733;--muted:#66788a;--shadow:0 10px 28px rgba(18,46,72,.10)}
@@ -23,7 +23,7 @@
 </head>
 <body>
 <div class="app">
-<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.3</h1><div class="sub">メインアプリの出店ネタだけを反映し、A〜Eなどの入力欄記号を除外</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
+<header><div class="top"><div><h1>📦 在庫・発注・購入 管理センター v21.4</h1><div class="sub">メインアプリの精算先に並ぶネタを正として、全イベント共通で予定設定へ反映</div></div><button class="back" onclick="history.length>1?history.back():location.href='king.html'">← 戻る</button></div></header>
 
 <div class="notice safe">🔒 <b>メイン・KING・現在庫・材料マスターは書き換えません。</b><br>
 このv21.2では、これまでの在庫・単価・購入先・材料計算基準・イベント予定設定・今週/来週早見・発注/購入/仕入資金をそのまま残し、
@@ -575,78 +575,62 @@ function eventNetaNamesV13(ev){
   'からあげ':['からあげ','唐揚げ','唐揚','から揚げ','カラアゲ'],
   '10円パン':['10円パン','10円玉のパン']
  };
- const normalize=s=>String(s||'')
-   .normalize('NFKC')
-   .replace(/\s+/g,'')
-   .replace(/[・･／/、,＋+]/g,'')
-   .toLowerCase();
-
- const cleanToken=s=>String(s||'').trim().replace(/^[・･／/、,＋+]+|[・･／/、,＋+。．.!！?？]+$/g,'');
- const isNoiseToken=v=>{
-   const s=String(v||'').trim();
-   return /^[A-EＡ-Ｅ]$/i.test(s) || /^(未設定|なし|無し|出店ネタ|精算先)$/i.test(s);
- };
- const addName=name=>{
-   const v=cleanToken(name);
-   if(!v || isNoiseToken(v))return;
+ const normalize=s=>String(s||'').normalize('NFKC').replace(/\s+/g,'').replace(/[・･／/、,＋+]/g,'').toLowerCase();
+ const clean=s=>String(s||'').trim().replace(/^[・･／/、,＋+]+|[・･／/、,＋+。．.!！?？]+$/g,'');
+ const noise=s=>/^[A-EＡ-Ｅ]$/i.test(s)||/^(未設定|なし|無し|出店ネタ|精算先)$/i.test(s);
+ const add=name=>{
+   const v=clean(name); if(!v||noise(v))return;
    if(!names.some(x=>norm(x)===norm(v)))names.push(v);
  };
- const canonicalFor=value=>{
-   const raw=normalize(value);
-   if(!raw)return '';
+ const canonical=value=>{
+   const raw=normalize(value); if(!raw)return '';
    for(const [name,list] of Object.entries(aliases)){
      if(list.some(a=>raw===normalize(a) || raw.includes(normalize(a))))return name;
    }
    return '';
  };
- const addToken=value=>{
-   const v=cleanToken(value);
-   if(!v)return;
-   const canon=canonicalFor(v);
-   addName(canon||v);
- };
- const addRaw=value=>{
-   String(value||'').split(/[\s\n\r\t、,，／/＋+]+/).map(cleanToken).filter(Boolean).forEach(addToken);
- };
+ const addToken=value=>{ const v=clean(value); if(!v)return; add(canonical(v)||v); };
+ const addRaw=value=>String(value||'').split(/[\s\n\r\t、,，／/＋+]+/).map(clean).filter(Boolean).forEach(addToken);
  const arr2=v=>Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]);
 
- // メインアプリの出店ネタ入力欄は、登録順のまま直接取り込む。
- // 正規16ネタに無い新しいネタ名も、そのまま予定設定へ追加する。
- addRaw(ev.itemsText);
- addRaw(ev.itemsName);
-
- ['neta','netas','menu','menus','products','productNames','shopItems','eventItems'].forEach(key=>{
+ // 1. メインアプリで画面表示に使っている「精算先」由来のネタ候補を最優先
+ const settlementKeys=['settlement','settlements','settlementItems','settlementTargets','settlementDestinations','paymentDestinations','destinations'];
+ settlementKeys.forEach(key=>{
    arr2(ev[key]).forEach(v=>{
-     if(v&&typeof v==='object') addToken(v.name||v.title||v.cat||v.category||v.neta);
+     if(v&&typeof v==='object') addToken(v.name||v.title||v.neta||v.item||v.label);
      else addToken(v);
    });
  });
 
+ // 2. itemsText / itemsName はメインアプリの出店ネタ入力そのもの
+ addRaw(ev.itemsText);
+ addRaw(ev.itemsName);
+
+ // 3. 既存形式を補完
+ ['neta','netas','menu','menus','products','productNames','shopItems','eventItems'].forEach(key=>{
+   arr2(ev[key]).forEach(v=>{
+     if(v&&typeof v==='object') addToken(v.name||v.title||v.cat||v.category||v.neta||v.item||v.label);
+     else addToken(v);
+   });
+ });
+
+ // 4. items は在庫IDか直接文字列の両方に対応
  arr2(ev.items).forEach(v=>{
    if(v&&typeof v==='object'){
-     addToken(v.name||v.title||v.cat||v.category);
+     addToken(v.name||v.title||v.cat||v.category||v.neta||v.item||v.label);
      return;
    }
    const it=inventory.find(x=>String(x.id||'')===String(v));
-   if(it){
-     addToken(it.cat);
-   }else{
-     addToken(v);
-   }
+   if(it) addToken(it.cat||it.name);
+   else addToken(v);
  });
 
+ // 5. 売上入力に実在するネタ名も補完
  const sales=ev.sales||{};
- const salesObjects=[sales.items,sales.itemSales,sales.simple&&sales.simple.items];
- salesObjects.forEach(obj=>Object.keys(obj||{}).forEach(addToken));
- Object.values(sales.days||{}).forEach(day=>Object.keys((day&&day.items)||{}).forEach(addToken));
-
- // memo/note/description は誤検出防止のため、既知ネタだけ補完。
- ['memo','note','description'].forEach(k=>{
-   const raw=String(ev[k]||'');
-   Object.entries(aliases).forEach(([name,list])=>{
-     if(list.some(a=>normalize(raw).includes(normalize(a))))addName(name);
-   });
+ [sales.items,sales.itemSales,sales.simple&&sales.simple.items].forEach(obj=>{
+   Object.keys(obj||{}).forEach(addToken);
  });
+ Object.values(sales.days||{}).forEach(day=>Object.keys((day&&day.items)||{}).forEach(addToken));
 
  return names;
 }
@@ -695,7 +679,7 @@ function renderPlanRows(){
  const netas=eventNetaNamesV13(e);
  const diag=document.getElementById('planNetaDiag');
  if(diag){
-   diag.innerHTML=`📌 <b>メインアプリから判定した出店ネタ：</b> ${netas.length?esc(netas.join('・')):'なし'}<br>`+
+   diag.innerHTML=`📌 <b>メインアプリの精算先・出店ネタから判定：</b> ${netas.length?esc(netas.join('・')):'なし'}<br>`+
      `🧾 <b>itemsText：</b> ${esc(e.itemsText||'（空）')}<br>`+
      `<span class="muted">選択イベントのFirebase本体を直接参照しています。</span>`;
  }
