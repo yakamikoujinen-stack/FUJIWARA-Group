@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.51 出店形態保存読込修正版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.52 出店形態保存確定版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3396,6 +3396,26 @@ function saveEventForm() {
   renderCalendar();
   renderSalesPage();
   fbSave();
+
+  // v4.3.52: 出店形態だけはイベント本体保存後にも該当イベントへ確定書込みする。
+  // realtime同期の競合が起きても boothType / tarpSizes / boothCount が消えないようにする。
+  (function(savedId,savedBooth){
+    setTimeout(function(){
+      try{
+        if(!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.database&&window._fgFirebaseReady)) return;
+        var idx=-1;
+        for(var j=0;j<state.events.length;j++){
+          if(String(state.events[j].id)===String(savedId)){ idx=j; break; }
+        }
+        if(idx<0) return;
+        firebase.database().ref('fujiwara/events/'+idx).update({
+          boothType:savedBooth.boothType||'',
+          tarpSizes:Array.isArray(savedBooth.tarpSizes)?savedBooth.tarpSizes:[],
+          boothCount:(savedBooth.boothCount!==undefined&&savedBooth.boothCount!==null)?savedBooth.boothCount:''
+        }).catch(function(e){ console.warn('出店形態の確定保存エラー',e); });
+      }catch(e){ console.warn('出店形態の確定保存をスキップ',e); }
+    },500);
+  })(rawId||data.id,{boothType:data.boothType,tarpSizes:data.tarpSizes,boothCount:data.boothCount});
 }
 
 function deleteEvent() {
@@ -5053,7 +5073,10 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   }
 
   function normalize(ev){
-    return {
+    // v4.3.52: Firebaseから戻ったイベントを「必要項目だけの作り直し」にしない。
+    // 既存の全項目を保持したまま型だけ整えることで、新規項目や日別データの消失を防ぐ。
+    ev=ev||{};
+    return Object.assign({},ev,{
       id:String(ev.id||''),
       name:ev.name||'',
       date:ev.date||'',
@@ -5061,12 +5084,10 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       zone:canonicalSupplierName(ev.zone||'A'),
       place:ev.place||'',
       status:ev.status||'planned',
-      // v4.3.51: 出店形態をFirebase再読込時にも保持する。
-      // ここで落とすと保存直後のrealtime同期で画面上から消えていた。
       boothType:ev.boothType||'',
       tarpSizes:Array.isArray(ev.tarpSizes)?ev.tarpSizes:(ev.tarpSizes?Object.values(ev.tarpSizes):[]),
       boothCount:(ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!=='')?ev.boothCount:'',
-      requiredStaff: parseInt(ev.requiredStaff)||0,
+      requiredStaff:parseInt(ev.requiredStaff)||0,
       memo:ev.memo||'',
       itemsText:ev.itemsText||'',
       bsLeader:ev.bsLeader||'',
@@ -5077,7 +5098,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret
-    };
+    });
   }
 
   window._fbSave = function(){
