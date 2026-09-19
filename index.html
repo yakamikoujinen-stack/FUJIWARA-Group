@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.52 出店形態保存確定版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.57</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1020,9 +1020,14 @@ body::before,#app::before,.page::before{
         <div style="font-size:12px;font-weight:800;margin-bottom:7px">ターフテントサイズ</div>
         <div style="display:flex;flex-wrap:wrap;gap:10px">
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="3m" style="width:auto;margin:0"> 3m</label>
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2.5×3×2" style="width:auto;margin:0"> 2.5×3×2</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2.5m" style="width:auto;margin:0"> 2.5m</label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="3×2" style="width:auto;margin:0"> 3×2</label>
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2m" style="width:auto;margin:0"> 2m</label>
         </div>
+      </div>
+      <div id="ef-site-frontage-wrap" style="display:none;margin-top:9px;padding:9px 11px;border:1px dashed var(--border);border-radius:10px;background:var(--surface2)">
+        <div style="font-size:12px;font-weight:800;margin-bottom:7px">現地設営テント</div>
+        <div style="display:flex;align-items:center;gap:8px"><b>間口</b><input type="number" id="ef-site-frontage" min="0" step="0.1" inputmode="decimal" placeholder="例：6" style="max-width:140px"><b>m</b></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
         <input type="number" id="ef-booth-count" min="0" step="1" inputmode="numeric" placeholder="0" style="max-width:140px">
@@ -2656,7 +2661,8 @@ function renderEventList(dateFilter) {
     if(ended) sClass='s-done';
     var borderColor=ev.zone==='B'?'var(--green)':'var(--gold)';
     var displayDs=dateFilter||ev.date;
-    var displayStaff=getEventStaffForDate(ev,displayDs);
+    var evDatesForCard=dateListForEvent(ev);
+    var displayStaff=(evDatesForCard.length<=1 && Array.isArray(ev.staff))?ev.staff:getEventStaffForDate(ev,displayDs);
     var staffStr=displayStaff.length?displayStaff.join('・'):'未設定';
     var memoText=String(ev.memo||'').trim();
     /* 日別スタッフの自動生成文字はイベントカードに表示しない */
@@ -3261,6 +3267,7 @@ function renderBoothTypeSummary(ev){
   var sizes=Array.isArray(ev.tarpSizes)?ev.tarpSizes:(Array.isArray(ev.boothSizes)?ev.boothSizes:[]);
   var detail='';
   if(type==='ターフテント' && sizes.length){ detail='（'+sizes.join('・')+'）'; }
+  if(type==='現地設営テント' && ev.siteFrontage!==undefined && ev.siteFrontage!==null && ev.siteFrontage!==''){ detail='（間口 '+esc(ev.siteFrontage)+'m）'; }
   var rawCount=(ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!=='')?ev.boothCount:
                ((ev.storeCount!==undefined&&ev.storeCount!==null&&ev.storeCount!=='')?ev.storeCount:'');
   var count='';
@@ -3269,7 +3276,7 @@ function renderBoothTypeSummary(ev){
     count=' × '+rawCount+unit;
   }
   var icon=type==='キッチンカー'?'🚚':'⛺';
-  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+esc(type)+esc(detail)+esc(count)+'</div>';
+  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+escHtml(type)+escHtml(detail)+escHtml(count)+'</div>';
 }
 
 // ════ EVENT FORM ════
@@ -3278,6 +3285,8 @@ function updateBoothTypeUI(){
   var type=checked?checked.value:'';
   var sizeWrap=document.getElementById('ef-tarp-size-wrap');
   if(sizeWrap) sizeWrap.style.display=type==='ターフテント'?'block':'none';
+  var frontageWrap=document.getElementById('ef-site-frontage-wrap');
+  if(frontageWrap) frontageWrap.style.display=type==='現地設営テント'?'block':'none';
   var unit=document.getElementById('ef-booth-unit');
   if(unit) unit.textContent=type==='キッチンカー'?'台':'基';
 }
@@ -3285,6 +3294,8 @@ function setBoothFormValues(ev){
   document.querySelectorAll('input[name="ef-booth-type"]').forEach(function(r){ r.checked=!!(ev&&ev.boothType===r.value); });
   var sizes=ev&&Array.isArray(ev.tarpSizes)?ev.tarpSizes:[];
   document.querySelectorAll('input[name="ef-tarp-size"]').forEach(function(c){ c.checked=sizes.indexOf(c.value)>=0; });
+  var frontage=document.getElementById('ef-site-frontage');
+  if(frontage) frontage.value=ev&&ev.siteFrontage!==undefined&&ev.siteFrontage!==null&&ev.siteFrontage!==''?ev.siteFrontage:'';
   var count=document.getElementById('ef-booth-count');
   if(count) count.value=ev&&ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!==''?ev.boothCount:'';
   updateBoothTypeUI();
@@ -3294,9 +3305,11 @@ function getBoothFormValues(){
   var type=checked?checked.value:'';
   var sizes=[];
   if(type==='ターフテント') document.querySelectorAll('input[name="ef-tarp-size"]:checked').forEach(function(c){ sizes.push(c.value); });
+  var frontageEl=document.getElementById('ef-site-frontage');
+  var frontageRaw=frontageEl?frontageEl.value:'';
   var countEl=document.getElementById('ef-booth-count');
   var raw=countEl?countEl.value:'';
-  return {boothType:type,tarpSizes:sizes,boothCount:raw===''?'':(parseInt(raw,10)||0)};
+  return {boothType:type,tarpSizes:sizes,siteFrontage:frontageRaw===''?'':(parseFloat(frontageRaw)||0),boothCount:raw===''?'':(parseInt(raw,10)||0)};
 }
 function openEventForm(id) {
   if(role==='user'){ toast('⛔ 権限がありません'); return; }
@@ -3361,11 +3374,25 @@ function saveEventForm() {
     boothType:getBoothFormValues().boothType,
     tarpSizes:getBoothFormValues().tarpSizes,
     boothCount:getBoothFormValues().boothCount,
+    siteFrontage:getBoothFormValues().siteFrontage,
     requiredStaff: parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0) || 0,
     memo:document.getElementById('ef-memo').value,
     itemsText:document.getElementById('ef-items-text').value.trim(),
     staff:staff,
-    dayAssignments:(function(){ var out={}; var dates=dateListForEvent({date:date,dateEnd:document.getElementById('ef-date-end').value||''}); dates.forEach(function(ds){ if(eventDayStaffDraft[ds]) out[ds]={staff:(eventDayStaffDraft[ds].staff||[]).slice(),requiredStaff:parseInt(eventDayStaffDraft[ds].requiredStaff)||0}; }); return out; })(),
+    dayAssignments:(function(){
+      var out={};
+      var dates=dateListForEvent({date:date,dateEnd:savedEnd});
+      if(dates.length<=1){
+        out[date]={staff:staff.slice(),requiredStaff:parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0)||0};
+      }else{
+        dates.forEach(function(ds){
+          var rec=eventDayStaffDraft[ds];
+          out[ds]=rec ? {staff:(rec.staff||[]).slice(),requiredStaff:parseInt(rec.requiredStaff)||0}
+                      : {staff:staff.slice(),requiredStaff:parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0)||0};
+        });
+      }
+      return out;
+    })(),
     items:[],
     // シークレットイベント設定
     secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
@@ -3397,25 +3424,31 @@ function saveEventForm() {
   renderSalesPage();
   fbSave();
 
-  // v4.3.52: 出店形態だけはイベント本体保存後にも該当イベントへ確定書込みする。
-  // realtime同期の競合が起きても boothType / tarpSizes / boothCount が消えないようにする。
-  (function(savedId,savedBooth){
+  // v4.3.55 TEST: 編集したイベント1件だけを state.events と同じ配列位置へ確定保存。
+  (function(savedId){
+    var idx=-1, current=null;
+    for(var k=0;k<state.events.length;k++){
+      if(String(state.events[k].id)===String(savedId)){ idx=k; current=state.events[k]; break; }
+    }
+    if(idx<0 || !current) return;
+    var eventDates=dateListForEvent(current);
+    if(eventDates.length<=1){
+      current.dayAssignments=current.dayAssignments||{};
+      current.dayAssignments[current.date]={
+        staff:Array.isArray(current.staff)?current.staff.slice():[],
+        requiredStaff:parseInt(current.requiredStaff)||0
+      };
+    }
+    renderCalendar();
     setTimeout(function(){
       try{
         if(!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.database&&window._fgFirebaseReady)) return;
-        var idx=-1;
-        for(var j=0;j<state.events.length;j++){
-          if(String(state.events[j].id)===String(savedId)){ idx=j; break; }
-        }
-        if(idx<0) return;
-        firebase.database().ref('fujiwara/events/'+idx).update({
-          boothType:savedBooth.boothType||'',
-          tarpSizes:Array.isArray(savedBooth.tarpSizes)?savedBooth.tarpSizes:[],
-          boothCount:(savedBooth.boothCount!==undefined&&savedBooth.boothCount!==null)?savedBooth.boothCount:''
-        }).catch(function(e){ console.warn('出店形態の確定保存エラー',e); });
-      }catch(e){ console.warn('出店形態の確定保存をスキップ',e); }
-    },500);
-  })(rawId||data.id,{boothType:data.boothType,tarpSizes:data.tarpSizes,boothCount:data.boothCount});
+        firebase.database().ref('fujiwara/events/'+idx).set(current)
+          .then(function(){ console.log('v4.3.55 event confirmed',savedId); })
+          .catch(function(e){ console.warn('イベント確定保存エラー',e); });
+      }catch(e){ console.warn('イベント確定保存をスキップ',e); }
+    },250);
+  })(rawId||data.id);
 }
 
 function deleteEvent() {
@@ -5087,6 +5120,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       boothType:ev.boothType||'',
       tarpSizes:Array.isArray(ev.tarpSizes)?ev.tarpSizes:(ev.tarpSizes?Object.values(ev.tarpSizes):[]),
       boothCount:(ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!=='')?ev.boothCount:'',
+      siteFrontage:(ev.siteFrontage!==undefined&&ev.siteFrontage!==null&&ev.siteFrontage!=='')?ev.siteFrontage:'',
       requiredStaff:parseInt(ev.requiredStaff)||0,
       memo:ev.memo||'',
       itemsText:ev.itemsText||'',
