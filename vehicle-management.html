@@ -108,7 +108,7 @@ td input{font-size:15px;padding:8px}
   <div class="top">
     <div>
       <h1>🚚 簡単車両点検・車検管理</h1>
-      <div class="header-sub">担当：将｜点検記録と車検期限をまとめて管理</div>
+      <div class="header-sub">担当：将｜点検記録と車検期限をまとめて管理｜v3 既存車両編集対応</div>
     </div>
     <button class="back" onclick="goBack()">← 戻る</button>
   </div>
@@ -212,7 +212,7 @@ td input{font-size:15px;padding:8px}
   <div class="detail-panel">
     <div class="detail-head">
       <h3>🚘 車検予約用 車両詳細</h3>
-      <button class="ghost" onclick="closeVehicleDetail()">閉じる</button>
+      <div style="display:flex;gap:8px"><button class="primary" id="detailEditBtn" onclick="editVehicleDetail()">✏️ この車両を編集</button><button class="ghost" onclick="closeVehicleDetail()">閉じる</button></div>
     </div>
     <div id="detailContent"></div>
   </div>
@@ -250,6 +250,8 @@ const CHECK_ITEMS=[
 ];
 
 let state={inspections:[],shaken:[]};
+let editingShakenId=null;
+let detailVehicleId=null;
 
 function normalizeState(data){
   const d=(data&&typeof data==="object")?data:{};
@@ -424,23 +426,28 @@ function saveShaken(){
   const carNo=val("shakenCarNo").trim();
   const date=val("shakenDate");
   if(!carName||!carNo||!date){alert("車名・車番・車検日を入力してください");return}
-  state.shaken.push({
-    id:Date.now(),carName,carNo,date,
-    lastCost:Number(val("lastCost"))||0,
-    chassisNo:val("chassisNo").trim(),
-    modelCode:val("modelCode").trim(),
-    firstRegistration:val("firstRegistration"),
-    ownerName:val("ownerName").trim(),
-    shop:val("shakenShop").trim(),
-    shopPhone:val("shopPhone").trim(),
-    memo:val("shakenMemo").trim()
-  });
-  state.shaken.sort((a,b)=>a.date.localeCompare(b.date));
+  const data={
+    carName,carNo,date,lastCost:Number(val("lastCost"))||0,
+    chassisNo:val("chassisNo").trim(),modelCode:val("modelCode").trim(),
+    firstRegistration:val("firstRegistration"),ownerName:val("ownerName").trim(),
+    shop:val("shakenShop").trim(),shopPhone:val("shopPhone").trim(),memo:val("shakenMemo").trim()
+  };
+  if(editingShakenId!==null){
+    const r=state.shaken.find(x=>String(x.id)===String(editingShakenId));
+    if(!r){alert("編集対象の車両が見つかりません");return}
+    Object.assign(r,data);
+  }else{
+    state.shaken.push({id:Date.now(),...data});
+  }
+  state.shaken.sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+  const wasEdit=editingShakenId!==null;
   save();renderShaken();clearShakenForm();
-  alert("車検情報を登録しました");
+  alert(wasEdit?"車両情報を更新しました":"車検情報を登録しました");
 }
 function clearShakenForm(){
   ["shakenCarName","shakenCarNo","shakenDate","lastCost","chassisNo","modelCode","firstRegistration","ownerName","shakenShop","shopPhone","shakenMemo"].forEach(id=>setVal(id,""));
+  editingShakenId=null;
+  const b=document.querySelector('#shakenSec .primary'); if(b)b.textContent="＋ 車検情報を登録";
 }
 function statusOf(dateStr){
   const now=new Date();now.setHours(0,0,0,0);
@@ -466,7 +473,7 @@ function renderShaken(){
         <td><input type="number" value="${esc(r.lastCost)}" onblur="updateShaken(${r.id},'lastCost',this.value)"><div style="font-weight:900;margin-top:4px">${yen(r.lastCost)}</div></td>
         <td><input value="${esc(r.shop)}" onblur="updateShaken(${r.id},'shop',this.value)"></td>
         <td><input value="${esc(r.memo)}" onblur="updateShaken(${r.id},'memo',this.value)"></td>
-        <td><button class="vehicle-detail-btn" onclick="showVehicleDetail(${r.id})">📋 予約情報</button></td>
+        <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="vehicle-detail-btn" onclick="showVehicleDetail(${r.id})">📋 予約情報</button><button class="ghost" onclick="editShaken(${r.id})">✏️ 編集</button></div></td>
         <td><button class="danger" onclick="deleteShaken(${r.id})">削除</button></td>
       </tr>`
     }).join("");
@@ -484,6 +491,7 @@ function updateShaken(id,key,value){
 
 function showVehicleDetail(id){
   const r=state.shaken.find(x=>String(x.id)===String(id));if(!r)return;
+  detailVehicleId=r.id;
   const fields=[
     ["車名",r.carName],["ナンバープレート",r.carNo],
     ["車体番号",r.chassisNo],["型式",r.modelCode],
@@ -501,6 +509,19 @@ function showVehicleDetail(id){
 }
 function closeVehicleDetail(){
   document.getElementById("detailOverlay").classList.remove("open");
+}
+function editVehicleDetail(){
+  if(detailVehicleId!==null){ closeVehicleDetail(); editShaken(detailVehicleId); }
+}
+function editShaken(id){
+  const r=state.shaken.find(x=>String(x.id)===String(id));if(!r)return;
+  editingShakenId=r.id;
+  setVal("shakenCarName",r.carName);setVal("shakenCarNo",r.carNo);setVal("shakenDate",r.date);
+  setVal("lastCost",r.lastCost);setVal("chassisNo",r.chassisNo);setVal("modelCode",r.modelCode);
+  setVal("firstRegistration",r.firstRegistration);setVal("ownerName",r.ownerName);setVal("shakenShop",r.shop);
+  setVal("shopPhone",r.shopPhone);setVal("shakenMemo",r.memo);
+  const b=document.querySelector('#shakenSec .primary'); if(b)b.textContent="💾 この車両を更新";
+  jump("shakenSec");
 }
 
 function deleteShaken(id){
