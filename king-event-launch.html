@@ -42,5 +42,37 @@ function reflectNeta(){let old={};document.querySelectorAll(".netaMoney").forEac
 function calcTotal(){let t=[...document.querySelectorAll(".netaMoney")].reduce((a,x)=>a+Number(x.value||0),0);$("totalTarget").textContent="合計目標 ¥"+t.toLocaleString("ja-JP")}
 function updateStatus(){let req=Number($("required").value||0),cnt=document.querySelectorAll('input[name="staff"]:checked').length+(document.querySelector('input[name="manager"]:checked')?1:0),short=Math.max(0,req-cnt);$("staffStatus").textContent=req?("必要 "+req+"名 ／ 配置済 "+cnt+"名 ／ 不足 "+short+"名"):"必要人数を入力してください";$("staffStatus").className="status "+(short?"warn":"");$("recruitOpen").checked=short>0}
 $("required").addEventListener("input",updateStatus);$("date").value=new Date().toISOString().slice(0,10);renderManagers();loadExisting();
-async function saveLaunch(){let date=$("date").value,name=$("name").value.trim();if(!date||!name){alert("日付とイベント名は必須です");return}let manager=document.querySelector('input[name="manager"]:checked')?.value||"",staff=[...document.querySelectorAll('input[name="staff"]:checked')].map(x=>x.value),targets={};document.querySelectorAll(".netaMoney").forEach(x=>targets[x.dataset.name]=Number(x.value||0));let client=$("clientOther").value.trim()||$("client").value;let ref=db.ref(PATH).push();let data={id:ref.key,status:"draft",leaderOnly:true,date,dateEnd:$("dateEnd").value||date,name,client,place:$("place").value.trim(),hours:$("hours").value.trim(),neta:Object.keys(targets),netaTargets:targets,salesTarget:Object.values(targets).reduce((a,b)=>a+b,0),setup:{tekiya:$("tekiya").checked?{size:$("tekiyaSize").value,count:Number($("tekiyaCount").value||0)}:null,tarp:$("tarp").checked?{size:$("tarpSize").value,count:Number($("tarpCount").value||0)}:null,localTent:$("localTent").checked?{frontage:Number($("frontage").value||0)}:null,kitchen:$("kitchen").checked?{type:$("kitchenType").value,count:Number($("kitchenCount").value||0)}:null},requiredStaff:Number($("required").value||0),manager,staff,recruitOpen:$("recruitOpen").checked,recruitNote:$("recruitNote").value.trim(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};await ref.set(data);alert("初動を保存しました。\n既存アプリはまだ変更していません。")}
+async async function saveLaunch(){
+  let date=$("date").value,name=$("name").value.trim();
+  if(!date||!name){alert("日付とイベント名は必須です");return}
+  let manager=document.querySelector('input[name="manager"]:checked')?.value||"";
+  let general=[...document.querySelectorAll('input[name="staff"]:checked')].map(x=>x.value);
+  let staff=[...new Set([manager,...general].filter(Boolean))];
+  let targets={};document.querySelectorAll(".netaMoney").forEach(x=>targets[x.dataset.name]=Number(x.value||0));
+  let client=$("clientOther").value.trim()||$("client").value;
+  let dateEnd=$("dateEnd").value||date;
+  let setup={tekiya:$("tekiya").checked?{size:$("tekiyaSize").value,count:Number($("tekiyaCount").value||0)}:null,tarp:$("tarp").checked?{size:$("tarpSize").value,count:Number($("tarpCount").value||0)}:null,localTent:$("localTent").checked?{frontage:Number($("frontage").value||0)}:null,kitchen:$("kitchen").checked?{type:$("kitchenType").value,count:Number($("kitchenCount").value||0)}:null};
+  let launchRef=db.ref(PATH).push(), now=new Date().toISOString();
+  let launchData={id:launchRef.key,status:"saved",leaderOnly:true,date,dateEnd,name,client,place:$("place").value.trim(),hours:$("hours").value.trim(),neta:Object.keys(targets),netaTargets:targets,salesTarget:Object.values(targets).reduce((a,b)=>a+b,0),setup,requiredStaff:Number($("required").value||0),manager,staff:general,recruitOpen:$("recruitOpen").checked,recruitNote:$("recruitNote").value.trim(),createdAt:now,updatedAt:now};
+  try{
+    let snap=await db.ref("fujiwara/events").once("value"), raw=snap.val(), arr=Array.isArray(raw)?raw.slice():Object.values(raw||{}).filter(Boolean);
+    let id="launch_"+Date.now();
+    let booth=[];
+    if(setup.tekiya) booth.push("テキヤテント "+setup.tekiya.size+" "+setup.tekiya.count+"基");
+    if(setup.tarp) booth.push("ターフテント "+setup.tarp.size+" "+setup.tarp.count+"基");
+    if(setup.localTent) booth.push("現地設営テント 間口"+setup.localTent.frontage+"m");
+    if(setup.kitchen) booth.push("キッチンカー "+setup.kitchen.type+" "+setup.kitchen.count+"台");
+    let dayAssignments={};dayAssignments[date]={staff:staff.slice(),requiredStaff:Number($("required").value||0)};
+    let mainEvent={id,name,date,dateEnd,endDate:dateEnd,toDate:dateEnd,zone:client||"A",client:client||"",place:$("place").value.trim(),status:"planned",boothType:booth.join("・"),requiredStaff:Number($("required").value||0),memo:$("hours").value.trim(),itemsText:Object.keys(targets).join("・"),staff:staff,dayAssignments,items:[],secret:false,
+      launchId:launchRef.key,launchSource:"KING初動",manager,neta:Object.keys(targets),netaTargets:targets,salesTarget:Object.values(targets).reduce((a,b)=>a+b,0),setup,recruitOpen:$("recruitOpen").checked,recruitNote:$("recruitNote").value.trim(),createdAt:now,updatedAt:now};
+    arr.push(mainEvent);
+    await db.ref("fujiwara/events").set(arr);
+    launchData.mainEventId=id; launchData.mainSyncedAt=now;
+    await launchRef.set(launchData);
+    alert("初動を保存し、メインアプリへ反映しました。");
+  }catch(e){
+    console.error(e);
+    alert("保存中にエラーが発生しました。メインアプリへの反映は完了していません。\n"+e.message);
+  }
+}
 </script></body></html>
