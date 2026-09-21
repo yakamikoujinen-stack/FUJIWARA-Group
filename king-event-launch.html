@@ -12,8 +12,8 @@
 <div class="opt"><label><input type="checkbox" id="kitchen"> キッチンカー</label><div><select id="kitchenType"><option>1.5t車</option><option>軽トラ</option></select><input id="kitchenCount" type="number" min="0" placeholder="台" style="margin-top:6px"></div></div>
 </div></section>
 <section class="card"><div class="step">⑤ 必要人数</div><div class="field"><input id="required" type="number" min="0" value="0"></div><div id="staffStatus" class="status">必要人数を入力してください</div></section>
-<section class="card"><div class="step">⑥ 担当者</div><div class="chips" id="managerChips"></div></section>
-<section class="card"><div class="step">⑦ 一般スタッフ配置</div><div class="note" style="margin-bottom:10px">メインアプリに登録・使用されているスタッフ名を読み込みます。担当者で選択した人は除外します。</div><div id="staffGrid" class="staffGrid"><div class="note">スタッフ読込中…</div></div><div class="field" style="margin-top:12px"><label><input id="recruitOpen" type="checkbox"> 人数不足分を一般スタッフへ募集する</label></div><div class="field"><label>募集メモ</label><textarea id="recruitNote" placeholder="集合時間・仕事内容など"></textarea></div></section>
+<section class="card"><div class="step">⑥ 担当者</div><div class="note" style="margin-bottom:10px">メインアプリのスタッフ名から担当者を選択します。</div><div class="chips" id="managerChips"></div></section>
+<section class="card"><div class="step">⑦ 一般スタッフ配置</div><div class="note" style="margin-bottom:10px">メインアプリに登録・使用されているスタッフ名を読み込みます。担当者で選択した人は除外します。</div><div id="staffGrid" class="staffGrid"><div class="note">スタッフ読込中…</div></div><div class="field" style="margin-top:12px"><label><input id="recruitOpen" type="checkbox"> 人数不足分を一般スタッフへ募集する</label></div><div class="field" style="margin-top:12px"><label><input id="secret" type="checkbox"> 🔒 シークレットイベントにする</label></div><div class="field"><label>募集メモ</label><textarea id="recruitNote" placeholder="集合時間・仕事内容など"></textarea></div></section>
 <section class="card"><button class="save" onclick="saveLaunch()">✅ 初動を保存</button><p class="note">現在はテスト段階です。既存のメイン等を直接上書きせず、初動専用領域に保存します。</p></section></main>
 <script>
 const cfg={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:8ff756d645bc0398956a94"};if(!firebase.apps.length)firebase.initializeApp(cfg);const db=firebase.database(),PATH="fujiwara/eventLaunches",$=id=>document.getElementById(id);let eventCache={},generalStaff=[],netaMaster=[];
@@ -42,7 +42,7 @@ function reflectNeta(){let old={};document.querySelectorAll(".netaMoney").forEac
 function calcTotal(){let t=[...document.querySelectorAll(".netaMoney")].reduce((a,x)=>a+Number(x.value||0),0);$("totalTarget").textContent="合計目標 ¥"+t.toLocaleString("ja-JP")}
 function updateStatus(){let req=Number($("required").value||0),cnt=document.querySelectorAll('input[name="staff"]:checked').length+(document.querySelector('input[name="manager"]:checked')?1:0),short=Math.max(0,req-cnt);$("staffStatus").textContent=req?("必要 "+req+"名 ／ 配置済 "+cnt+"名 ／ 不足 "+short+"名"):"必要人数を入力してください";$("staffStatus").className="status "+(short?"warn":"");$("recruitOpen").checked=short>0}
 $("required").addEventListener("input",updateStatus);$("date").value=new Date().toISOString().slice(0,10);renderManagers();loadExisting();
-async async function saveLaunch(){
+async function saveLaunch(){
   let date=$("date").value,name=$("name").value.trim();
   if(!date||!name){alert("日付とイベント名は必須です");return}
   let manager=document.querySelector('input[name="manager"]:checked')?.value||"";
@@ -53,7 +53,7 @@ async async function saveLaunch(){
   let dateEnd=$("dateEnd").value||date;
   let setup={tekiya:$("tekiya").checked?{size:$("tekiyaSize").value,count:Number($("tekiyaCount").value||0)}:null,tarp:$("tarp").checked?{size:$("tarpSize").value,count:Number($("tarpCount").value||0)}:null,localTent:$("localTent").checked?{frontage:Number($("frontage").value||0)}:null,kitchen:$("kitchen").checked?{type:$("kitchenType").value,count:Number($("kitchenCount").value||0)}:null};
   let launchRef=db.ref(PATH).push(), now=new Date().toISOString();
-  let launchData={id:launchRef.key,status:"saved",leaderOnly:true,date,dateEnd,name,client,place:$("place").value.trim(),hours:$("hours").value.trim(),neta:Object.keys(targets),netaTargets:targets,salesTarget:Object.values(targets).reduce((a,b)=>a+b,0),setup,requiredStaff:Number($("required").value||0),manager,staff:general,recruitOpen:$("recruitOpen").checked,recruitNote:$("recruitNote").value.trim(),createdAt:now,updatedAt:now};
+  let launchData={id:launchRef.key,status:"saved",leaderOnly:true,date,dateEnd,name,client,place:$("place").value.trim(),hours:$("hours").value.trim(),neta:Object.keys(targets),netaTargets:targets,salesTarget:Object.values(targets).reduce((a,b)=>a+b,0),setup,requiredStaff:Number($("required").value||0),manager,staff:general,recruitOpen:$("recruitOpen").checked,secret:$("secret").checked,recruitNote:$("recruitNote").value.trim(),createdAt:now,updatedAt:now};
   try{
     let snap=await db.ref("fujiwara/events").once("value"), raw=snap.val(), arr=Array.isArray(raw)?raw.slice():Object.values(raw||{}).filter(Boolean);
     let id="launch_"+Date.now();
@@ -63,7 +63,7 @@ async async function saveLaunch(){
     if(setup.localTent) booth.push("現地設営テント 間口"+setup.localTent.frontage+"m");
     if(setup.kitchen) booth.push("キッチンカー "+setup.kitchen.type+" "+setup.kitchen.count+"台");
     let dayAssignments={};dayAssignments[date]={staff:staff.slice(),requiredStaff:Number($("required").value||0)};
-    let mainEvent={id,name,date,dateEnd,endDate:dateEnd,toDate:dateEnd,zone:client||"A",client:client||"",place:$("place").value.trim(),status:"planned",boothType:booth.join("・"),requiredStaff:Number($("required").value||0),memo:$("hours").value.trim(),itemsText:Object.keys(targets).join("・"),staff:staff,dayAssignments,items:[],secret:false,
+    let mainEvent={id,name,date,dateEnd,endDate:dateEnd,toDate:dateEnd,zone:client||"A",client:client||"",place:$("place").value.trim(),status:"planned",boothType:booth.join("・"),requiredStaff:Number($("required").value||0),memo:$("hours").value.trim(),itemsText:Object.keys(targets).join("・"),staff:staff,dayAssignments,items:[],secret:$("secret").checked,
       launchId:launchRef.key,launchSource:"KING初動",manager,neta:Object.keys(targets),netaTargets:targets,salesTarget:Object.values(targets).reduce((a,b)=>a+b,0),setup,recruitOpen:$("recruitOpen").checked,recruitNote:$("recruitNote").value.trim(),createdAt:now,updatedAt:now};
     arr.push(mainEvent);
     await db.ref("fujiwara/events").set(arr);
