@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.57</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.52 テントサイズ別基数表示版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -676,7 +676,6 @@ body::before,#app::before,.page::before{
       <span class="role-badge" id="role-badge"></span>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
-      <button id="king-back-btn" class="btn btn-ghost" onclick="location.href='king.html'" style="display:none;padding:7px 11px;font-size:11px;white-space:nowrap">👑 KINGへ戻る</button>
       <button class="btn btn-icon btn-ghost" onclick="openNoticeModal()" style="font-size:17px">🔔</button>
       <div class="avatar" id="user-avatar" onclick="openProfileModal()">F</div>
     </div>
@@ -1017,19 +1016,15 @@ body::before,#app::before,.page::before{
         <label style="display:flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);padding:9px 11px;border-radius:10px;cursor:pointer"><input type="radio" name="ef-booth-type" value="キッチンカー" style="width:auto;margin:0" onchange="updateBoothTypeUI()"> キッチンカー</label>
       </div>
       <div id="ef-tarp-size-wrap" style="display:none;margin-top:9px;padding:9px 11px;border:1px dashed var(--border);border-radius:10px;background:var(--surface2)">
-        <div style="font-size:12px;font-weight:800;margin-bottom:7px">ターフテントサイズ</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px">
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="3m" style="width:auto;margin:0"> 3m</label>
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2.5m" style="width:auto;margin:0"> 2.5m</label>
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="3×2" style="width:auto;margin:0"> 3×2</label>
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2m" style="width:auto;margin:0"> 2m</label>
+        <div style="font-size:12px;font-weight:800;margin-bottom:7px">ターフテント｜サイズ別の基数</div>
+        <div style="display:grid;gap:8px">
+          <label style="display:grid;grid-template-columns:auto 1fr 86px auto;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="3m" style="width:auto;margin:0" onchange="updateTarpCountInputs()"><b>3m</b><input type="number" class="ef-tarp-count" data-size="3m" min="0" step="1" inputmode="numeric" placeholder="0" disabled style="margin:0;padding:8px"><span>基</span></label>
+          <label style="display:grid;grid-template-columns:auto 1fr 86px auto;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2.5×3×2" style="width:auto;margin:0" onchange="updateTarpCountInputs()"><b>2.5×3×2</b><input type="number" class="ef-tarp-count" data-size="2.5×3×2" min="0" step="1" inputmode="numeric" placeholder="0" disabled style="margin:0;padding:8px"><span>基</span></label>
+          <label style="display:grid;grid-template-columns:auto 1fr 86px auto;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" name="ef-tarp-size" value="2m" style="width:auto;margin:0" onchange="updateTarpCountInputs()"><b>2m</b><input type="number" class="ef-tarp-count" data-size="2m" min="0" step="1" inputmode="numeric" placeholder="0" disabled style="margin:0;padding:8px"><span>基</span></label>
         </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:7px">使うサイズにチェックを入れ、それぞれの基数を入力してください。</div>
       </div>
-      <div id="ef-site-frontage-wrap" style="display:none;margin-top:9px;padding:9px 11px;border:1px dashed var(--border);border-radius:10px;background:var(--surface2)">
-        <div style="font-size:12px;font-weight:800;margin-bottom:7px">現地設営テント</div>
-        <div style="display:flex;align-items:center;gap:8px"><b>間口</b><input type="number" id="ef-site-frontage" min="0" step="0.1" inputmode="decimal" placeholder="例：6" style="max-width:140px"><b>m</b></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <div id="ef-booth-count-wrap" style="display:flex;align-items:center;gap:8px;margin-top:10px">
         <input type="number" id="ef-booth-count" min="0" step="1" inputmode="numeric" placeholder="0" style="max-width:140px">
         <b id="ef-booth-unit" style="font-size:15px">基</b><span style="font-size:12px;color:var(--text2)">（個数又は台数）</span>
       </div>
@@ -2661,8 +2656,7 @@ function renderEventList(dateFilter) {
     if(ended) sClass='s-done';
     var borderColor=ev.zone==='B'?'var(--green)':'var(--gold)';
     var displayDs=dateFilter||ev.date;
-    var evDatesForCard=dateListForEvent(ev);
-    var displayStaff=(evDatesForCard.length<=1 && Array.isArray(ev.staff))?ev.staff:getEventStaffForDate(ev,displayDs);
+    var displayStaff=getEventStaffForDate(ev,displayDs);
     var staffStr=displayStaff.length?displayStaff.join('・'):'未設定';
     var memoText=String(ev.memo||'').trim();
     /* 日別スタッフの自動生成文字はイベントカードに表示しない */
@@ -3258,16 +3252,53 @@ function dayStaffSummaryHtml(ev,ds){
   return '<span class="day-badge">👥 '+rec.staff.length+'人'+(rec.requiredStaff?' / 必要'+rec.requiredStaff+'人':'')+'</span>';
 }
 
-// v4.3.49: イベントカードに出店形態を表示
+// v4.3.52: テント種類・サイズ別基数をイベントカードに表示
+function normalizeBoothBreakdown(ev){
+  if(!ev) return [];
+  var src=ev.boothBreakdown||ev.tentBreakdown||ev.boothDetails||ev.tentDetails||[];
+  var out=[];
+  if(Array.isArray(src)){
+    src.forEach(function(x){
+      if(!x) return;
+      if(typeof x==='string'){
+        out.push({type:String(ev.boothType||'ターフテント'),size:x,count:'',unit:'基'});
+        return;
+      }
+      var type=String(x.type||x.boothType||x.tentType||ev.boothType||'').trim();
+      var size=String(x.size||x.tarpSize||x.tentSize||'').trim();
+      var raw=(x.count!==undefined&&x.count!==null&&x.count!=='')?x.count:(x.qty!==undefined?x.qty:x.quantity);
+      var unit=String(x.unit||(type==='キッチンカー'?'台':'基'));
+      if(type||size) out.push({type:type,size:size,count:raw===undefined?'':raw,unit:unit});
+    });
+  } else if(src && typeof src==='object'){
+    Object.keys(src).forEach(function(k){
+      var v=src[k];
+      if(v && typeof v==='object') out.push({type:String(v.type||ev.boothType||'ターフテント'),size:String(v.size||k),count:v.count!==undefined?v.count:(v.qty||0),unit:String(v.unit||'基')});
+      else out.push({type:String(ev.boothType||'ターフテント'),size:k,count:v,unit:'基'});
+    });
+  }
+  return out;
+}
+
 function renderBoothTypeSummary(ev){
   if(!ev) return '';
-  // v4.3.50: 現行保存キーを最優先。旧試作キーが残っていても表示だけ救済する。
+  var rows=normalizeBoothBreakdown(ev).filter(function(x){ return x.type||x.size; });
+  if(rows.length){
+    var parts=rows.map(function(x){
+      var type=x.type||'テント';
+      var size=x.size?' '+x.size:'';
+      var count=(x.count!==''&&x.count!==undefined&&x.count!==null)?' '+x.count+(x.unit||(type==='キッチンカー'?'台':'基')):'';
+      var icon=type==='キッチンカー'?'🚚':'⛺';
+      return '<span style="display:inline-block;margin:2px 8px 2px 0">'+icon+' '+esc(type)+esc(size)+' <b style="color:var(--gold2)">'+esc(count.trim())+'</b></span>';
+    }).join('');
+    return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)"><span style="color:var(--gold2)">設営</span>　'+parts+'</div>';
+  }
+  // 旧保存データも従来どおり表示する。
   var type=String(ev.boothType||ev.storeType||ev.stallType||'').trim();
   if(!type) return '';
   var sizes=Array.isArray(ev.tarpSizes)?ev.tarpSizes:(Array.isArray(ev.boothSizes)?ev.boothSizes:[]);
   var detail='';
   if(type==='ターフテント' && sizes.length){ detail='（'+sizes.join('・')+'）'; }
-  if(type==='現地設営テント' && ev.siteFrontage!==undefined && ev.siteFrontage!==null && ev.siteFrontage!==''){ detail='（間口 '+esc(ev.siteFrontage)+'m）'; }
   var rawCount=(ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!=='')?ev.boothCount:
                ((ev.storeCount!==undefined&&ev.storeCount!==null&&ev.storeCount!=='')?ev.storeCount:'');
   var count='';
@@ -3276,7 +3307,7 @@ function renderBoothTypeSummary(ev){
     count=' × '+rawCount+unit;
   }
   var icon=type==='キッチンカー'?'🚚':'⛺';
-  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+escHtml(type)+escHtml(detail)+escHtml(count)+'</div>';
+  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+esc(type)+esc(detail)+esc(count)+'</div>';
 }
 
 // ════ EVENT FORM ════
@@ -3285,31 +3316,52 @@ function updateBoothTypeUI(){
   var type=checked?checked.value:'';
   var sizeWrap=document.getElementById('ef-tarp-size-wrap');
   if(sizeWrap) sizeWrap.style.display=type==='ターフテント'?'block':'none';
-  var frontageWrap=document.getElementById('ef-site-frontage-wrap');
-  if(frontageWrap) frontageWrap.style.display=type==='現地設営テント'?'block':'none';
+  var countWrap=document.getElementById('ef-booth-count-wrap');
+  if(countWrap) countWrap.style.display=type==='ターフテント'?'none':'flex';
   var unit=document.getElementById('ef-booth-unit');
   if(unit) unit.textContent=type==='キッチンカー'?'台':'基';
+  updateTarpCountInputs();
+}
+function updateTarpCountInputs(){
+  document.querySelectorAll('.ef-tarp-count').forEach(function(inp){
+    var cb=document.querySelector('input[name="ef-tarp-size"][value="'+inp.getAttribute('data-size')+'"]');
+    inp.disabled=!(cb&&cb.checked);
+    if(inp.disabled) inp.value='';
+  });
 }
 function setBoothFormValues(ev){
   document.querySelectorAll('input[name="ef-booth-type"]').forEach(function(r){ r.checked=!!(ev&&ev.boothType===r.value); });
-  var sizes=ev&&Array.isArray(ev.tarpSizes)?ev.tarpSizes:[];
+  var details=normalizeBoothBreakdown(ev);
+  var sizes=ev&&Array.isArray(ev.tarpSizes)?ev.tarpSizes:details.filter(function(x){return x.type==='ターフテント'&&x.size;}).map(function(x){return x.size;});
   document.querySelectorAll('input[name="ef-tarp-size"]').forEach(function(c){ c.checked=sizes.indexOf(c.value)>=0; });
-  var frontage=document.getElementById('ef-site-frontage');
-  if(frontage) frontage.value=ev&&ev.siteFrontage!==undefined&&ev.siteFrontage!==null&&ev.siteFrontage!==''?ev.siteFrontage:'';
+  document.querySelectorAll('.ef-tarp-count').forEach(function(inp){
+    var row=details.find(function(x){return x.type==='ターフテント'&&x.size===inp.getAttribute('data-size');});
+    inp.value=row&&row.count!==undefined&&row.count!==null?row.count:'';
+  });
   var count=document.getElementById('ef-booth-count');
   if(count) count.value=ev&&ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!==''?ev.boothCount:'';
+  // 旧形式の「合計基数」しかない場合は、最初の選択サイズへ引き継ぐ。
+  if(ev&&ev.boothType==='ターフテント'&&!details.length&&sizes.length&&ev.boothCount!==''){
+    var first=document.querySelector('.ef-tarp-count[data-size="'+sizes[0]+'"]');
+    if(first) first.value=ev.boothCount;
+  }
   updateBoothTypeUI();
 }
 function getBoothFormValues(){
   var checked=document.querySelector('input[name="ef-booth-type"]:checked');
   var type=checked?checked.value:'';
-  var sizes=[];
-  if(type==='ターフテント') document.querySelectorAll('input[name="ef-tarp-size"]:checked').forEach(function(c){ sizes.push(c.value); });
-  var frontageEl=document.getElementById('ef-site-frontage');
-  var frontageRaw=frontageEl?frontageEl.value:'';
+  var sizes=[],breakdown=[];
+  if(type==='ターフテント') document.querySelectorAll('input[name="ef-tarp-size"]:checked').forEach(function(c){
+    sizes.push(c.value);
+    var inp=document.querySelector('.ef-tarp-count[data-size="'+c.value+'"]');
+    breakdown.push({type:type,size:c.value,count:parseInt(inp&&inp.value,10)||0,unit:'基'});
+  });
   var countEl=document.getElementById('ef-booth-count');
   var raw=countEl?countEl.value:'';
-  return {boothType:type,tarpSizes:sizes,siteFrontage:frontageRaw===''?'':(parseFloat(frontageRaw)||0),boothCount:raw===''?'':(parseInt(raw,10)||0)};
+  var total=raw===''?'':(parseInt(raw,10)||0);
+  if(type==='ターフテント') total=breakdown.reduce(function(sum,x){return sum+Number(x.count||0);},0);
+  else if(type) breakdown=[{type:type,size:'',count:total,unit:type==='キッチンカー'?'台':'基'}];
+  return {boothType:type,tarpSizes:sizes,boothCount:total,boothBreakdown:breakdown};
 }
 function openEventForm(id) {
   if(role==='user'){ toast('⛔ 権限がありません'); return; }
@@ -3374,25 +3426,12 @@ function saveEventForm() {
     boothType:getBoothFormValues().boothType,
     tarpSizes:getBoothFormValues().tarpSizes,
     boothCount:getBoothFormValues().boothCount,
-    siteFrontage:getBoothFormValues().siteFrontage,
+    boothBreakdown:getBoothFormValues().boothBreakdown,
     requiredStaff: parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0) || 0,
     memo:document.getElementById('ef-memo').value,
     itemsText:document.getElementById('ef-items-text').value.trim(),
     staff:staff,
-    dayAssignments:(function(){
-      var out={};
-      var dates=dateListForEvent({date:date,dateEnd:savedEnd});
-      if(dates.length<=1){
-        out[date]={staff:staff.slice(),requiredStaff:parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0)||0};
-      }else{
-        dates.forEach(function(ds){
-          var rec=eventDayStaffDraft[ds];
-          out[ds]=rec ? {staff:(rec.staff||[]).slice(),requiredStaff:parseInt(rec.requiredStaff)||0}
-                      : {staff:staff.slice(),requiredStaff:parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0)||0};
-        });
-      }
-      return out;
-    })(),
+    dayAssignments:(function(){ var out={}; var dates=dateListForEvent({date:date,dateEnd:document.getElementById('ef-date-end').value||''}); dates.forEach(function(ds){ if(eventDayStaffDraft[ds]) out[ds]={staff:(eventDayStaffDraft[ds].staff||[]).slice(),requiredStaff:parseInt(eventDayStaffDraft[ds].requiredStaff)||0}; }); return out; })(),
     items:[],
     // シークレットイベント設定
     secret: document.getElementById('ef-secret') ? document.getElementById('ef-secret').checked : false
@@ -3423,32 +3462,6 @@ function saveEventForm() {
   renderCalendar();
   renderSalesPage();
   fbSave();
-
-  // v4.3.55 TEST: 編集したイベント1件だけを state.events と同じ配列位置へ確定保存。
-  (function(savedId){
-    var idx=-1, current=null;
-    for(var k=0;k<state.events.length;k++){
-      if(String(state.events[k].id)===String(savedId)){ idx=k; current=state.events[k]; break; }
-    }
-    if(idx<0 || !current) return;
-    var eventDates=dateListForEvent(current);
-    if(eventDates.length<=1){
-      current.dayAssignments=current.dayAssignments||{};
-      current.dayAssignments[current.date]={
-        staff:Array.isArray(current.staff)?current.staff.slice():[],
-        requiredStaff:parseInt(current.requiredStaff)||0
-      };
-    }
-    renderCalendar();
-    setTimeout(function(){
-      try{
-        if(!(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.database&&window._fgFirebaseReady)) return;
-        firebase.database().ref('fujiwara/events/'+idx).set(current)
-          .then(function(){ console.log('v4.3.55 event confirmed',savedId); })
-          .catch(function(e){ console.warn('イベント確定保存エラー',e); });
-      }catch(e){ console.warn('イベント確定保存をスキップ',e); }
-    },250);
-  })(rawId||data.id);
 }
 
 function deleteEvent() {
@@ -5106,10 +5119,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
   }
 
   function normalize(ev){
-    // v4.3.52: Firebaseから戻ったイベントを「必要項目だけの作り直し」にしない。
-    // 既存の全項目を保持したまま型だけ整えることで、新規項目や日別データの消失を防ぐ。
-    ev=ev||{};
-    return Object.assign({},ev,{
+    return {
       id:String(ev.id||''),
       name:ev.name||'',
       date:ev.date||'',
@@ -5117,11 +5127,14 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       zone:canonicalSupplierName(ev.zone||'A'),
       place:ev.place||'',
       status:ev.status||'planned',
+      // v4.3.51: 出店形態をFirebase再読込時にも保持する。
+      // ここで落とすと保存直後のrealtime同期で画面上から消えていた。
       boothType:ev.boothType||'',
       tarpSizes:Array.isArray(ev.tarpSizes)?ev.tarpSizes:(ev.tarpSizes?Object.values(ev.tarpSizes):[]),
       boothCount:(ev.boothCount!==undefined&&ev.boothCount!==null&&ev.boothCount!=='')?ev.boothCount:'',
-      siteFrontage:(ev.siteFrontage!==undefined&&ev.siteFrontage!==null&&ev.siteFrontage!=='')?ev.siteFrontage:'',
-      requiredStaff:parseInt(ev.requiredStaff)||0,
+      // サイズごとの基数を再同期後も保持。KING初動側の互換キーも読み込む。
+      boothBreakdown:normalizeBoothBreakdown(ev),
+      requiredStaff: parseInt(ev.requiredStaff)||0,
       memo:ev.memo||'',
       itemsText:ev.itemsText||'',
       bsLeader:ev.bsLeader||'',
@@ -5132,7 +5145,7 @@ function fbSave(){ if(window._fbSave) window._fbSave(); }
       availability:ev.availability||{},
       sales:ev.sales||null,
       secret:!!ev.secret
-    });
+    };
   }
 
   window._fbSave = function(){
@@ -5672,19 +5685,6 @@ document.addEventListener('click',function(e){
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&userName&&document.getElementById('app')&&document.getElementById('app').style.display!=='none')writePresence();});
   window.addEventListener('beforeunload',function(){try{if(presenceRef)presenceRef.remove();}catch(e){}});
   setTimeout(updatePresenceFab,500);
-})();
-</script>
-
-<script id="king-back-leader-only">
-(function(){
-  function syncKingBack(){
-    var b=document.getElementById('king-back-btn');
-    if(!b)return;
-    b.style.display=(typeof role!=='undefined' && role==='leader')?'inline-flex':'none';
-  }
-  setInterval(syncKingBack,300);
-  document.addEventListener('click',function(){setTimeout(syncKingBack,0);});
-  syncKingBack();
 })();
 </script>
 </body>
