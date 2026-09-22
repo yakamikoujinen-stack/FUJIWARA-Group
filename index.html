@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.58 TEST｜出店形態カード安全表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.59 TEST｜出店形態カード安全表示版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3221,6 +3221,20 @@ function syncEventDayStaffDraftFromDom(){
     eventDayStaffDraft[ds]={staff:staff,requiredStaff:parseInt(req&&req.value)||0};
   });
 }
+function syncMainStaffToActiveEventDay(){
+  var start=document.getElementById('ef-date').value;
+  var end=document.getElementById('ef-date-end').value;
+  if(!start||!end||end<=start){ renderEventDayStaffEditor(); return; }
+  syncEventDayStaffDraftFromDom();
+  var dates=dateListForEvent({date:start,dateEnd:end});
+  var active=(typeof selDate!=='undefined' && dates.indexOf(selDate)>=0)?selDate:start;
+  var staff=[];
+  document.querySelectorAll('#ef-staff-checks input:checked').forEach(function(ch){ staff.push(ch.value); });
+  var req=parseInt(document.getElementById('ef-required-staff').value)||0;
+  var old=eventDayStaffDraft[active]||{};
+  eventDayStaffDraft[active]={staff:staff.slice(),requiredStaff:(old.requiredStaff!==undefined?old.requiredStaff:req)};
+  renderEventDayStaffEditor();
+}
 function renderEventDayStaffEditor(){
   syncEventDayStaffDraftFromDom();
   var start=document.getElementById('ef-date').value;
@@ -3342,9 +3356,17 @@ function openEventForm(id) {
   // シークレットイベントの状態を反映
   var secretChk=document.getElementById('ef-secret');
   if(secretChk){ secretChk.checked = ev ? !!ev.secret : false; }
+  var mainFormStaff=ev&&Array.isArray(ev.staff)?ev.staff.slice():[];
+  if(ev){
+    var formDates=dateListForEvent({date:ev.date||'',dateEnd:inferEventEndDate(ev)||''});
+    if(formDates.length>1){
+      var activeFormDate=(typeof selDate!=='undefined' && formDates.indexOf(selDate)>=0)?selDate:formDates[0];
+      mainFormStaff=getEventStaffForDate(ev,activeFormDate);
+    }
+  }
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
-    var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
-    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' onchange="renderEventDayStaffEditor()" style="width:auto;margin:0"> '+s+'</label>';
+    var chk=mainFormStaff.indexOf(s)>=0?'checked':'';
+    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' onchange="syncMainStaffToActiveEventDay()" style="width:auto;margin:0"> '+s+'</label>';
   }).join('');
   renderEventDayStaffEditor();
   openModal('modal-event-form');
