@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.57 TEST｜出店形態カード安全表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.58 TEST｜出店形態カード安全表示版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3382,7 +3382,10 @@ function saveEventForm() {
     dayAssignments:(function(){
       var out={};
       var dates=dateListForEvent({date:date,dateEnd:savedEnd});
-      if(dates.length<=1){
+      // v4.3.58: 開始日=終了日のイベントは単日扱い。
+      // 旧日別担当が残っていても、今回チェックした担当スタッフを当日の正として保存する。
+      var isSingleDay = !savedEnd || savedEnd===date || dates.length<=1;
+      if(isSingleDay){
         out[date]={staff:staff.slice(),requiredStaff:parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0)||0};
       }else{
         dates.forEach(function(ds){
