@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.52 テントサイズ別基数表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.53 テントカード表示停止修正版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -3262,7 +3262,15 @@ function normalizeBoothBreakdown(ev){
     src.forEach(function(x){
       if(!x) return;
       if(typeof x==='string'){
-        out.push({type:String(ev.boothType||'ターフテント'),size:x,count:'',unit:'基'});
+        // KING初動は「テキヤテント 7尺×1…」のような完成文字列で渡す場合がある。
+        var text=String(x).trim();
+        var matched=text.match(/^(テキヤテント|ターフテント|現地設営テント|キッチンカー)\s*(.*)$/);
+        out.push({
+          type:matched?matched[1]:String(ev.boothType||'テント'),
+          size:matched?matched[2]:text,
+          count:'',
+          unit:matched&&matched[1]==='キッチンカー'?'台':'基'
+        });
         return;
       }
       var type=String(x.type||x.boothType||x.tentType||ev.boothType||'').trim();
@@ -3290,7 +3298,7 @@ function renderBoothTypeSummary(ev){
       var size=x.size?' '+x.size:'';
       var count=(x.count!==''&&x.count!==undefined&&x.count!==null)?' '+x.count+(x.unit||(type==='キッチンカー'?'台':'基')):'';
       var icon=type==='キッチンカー'?'🚚':'⛺';
-      return '<span style="display:inline-block;margin:2px 8px 2px 0">'+icon+' '+esc(type)+esc(size)+' <b style="color:var(--gold2)">'+esc(count.trim())+'</b></span>';
+      return '<span style="display:inline-block;margin:2px 8px 2px 0">'+icon+' '+escHtml(type)+escHtml(size)+' <b style="color:var(--gold2)">'+escHtml(count.trim())+'</b></span>';
     }).join('');
     return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)"><span style="color:var(--gold2)">設営</span>　'+parts+'</div>';
   }
@@ -3308,7 +3316,7 @@ function renderBoothTypeSummary(ev){
     count=' × '+rawCount+unit;
   }
   var icon=type==='キッチンカー'?'🚚':'⛺';
-  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+esc(type)+esc(detail)+esc(count)+'</div>';
+  return '<div class="ev-meta booth-type-summary" style="margin-top:6px;margin-bottom:3px;font-size:13px;font-weight:900;color:var(--text)">'+icon+' <span style="color:var(--gold2)">出店形態</span>　'+escHtml(type)+escHtml(detail)+escHtml(count)+'</div>';
 }
 
 // ════ EVENT FORM ════
