@@ -28,6 +28,7 @@ header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-
 <div id="presence-status" class="presence-status">🟢 入国状況を共有中</div>
 <section class="main-app-card"><div class="main-app-icon">🏠</div><div class="main-app-info"><h2 class="main-app-title">メインアプリ</h2><p class="main-app-text">イベント管理・カレンダー・売上・出勤など、メインアプリへ移動します。</p><button class="main-app-btn" onclick="setManagerDestination('メインアプリ');setTimeout(function(){location.href='index.html'},80)">メインアプリを開く</button></div></section>
 
+<section class="main-app-card"><div class="main-app-icon">📦</div><div class="main-app-info"><h2 class="main-app-title">イベント別 持出し振分け</h2><p class="main-app-text">会場・出店ネタ別に数量を入力し、KINGと同じ共有データを編集します。</p><button class="main-app-btn" onclick="location.href='event-carry-plan.html'">持出し振分けを開く</button></div></section>
 <main class="grid" id="cards"></main>
 
 <details class="settings" id="settings"><summary>⚙️ 担当者・リンク設定</summary><div id="settingRows"></div><div class="settings-actions"><button class="cancel-btn" onclick="loadSettingsForm()">元に戻す</button><button class="save-btn" onclick="saveSettings()">設定を保存</button></div></details>
