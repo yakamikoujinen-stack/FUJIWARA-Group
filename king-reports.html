@@ -10,9 +10,10 @@
 :root{--navy:#17324d;--gold:#c99513;--gold2:#e8bc44;--ink:#172033;--sub:#687386;--line:#e2e8f0;--bg:#eef5fb;--card:#fff;--red:#d64242;--blue:#2f80ed;--green:#168a58;--orange:#d88b16}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:linear-gradient(180deg,#edf7ff,#fffaf0);min-height:100vh}.wrap{max-width:1280px;margin:auto;padding:16px 16px 90px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#102b45,#1d4568);color:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 10px 28px rgba(23,50,77,.18)}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;font-size:12px;opacity:.82}.back{border:1px solid #efd06c;background:#fff8dd;color:#725100;border-radius:12px;padding:10px 13px;font-weight:900;text-decoration:none;white-space:nowrap}.status{margin:12px 0;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px 12px;font-size:12px;font-weight:800;color:var(--sub)}
 .center{background:rgba(255,255,255,.9);border:1px solid #dce7f0;border-radius:20px;padding:16px;box-shadow:0 8px 24px rgba(40,70,100,.08)}.center-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.center-head h2{margin:0;font-size:20px}.report-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.report-card{border:1.5px solid #dce5ee;border-radius:16px;background:#fff;padding:13px;min-height:108px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;justify-content:space-between}.report-card.active{border:2px solid #d5a619;background:linear-gradient(135deg,#fffdf2,#fff4c9)}.report-icon{font-size:27px}.report-title{font-weight:950;font-size:15px;margin-top:5px}.report-desc{font-size:11px;color:var(--sub);line-height:1.5}.soon{font-size:10px;font-weight:900;color:#8b6a10;background:#fff3c4;border-radius:999px;padding:3px 7px;align-self:flex-start}
-.panel{margin-top:14px;background:#fff;border:1px solid #dce5ee;border-radius:20px;padding:16px;box-shadow:0 8px 24px rgba(40,70,100,.08)}.controls{display:grid;grid-template-columns:180px 1fr auto auto;gap:9px;align-items:end}.fg label{display:block;font-size:11px;font-weight:900;color:var(--sub);margin-bottom:4px}.fg input,.fg select{width:100%;height:42px;border:1.5px solid #cfd9e3;border-radius:10px;background:#fff;padding:0 10px;font-size:14px}.btn{height:42px;border:0;border-radius:11px;padding:0 14px;font-weight:900;cursor:pointer}.btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#271b00}.btn-navy{background:var(--navy);color:#fff}.legend{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.legend span{font-size:11px;font-weight:900;border:1px solid;padding:5px 8px;border-radius:999px}.fuji{background:#fff1f1;border-color:var(--red)!important;color:#9f1d1d}.sho{background:#eef6ff;border-color:var(--blue)!important;color:#1457a6}.bunta{background:#eefbf2;border-color:var(--green)!important;color:#0d6a40}.shige{background:#fff4df;border-color:var(--orange)!important;color:#8a5400}
+.panel{margin-top:14px;background:#fff;border:1px solid #dce5ee;border-radius:20px;padding:16px;box-shadow:0 8px 24px rgba(40,70,100,.08)}.report-panel{display:none}.report-panel.active{display:block}.controls{display:grid;grid-template-columns:180px 1fr auto auto;gap:9px;align-items:end}.fg label{display:block;font-size:11px;font-weight:900;color:var(--sub);margin-bottom:4px}.fg input,.fg select{width:100%;height:42px;border:1.5px solid #cfd9e3;border-radius:10px;background:#fff;padding:0 10px;font-size:14px}.btn{height:42px;border:0;border-radius:11px;padding:0 14px;font-weight:900;cursor:pointer}.btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#271b00}.btn-navy{background:var(--navy);color:#fff}.legend{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.legend span{font-size:11px;font-weight:900;border:1px solid;padding:5px 8px;border-radius:999px}.fuji{background:#fff1f1;border-color:var(--red)!important;color:#9f1d1d}.sho{background:#eef6ff;border-color:var(--blue)!important;color:#1457a6}.bunta{background:#eefbf2;border-color:var(--green)!important;color:#0d6a40}.shige{background:#fff4df;border-color:var(--orange)!important;color:#8a5400}
 .sheet-head{text-align:center;margin:14px 0 10px}.sheet-head h2{margin:0;font-size:24px}.sheet-head .sub{font-size:12px;color:var(--sub);margin-top:4px}.table-wrap{overflow:auto;border:1px solid #dce5ee;border-radius:13px}.roster{width:100%;border-collapse:collapse;min-width:980px;background:#fff}.roster th,.roster td{border:1px solid #dfe5eb;padding:8px 7px;text-align:center;font-size:12px;vertical-align:middle}.roster th{background:#edf4fa;font-weight:950;position:sticky;top:0;z-index:2}.roster .datecol{min-width:82px}.roster .eventcol{min-width:180px;text-align:left}.roster .placecol{min-width:130px;text-align:left}.roster td.staff-on{font-weight:950;background:#fff8d9}.roster td.resp-fuji{background:#fff1f1;color:#9f1d1d;font-weight:950}.roster td.resp-sho{background:#eef6ff;color:#1457a6;font-weight:950}.roster td.resp-bunta{background:#eefbf2;color:#0d6a40;font-weight:950}.roster td.resp-shige{background:#fff4df;color:#8a5400;font-weight:950}.staff-sheet{display:none}.staff-sheet.active{display:block}.staff-list-table{width:100%;border-collapse:collapse}.staff-list-table th,.staff-list-table td{border:1px solid #dfe5eb;padding:10px;font-size:13px}.staff-list-table th{background:#edf4fa}.staff-list-table .day{width:90px;text-align:center;font-weight:900}.staff-list-table .evt{font-weight:900}.empty{padding:35px;text-align:center;color:var(--sub);font-weight:800}.note{font-size:11px;color:var(--sub);margin-top:10px;line-height:1.6}
-@media(max-width:800px){.report-grid{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:1fr 1fr}.controls .btn{width:100%}.top{align-items:flex-start}.top h1{font-size:19px}}@media(max-width:480px){.report-grid{grid-template-columns:1fr 1fr}.wrap{padding:10px 10px 85px}.report-card{min-height:120px}.sheet-head h2{font-size:20px}}
+.neta-controls{grid-template-columns:220px auto 1fr}.neta-table{width:100%;border-collapse:collapse;background:#fff;min-width:760px}.neta-table th,.neta-table td{border:1px solid #dfe5eb;padding:9px 8px;text-align:center;font-size:12px;vertical-align:middle}.neta-table th{background:linear-gradient(180deg,#edf4fa,#e3edf6);font-weight:950;position:sticky;top:0;z-index:2;white-space:nowrap}.neta-table .neta-date{min-width:92px;font-weight:900;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1}.neta-table .neta-event{min-width:210px;text-align:left;font-weight:900;position:sticky;left:92px;background:#fff;z-index:1}.neta-table th.neta-date,.neta-table th.neta-event{background:linear-gradient(180deg,#edf4fa,#e3edf6);z-index:3}.neta-table .neta-mark{font-size:20px;font-weight:950;color:#b17b00;background:#fff9df}.neta-table .neta-off{color:#c5ccd5}.neta-empty{padding:38px!important;text-align:center!important;color:var(--sub);font-weight:800}.neta-help{display:inline-block;margin-left:6px;font-size:10px;font-weight:900;color:#8b6a10;background:#fff3c4;border-radius:999px;padding:3px 7px}
+@media(max-width:800px){.report-grid{grid-template-columns:repeat(2,1fr)}.controls,.neta-controls{grid-template-columns:1fr 1fr}.controls .btn{width:100%}.top{align-items:flex-start}.top h1{font-size:19px}}@media(max-width:480px){.report-grid{grid-template-columns:1fr 1fr}.wrap{padding:10px 10px 85px}.report-card{min-height:120px}.sheet-head h2{font-size:20px}.neta-table .neta-event{min-width:165px}}
 @media print{body{background:#fff}.wrap{max-width:none;padding:0}.top,.center,.controls,.legend,.status,.note{display:none!important}.panel{box-shadow:none;border:0;margin:0;padding:0}.sheet-head{margin:0 0 8mm}.table-wrap{border:0;overflow:visible}.roster{min-width:0;font-size:9px}.roster th,.roster td{padding:3px 2px;font-size:8.5px}.staff-list-table th,.staff-list-table td{font-size:11px;padding:6px}.no-print{display:none!important}@page{size:A4 landscape;margin:8mm}body.staff-mode @page{size:A4 portrait;margin:10mm}}
 
 /* 同日イベント色分け v1.6 */
@@ -47,18 +48,18 @@
   <section class="center">
     <div class="center-head"><h2>📊 各種一覧表・帳票</h2><span class="soon">第1弾</span></div>
     <div class="report-grid">
-      <a class="report-card active" href="#monthly"><div><div class="report-icon">👥</div><div class="report-title">月間スタッフ出勤表</div><div class="report-desc">メインの日別スタッフ設定を月間一覧に自動反映</div></div><span class="soon">使用できます</span></a>
+      <a class="report-card active" href="#monthly" data-report="monthly"><div><div class="report-icon">👥</div><div class="report-title">月間スタッフ出勤表</div><div class="report-desc">メインの日別スタッフ設定を月間一覧に自動反映</div></div><span class="soon">使用できます</span></a>
       <div class="report-card"><div><div class="report-icon">📅</div><div class="report-title">イベント一覧表</div><div class="report-desc">月別・会場別のイベント一覧</div></div><span class="soon">順次追加</span></div>
       <div class="report-card"><div><div class="report-icon">👑</div><div class="report-title">責任者別一覧</div><div class="report-desc">藤原・将・文太・繁充ごとの担当表</div></div><span class="soon">順次追加</span></div>
       <div class="report-card"><div><div class="report-icon">💰</div><div class="report-title">売上・利益一覧</div><div class="report-desc">イベント別売上・利益の管理表</div></div><span class="soon">順次追加</span></div>
       <div class="report-card"><div><div class="report-icon">🧾</div><div class="report-title">労務費・未払い一覧</div><div class="report-desc">スタッフ別支払・未払い確認</div></div><span class="soon">順次追加</span></div>
-      <div class="report-card"><div><div class="report-icon">🛒</div><div class="report-title">仕入一覧</div><div class="report-desc">購入先・仕入金額の月間一覧</div></div><span class="soon">順次追加</span></div>
+      <a class="report-card" href="#neta" data-report="neta"><div><div class="report-icon">📋</div><div class="report-title">月間イベント・出店ネタ一覧表</div><div class="report-desc">日付・イベント別に出店ネタを◯で一覧表示</div></div><span class="soon">使用できます</span></a>
       <div class="report-card"><div><div class="report-icon">🧮</div><div class="report-title">イベント精算一覧</div><div class="report-desc">FUJIWARA・尼崎本社の精算管理</div></div><span class="soon">順次追加</span></div>
       <div class="report-card"><div><div class="report-icon">📈</div><div class="report-title">年間集計</div><div class="report-desc">月別推移・年間比較表</div></div><span class="soon">順次追加</span></div>
     </div>
   </section>
 
-  <section class="panel" id="monthly">
+  <section class="panel report-panel active" id="monthly">
     <div class="controls no-print">
       <div class="fg"><label>対象月</label><input type="month" id="month"></div>
       <div class="fg"><label>表示</label><select id="mode"><option value="all">月間総合表</option><option value="staff">スタッフ別 配布表</option><option value="admin">管理用 全体表（シークレット含む）</option></select></div>
@@ -71,6 +72,17 @@
     <div id="staffSheet" class="staff-sheet"></div>
     <div class="note no-print">※ メインアプリの「日ごとの出勤スタッフ」を優先し、日別設定がない日はイベントの担当スタッフを表示します。表からデータの編集はしません。</div>
   </section>
+
+  <section class="panel report-panel" id="neta">
+    <div class="controls neta-controls no-print">
+      <div class="fg"><label>対象月</label><input type="month" id="netaMonth"></div>
+      <button class="btn btn-gold" id="netaPrintBtn">🖨️ 印刷・PDF</button>
+      <div></div>
+    </div>
+    <div class="sheet-head"><h2>月間イベント・出店ネタ一覧表</h2><div class="sub" id="netaSheetSub"></div></div>
+    <div class="table-wrap"><table class="neta-table" id="netaMatrix"></table></div>
+    <div class="note no-print">※ 1列目は日付、2列目はイベント名、1行目はネタ名です。出店するネタを「◯」、出店しないネタを「－」で表示します。連日イベントは1行で表示します。</div>
+  </section>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -79,7 +91,24 @@
 'use strict';
 var cfg={apiKey:'AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA',authDomain:'fujiwara-group-3a600.firebaseapp.com',databaseURL:'https://fujiwara-group-3a600-default-rtdb.firebaseio.com',projectId:'fujiwara-group-3a600',storageBucket:'fujiwara-group-3a600.firebasestorage.app',messagingSenderId:'709887362301',appId:'1:709887362301:web:8ff756d645bc0398956a94'};
 if(!firebase.apps.length) firebase.initializeApp(cfg);
-var db=firebase.database(), events=[], staffList=[];
+var db=firebase.database(), events=[], staffList=[], invItems=[];
+var NETA_ORDER=['いか焼き','串焼き','かすてら','たい焼き','ポテト','からあげ','かき氷','チーズハットグ','やきそば','ホルそば','肉巻きおにぎり','りんご飴','だんご','コットンキャンディー','チョコバナナ','とんかつスティック','電球ジュース','かまぼこ','らーめん'];
+var NETA_ALIASES={
+  'イカ焼き':'いか焼き','いかやき':'いか焼き',
+  '牛串':'串焼き','牛くし':'串焼き','牛たん串':'串焼き','牛タン串':'串焼き','豚串':'串焼き','豚くし':'串焼き','鳥串':'串焼き','鶏串':'串焼き','ねぎま':'串焼き','皮':'串焼き','焼き鳥':'串焼き',
+  'ベビーカステラ':'かすてら','カステラ':'かすてら',
+  'タイ焼き':'たい焼き','鯛焼き':'たい焼き','鯛焼':'たい焼き',
+  'フライドポテト':'ポテト',
+  '唐揚げ':'からあげ','から揚げ':'からあげ',
+  'ハットグ':'チーズハットグ','チーズドッグ':'チーズハットグ',
+  '焼きそば':'やきそば','焼そば':'やきそば',
+  'ホルモン焼きそば':'ホルそば','ホルモンそば':'ホルそば','ホル焼きそば':'ホルそば',
+  '肉巻き':'肉巻きおにぎり','肉巻おにぎり':'肉巻きおにぎり',
+  'りんごあめ':'りんご飴','リンゴ飴':'りんご飴',
+  '綿菓子':'コットンキャンディー','わたがし':'コットンキャンディー','綿あめ':'コットンキャンディー',
+  'とんかつ':'とんかつスティック','トンカツ':'とんかつスティック',
+  '電球ソーダ':'電球ジュース','電球ドリンク':'電球ジュース'
+};
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function normDate(v){var m=String(v||'').match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);return m?m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'):''}
@@ -88,6 +117,51 @@ function staffFor(ev,ds){var m=ev.dayAssignments&&typeof ev.dayAssignments==='ob
 function canon(n){n=String(n||'').trim();if(n==='藤原明裕'||n==='藤原明広')return'藤原';return n}
 function cls(n){n=canon(n);if(n==='藤原')return'resp-fuji';if(n==='将')return'resp-sho';if(n==='文太')return'resp-bunta';if(n==='繁充')return'resp-shige';return''}
 function isSecretEvent(ev){var v=ev&&ev.secret;return v===true||v==='true'||v===1||v==='1'||v==='on'}
+function asArray(v){return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[])}
+function canonNeta(name){var n=String(name||'').trim();return NETA_ALIASES[n]||n}
+function invById(id){for(var i=0;i<invItems.length;i++){if(String(invItems[i].id)===String(id))return invItems[i]}return null}
+function addNetaNames(target,value){
+  if(value===null||typeof value==='undefined')return;
+  if(Array.isArray(value)){value.forEach(function(v){addNetaNames(target,v)});return}
+  if(typeof value==='object'){
+    var fields=[value.cat,value.category,value.neta,value.menu,value.name,value.title,value.itemName,value.productName,value.label,value.text,value.value];
+    fields.forEach(function(v){addNetaNames(target,v)});
+    if(value.id){var hit=invById(value.id);if(hit){addNetaNames(target,hit.cat);addNetaNames(target,hit.name)}}
+    if(!fields.some(function(v){return v!==undefined&&v!==null&&v!==''})){Object.keys(value).forEach(function(k){if(value[k])addNetaNames(target,k)})}
+    return;
+  }
+  var raw=String(value||'').trim();if(!raw)return;
+  var item=invById(raw);if(item){addNetaNames(target,item.cat);addNetaNames(target,item.name);return}
+  raw.split(/\r?\n|、|,|・|／|\/|　|\||｜|＋|\+/).map(function(x){return canonNeta(x.trim())}).filter(Boolean).forEach(function(x){if(target.indexOf(x)<0)target.push(x)});
+}
+function eventNetas(ev){
+  var names=[];
+  addNetaNames(names,ev.items);addNetaNames(names,ev.itemsText);
+  [ev.netas,ev.neta,ev.menus,ev.menu,ev.products,ev.product,ev.selectedMenus,ev.selectedItems,ev.shopItems,ev.foods,ev.stalls,ev.booths,ev.categories,ev.category].forEach(function(v){addNetaNames(names,v)});
+  var sales=ev.sales||{};
+  addNetaNames(names,Object.values(sales.labels||{}));
+  if(sales.days&&typeof sales.days==='object')Object.values(sales.days).forEach(function(day){addNetaNames(names,Object.values((day&&day.labels)||{}))});
+  if(sales.simple&&typeof sales.simple==='object')addNetaNames(names,Object.values(sales.simple.labels||{}));
+  names.slice().forEach(function(name){invItems.filter(function(x){return canonNeta(x.name)===canonNeta(name)}).forEach(function(x){addNetaNames(names,x.cat)})});
+  return names.map(canonNeta).filter(Boolean).filter(function(n,i,a){return a.indexOf(n)===i});
+}
+function netaEventsForMonth(ym){
+  return events.filter(function(ev){return datesFor(ev).some(function(ds){return ds.slice(0,7)===ym})}).sort(function(a,b){var ad=datesFor(a)[0]||'',bd=datesFor(b)[0]||'';return ad.localeCompare(bd)||String(a.name||'').localeCompare(String(b.name||''),'ja')});
+}
+function netaDateLabel(ev){var ds=datesFor(ev);if(!ds.length)return'';function short(v){return Number(v.slice(5,7))+'/'+Number(v.slice(8,10))}return ds.length>1?short(ds[0])+'〜'+short(ds[ds.length-1]):short(ds[0])}
+function renderNeta(){
+  var ym=document.getElementById('netaMonth').value;if(!ym)return;
+  var list=netaEventsForMonth(ym), detected=[];
+  list.forEach(function(ev){eventNetas(ev).forEach(function(n){if(detected.indexOf(n)<0)detected.push(n)})});
+  var columns=NETA_ORDER.filter(function(n){return detected.indexOf(n)>=0}).concat(detected.filter(function(n){return NETA_ORDER.indexOf(n)<0}).sort(function(a,b){return a.localeCompare(b,'ja')}));
+  document.getElementById('netaSheetSub').textContent=ym.slice(0,4)+'年 '+Number(ym.slice(5))+'月';
+  var h='<thead><tr><th class="neta-date">日付</th><th class="neta-event">イベント名</th>'+columns.map(function(n){return'<th>'+esc(n)+'</th>'}).join('')+'</tr></thead><tbody>';
+  if(!list.length){h+='<tr><td colspan="'+Math.max(2,2+columns.length)+'" class="neta-empty">この月のイベントはありません</td></tr>'}
+  list.forEach(function(ev){var netas=eventNetas(ev);h+='<tr><td class="neta-date">'+esc(netaDateLabel(ev))+'</td><td class="neta-event">'+esc(ev.name||'名称未設定')+'</td>';columns.forEach(function(n){var on=netas.indexOf(n)>=0;h+='<td class="'+(on?'neta-mark':'neta-off')+'">'+(on?'◯':'－')+'</td>'});h+='</tr>'});
+  if(list.length&&!columns.length){h='<thead><tr><th class="neta-date">日付</th><th class="neta-event">イベント名</th><th>出店ネタ</th></tr></thead><tbody>'+list.map(function(ev){return'<tr><td class="neta-date">'+esc(netaDateLabel(ev))+'</td><td class="neta-event">'+esc(ev.name||'名称未設定')+'</td><td class="neta-off">未設定</td></tr>'}).join('')+'</tbody>'}
+  else h+='</tbody>';
+  document.getElementById('netaMatrix').innerHTML=h;
+}
 function monthRows(ym,includeSecret){var rows=[];(events||[]).forEach(function(ev){if(!includeSecret&&isSecretEvent(ev))return;datesFor(ev).forEach(function(ds){if(ds.slice(0,7)!==ym)return;rows.push({ds:ds,ev:ev,staff:staffFor(ev,ds).map(canon),secret:isSecretEvent(ev)})})});rows.sort(function(a,b){return a.ds.localeCompare(b.ds)||String(a.ev.name||'').localeCompare(String(b.ev.name||''),'ja')});return rows}
 function allStaff(rows){var set={};var hidden={'friends':1,'friends GP':1,'スポット(バイト)':1,'スポット（バイト）':1,'タイミー①':1,'タイミー②':1,'タイミー③':1,'タイミー④':1};staffList.forEach(function(n){n=canon(n);if(n&&!hidden[n])set[n]=1});rows.forEach(function(r){r.staff.forEach(function(n){if(n&&!hidden[n])set[n]=1})});var responsible=['藤原','将','文太','繁充'];var main=['まゆみ','龍来','想良','まりん','理紗菜'];return Object.keys(set).sort(function(a,b){var ia=responsible.indexOf(a),ib=responsible.indexOf(b);if(ia>=0||ib>=0){if(ia<0)return 1;if(ib<0)return-1;return ia-ib}var ma=main.indexOf(a),mb=main.indexOf(b);if(ma>=0||mb>=0){if(ma<0)return 1;if(mb<0)return-1;return ma-mb}return a.localeCompare(b,'ja')})}
 function render(){var ym=document.getElementById('month').value;if(!ym)return;var mode=document.getElementById('mode').value;var includeSecret=(mode==='admin');var rows=monthRows(ym,includeSecret), names=allStaff(rows);var m=Number(ym.slice(5)),y=ym.slice(0,4);document.getElementById('sheetSub').textContent=y+'年 '+m+'月';
@@ -96,8 +170,17 @@ if(mode==='staff'){document.body.classList.add('staff-mode');document.getElement
 }
 function renderAll(rows,names,showSecretLabel){var h='<thead><tr><th class="datecol">日付</th><th class="eventcol">イベント</th><th class="placecol">場所</th>'+names.map(function(n){return'<th>'+esc(n)+'</th>'}).join('')+'</tr></thead><tbody>';if(!rows.length)h+='<tr><td colspan="'+(3+names.length)+'" class="empty">この月のイベントはありません</td></tr>';var dateCounts={};rows.forEach(function(x){dateCounts[x.ds]=(dateCounts[x.ds]||0)+1});var dateSeen={};rows.forEach(function(r){var d=new Date(r.ds+'T00:00:00'),dow='日月火水木金土'[d.getDay()];var sec=(showSecretLabel&&r.secret)?'<span style="display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#5b21b6;color:#fff;font-size:10px;font-weight:900">シークレット</span>':'';var rowClass='';if(dateCounts[r.ds]>1){var idx=dateSeen[r.ds]||0;rowClass='same-date-'+['a','b','c','d'][idx%4];dateSeen[r.ds]=idx+1}h+='<tr class="'+rowClass+'"'+((showSecretLabel&&r.secret)?' style="outline:2px solid #d8b4fe;outline-offset:-2px"':'')+'><td>'+Number(r.ds.slice(8))+'日('+dow+')</td><td class="eventcol">'+esc(r.ev.name||'')+sec+'</td><td class="placecol">'+esc(r.ev.place||'')+'</td>';names.forEach(function(n){var on=r.staff.indexOf(n)>=0,c=on?cls(n):'';h+='<td class="'+(on?(c||'staff-on'):'')+'">'+(on?'●':'')+'</td>'});h+='</tr>'});h+='</tbody>';document.getElementById('roster').innerHTML=h}
 function renderStaff(rows,name){name=canon(name);document.getElementById('sheetTitle').textContent=name+' さん｜月間出勤予定表';var mine=rows.filter(function(r){return r.staff.indexOf(name)>=0});var h='<table class="staff-list-table"><thead><tr><th>日付</th><th>イベント</th><th>場所</th><th>一緒に出勤</th></tr></thead><tbody>';if(!mine.length)h+='<tr><td colspan="4" class="empty">この月の出勤予定はありません</td></tr>';mine.forEach(function(r){var d=new Date(r.ds+'T00:00:00'),dow='日月火水木金土'[d.getDay()];var others=r.staff.filter(function(x){return x!==name}).join('・');h+='<tr><td class="day">'+Number(r.ds.slice(8))+'日('+dow+')</td><td class="evt">'+esc(r.ev.name||'')+'</td><td>'+esc(r.ev.place||'')+'</td><td>'+esc(others||'—')+'</td></tr>'});h+='</tbody></table>';document.getElementById('staffSheet').innerHTML=h}
-var now=new Date(),ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');document.getElementById('month').value=ym;document.getElementById('month').addEventListener('change',render);document.getElementById('mode').addEventListener('change',render);document.getElementById('staff').addEventListener('change',render);document.getElementById('printBtn').addEventListener('click',function(){window.print()});
-db.ref('fujiwara').on('value',function(s){var v=s.val()||{};var e=v.events||[];events=(Array.isArray(e)?e:Object.values(e)).filter(Boolean);var st=v.staffList||[];staffList=(Array.isArray(st)?st:Object.values(st)).filter(Boolean).map(String);document.getElementById('status').textContent='✅ メインアプリと同期中｜イベント '+events.length+'件・スタッフ '+staffList.length+'人';render()},function(err){document.getElementById('status').textContent='⚠️ Firebase読込エラー: '+err.message;render()});
+function showReport(id){
+  document.querySelectorAll('.report-panel').forEach(function(p){p.classList.toggle('active',p.id===id)});
+  document.querySelectorAll('[data-report]').forEach(function(c){c.classList.toggle('active',c.getAttribute('data-report')===id)});
+  if(id==='neta'){document.body.classList.remove('staff-mode');renderNeta()}else render();
+}
+var now=new Date(),ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+document.getElementById('month').value=ym;document.getElementById('netaMonth').value=ym;
+document.getElementById('month').addEventListener('change',render);document.getElementById('netaMonth').addEventListener('change',renderNeta);document.getElementById('mode').addEventListener('change',render);document.getElementById('staff').addEventListener('change',render);document.getElementById('printBtn').addEventListener('click',function(){window.print()});document.getElementById('netaPrintBtn').addEventListener('click',function(){window.print()});
+document.querySelectorAll('[data-report]').forEach(function(card){card.addEventListener('click',function(e){e.preventDefault();var id=card.getAttribute('data-report');showReport(id);history.replaceState(null,'','#'+id);document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'})})});
+db.ref('fujiwara').on('value',function(s){var v=s.val()||{};var e=v.events||[];events=asArray(e);var st=v.staffList||[];staffList=asArray(st).map(String);invItems=asArray(v.invItems||[]);document.getElementById('status').textContent='✅ メインアプリと同期中｜イベント '+events.length+'件・スタッフ '+staffList.length+'人・在庫品目 '+invItems.length+'件';render();renderNeta()},function(err){document.getElementById('status').textContent='⚠️ Firebase読込エラー: '+err.message;render();renderNeta()});
+if(location.hash==='#neta')showReport('neta');
 })();
 </script>
 </body></html>
