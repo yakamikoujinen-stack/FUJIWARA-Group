@@ -193,8 +193,11 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 </div>
 
 <div class="no-print">
-<button class="green" onclick="createConstructionInvoice()">🧾 この月の請求書を作る</button>
-<div class="small">選択中の取引先・対象月・日報明細を正規のFUJIWARA請求書へ引き継ぎます。単価・金額は請求書側で入力してください。</div>
+<div class="row">
+  <button class="green" onclick="openConstructionBilling()">📊 請求書・集計表を作る</button>
+  <button onclick="createConstructionInvoice()">🧾 従来の請求書を作る</button>
+</div>
+<div class="small">「請求書・集計表を作る」は、選択中の取引先・対象月の日報から月間集計表と請求書を作成します。従来の請求書も残しています。</div>
 </div>
 </div>
 </section>
@@ -395,6 +398,15 @@ function csvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"'}
 function copyAdminCSV(){
  const arr=filteredAdminReports();const csv=["日付","取引先名","取引先担当者","現場名","入力者","作業員","人数","現場入場","現場退場","時間","天気","保存日時"].map(csvCell).join(",")+"\n"+arr.map(r=>[r.date,r.client,r.clientPerson,r.site,r.reporter,r.worker,r.people,r.start,r.end,reportHours(r).toFixed(2),r.weather,formatSavedAt(r)].map(csvCell).join(",")).join("\n");
  navigator.clipboard.writeText(csv).then(()=>alert("月間一覧をCSVコピーしました")).catch(()=>alert("コピーできない場合は長押しコピーしてください"));
+}
+
+function openConstructionBilling(){
+ const client=adminClientFilter.value||"";
+ const month=adminMonthFilter.value||"";
+ const q=new URLSearchParams();
+ if(client)q.set("client",client);
+ if(month)q.set("month",month);
+ location.href="construction-billing.html"+(q.toString()?"?"+q.toString():"");
 }
 
 function createConstructionInvoice(){
