@@ -40,7 +40,7 @@ input.cell.left{text-align:left}
 <div class="wrap">
   <section class="card no-print">
     <h1>🏗️ 建設 請求書・集計表</h1>
-    <div class="small">スタッフ日報から取引先別・月別に集計します。オペレーターは藤原のみ＝15,000円（税別）、藤原以外の普通作業員＝15,000円（税込）で自動計算します。請求書表紙は月間の集計だけを表示します。</div>
+    <div class="small">スタッフ日報から取引先別・月別に集計します。同じ日・同じ現場で複数スタッフが日報を入力しても、入力者名＋一緒に行った作業員名を重複除外して人数を数えます。オペレーターは藤原のみ＝15,000円（税別）、藤原以外の普通作業員＝15,000円（税込）です。</div>
   </section>
 
   <section class="card no-print">
@@ -192,19 +192,40 @@ function rowAmount(r){
   r.genAmount=num(r.genQty)*GEN_PRICE_GROSS;    // 税込
   r.total=r.opAmount+r.genAmount;
 }
+function splitNames(v){
+ return String(v||"").split(/[、,，\s\/]+/).map(x=>x.trim()).filter(Boolean);
+}
 function buildRows(){
  const month=monthSel.value,client=clientSel.value;
  const rs=reports.filter(r=>(r.date||"").startsWith(month)&&(!client||(r.client||"未登録")===client)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
  const map={};
  rs.forEach(r=>{
    const k=(r.date||"")+"|"+(r.site||"-");
-   if(!map[k])map[k]={date:r.date||"",site:r.site||"-",opQty:0,opPrice:OP_PRICE,genQty:0,genPrice:GEN_PRICE_GROSS};
-   const totalPeople=Math.max(0,num(r.people));
-   const fujiwara=hasFujiwara(r);
-   map[k].opQty+=fujiwara?1:0;
-   map[k].genQty+=Math.max(0,totalPeople-(fujiwara?1:0));
+   if(!map[k])map[k]={
+     date:r.date||"",site:r.site||"-",
+     opQty:0,opPrice:OP_PRICE,genQty:0,genPrice:GEN_PRICE_GROSS,
+     _names:new Set(),_maxPeople:0
+   };
+   const g=map[k];
+   splitNames(r.reporter).forEach(n=>g._names.add(n));
+   splitNames(r.worker).forEach(n=>g._names.add(n));
+   g._maxPeople=Math.max(g._maxPeople,num(r.people));
  });
- rows=Object.values(map);
+
+ rows=Object.values(map).map(g=>{
+   const names=[...g._names];
+   if(names.length){
+     const hasOp=names.some(n=>n==="藤原"||n.includes("藤原"));
+     g.opQty=hasOp?1:0;
+     g.genQty=names.filter(n=>!(n==="藤原"||n.includes("藤原"))).length;
+   }else{
+     // 旧日報など名前情報がない場合は、重複加算せず同日同現場の最大人数を採用
+     g.opQty=0;
+     g.genQty=g._maxPeople;
+   }
+   delete g._names; delete g._maxPeople;
+   return g;
+ });
  renderRows();
 }
 function renderRows(){
