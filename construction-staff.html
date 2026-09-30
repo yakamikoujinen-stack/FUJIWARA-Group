@@ -55,6 +55,13 @@ button:disabled{opacity:.55}
   color:#8a5a00;font-size:11px;font-weight:800;line-height:1.25
 }
 .report-dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#0a7a2f;margin:4px 3px 0 0}
+.worker-checks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px}
+.worker-check{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;font-size:15px;font-weight:700}
+.worker-check input{width:auto;margin:0;transform:scale(1.2)}
+.edit-report-btn{background:#1f3a5f;margin-top:8px;min-height:42px}
+.cancel-edit-btn{display:none;background:#60758f;margin-top:8px;min-height:42px}
+.editing-notice{display:none;background:#fff4db;border:1px solid #f4d58d;color:#8a5a00;border-radius:12px;padding:10px;margin-top:10px;font-weight:800}
+@media(max-width:680px){.worker-checks{grid-template-columns:1fr 1fr}}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -157,7 +164,11 @@ button:disabled{opacity:.55}
     </div>
 
     <div class="row">
-      <div><label>作業員</label><select id="rWorker"></select></div>
+      <div>
+        <label>一緒に行った作業員</label>
+        <input id="rWorker" type="hidden">
+        <div id="rWorkerChecks" class="worker-checks"></div>
+      </div>
       <div><label>天気</label>
         <select id="rWeather">
           <option value="">天気を選択</option>
@@ -180,7 +191,9 @@ button:disabled{opacity:.55}
     <label>連絡事項・問題点・明日の予定</label>
     <textarea id="rMemo" placeholder="連絡事項など"></textarea>
 
+    <div id="editingNotice" class="editing-notice">✏️ 日報を訂正中です。内容を直して「訂正を保存」を押してください。</div>
     <button id="saveBtn" onclick="saveReport()">日報を保存</button>
+    <button id="cancelEditBtn" class="cancel-edit-btn" onclick="cancelReportEdit()">訂正をやめる</button>
     <div id="done" class="done"></div>
   </section>
 </main>
@@ -200,7 +213,7 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const base="fujiwara/construction";
 const companiesData=["藤原一工業合同会社","リコー工業合同会社","株式会社ミライソ"];
-let workersData=[],clientsData=[],jobsData=[],reportsData=[],staffScheduleData=[],staffCurrentMonth=new Date(),reportCurrentMonth=new Date();
+let workersData=[],clientsData=[],jobsData=[],reportsData=[],staffScheduleData=[],staffCurrentMonth=new Date(),reportCurrentMonth=new Date(),editingReportId="";
 
 function R(p){return db.ref(base+"/"+p)}
 function unique(a){return [...new Set((a||[]).filter(Boolean))]}
@@ -238,12 +251,22 @@ function renderStaffCalendar(){
 }
 function moveStaffMonth(n){staffCurrentMonth.setMonth(staffCurrentMonth.getMonth()+n);renderStaffCalendar()}
 
+function renderWorkerChecks(value){
+  const selected=String(value||"").split(/[、,]/).map(x=>x.trim()).filter(Boolean);
+  if(typeof rWorkerChecks==="undefined")return;
+  rWorkerChecks.innerHTML=workersData.map(x=>`<label class="worker-check"><input type="checkbox" value="${x}" ${selected.includes(x)?"checked":""} onchange="syncWorkerChecks()">${x}</label>`).join("");
+  syncWorkerChecks();
+}
+function syncWorkerChecks(){
+  if(typeof rWorkerChecks==="undefined")return;
+  rWorker.value=[...rWorkerChecks.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value).join("、");
+}
 function renderSelects(){
   const oldReporter=rReporter.value,oldClient=rClient.value,oldWorker=rWorker.value;
   rCompany.innerHTML=companiesData.map(x=>`<option>${x}</option>`).join("");
   rReporter.innerHTML='<option value="">入力者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");
   rClient.innerHTML='<option value="">取引先名を選択</option>'+clientsData.map(x=>`<option>${x}</option>`).join("");
-  rWorker.innerHTML='<option value="">作業員を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");
+  renderWorkerChecks(oldWorker);
   if(typeof sWriter!=="undefined"){
     const oldWriter=sWriter.value;
     sWriter.innerHTML='<option value="">記入者を選択</option>'+workersData.map(x=>`<option>${x}</option>`).join("");
@@ -251,7 +274,6 @@ function renderSelects(){
   }
   if(workersData.includes(oldReporter))rReporter.value=oldReporter;
   if(clientsData.includes(oldClient))rClient.value=oldClient;
-  if(workersData.includes(oldWorker))rWorker.value=oldWorker;
 }
 
 function start(){
@@ -322,7 +344,7 @@ function moveReportMonth(n){reportCurrentMonth.setMonth(reportCurrentMonth.getMo
 function showReportDay(ds){
   const rs=reportsData.filter(r=>r.date===ds);
   reportDayList.innerHTML=rs.length
-    ? rs.map(r=>`<div style="padding:8px 0;border-bottom:1px solid #e8edf3"><b>${r.site||"-"}</b><br>入力者：${r.reporter||"-"} / 人数：${r.people||"-"}<br>入場：${r.start||"-"}　退場：${r.end||"-"}<br>作業：${r.work||"-"}</div>`).join("")
+    ? rs.map(r=>`<div style="padding:8px 0;border-bottom:1px solid #e8edf3"><b>${r.site||"-"}</b><br>入力者：${r.reporter||"-"} / 人数：${r.people||"-"}<br>一緒に行った作業員：${r.worker||"-"}<br>入場：${r.start||"-"}　退場：${r.end||"-"}<br>作業：${r.work||"-"}<button class="edit-report-btn" onclick="editReport('${r.id}')">✏️ この日報を訂正</button></div>`).join("")
     : "この日の日報はありません。";
 }
 
@@ -347,6 +369,35 @@ function saveStaffSchedule(){
   }).catch(e=>alert("保存エラー: "+e.message));
 }
 
+function editReport(id){
+  const r=reportsData.find(x=>x.id===id);
+  if(!r)return alert("日報が見つかりません");
+  editingReportId=id;
+  rDate.value=r.date||"";
+  rSite.value=r.site||"";
+  rCompany.value=r.company||companiesData[0];
+  rReporter.value=r.reporter||"";
+  rPeople.value=r.people||"";
+  rClient.value=r.client||"";
+  rClientPerson.value=r.clientPerson||"";
+  renderWorkerChecks(r.worker||"");
+  rWeather.value=r.weather||"";
+  rStart.value=r.start||"";
+  rEnd.value=r.end||"";
+  rBreak.value=r.breakMin||"";
+  rWork.value=r.work||"";
+  rMemo.value=r.memo||"";
+  editingNotice.style.display="block";
+  cancelEditBtn.style.display="block";
+  saveBtn.textContent="訂正を保存";
+  staffReportPage.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function cancelReportEdit(){
+  editingReportId="";
+  editingNotice.style.display="none";
+  cancelEditBtn.style.display="none";
+  saveBtn.textContent="日報を保存";
+}
 function saveReport(){
   const required=[
     [rDate.value,"日付"],[rSite.value.trim(),"現場名"],[rReporter.value,"日報入力者"],
@@ -373,19 +424,27 @@ function saveReport(){
     breakMin:rBreak.value,
     weather:rWeather.value,
     work:rWork.value.trim(),
-    memo:rMemo.value.trim(),
-    approved:false,
-    createdAt:now.toISOString(),
-    created:now.toLocaleString()
+    memo:rMemo.value.trim()
   };
 
-  R("reports").push(data).then(()=>{
+  const isEdit=!!editingReportId;
+  const op=isEdit
+    ? R("reports/"+editingReportId).update({...data,updatedAt:now.toISOString(),updated:now.toLocaleString()})
+    : R("reports").push({...data,approved:false,createdAt:now.toISOString(),created:now.toLocaleString()});
+
+  op.then(()=>{
     done.style.display="block";
-    done.textContent="✅ 日報を保存しました。管理者の建設管理へ共有されています。";
+    done.textContent=isEdit
+      ?"✅ 日報を訂正しました。管理者の建設管理へ反映されています。"
+      :"✅ 日報を保存しました。管理者の建設管理へ共有されています。";
+    editingReportId="";
+    editingNotice.style.display="none";
+    cancelEditBtn.style.display="none";
     rSite.value="";
     rPeople.value="";
     rClientPerson.value="";
     rWorker.value="";
+    renderWorkerChecks("");
     rStart.value="";
     rEnd.value="";
     rBreak.value="";
