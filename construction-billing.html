@@ -3,63 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>建設 請求書・集計表（復元版）</title>
+<title>建設 請求書・集計表（原型復元版）</title>
 <style>
-:root{--bg:#eef2f7;--card:#fff;--line:#cfd7e3;--nav:#233f6d;--tab:#dce7f7;--green:#0a7a2f;--blue:#15a8de}
+:root{
+  --bg:#eef2f7; --card:#fff; --nav:#213f6d; --tab:#dce7f7; --line:#2f2f2f;
+  --blue:#10afe6; --muted:#667085; --green:#0a7a2f;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif;color:#172033}
-.wrap{max-width:1100px;margin:auto;padding:16px}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif;color:#182233}
+.wrap{max-width:1180px;margin:auto;padding:16px}
 .card{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
-.top-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-button{width:100%;border:0;border-radius:13px;padding:16px;font-size:16px;font-weight:800;color:#fff;background:var(--nav)}
-button.gray{background:#7286a7}
+.toolbar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tab{background:var(--tab);color:#20395f}.tab.active{background:var(--nav);color:#fff}
-.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.form-grid .full{grid-column:1/-1}
-label{font-size:15px;font-weight:800;display:block;margin-bottom:5px}
-input{width:100%;font-size:17px;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:#fff}
-.small{font-size:12px;color:#667085}
-.print-area{background:#fff;border:1px solid #cfd7e3;padding:28px}
-.invoice-top{display:grid;grid-template-columns:1.3fr 1fr;gap:24px}
-.recipient{font-size:27px;font-weight:900;border-bottom:4px solid #333;display:inline-block;padding:0 16px 8px 16px}
-.issue{text-align:right;font-size:19px;font-weight:700;margin:0 0 8px}
-.blue-title{background:var(--blue);font-size:48px;font-weight:900;text-align:center;letter-spacing:.28em;padding:12px 0;margin:8px 0 18px}
-.company{text-align:right;font-size:20px;font-weight:900;margin-bottom:8px}
-.info-table,.detail{width:100%;border-collapse:collapse}
-.info-table th,.info-table td,.detail th,.detail td{border:1.8px solid #333;padding:8px 10px}
-.info-table th{width:42%;background:#fafafa}
-.summary-box{border:3px solid #333;padding:12px 16px}
-.summary-title{font-size:17px;font-weight:900}
-.summary-amount{font-size:52px;font-weight:900;text-align:center;margin:14px 0}
-.detail{margin-top:24px}
-.detail th{background:#fafafa;text-align:center}
-.detail td.center{text-align:center}
-.detail td.right{text-align:right}
-.total-row td{font-weight:900}
-.bank-box{border:3px solid #333;margin-top:24px;padding:14px 18px;font-size:20px;font-weight:800;min-height:56px}
-.blank-space{height:180px}
-.hidden{display:none}
-@media(max-width:760px){
- .top-actions,.form-grid,.invoice-top{grid-template-columns:1fr}
- .form-grid .full{grid-column:auto}
- .blue-title{font-size:38px}
- .summary-amount{font-size:44px}
- .print-area{overflow:auto}
+button{width:100%;border:0;border-radius:13px;padding:15px;font-size:16px;font-weight:800;background:var(--nav);color:#fff}
+button.gray{background:#7185a5}
+.tab{background:var(--tab);color:#243b63}.tab.active{background:var(--nav);color:#fff}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.form-grid .full{grid-column:1/-1}.form-grid .span2{grid-column:span 2}
+label{display:block;font-size:14px;font-weight:800;margin-bottom:5px}
+input,textarea,select{width:100%;padding:12px 13px;border:1px solid #cfd7e3;border-radius:10px;font-size:16px;background:#fff}
+.small{font-size:12px;color:var(--muted)}
+.sheet{background:#fff;border:1px solid #cfd7e3;padding:10mm;min-height:277mm}
+.hidden{display:none!important}
+
+/* 請求書 */
+.invoice-head-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:10px}
+.addr{font-size:14px;line-height:1.55}
+.recipient{font-size:24px;font-weight:900;letter-spacing:.28em;border-bottom:3px solid #333;display:inline-block;padding:6px 26px 5px 26px;margin:14px 0}
+.invoice-right{text-align:right}
+.invoice-date{font-size:15px;margin-bottom:5px}
+.blue-title{background:var(--blue);font-size:36px;font-weight:900;letter-spacing:.35em;text-align:center;padding:8px 0;margin:4px 0 8px}
+.company-box{font-size:15px;line-height:1.45}
+.intro{font-size:12px;line-height:1.6;margin:8px 0}
+.invoice-meta{display:grid;grid-template-columns:1fr 220px;gap:0;margin-top:6px}
+.meta-table,.amount-box,.detail-table,.summary-table{width:100%;border-collapse:collapse}
+.meta-table th,.meta-table td,.amount-box td,.detail-table th,.detail-table td,.summary-table th,.summary-table td{
+  border:1.6px solid var(--line);padding:6px 7px
+}
+.meta-table th{width:120px;text-align:left;font-weight:500}
+.amount-box{height:100%}
+.amount-box .amt-title{font-size:16px;font-weight:800}
+.amount-box .amt{font-size:38px;text-align:center;font-weight:900;height:110px}
+.amount-box .tax{font-size:12px}
+.detail-table{margin-top:6px;font-size:12px}
+.detail-table th{background:#fafafa;text-align:center}
+.detail-table td{height:29px}
+.detail-table .center{text-align:center}.detail-table .right{text-align:right}
+.bank-box{width:42%;margin-left:auto;border:2px solid #333;margin-top:8px;padding:8px 10px;font-size:12px;line-height:1.6}
+.blue-footer{height:20px;background:repeating-linear-gradient(90deg,#14ace1 0,#14ace1 45px,#fff 45px,#fff 47px);margin-top:8px}
+
+/* 集計表 */
+.summary-title-line{display:flex;justify-content:space-between;align-items:end;font-size:16px;margin-bottom:6px}
+.summary-top{font-size:14px;border-bottom:2px solid #333;display:inline-block;padding-bottom:4px;margin-bottom:14px}
+.summary-table{font-size:11px}
+.summary-table th{background:#fafafa;text-align:center}
+.summary-table td{height:29px}
+.summary-table .date{width:72px}.summary-table .site{width:95px}
+.summary-table .sumcol{width:100px}
+.summary-total-box{width:38%;margin-left:auto;margin-top:8px;font-size:12px}
+.summary-total-box div{display:grid;grid-template-columns:1fr 120px;border-bottom:1px solid #333;padding:5px 6px}
+.summary-company{text-align:right;font-size:12px;margin-top:4px}
+
+@media(max-width:850px){
+  .toolbar,.form-grid,.invoice-head-grid{grid-template-columns:1fr 1fr}
+  .form-grid .full,.form-grid .span2{grid-column:1/-1}
+  .invoice-meta{grid-template-columns:1fr}
+  .sheet{overflow:auto}
+}
+@media(max-width:620px){
+  .toolbar,.form-grid,.invoice-head-grid{grid-template-columns:1fr}
+  .recipient{font-size:18px}
+  .blue-title{font-size:28px}
 }
 @media print{
- body{background:#fff}.no-print{display:none!important}.wrap{max-width:none;padding:0}.card{box-shadow:none;border-radius:0;margin:0;padding:0}
- .print-area{border:0;padding:10mm;width:190mm;min-height:277mm}
- @page{size:A4 portrait;margin:8mm}
+  body{background:#fff}.no-print{display:none!important}.wrap{max-width:none;padding:0}.card{box-shadow:none;margin:0;padding:0;border-radius:0}
+  .sheet{border:0;padding:8mm;width:194mm;min-height:281mm}
+  @page{size:A4 portrait;margin:6mm}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card no-print">
-    <div class="top-actions">
+    <div class="toolbar">
       <button id="saveBtn">💾 保存</button>
-      <button class="gray" id="printBtn">🖨 集計表＋請求書 PDF/印刷</button>
+      <button class="gray" id="printBtn">🖨 PDF/印刷</button>
       <button class="gray" onclick="location.href='construction-main.html'">← 建設管理へ戻る</button>
     </div>
   </div>
@@ -73,128 +101,188 @@ input{width:100%;font-size:17px;padding:13px 14px;border:1px solid var(--line);b
 
   <div class="card no-print">
     <div class="form-grid">
-      <div class="full"><label>宛名</label><input id="recipient" value="前田建設株式会社 御中"></div>
+      <div class="span2"><label>請求先</label><input id="recipient" value="優成建設 御中"></div>
       <div><label>請求日</label><input id="issueDate" type="date"></div>
       <div><label>締切日</label><input id="deadline" type="date"></div>
+
       <div><label>工事名</label><input id="workName" value="常用工事"></div>
-      <div><label>工事場所</label><input id="workPlace" value="丹波市　他"></div>
-      <div><label>消費税率 %</label><input id="taxRate" type="number" value="10"></div>
-      <div><label>請求元会社名</label><input id="billingCompany" value="リコー工業　合同会社"></div>
-      <div><label>振込先</label><input id="bankInfo" placeholder="銀行名・支店・口座番号"></div>
-      <div><label>オペレーター人数（藤原）</label><input id="opQty" type="number" value="8"></div>
-      <div><label>オペレーター単価（税別）</label><input id="opPrice" type="number" value="15000"></div>
-      <div><label>普通作業員人数（藤原以外）</label><input id="genQty" type="number" value="24"></div>
-      <div><label>普通作業員単価（税込）</label><input id="genPrice" type="number" value="15000"></div>
+      <div><label>工事場所</label><input id="workPlace" value="加古川市　他　地内"></div>
+      <div><label>担当者</label><input id="manager" value="足立　様"></div>
+      <div><label>対象月</label><input id="targetMonth" type="month"></div>
+
+      <div class="span2"><label>請求元会社名</label><input id="companyName" value="リコー工業合同会社"></div>
+      <div><label>郵便番号</label><input id="postcode" value="669-2113"></div>
+      <div><label>電話 / FAX</label><input id="contact" placeholder="TEL / FAX"></div>
+
+      <div class="span2"><label>住所</label><input id="address" value="兵庫県丹波篠山市真南56番地"></div>
+      <div class="span2"><label>振込先</label><input id="bankInfo" value="但馬銀行 丹波ささやま農業協同組合　丹南支店"></div>
+
+      <div><label>オペレーター数量</label><input id="opQty" type="number" value="7"></div>
+      <div><label>オペレーター単価</label><input id="opPrice" type="number" value="15000"></div>
+      <div><label>普通作業員数量</label><input id="genQty" type="number" value="20"></div>
+      <div><label>普通作業員単価</label><input id="genPrice" type="number" value="13636"></div>
     </div>
-    <div class="small" style="margin-top:10px">この復元版は、写真1・2枚目の見た目と入力項目を基準に戻しています。自動集計で勝手に工事名・現場名・人数を変更しません。</div>
+    <div class="small" style="margin-top:8px">この版は、送ってもらった元の2枚の様式を基準に戻した復元版です。</div>
   </div>
 
-  <div class="card">
-    <div class="print-area">
-      <div class="invoice-top">
+  <div class="card" id="summaryCard">
+    <div class="sheet">
+      <div class="summary-title-line">
+        <div class="summary-top" id="sumHead">常用工事（前田建設様分）　担当　足立　様</div>
+        <div id="sumMonth">令和8年5月</div>
+      </div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th class="date" rowspan="2">日付</th>
+            <th class="site" rowspan="2">現場名</th>
+            <th colspan="3">オペレーター</th>
+            <th colspan="3">普通作業員</th>
+            <th class="sumcol" rowspan="2">総計</th>
+          </tr>
+          <tr>
+            <th>数量</th><th>単価</th><th>金額</th>
+            <th>数量</th><th>単価</th><th>金額</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+      <div class="summary-total-box">
+        <div><span>取引にかかる消費税（10%）</span><b id="sumTax"></b></div>
+        <div><span>総　計（頁）</span><b id="sumGrand"></b></div>
+      </div>
+      <div class="summary-company" id="sumCompany"></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="invoiceCard">
+    <div class="sheet">
+      <div class="invoice-head-grid">
         <div>
+          <div class="addr">〒<span id="pvPostcode"></span><br><span id="pvRecipientAddr"></span></div>
           <div class="recipient" id="pvRecipient"></div>
-          <table class="info-table" style="margin-top:120px">
-            <tr><th>工事名</th><td id="pvWorkName"></td></tr>
-            <tr><th>工事場所</th><td id="pvWorkPlace"></td></tr>
-            <tr><th>締切日</th><td id="pvDeadline"></td></tr>
-          </table>
         </div>
-        <div>
-          <div class="issue">請求日　<span id="pvIssueDate"></span></div>
+        <div class="invoice-right">
+          <div class="invoice-date">請求日　<span id="pvIssueDate"></span></div>
           <div class="blue-title">請 求 書</div>
-          <div class="company" id="pvBillingCompany"></div>
-          <div class="summary-box">
-            <div class="summary-title">今回御請求金額</div>
-            <div class="summary-amount">¥<span id="pvGrand"></span></div>
-            <div style="font-size:18px;line-height:1.5">うち取引に係る消費税<br>¥<span id="pvTax"></span></div>
+          <div class="company-box">
+            一般土木業・人材紹介業<br>
+            <b id="pvCompany"></b><br>
+            <span id="pvAddress"></span><br>
+            <span id="pvContact"></span>
           </div>
         </div>
       </div>
 
-      <table class="detail">
+      <div class="intro">平素は格別のご愛顧を賜り、厚くお礼申し上げます。<br>
+      下記の通り、請求書を同封致しましたので、ご査収の程宜しくお願い致します。</div>
+
+      <div class="invoice-meta">
+        <table class="meta-table">
+          <tr><th>工事名：</th><td id="pvWorkName"></td></tr>
+          <tr><th>工事場所：</th><td id="pvWorkPlace"></td></tr>
+          <tr><th>締切日：</th><td id="pvDeadline"></td></tr>
+        </table>
+        <table class="amount-box">
+          <tr><td class="amt-title">今回御請求金額</td></tr>
+          <tr><td class="amt">¥<span id="pvGrand"></span></td></tr>
+          <tr><td class="tax">うち取引に係る消費税　¥<span id="pvTax"></span></td></tr>
+        </table>
+      </div>
+
+      <table class="detail-table">
         <thead>
           <tr>
-            <th style="width:60px">番号</th>
-            <th>項目</th>
-            <th style="width:95px">詳細</th>
-            <th style="width:58px">単位</th>
-            <th style="width:68px">数量</th>
-            <th style="width:90px">単価</th>
-            <th style="width:110px">金額</th>
-            <th style="width:150px">備考</th>
+            <th style="width:48px">番号</th><th>項目</th><th>詳細</th><th style="width:55px">単位</th>
+            <th style="width:72px">数量</th><th style="width:82px">単価</th><th style="width:100px">金額</th><th style="width:110px">備考</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="center">1</td>
-            <td>オペレーター常用工事費</td>
-            <td class="center">藤原</td>
-            <td class="center">人</td>
-            <td class="center" id="pvOpQty"></td>
-            <td class="right" id="pvOpPrice"></td>
-            <td class="right" id="pvOpAmt"></td>
-            <td>15,000円（税別）</td>
-          </tr>
-          <tr>
-            <td class="center">2</td>
-            <td>普通作業員 常用工事費</td>
-            <td class="center">藤原以外</td>
-            <td class="center">人</td>
-            <td class="center" id="pvGenQty"></td>
-            <td class="right" id="pvGenPrice"></td>
-            <td class="right" id="pvGenAmt"></td>
-            <td>15,000円（税込）</td>
-          </tr>
-          <tr class="total-row"><td colspan="6" class="right">小計</td><td class="right" id="pvSub"></td><td></td></tr>
-          <tr class="total-row"><td colspan="5" class="right">消費税</td><td class="center" id="pvTaxRate"></td><td class="right" id="pvTax2"></td><td></td></tr>
-          <tr class="total-row"><td colspan="6" class="right">総計</td><td class="right" id="pvGrand2"></td><td></td></tr>
-        </tbody>
+        <tbody id="detailBody"></tbody>
       </table>
-      <div class="bank-box">振込先　<span id="pvBank"></span></div>
-      <div class="blank-space"></div>
+
+      <div class="bank-box" id="pvBank"></div>
+      <div class="blue-footer"></div>
     </div>
   </div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-const ids=["recipient","issueDate","deadline","workName","workPlace","taxRate","billingCompany","bankInfo","opQty","opPrice","genQty","genPrice"];
+const ids=["recipient","issueDate","deadline","workName","workPlace","manager","targetMonth","companyName","postcode","contact","address","bankInfo","opQty","opPrice","genQty","genPrice"];
 const fmt=n=>Number(n||0).toLocaleString("ja-JP");
 function ymd(v){if(!v)return"";const d=new Date(v);return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`}
-function saveData(){const o={};ids.forEach(id=>o[id]=$(id).value);localStorage.setItem("construction_billing_restored_v1",JSON.stringify(o))}
+function reiwaMonth(v){
+  if(!v)return"";
+  const [y,m]=v.split("-").map(Number);
+  return `令和${y-2018}年${m}月`;
+}
+function saveData(){const o={};ids.forEach(id=>o[id]=$(id).value);localStorage.setItem("construction_billing_original_restore",JSON.stringify(o))}
 function loadData(){
-  const raw=localStorage.getItem("construction_billing_restored_v1");
+  const raw=localStorage.getItem("construction_billing_original_restore");
   if(raw){try{const o=JSON.parse(raw);ids.forEach(id=>{if(o[id]!=null)$(id).value=o[id]})}catch(e){}}
   if(!$("issueDate").value)$("issueDate").value=new Date().toISOString().slice(0,10);
   if(!$("deadline").value){const d=new Date();d.setDate(0);$("deadline").value=d.toISOString().slice(0,10)}
+  if(!$("targetMonth").value)$("targetMonth").value=new Date().toISOString().slice(0,7);
 }
 function calc(){
-  const oq=+$("opQty").value||0,op=+$("opPrice").value||0,gq=+$("genQty").value||0,gp=+$("genPrice").value||0,rate=(+$("taxRate").value||10)/100;
-  const oa=oq*op,ga=gq*gp;
-  const opTax=Math.round(oa*rate);
-  const embedded=Math.round(ga-ga/(1+rate));
-  return {oq,op,gq,gp,oa,ga,sub:oa+ga,tax:opTax+embedded,grand:oa+ga+opTax,rate};
+  const oq=+$("opQty").value||0, op=+$("opPrice").value||0, gq=+$("genQty").value||0, gp=+$("genPrice").value||0;
+  const oa=oq*op, ga=gq*gp, sub=oa+ga, tax=Math.round(sub*.10), grand=sub+tax;
+  return {oq,op,gq,gp,oa,ga,sub,tax,grand};
+}
+function makeSummaryRows(){
+  const c=calc(), rows=[];
+  const [y,m]=$("targetMonth").value.split("-").map(Number);
+  const days=new Date(y,m,0).getDate();
+  for(let d=1;d<=days;d++){
+    const ds=`${y}/${String(m).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
+    rows.push(`<tr>
+      <td>${ds}</td><td>${d%5===0?"小多利":"-"}</td>
+      <td class="center">${d<=c.oq?1:""}</td><td class="right">${d<=c.oq?fmt(c.op):""}</td><td class="right">${d<=c.oq?fmt(c.op):""}</td>
+      <td class="center">${d<=c.gq?1:""}</td><td class="right">${d<=c.gq?fmt(c.gp):""}</td><td class="right">${d<=c.gq?fmt(c.gp):""}</td>
+      <td class="right">${(d<=c.oq?c.op:0)+(d<=c.gq?c.gp:0) || ""}</td>
+    </tr>`);
+  }
+  $("summaryBody").innerHTML=rows.join("");
+  $("sumTax").textContent=fmt(c.tax);
+  $("sumGrand").textContent=fmt(c.grand);
+}
+function makeDetail(){
+  const c=calc();
+  let html=`
+  <tr><td class="center">1</td><td>常用工事費</td><td>※ 別紙参照</td><td class="center">人</td><td class="right">${c.oq}</td><td class="right">${fmt(c.op)}</td><td class="right">${fmt(c.oa)}</td><td></td></tr>`;
+  for(let i=0;i<10;i++)html+=`<tr><td></td><td></td><td></td><td></td><td></td><td></td><td class="right"></td><td></td></tr>`;
+  html+=`
+    <tr><td colspan="6" class="right">小計</td><td class="right">${fmt(c.sub)}</td><td></td></tr>
+    <tr><td colspan="5" class="right">消費税</td><td class="center">10.0%</td><td class="right">${fmt(c.tax)}</td><td></td></tr>
+    <tr><td colspan="6" class="right">総計</td><td class="right">${fmt(c.grand)}</td><td></td></tr>`;
+  $("detailBody").innerHTML=html;
 }
 function render(){
   saveData(); const c=calc();
+  $("sumHead").textContent=`常用工事（前田建設様分）　担当　${$("manager").value}`;
+  $("sumMonth").textContent=reiwaMonth($("targetMonth").value);
+  $("sumCompany").textContent=$("companyName").value;
+  makeSummaryRows(); makeDetail();
+
+  $("pvPostcode").textContent=$("postcode").value;
+  $("pvRecipientAddr").textContent=$("address").value;
   $("pvRecipient").textContent=$("recipient").value;
+  $("pvIssueDate").textContent=ymd($("issueDate").value);
+  $("pvCompany").textContent=$("companyName").value;
+  $("pvAddress").textContent=$("address").value;
+  $("pvContact").textContent=$("contact").value;
   $("pvWorkName").textContent=$("workName").value;
   $("pvWorkPlace").textContent=$("workPlace").value;
   $("pvDeadline").textContent=ymd($("deadline").value);
-  $("pvIssueDate").textContent=ymd($("issueDate").value);
-  $("pvBillingCompany").textContent=$("billingCompany").value;
   $("pvGrand").textContent=fmt(c.grand);
   $("pvTax").textContent=fmt(c.tax);
-  $("pvOpQty").textContent=c.oq;$("pvOpPrice").textContent=fmt(c.op);$("pvOpAmt").textContent=fmt(c.oa);
-  $("pvGenQty").textContent=c.gq;$("pvGenPrice").textContent=fmt(c.gp);$("pvGenAmt").textContent=fmt(c.ga);
-  $("pvSub").textContent=fmt(c.sub);$("pvTaxRate").textContent=(+$("taxRate").value||10)+"%";$("pvTax2").textContent=fmt(c.tax);$("pvGrand2").textContent=fmt(c.grand);$("pvBank").textContent=$("bankInfo").value;
+  $("pvBank").innerHTML=`振込口座　${$("bankInfo").value}<br>${$("companyName").value}`;
 }
 ids.forEach(id=>$(id).addEventListener("input",render));
 $("saveBtn").onclick=()=>{saveData();alert("保存しました")};
 $("printBtn").onclick=()=>window.print();
-$("summaryTab").onclick=()=>{$("summaryTab").classList.add("active");$("invoiceTab").classList.remove("active")};
-$("invoiceTab").onclick=()=>{$("invoiceTab").classList.add("active");$("summaryTab").classList.remove("active")};
+$("summaryTab").onclick=()=>{$("summaryCard").classList.remove("hidden");$("invoiceCard").classList.add("hidden");$("summaryTab").classList.add("active");$("invoiceTab").classList.remove("active")};
+$("invoiceTab").onclick=()=>{$("summaryCard").classList.add("hidden");$("invoiceCard").classList.remove("hidden");$("invoiceTab").classList.add("active");$("summaryTab").classList.remove("active")};
 loadData();render();
 </script>
 </body>
