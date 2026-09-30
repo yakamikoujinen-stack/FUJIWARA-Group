@@ -40,7 +40,7 @@ input.cell.left{text-align:left}
 <div class="wrap">
   <section class="card no-print">
     <h1>🏗️ 建設 請求書・集計表</h1>
-    <div class="small">スタッフ日報から取引先別・月別に集計し、写真と同じ考え方で「月間集計表」と「請求書」を作成します。単価・数量・宛名などは管理者が編集できます。</div>
+    <div class="small">スタッフ日報から取引先別・月別に集計します。オペレーターは藤原のみ＝15,000円（税別）、藤原以外の普通作業員＝15,000円（税込）で自動計算します。請求書表紙は月間の集計だけを表示します。</div>
   </section>
 
   <section class="card no-print">
@@ -180,15 +180,29 @@ const arr=v=>!v?[]:Object.entries(v).map(([id,x])=>({id,...x}));
 function safeKey(s){return String(s||"").replace(/[.#$\[\]\/]/g,"_")}
 function fmtDate(s){if(!s)return"";const d=new Date(s+"T00:00:00");return isNaN(d)?s:(d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0"))}
 function showPane(x){paneSummary.classList.toggle("hide",x!=="summary");paneInvoice.classList.toggle("hide",x!=="invoice");tabSummary.className="tab "+(x==="summary"?"active":"");tabInvoice.className="tab "+(x==="invoice"?"active":"");if(x==="invoice")syncInvoice()}
-function rowAmount(r){r.opAmount=num(r.opQty)*num(r.opPrice);r.genAmount=num(r.genQty)*num(r.genPrice);r.total=r.opAmount+r.genAmount}
+const OP_PRICE=15000, GEN_PRICE_GROSS=15000;
+function hasFujiwara(r){
+  const names=[r.reporter||"",r.worker||""].join("、").split(/[、,\s]+/).filter(Boolean);
+  return names.some(x=>x==="藤原"||x.includes("藤原"));
+}
+function rowAmount(r){
+  r.opPrice=OP_PRICE;
+  r.genPrice=GEN_PRICE_GROSS;
+  r.opAmount=num(r.opQty)*OP_PRICE;              // 税別
+  r.genAmount=num(r.genQty)*GEN_PRICE_GROSS;    // 税込
+  r.total=r.opAmount+r.genAmount;
+}
 function buildRows(){
  const month=monthSel.value,client=clientSel.value;
  const rs=reports.filter(r=>(r.date||"").startsWith(month)&&(!client||(r.client||"未登録")===client)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
  const map={};
  rs.forEach(r=>{
    const k=(r.date||"")+"|"+(r.site||"-");
-   if(!map[k])map[k]={date:r.date||"",site:r.site||"-",opQty:0,opPrice:0,genQty:0,genPrice:0};
-   map[k].genQty+=num(r.people);
+   if(!map[k])map[k]={date:r.date||"",site:r.site||"-",opQty:0,opPrice:OP_PRICE,genQty:0,genPrice:GEN_PRICE_GROSS};
+   const totalPeople=Math.max(0,num(r.people));
+   const fujiwara=hasFujiwara(r);
+   map[k].opQty+=fujiwara?1:0;
+   map[k].genQty+=Math.max(0,totalPeople-(fujiwara?1:0));
  });
  rows=Object.values(map);
  renderRows();
@@ -198,10 +212,10 @@ function renderRows(){
  <td>${esc(r.date)}</td>
  <td><input class="cell left" value="${esc(r.site)}" onchange="rows[${i}].site=this.value;recalcAll()"></td>
  <td><input class="cell" type="number" step="0.5" value="${r.opQty}" onchange="rows[${i}].opQty=this.value;recalcAll()"></td>
- <td><input class="cell" type="number" value="${r.opPrice}" onchange="rows[${i}].opPrice=this.value;recalcAll()"></td>
+ <td class="money">15,000</td>
  <td class="money" id="opAmt${i}">${Math.round(r.opAmount).toLocaleString()}</td>
  <td><input class="cell" type="number" step="0.5" value="${r.genQty}" onchange="rows[${i}].genQty=this.value;recalcAll()"></td>
- <td><input class="cell" type="number" value="${r.genPrice}" onchange="rows[${i}].genPrice=this.value;recalcAll()"></td>
+ <td class="money">15,000</td>
  <td class="money" id="genAmt${i}">${Math.round(r.genAmount).toLocaleString()}</td>
  <td class="money" id="tot${i}">${Math.round(r.total).toLocaleString()}</td>
  </tr>`}).join("");
@@ -213,19 +227,32 @@ function recalcAll(){
    const a=document.getElementById("opAmt"+i),b=document.getElementById("genAmt"+i),c=document.getElementById("tot"+i);
    if(a)a.textContent=Math.round(r.opAmount).toLocaleString();if(b)b.textContent=Math.round(r.genAmount).toLocaleString();if(c)c.textContent=Math.round(r.total).toLocaleString();
  });
- const sub=oa+ga,rate=num(taxRate.value||10),tax=Math.round(sub*rate/100),grand=sub+tax;
+ const rate=num(taxRate.value||10);
+ const opTax=Math.round(oa*rate/100);                    // 藤原分は税別に加算
+ const genIncludedTax=Math.round(ga*rate/(100+rate));   // 普通作業員分は15,000円に内税
+ const sub=oa+ga;
+ const grand=oa+opTax+ga;
+ const tax=opTax+genIncludedTax;
  opQtyTotal.textContent=oq.toLocaleString();opAmtTotal.textContent=Math.round(oa).toLocaleString();genQtyTotal.textContent=gq.toLocaleString();genAmtTotal.textContent=Math.round(ga).toLocaleString();subTotal.textContent=Math.round(sub).toLocaleString();
  taxRateLabel.textContent=rate;taxAmount.textContent=Math.round(tax).toLocaleString();grandTotal.textContent=Math.round(grand).toLocaleString();
  summaryTitlePrint.textContent=sumTitle.value||"常用工事";summaryClientPrint.textContent=clientSel.value||"";summaryPersonPrint.textContent=sumPerson.value||"";summaryMonthPrint.textContent=sumMonthLabel.value||monthSel.value;
  syncInvoice();
 }
 function syncInvoice(){
- const sub=rows.reduce((a,r)=>(rowAmount(r),a+r.total),0),rate=num(taxRate.value||10),tax=Math.round(sub*rate/100),grand=sub+tax;
+ let oq=0,oa=0,gq=0,ga=0;
+ rows.forEach(r=>{rowAmount(r);oq+=num(r.opQty);oa+=r.opAmount;gq+=num(r.genQty);ga+=r.genAmount});
+ const rate=num(taxRate.value||10);
+ const opTax=Math.round(oa*rate/100);
+ const genIncludedTax=Math.round(ga*rate/(100+rate));
+ const sub=oa+ga, tax=opTax+genIncludedTax, grand=oa+opTax+ga;
  recipientPrint.textContent=invRecipient.value||((clientSel.value||"")+" 御中");
  invoiceDatePrint.textContent=fmtDate(invDate.value);issuerPrint.textContent=issuerName.value;
  projectPrint.textContent=invProject.value;locationPrint.textContent=invLocation.value;duePrint.textContent=fmtDate(invDue.value);
  invoiceGrand.textContent=yen(grand);invoiceTax.textContent=yen(tax);invoiceSub.textContent=Math.round(sub).toLocaleString();invoiceTaxRate.textContent=rate+"%";invoiceTax2.textContent=Math.round(tax).toLocaleString();invoiceTotal.textContent=Math.round(grand).toLocaleString();bankPrint.textContent=bankInfo.value;
- invoiceBody.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>常用工事費</td><td>${esc(r.date)} ${esc(r.site)}</td><td>式</td><td>1</td><td class="money">${Math.round(r.total).toLocaleString()}</td><td class="money">${Math.round(r.total).toLocaleString()}</td><td>別紙参照</td></tr>`).join("");
+ const lines=[];
+ if(oq>0)lines.push({item:"オペレーター常用工事費",detail:"藤原",unit:"人",qty:oq,price:OP_PRICE,amount:oa,note:"15,000円（税別）"});
+ if(gq>0)lines.push({item:"普通作業員 常用工事費",detail:"藤原以外",unit:"人",qty:gq,price:GEN_PRICE_GROSS,amount:ga,note:"15,000円（税込）"});
+ invoiceBody.innerHTML=lines.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.item)}</td><td>${esc(x.detail)}</td><td>${x.unit}</td><td>${x.qty}</td><td class="money">${Math.round(x.price).toLocaleString()}</td><td class="money">${Math.round(x.amount).toLocaleString()}</td><td>${esc(x.note)}</td></tr>`).join("");
 }
 function bindPrintFields(){
  [sumTitle,sumPerson,sumMonthLabel,invRecipient,invDate,invDue,invProject,invLocation,taxRate,issuerName,bankInfo].forEach(x=>x.addEventListener("input",recalcAll));
@@ -235,7 +262,7 @@ async function loadBilling(){
  currentKey=safeKey(client+"_"+month);
  const s=await db.ref(BASE+"/billing/"+currentKey).once("value");
  if(s.exists()){
-   const v=s.val();rows=v.rows||[];sumTitle.value=v.sumTitle||"常用工事";sumPerson.value=v.sumPerson||"";sumMonthLabel.value=v.sumMonthLabel||month;
+   const v=s.val();rows=(v.rows||[]).map(r=>({...r,opPrice:OP_PRICE,genPrice:GEN_PRICE_GROSS}));sumTitle.value=v.sumTitle||"常用工事";sumPerson.value=v.sumPerson||"";sumMonthLabel.value=v.sumMonthLabel||month;
    invRecipient.value=v.invRecipient||client+" 御中";invDate.value=v.invDate||"";invDue.value=v.invDue||"";invProject.value=v.invProject||"常用工事";invLocation.value=v.invLocation||"";taxRate.value=v.taxRate??10;issuerName.value=v.issuerName||"藤原一工業合同会社";bankInfo.value=v.bankInfo||"";
    renderRows();
  }else{
