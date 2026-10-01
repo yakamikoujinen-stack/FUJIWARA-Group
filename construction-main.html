@@ -51,6 +51,10 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 .king-report-legend span{background:#f8fafc;border-radius:999px;padding:6px 10px;font-size:12px}
 @media(max-width:720px){.king-report-day{min-height:70px}}
 
+
+.pay-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.pay-fields label{font-weight:700;font-size:14px}.pay-sheet{padding:24px;border:1px solid #ccd3dd;background:white}.pay-sheet h2{text-align:center}.pay-table{width:100%;border-collapse:collapse;margin:15px 0}.pay-table th,.pay-table td{border:1px solid #b9c2ce;padding:10px;text-align:left}.pay-table td:last-child{text-align:right}.pay-total{background:#eaf5ee;font-size:22px;font-weight:800}.pay-status{white-space:pre-wrap;font-size:14px;line-height:1.6}.pay-warning{color:#a04b00}
+@media(max-width:600px){.pay-fields{grid-template-columns:1fr}}
+@media print{body.pay-print .fg-header,body.pay-print main>section,body.pay-print main>div{display:none!important}body.pay-print main>#payroll{display:block!important}body.pay-print #payroll>*{display:none!important}body.pay-print #payroll>#paySheet{display:block!important;border:0;padding:8mm}body.pay-print #admin{display:none!important}@page{size:A4;margin:12mm}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -75,6 +79,7 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 <button id="bCal" class="tab active" onclick="showTab('cal')">📅 予定</button>
 <button id="bRep" class="tab" onclick="showTab('rep')">📝 日報</button>
 <button id="bAdmin" class="tab" onclick="showTab('admin')">⚙️ 管理者</button>
+<button id="bPayroll" class="tab" onclick="showTab('payroll')">💴 給与明細</button>
 <button id="bAttendance" class="tab" onclick="showTab('attendance')">📆 出欠予定表</button>
 </div>
 
@@ -193,11 +198,8 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
 </div>
 
 <div class="no-print">
-<div class="row">
-  <button class="green" onclick="openConstructionBilling()">📊 請求書・集計表を作る</button>
-  <button onclick="createConstructionInvoice()">🧾 従来の請求書を作る</button>
-</div>
-<div class="small">「請求書・集計表を作る」は、選択中の取引先・対象月の日報から月間集計表と請求書を作成します。従来の請求書も残しています。</div>
+<button class="green" onclick="createConstructionInvoice()">🧾 この月の請求書を作る</button>
+<div class="small">選択中の取引先・対象月・日報明細を正規のFUJIWARA請求書へ引き継ぎます。単価・金額は請求書側で入力してください。</div>
 </div>
 </div>
 </section>
@@ -212,6 +214,19 @@ button{background:#1f3a5f;color:#fff;border:0;font-weight:bold}.green{background
       style="width:100%;height:78vh;min-height:760px;border:1px solid #d6dde8;border-radius:14px;background:#fff"
       loading="lazy"></iframe>
   </div>
+</section>
+
+
+<section id="payroll" style="display:none">
+<div class="card no-print"><h2>💴 建設 給与明細</h2><p class="small">月末締め・翌月15日支払い。保存した明細は日報が変わっても自動変更しません。日報を確認して更新・保存してください。</p>
+<div class="pay-fields"><label>対象月<input id="payMonth" type="month"></label><label>従業員<select id="payPerson"><option value="tanaka">田中</option><option value="bunta">文太</option><option value="shigeo">繁夫</option></select></label><label>支払日<input id="payDate" type="date"></label><label>発行会社<input id="payCompany" value="藤原一工業合同会社"></label><label>日報での作業員名<select id="paySource"></select></label><label>出勤日数（確認・修正可）<input id="payDays" type="number" min="0" max="31" step="0.5" value="0"></label></div>
+<label><input id="payApproved" type="checkbox" checked style="width:auto"> 承認済みの日報だけを集計する</label>
+<button type="button" onclick="payImport()">日報から出勤日数を取り込む</button><p id="payEvidence" class="pay-status">日報を取り込んでください。作業員欄で照合し、同じ日の複数日報は1日として数えます。</p>
+<div class="pay-fields"><label>日給（円）<input id="payRate" type="number" readonly></label><label>1日あたり交通費（円）<input id="payDailyTravel" type="number" readonly></label><label id="payTechLabel">月額 技術手当（円）<input id="payTech" type="number" min="0" step="1" value="0"></label><label id="payTravelLabel">月額 通勤費（円）<input id="payTravel" type="number" min="0" step="1" value="0"></label></div>
+<h3>控除（必要な場合に入力）</h3><p class="small">控除額は確認した金額を入力します。税金・保険料の自動計算はありません。</p><div id="payDeductions" class="pay-fields"></div>
+<label>備考<textarea id="payMemo" placeholder="連絡事項など"></textarea></label>
+<button class="green" id="paySave" onclick="paySave()">給与明細を保存・更新</button><button onclick="payLoad()">この月・従業員の保存済み明細を読み込む</button><button onclick="payPrint()">給与明細を印刷・PDF保存</button><p id="payStatus" class="pay-status" role="status">未保存</p>
+</div><div id="paySheet" class="pay-sheet"></div>
 </section>
 
 </main>
@@ -246,6 +261,9 @@ function startFirebase(){
  R("clients").on("value",s=>{clientsData=unique(asArray(s.val()).map(x=>x.name).concat(readLocal("fks_construction_clients")).concat(["未登録","前田建設株式会社"]));renderAll()});
 }
 function showTab(t){
+ payroll.style.display=t==="payroll"?"block":"none";
+ bPayroll.className=t==="payroll"?"tab active":"tab";
+ if(t==="payroll")paySources();
  cal.style.display=t==="cal"?"block":"none";
  rep.style.display=t==="rep"?"block":"none";
  admin.style.display=t==="admin"?"block":"none";
@@ -400,15 +418,6 @@ function copyAdminCSV(){
  navigator.clipboard.writeText(csv).then(()=>alert("月間一覧をCSVコピーしました")).catch(()=>alert("コピーできない場合は長押しコピーしてください"));
 }
 
-function openConstructionBilling(){
- const client=adminClientFilter.value||"";
- const month=adminMonthFilter.value||"";
- const q=new URLSearchParams();
- if(client)q.set("client",client);
- if(month)q.set("month",month);
- location.href="construction-billing.html"+(q.toString()?"?"+q.toString():"");
-}
-
 function createConstructionInvoice(){
  const arr=filteredAdminReports();
  if(!arr.length)return alert("請求書に入れる日報がありません");
@@ -435,6 +444,28 @@ function createConstructionInvoice(){
 
 function renderAll(){renderSelects();renderCalendar();renderReports();renderKingReportCalendar();renderAdminAttendance();renderLeaderNotes()}
 let t=fmt(new Date());jDate.value=t;rDate.value=t;leaderNoteDate.value=t;adminMonthFilter.value=t.slice(0,7);renderAll();startFirebase();
+</script>
+<script>
+const payPeople={tanaka:{name:'田中',rate:5000,travel:0,monthly:true},bunta:{name:'文太',rate:5000,travel:0,monthly:true},shigeo:{name:'繁夫',rate:8000,travel:300,monthly:false}};
+const payDedNames=['健康保険','厚生年金','雇用保険','所得税','住民税','前払い・その他控除'];
+let payImported=[],payRevision=0;
+const pe=id=>document.getElementById(id);
+function payPaymentDate(month){const [y,m]=month.split('-').map(Number);return fmt(new Date(y,m,15))}
+function payCalculate(v){const basic=Math.round(v.days*v.rate),travel=Math.round(v.days*v.dailyTravel)+v.monthTravel,gross=basic+travel+v.tech,ded=v.deductions.reduce((a,b)=>a+b,0);return {basic,travel,gross,ded,net:gross-ded}}
+function paySources(){const el=pe('paySource'),old=el.value,names=unique(workersData.concat(reportsData.flatMap(r=>String(r.worker||'').split(/[、,，\n]/).map(x=>x.trim()))));const wanted=old||payPeople[pe('payPerson').value].name;el.innerHTML='<option value="">日報の名前を選択</option>'+names.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');el.value=names.includes(wanted)?wanted:''}
+function payReset(){payRevision++;const p=payPeople[pe('payPerson').value];pe('payRate').value=p.rate;pe('payDailyTravel').value=p.travel;pe('payTechLabel').style.display=pe('payTravelLabel').style.display=p.monthly?'block':'none';for(const id of ['payDays','payTech','payTravel'])pe(id).value=0;payDedNames.forEach((_,i)=>pe('payDed'+i).value=0);pe('payDate').value=payPaymentDate(pe('payMonth').value);pe('payMemo').value='';pe('paySource').innerHTML='';paySources();payImported=[];pe('payEvidence').textContent='日報を取り込んでください。繁夫さんと日報の名前が異なる場合は、該当する作業員名を選んでください。';pe('payStatus').textContent='未保存。保存済みの明細がある場合は「読み込む」を押してください。';payRender()}
+function payValue(){const p=payPeople[pe('payPerson').value];return {month:pe('payMonth').value,person:pe('payPerson').value,name:p.name,date:pe('payDate').value,company:pe('payCompany').value,source:pe('paySource').value,days:Number(pe('payDays').value),rate:p.rate,dailyTravel:p.travel,tech:p.monthly?Number(pe('payTech').value):0,monthTravel:p.monthly?Number(pe('payTravel').value):0,deductions:payDedNames.map((_,i)=>Number(pe('payDed'+i).value)),memo:pe('payMemo').value,importedDates:payImported,approvedOnly:pe('payApproved').checked}}
+function payValid(v){return /^\d{4}-\d{2}$/.test(v.month)&&v.company.trim()&&v.date&&Number.isFinite(v.days)&&v.days>=0&&v.days<=new Date(Number(v.month.slice(0,4)),Number(v.month.slice(5)),0).getDate()&&[v.tech,v.monthTravel,...v.deductions].every(n=>Number.isSafeInteger(n)&&n>=0)}
+function payRender(){const v=payValue(),c=payCalculate(v),yen=n=>Number.isFinite(n)?n.toLocaleString('ja-JP')+' 円':'入力を確認';const row=(a,b)=>'<tr><th>'+esc(a)+'</th><td>'+esc(b)+'</td></tr>';pe('paySheet').innerHTML='<h2>給与明細書</h2><p>'+esc(v.company)+'</p><p><b>'+esc(v.name)+' 様</b></p><p>対象：'+esc(v.month)+'　月末締め<br>支払日：'+esc(v.date)+'</p><table class="pay-table">'+row('出勤日数',v.days+' 日')+row('日給',yen(v.rate))+row('基本給（日給 × 出勤日数）',yen(c.basic))+(payPeople[v.person].monthly?row('技術手当',yen(v.tech))+row('通勤費',yen(v.monthTravel)):row('交通費（300円 × 出勤日数）',yen(c.travel)))+row('支給合計',yen(c.gross))+'</table><table class="pay-table">'+payDedNames.map((n,i)=>row(n,yen(v.deductions[i]))).join('')+row('控除合計',yen(c.ded))+'<tr class="pay-total"><th>差引支給額</th><td>'+yen(c.net)+'</td></tr></table><p style="white-space:pre-wrap">'+esc(v.memo)+'</p>'}
+function payImport(){const name=pe('paySource').value;if(!name)return alert('日報の作業員名を選択してください。');const month=pe('payMonth').value;const all=reportsData.filter(r=>String(r.date||'').startsWith(month+'-')&&String(r.worker||'').split(/[、,，\n]/).map(x=>x.trim()).includes(name));const rs=all.filter(r=>!pe('payApproved').checked||r.approved===true);payImported=unique(rs.map(r=>r.date)).sort();pe('payDays').value=payImported.length;pe('payEvidence').textContent='対象作業員：'+name+'\n出勤 '+payImported.length+' 日／日報 '+rs.length+' 件'+(all.length>rs.length?'（未承認 '+(all.length-rs.length)+' 件を除外）':'')+'\n'+(payImported.join('、')||'該当する日報なし。勤務実績を確認してください。')+(rs.length>payImported.length?'\n同じ日の複数日報を1日として集計しました。':'');payDirty()}
+function payDirty(){payRevision++;pe('payStatus').textContent='変更あり・未保存';payRender()}
+async function paySave(){const v=payValue();if(!payValid(v))return alert('対象月・支払日・会社名・日数・金額を確認してください。金額は0以上の整数で入力してください。');const rev=payRevision;pe('paySave').disabled=true;try{await R('payroll/'+v.month+'/'+v.person).set({...v,totals:payCalculate(v),savedAt:new Date().toISOString(),schemaVersion:1});pe('payStatus').textContent=rev===payRevision?'保存完了：'+v.month+' '+v.name:'保存完了。保存後の変更があります。もう一度保存してください。'}catch(e){pe('payStatus').textContent='保存できませんでした：'+e.message}finally{pe('paySave').disabled=false}}
+async function payLoad(){const month=pe('payMonth').value,person=pe('payPerson').value,rev=payRevision;try{const snap=await R('payroll/'+month+'/'+person).once('value');if(rev!==payRevision)return;const v=snap.val();if(!v){pe('payStatus').textContent='この月・従業員の保存済み明細はありません。';return}if(!confirm('入力中の内容を保存済み明細に置き換えますか？'))return;for(const [id,key] of [['payDate','date'],['payCompany','company'],['payDays','days'],['payTech','tech'],['payTravel','monthTravel'],['payMemo','memo']])pe(id).value=v[key]??'';payDedNames.forEach((_,i)=>pe('payDed'+i).value=(v.deductions||[])[i]||0);pe('paySource').value=v.source||'';pe('payApproved').checked=v.approvedOnly!==false;payImported=v.importedDates||[];pe('payEvidence').textContent='保存時の参照日：'+(payImported.join('、')||'日数を手入力');payRevision++;payRender();pe('payStatus').textContent='保存済み明細を読み込みました。保存日時：'+(v.savedAt||'');}catch(e){pe('payStatus').textContent='読み込みできませんでした：'+e.message}}
+function payPrint(){if(!payValid(payValue()))return alert('入力内容を確認してください。');payRender();document.body.classList.add('pay-print');window.print();setTimeout(()=>document.body.classList.remove('pay-print'),1000)}
+window.addEventListener('afterprint',()=>document.body.classList.remove('pay-print'));
+pe('payDeductions').innerHTML=payDedNames.map((n,i)=>'<label>'+n+'（円）<input id="payDed'+i+'" type="number" min="0" step="1" value="0"></label>').join('');
+pe('payMonth').value=fmt(new Date()).slice(0,7);for(const id of ['payMonth','payPerson'])pe(id).addEventListener('change',()=>{if(!/^\d{4}-\d{2}$/.test(pe('payMonth').value))return;payReset()});
+pe('payroll').addEventListener('input',e=>{if(!['payMonth','payPerson'].includes(e.target.id))payDirty()});payReset();
 </script>
 </body>
 </html>
