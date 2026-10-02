@@ -26,6 +26,10 @@ header{background:linear-gradient(135deg,var(--navy),#285f8c);color:#fff;border-
 <div class="notice">運行記録を追加しました。出発・帰社距離、行先、高速料金、給油記録をFirebaseで共有します。
 <div style="margin-top:9px"><button onclick="forceLatest()" style="border:0;border-radius:10px;padding:9px 12px;background:#17324d;color:#fff;font-weight:900">🔄 最新版へ更新</button></div></div>
 <div id="presence-status" class="presence-status">🟢 入国状況を共有中</div>
+<section aria-label="担当者チェックリスト" style="background:#fff9e6;border:3px solid #e5b746;border-radius:22px;padding:13px;margin:0 0 17px;box-shadow:0 10px 28px rgba(18,46,72,.12)">
+<h2 style="margin:5px 4px;font-size:25px;color:#17324d">☑️ チェックリスト</h2><p style="margin:4px 4px 10px;font-size:19px;font-weight:900;color:#9a3c12">必ずココを見ろ！</p>
+<iframe title="担当者の毎日チェックリスト" src="manager-checklist.html" loading="eager" style="width:100%;height:1120px;border:1px solid #e4e9ef;border-radius:15px;background:#fff" ></iframe>
+<p style="font-size:13px;color:#536579;margin:9px 4px 0">8項目を確認後、担当者・確認日を指定して「確認を記録」を押してください。</p></section>
 <section class="main-app-card"><div class="main-app-icon">🏠</div><div class="main-app-info"><h2 class="main-app-title">メインアプリ</h2><p class="main-app-text">イベント管理・カレンダー・売上・出勤など、メインアプリへ移動します。</p><button class="main-app-btn" onclick="setManagerDestination('メインアプリ');setTimeout(function(){location.href='index.html'},80)">メインアプリを開く</button></div></section>
 
 <section class="main-app-card"><div class="main-app-icon">📦</div><div class="main-app-info"><h2 class="main-app-title">イベント別 持出し振分け</h2><p class="main-app-text">会場・出店ネタ別に数量を入力し、KINGと同じ共有データを編集します。</p><button class="main-app-btn" onclick="location.href='event-carry-plan.html?from=manager'">持出し振分けを開く</button></div></section>
