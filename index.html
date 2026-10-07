@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.60 TEST｜出店形態カード安全表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.57 TEST｜出店形態カード安全表示版</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -788,7 +788,7 @@ body::before,#app::before,.page::before{
           </div>
           <div class="scroll-x">
             <table class="inv-table">
-              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th></th></tr></thead>
+              <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>在庫</th><th>保存場所</th><th>最終更新</th><th></th></tr></thead>
               <tbody id="inv-tbody"></tbody>
             </table>
           </div>
@@ -2664,17 +2664,6 @@ function renderEventList(dateFilter) {
     var evDatesForCard=dateListForEvent(ev);
     var displayStaff=(evDatesForCard.length<=1 && Array.isArray(ev.staff))?ev.staff:getEventStaffForDate(ev,displayDs);
     var staffStr=displayStaff.length?displayStaff.join('・'):'未設定';
-    var dayStaffHtml='';
-    if(evDatesForCard.length>1){
-      dayStaffHtml='<div class="ev-meta" style="margin-top:6px;padding:7px 9px;border:1px solid rgba(201,149,0,.28);border-radius:9px;background:rgba(255,248,218,.55)"><b>📅 日別出勤</b>';
-      evDatesForCard.forEach(function(ds){
-        var dsStaff=getEventStaffForDate(ev,ds);
-        var req=getEventRequiredStaffForDate(ev,ds);
-        var md=String(parseInt(ds.slice(5,7),10))+'/'+String(parseInt(ds.slice(8,10),10));
-        dayStaffHtml+='<div style="margin-top:4px"><b>'+md+'</b>　'+(dsStaff.length?eventStaffHtml(dsStaff):'<span style="color:var(--text2)">未設定</span>')+(req?'　<span style="font-size:11px;color:var(--text2)">体制 '+req+'人</span>':'')+'</div>';
-      });
-      dayStaffHtml+='</div>';
-    }
     var memoText=String(ev.memo||'').trim();
     /* 日別スタッフの自動生成文字はイベントカードに表示しない */
     var normalizedMemo=memoText.replace(/[\uFE0E\uFE0F]/g,'').replace(/\s+/g,' ').trim();
@@ -2727,7 +2716,6 @@ function renderEventList(dateFilter) {
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
       +'<div class="ev-meta event-staff-names">👥 担当 '+eventStaffHtml(displayStaff)+(getEventRequiredStaffForDate(ev,displayDs)?'　🧑‍🍳 体制 '+getEventRequiredStaffForDate(ev,displayDs)+'人':'')+'</div>'
-      +dayStaffHtml
       +renderBoothTypeSummary(ev)
       +(typeof renderAvailabilitySummary==='function'?'<div class="ev-meta">出勤回答 '+renderAvailabilitySummaryForDate(ev,displayDs)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailabilityForDate(ev,displayDs)):'')+'</div>':'')
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+renderSettlementTags(ev)+'</div>'
@@ -3233,20 +3221,6 @@ function syncEventDayStaffDraftFromDom(){
     eventDayStaffDraft[ds]={staff:staff,requiredStaff:parseInt(req&&req.value)||0};
   });
 }
-function syncMainStaffToActiveEventDay(){
-  var start=document.getElementById('ef-date').value;
-  var end=document.getElementById('ef-date-end').value;
-  if(!start||!end||end<=start){ renderEventDayStaffEditor(); return; }
-  syncEventDayStaffDraftFromDom();
-  var dates=dateListForEvent({date:start,dateEnd:end});
-  var active=(typeof selDate!=='undefined' && dates.indexOf(selDate)>=0)?selDate:start;
-  var staff=[];
-  document.querySelectorAll('#ef-staff-checks input:checked').forEach(function(ch){ staff.push(ch.value); });
-  var req=parseInt(document.getElementById('ef-required-staff').value)||0;
-  var old=eventDayStaffDraft[active]||{};
-  eventDayStaffDraft[active]={staff:staff.slice(),requiredStaff:(old.requiredStaff!==undefined?old.requiredStaff:req)};
-  renderEventDayStaffEditor();
-}
 function renderEventDayStaffEditor(){
   syncEventDayStaffDraftFromDom();
   var start=document.getElementById('ef-date').value;
@@ -3368,17 +3342,9 @@ function openEventForm(id) {
   // シークレットイベントの状態を反映
   var secretChk=document.getElementById('ef-secret');
   if(secretChk){ secretChk.checked = ev ? !!ev.secret : false; }
-  var mainFormStaff=ev&&Array.isArray(ev.staff)?ev.staff.slice():[];
-  if(ev){
-    var formDates=dateListForEvent({date:ev.date||'',dateEnd:inferEventEndDate(ev)||''});
-    if(formDates.length>1){
-      var activeFormDate=(typeof selDate!=='undefined' && formDates.indexOf(selDate)>=0)?selDate:formDates[0];
-      mainFormStaff=getEventStaffForDate(ev,activeFormDate);
-    }
-  }
   document.getElementById('ef-staff-checks').innerHTML=state.staffList.map(function(s){
-    var chk=mainFormStaff.indexOf(s)>=0?'checked':'';
-    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' onchange="syncMainStaffToActiveEventDay()" style="width:auto;margin:0"> '+s+'</label>';
+    var chk=ev&&ev.staff&&ev.staff.indexOf(s)>=0?'checked':'';
+    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:8px"><input type="checkbox" value="'+s+'" '+chk+' onchange="renderEventDayStaffEditor()" style="width:auto;margin:0"> '+s+'</label>';
   }).join('');
   renderEventDayStaffEditor();
   openModal('modal-event-form');
@@ -3416,10 +3382,7 @@ function saveEventForm() {
     dayAssignments:(function(){
       var out={};
       var dates=dateListForEvent({date:date,dateEnd:savedEnd});
-      // v4.3.58: 開始日=終了日のイベントは単日扱い。
-      // 旧日別担当が残っていても、今回チェックした担当スタッフを当日の正として保存する。
-      var isSingleDay = !savedEnd || savedEnd===date || dates.length<=1;
-      if(isSingleDay){
+      if(dates.length<=1){
         out[date]={staff:staff.slice(),requiredStaff:parseInt(document.getElementById('ef-required-staff') ? document.getElementById('ef-required-staff').value : 0)||0};
       }else{
         dates.forEach(function(ds){
@@ -3548,6 +3511,14 @@ function confirmInventoryCarryOut(){
   fbSave();
 }
 
+function inventoryItemUpdateMetaHtml(item){
+  var iso=item&&item.inventoryUpdatedAt?item.inventoryUpdatedAt:'';
+  var by=item&&item.inventoryUpdatedBy?item.inventoryUpdatedBy:'';
+  if(!iso && !by) return '<span class="muted" style="font-size:10px;white-space:nowrap">未記入</span>';
+  var dateText=iso?formatInventoryWriteDate(iso):'未記入';
+  return '<div style="font-size:10px;line-height:1.55;white-space:nowrap">📅 '+dateText+'<br>👤 '+(by||'未記入')+'</div>';
+}
+
 function renderInventory() {
   if(role==='user') return;
   renderInventoryWriteMeta();
@@ -3581,6 +3552,7 @@ function renderInventory() {
       +'<td><span class="mono" style="font-weight:700">'+item.hakobi+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
       +'<td><span class="mono" style="font-weight:700;color:'+(item.stock<5?'var(--red)':'var(--green)')+'">'+item.stock+'</span></td>'
       +'<td>'+warehouseLocationSelectHtml(item)+'</td>'
+      +'<td>'+inventoryItemUpdateMetaHtml(item)+'</td>'
       +'<td>'+editBtns+'</td></tr>';
   }).join('');
   renderWarehouseMapCounts();
