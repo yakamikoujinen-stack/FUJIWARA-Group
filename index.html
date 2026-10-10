@@ -633,6 +633,12 @@ body::before,#app::before,.page::before{
 .event-staff-name{display:inline-block;margin-right:2px;}
 .event-staff-name.resp-fujiwara,.event-staff-name.resp-sho,.event-staff-name.resp-bunta,.event-staff-name.resp-shige{padding:1px 5px;border-radius:7px;border:1px solid currentColor;}
 
+
+/* 連日イベントのカード内日別スタッフ */
+.event-card-day-staff{margin:8px 0;}
+.event-card-day-row{padding:7px 10px;margin:6px 0;background:#fff8df;border:1px solid #d8bf75;border-radius:9px;}
+.event-card-day-date{font-size:13px;font-weight:900;color:var(--text);line-height:1.7;}
+.event-card-common{display:inline-block;font-size:10px;font-weight:normal;color:var(--text2);margin-left:8px;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -2715,7 +2721,7 @@ function renderEventList(dateFilter) {
       +'<div class="ev-card-row">'
       +'<div><div class="ev-name">'+(isSecretEvent(ev)?'🔒 ':'')+ev.name+'</div>'
       +'<div class="ev-meta">📅 '+ev.date+(ev.dateEnd?' 〜 '+ev.dateEnd:'')+'　📍 '+ev.place+'</div>'
-      +'<div class="ev-meta event-staff-names">👥 担当 '+eventStaffHtml(displayStaff)+(getEventRequiredStaffForDate(ev,displayDs)?'　🧑‍🍳 体制 '+getEventRequiredStaffForDate(ev,displayDs)+'人':'')+'</div>'
+      +renderEventCardStaff(ev,evDatesForCard,displayDs)
       +renderBoothTypeSummary(ev)
       +(typeof renderAvailabilitySummary==='function'?'<div class="ev-meta">出勤回答 '+renderAvailabilitySummaryForDate(ev,displayDs)+(role!=='leader'?'　あなた: '+availabilityMark(getMyAvailabilityForDate(ev,displayDs)):'')+'</div>':'')
       +'<span class="ev-zone '+zClass+'">'+ev.zone+'ゾーン</span>'+memoHtml+renderSettlementTags(ev)+'</div>'
@@ -3189,6 +3195,27 @@ function eventStaffHtml(staff){
   }).join('・');
 }
 
+
+// 連日イベントは同じカード内に全開催日のスタッフを表示（保存データは変更しない）。
+function renderEventCardStaff(ev, dates, displayDs){
+  if(dates.length<=1){
+    var staff=Array.isArray(ev.staff)?ev.staff:getEventStaffForDate(ev,displayDs);
+    var required=getEventRequiredStaffForDate(ev,displayDs);
+    return '<div class="ev-meta event-staff-names">👥 担当 '+eventStaffHtml(staff)+(required?'　🧑‍🍳 体制 '+required+'人':'')+'</div>';
+  }
+  return '<div class="event-card-day-staff">'+dates.map(function(ds){
+    var record=getEventDayRecord(ev,ds);
+    var saved=ev.dayAssignments && ev.dayAssignments[ds];
+    var common=!(saved && Array.isArray(saved.staff));
+    var date=parseLocalDateOnly(ds);
+    var label=date?(date.getMonth()+1)+'月'+date.getDate()+'日（'+'日月火水木金土'.charAt(date.getDay())+'）':ds;
+    return '<div class="event-card-day-row">'
+      +'<div class="event-card-day-date">📅 '+escHtml(label)+(common?'<span class="event-card-common">共通設定</span>':'')+'</div>'
+      +'<div class="ev-meta event-staff-names">👥 担当 '+eventStaffHtml(record.staff)+'</div>'
+      +'<div class="ev-meta">👥 担当人数 '+record.staff.length+'人'+(record.requiredStaff?'　🧑‍🍳 体制 '+record.requiredStaff+'人':'')+'</div>'
+      +'</div>';
+  }).join('')+'</div>';
+}
 
 // ════ DAY-BY-DAY STAFF HELPERS ════
 var eventDayStaffDraft={};
