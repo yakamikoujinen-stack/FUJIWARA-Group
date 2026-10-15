@@ -159,6 +159,34 @@ function getBooks(){try{const d=JSON.parse(localStorage.getItem(BOOK_KEY)||'null
 function saveBooks(d){localStorage.setItem(BOOK_KEY,JSON.stringify(d));const s=document.getElementById('status');if(s)s.textContent='保存済み：'+now()}
 function current(){const d=getBooks();return{d,b:d.books.find(x=>x.id===currentId)}}
 
+
+const PHOTO_IMPORT_20261015 = [{"ok": false, "date": "10/31(土)", "event": "JAたじま 温泉感謝祭", "place": "美方郡新温泉町", "item": "", "memo": "写真取込（2026/10/15）"}, {"ok": false, "date": "11/5(木)", "event": "JAたじま 山東支店感謝祭", "place": "", "item": "", "memo": "写真取込（2026/10/15）※場所は写真で要確認"}, {"ok": false, "date": "11/14(土)", "event": "JAたじま 浜坂感謝祭", "place": "美方郡新温泉町", "item": "", "memo": "写真取込（2026/10/15）"}, {"ok": false, "date": "11/20(金)", "event": "JAたじま 豊岡感謝祭", "place": "豊岡市", "item": "", "memo": "写真取込（2026/10/15）"}, {"ok": false, "date": "11/20(金)", "event": "JAたじま 城崎感謝祭", "place": "", "item": "", "memo": "写真取込（2026/10/15）※場所は写真で要確認"}, {"ok": false, "date": "11/21(土)", "event": "JAたじま 村岡感謝祭", "place": "", "item": "", "memo": "写真取込（2026/10/15）※場所は写真で要確認"}, {"ok": false, "date": "11/23(月祝)", "event": "JA京都やましろ 和束感謝祭", "place": "", "item": "", "memo": "写真取込（2026/10/15）※場所は写真で要確認"}];
+function importPhotoRows20261015(){
+  const FLAG='fujiwara_conan_photo_import_20261015_v1';
+  if(localStorage.getItem(FLAG)==='done')return;
+  const d=getBooks();
+  let b=d.books.find(x=>String(x.title||'').includes('2026秋'));
+  if(!b){
+    b={id:uid(),title:'2026秋',icon:'🍁',updated:now(),autoSort:true,rows:[]};
+    d.books.push(b);
+  }
+  const sig=r=>[String(r.date||'').trim(),String(r.event||'').trim()].join('|');
+  const existing=new Set((b.rows||[]).map(sig));
+  let added=0;
+  PHOTO_IMPORT_20261015.forEach(r=>{
+    if(!existing.has(sig(r))){
+      b.rows.push(normRow(r));
+      existing.add(sig(r));
+      added++;
+    }
+  });
+  if(b.autoSort)b.rows=stableSort(b.rows||[]);
+  b.updated=now();
+  saveBooks(d);
+  localStorage.setItem(FLAG,'done');
+  if(added) setTimeout(()=>alert('写真から新規予定 '+added+'件を2026秋へ追加しました。\n既存予定は消していません。'),300);
+}
+
 function migrateLegacy(){
   const d=getBooks();
   if(d.books.length)return;
@@ -314,7 +342,7 @@ function restoreCurrent(file){
     if(b.autoSort)b.rows=stableSort(b.rows);b.updated=now();saveBooks(d);renderRows();alert(n+'件を追加復元しました。現在のデータは残しています。')
   }catch(e){alert('復元できないファイルです。')}};fr.readAsText(file,'utf-8')
 }
-migrateLegacy();renderList();loadMainEvents(false);
+migrateLegacy();importPhotoRows20261015();renderList();loadMainEvents(false);
 </script>
 </body>
 </html>
