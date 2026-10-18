@@ -3578,7 +3578,7 @@ function renderInventory() {
     return '<tr><td style="font-weight:500">'+item.name+'</td>'
       +'<td><span class="cat-tag">'+(item.cat||'')+'</span><br><span class="muted" style="font-size:10px">📍 '+(item.loc||'未設定')+'</span></td>'
       +'<td><span class="mono" style="font-weight:700">'+item.hakobi+'</span> <span class="muted" style="font-size:10px">'+item.unit+'</span></td>'
-      +'<td><span class="mono" style="font-weight:600">'+(item.inventoryPreviousStock===undefined || item.inventoryPreviousStock===null ? item.stock+' '+(item.unit||'')+' <small style="display:block;color:#786d54;font-size:10px">現時点の数量（次回更新前）</small>' : item.inventoryPreviousStock+' '+(item.unit||''))+'</span></td>'
+      +'<td><span class="mono" style="font-weight:600">'+inventoryPreviousDisplay(item)+'</span></td>'
       +'<td><span class="mono" style="font-weight:700;color:'+(item.stock<5?'var(--red)':'var(--green)')+'">'+item.stock+'</span></td>'
       +'<td>'+warehouseLocationSelectHtml(item)+'</td>'
       +'<td>'+inventoryItemUpdateMetaHtml(item)+'</td>'
@@ -3719,10 +3719,32 @@ function openStockModal(id) {
   document.getElementById('stock-id').value=id;
   document.getElementById('stock-hakobi').value=item.hakobi;
   document.getElementById('stock-stock').value=item.stock;
-  document.getElementById('stock-before-quantity').textContent=String(item.stock)+' '+(item.unit||'');
+  document.getElementById('stock-before-quantity').textContent=String(item.stock)+' '+(item.unit||'')+'（今回の変更前）';
   openModal('modal-stock');
 }
 
+// Inventory history: additive fields only; no existing stock values are rewritten.
+function recordInventoryStockChange(item, before, after, reason){
+  if(Number(before)===Number(after)) return;
+  var at=new Date().toISOString();
+  var entry={before:Number(before),after:Number(after),at:at,by:inventoryWriterName(),reason:reason};
+  if(!Array.isArray(item.inventoryStockHistory)) item.inventoryStockHistory=[];
+  item.inventoryStockHistory.push(entry);
+  // Keep a bounded per-item history to avoid unbounded Firebase document growth.
+  if(item.inventoryStockHistory.length>100) item.inventoryStockHistory=item.inventoryStockHistory.slice(-100);
+  item.inventoryPreviousStock=entry.before;
+  item.inventoryPreviousStockAt=at;
+}
+function inventoryPreviousDisplay(item){
+  var hist=Array.isArray(item.inventoryStockHistory)?item.inventoryStockHistory:[];
+  var last=hist.length?hist[hist.length-1]:null;
+  var prev=last?last.before:item.inventoryPreviousStock;
+  var unit=item.unit||'';
+  if(prev!==undefined && prev!==null && prev!=='' && isFinite(Number(prev))){
+    return '<strong>'+Number(prev)+' '+unit+'</strong><small style="display:block;color:#786d54;font-size:10px">直近変更前'+(last&&last.at?' / '+formatInventoryWriteDate(last.at):'')+'</small>';
+  }
+  return '<span style="color:#816d46">過去数量不明</span><small style="display:block;color:#786d54;font-size:10px">次回更新前：'+item.stock+' '+unit+'</small>';
+}
 function saveStockAdjust() {
   var id=document.getElementById('stock-id').value;
   var item=null;
@@ -3732,7 +3754,7 @@ function saveStockAdjust() {
   var oldStock=item.stock||0;
   item.hakobi=parseInt(document.getElementById('stock-hakobi').value)||0;
   item.stock=parseInt(document.getElementById('stock-stock').value)||0;
-  if(oldStock!==item.stock){ item.inventoryPreviousStock=oldStock; item.inventoryPreviousStockAt=new Date().toISOString(); }
+  recordInventoryStockChange(item,oldStock,item.stock,'在庫数量修正');
   markInventoryEdited(item,'在庫数量修正');
   addAudit('在庫数量修正', item.name+'｜持出 '+oldHakobi+'→'+item.hakobi+' / 在庫 '+oldStock+'→'+item.stock+'｜記入者 '+inventoryWriterName());
   closeModal('modal-stock');
@@ -3765,7 +3787,7 @@ function saveInvItemForm() {
   var data={name:name,cat:document.getElementById('iif-cat').value,unit:document.getElementById('iif-unit').value,loc:document.getElementById('iif-location').value||'未設定',stock:parseInt(document.getElementById('iif-stock').value)||0,hakobi:parseInt(document.getElementById('iif-hakobi').value)||0};
   if(rawId){
     var editedItem=null;
-    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ var priorStock=Number(state.invItems[i].stock)||0; if(priorStock!==data.stock){ state.invItems[i].inventoryPreviousStock=priorStock; state.invItems[i].inventoryPreviousStockAt=new Date().toISOString(); } Object.assign(state.invItems[i],data); editedItem=state.invItems[i]; break; } }
+    for(var i=0;i<state.invItems.length;i++){ if(String(state.invItems[i].id)===String(rawId)){ var priorStock=Number(state.invItems[i].stock)||0; recordInventoryStockChange(state.invItems[i],priorStock,data.stock,'品目編集'); Object.assign(state.invItems[i],data); editedItem=state.invItems[i]; break; } }
     markInventoryEdited(editedItem,'品目編集');
     addAudit('在庫品目編集', name+'｜記入者 '+inventoryWriterName());
     toast('✅ 品目を更新しました');
