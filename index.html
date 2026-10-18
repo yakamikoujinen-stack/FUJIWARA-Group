@@ -792,6 +792,16 @@ body::before,#app::before,.page::before{
             </div>
             <div style="font-size:11px;color:var(--text2);margin-top:4px" id="quick-add-label"></div>
           </div>
+          <div style="margin:10px 0 14px;padding:12px;border:1px solid #cba74b;border-radius:12px;background:#fff9e9">
+            <b>🔎 在庫履歴調査（読み取り専用）</b>
+            <div style="font-size:12px;margin:6px 0">10/17以前の記録を探します。調査では在庫数・売上・Firebaseデータを変更しません。</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label style="font-size:12px">調査日 <input id="inv-history-date" type="date" value="2026-10-18" style="padding:6px;border:1px solid #cba74b;border-radius:8px"></label>
+              <button class="btn btn-outline btn-sm" onclick="inspectInventoryHistory()">🔍 履歴を確認</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadInventoryEvidence()">📥 調査資料を保存</button>
+            </div>
+            <div id="inv-history-result" style="margin-top:10px;font-size:12px;max-height:380px;overflow:auto" aria-live="polite">調査ボタンを押してください。</div>
+          </div>
           <div class="scroll-x">
             <table class="inv-table">
               <thead><tr><th>品目</th><th>カテゴリ</th><th>今回持出し</th><th>更新前在庫</th><th>在庫</th><th>保存場所</th><th>最終更新</th><th></th></tr></thead>
@@ -3744,6 +3754,36 @@ function inventoryPreviousDisplay(item){
     return '<strong>'+Number(prev)+' '+unit+'</strong><small style="display:block;color:#786d54;font-size:10px">直近変更前'+(last&&last.at?' / '+formatInventoryWriteDate(last.at):'')+'</small>';
   }
   return '<span style="color:#816d46">過去数量不明</span><small style="display:block;color:#786d54;font-size:10px">次回更新前：'+item.stock+' '+unit+'</small>';
+}
+// Read-only evidence viewer: never writes to state, localStorage or Firebase.
+function invHistoryEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function invHistoryEvidence(){
+  var items=(state.invItems||[]).filter(function(i){return String(i.cat||'').indexOf('だんご')>=0 || /だんご|みたらし/.test(String(i.name||''));});
+  var logs=(state.auditLogs||[]).filter(function(l){return /在庫|品目/.test(String(l.action||''));});
+  return {generatedAt:new Date().toISOString(),firebaseLoaded:!!window._fgFirebaseReady,inventoryMeta:state.inventoryMeta||{},items:items.map(function(i){return {id:i.id,name:i.name,category:i.cat,stock:i.stock,unit:i.unit,hakobi:i.hakobi,inventoryUpdatedAt:i.inventoryUpdatedAt||null,inventoryUpdatedBy:i.inventoryUpdatedBy||null,inventoryPreviousStock:i.inventoryPreviousStock===undefined?null:i.inventoryPreviousStock,inventoryPreviousStockAt:i.inventoryPreviousStockAt||null,inventoryStockHistory:i.inventoryStockHistory||[]};}),auditLogs:logs};
+}
+function inspectInventoryHistory(){
+  var el=document.getElementById('inv-history-result');if(!el)return;
+  var day=(document.getElementById('inv-history-date')||{}).value||'2026-10-18';
+  var e=invHistoryEvidence();
+  var rows=e.items.map(function(i){
+    var hist=Array.isArray(i.inventoryStockHistory)?i.inventoryStockHistory:[];
+    var matches=hist.filter(function(h){return String(h.at||'').slice(0,10)===day || String(h.at||'').slice(0,10)===day.replace(/-/g,'/');});
+    var audit=e.auditLogs.filter(function(l){return String(l.detail||'').indexOf(i.name)>=0 && (String(l.time||'').slice(0,10)===day || String(l.time||'').slice(0,10)===day.replace(/-/g,'/'));});
+    var detail=matches.map(function(h){return invHistoryEsc(formatInventoryWriteDate(h.at))+'：'+invHistoryEsc(h.before)+' → '+invHistoryEsc(h.after)+' '+invHistoryEsc(i.unit)+'（'+invHistoryEsc(h.by)+'）';}).join('<br>');
+    if(!detail && audit.length)detail=audit.map(function(l){return invHistoryEsc(l.time)+' '+invHistoryEsc(l.detail);}).join('<br>');
+    if(!detail)detail='<span style="color:#a14522">該当日の変更前数量は記録から確認できません</span>';
+    return '<tr><td style="padding:7px;border-bottom:1px solid #e3d5b4">'+invHistoryEsc(i.name)+'</td><td style="padding:7px;border-bottom:1px solid #e3d5b4">'+invHistoryEsc(i.stock)+' '+invHistoryEsc(i.unit)+'</td><td style="padding:7px;border-bottom:1px solid #e3d5b4">'+detail+'</td></tr>';
+  }).join('');
+  el.innerHTML='<div style="margin-bottom:7px">'+(e.firebaseLoaded?'✅ Firebase読み込み済み':'⚠️ Firebase読み込み待ち（結果未確定）')+' / 調査日 '+invHistoryEsc(day)+'</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr><th>商品</th><th>現在数</th><th>保存された変更記録</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="margin-top:8px">※ この記録だけでは、補充・廃棄・持出しを含む実販売数量を確定できません。前日の記録が見つからなければ推測で補いません。</div>';
+}
+function downloadInventoryEvidence(){
+  var e=invHistoryEvidence();
+  if(!e.firebaseLoaded){alert('Firebaseの読み込みが完了してから保存してください。');return;}
+  var blob=new Blob([JSON.stringify(e,null,2)],{type:'application/json;charset=utf-8'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='inventory_evidence_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
 }
 function saveStockAdjust() {
   var id=document.getElementById('stock-id').value;
