@@ -3751,9 +3751,29 @@ function inventoryPreviousDisplay(item){
   var prev=last?last.before:item.inventoryPreviousStock;
   var unit=item.unit||'';
   if(prev!==undefined && prev!==null && prev!=='' && isFinite(Number(prev))){
-    return '<strong>'+Number(prev)+' '+unit+'</strong><small style="display:block;color:#786d54;font-size:10px">直近変更前'+(last&&last.at?' / '+formatInventoryWriteDate(last.at):'')+'</small>';
+    return '<strong>'+Number(prev)+' '+invHistoryEsc(unit)+'</strong><small style="display:block;color:#786d54;font-size:10px">直近変更前'+(last&&last.at?' / '+formatInventoryWriteDate(last.at):'')+'</small>';
   }
-  return '<span style="color:#816d46">過去数量不明</span><small style="display:block;color:#786d54;font-size:10px">次回更新前：'+item.stock+' '+unit+'</small>';
+  // Legacy changes were recorded in auditLogs, not item.inventoryStockHistory.
+  // Exact item-name matching avoids similar names overwriting one another.
+  var logs=(state.auditLogs||[]).filter(function(l){
+    if(String(l.action||'')!=='在庫数量修正') return false;
+    var detail=String(l.detail||'');
+    var pos=detail.indexOf('｜');
+    if(pos<0 || detail.slice(0,pos)!==String(item.name||'')) return false;
+    return /在庫\s*-?\d+\s*→\s*-?\d+/.test(detail);
+  }).sort(function(a,b){return String(b.time||'').localeCompare(String(a.time||'')) || Number(b.id||0)-Number(a.id||0);});
+  if(logs.length){
+    var m=String(logs[0].detail||'').match(/在庫\s*(-?\d+)\s*→\s*(-?\d+)/);
+    if(m){
+      var before=Number(m[1]),after=Number(m[2]);
+      // If current stock differs from last logged result, do not mislabel stale history.
+      if(Number(item.stock)===after){
+        return '<strong>'+before+' '+invHistoryEsc(unit)+'</strong><small style="display:block;color:#786d54;font-size:10px">操作履歴 '+invHistoryEsc(logs[0].time||'')+' / '+invHistoryEsc(logs[0].user||'')+'</small>';
+      }
+      return '<span style="color:#816d46">直近変更前は未確認</span><small style="display:block;color:#786d54;font-size:10px">履歴 '+before+'→'+after+' / 現在 '+invHistoryEsc(item.stock)+'</small>';
+    }
+  }
+  return '<span style="color:#816d46">過去数量不明</span><small style="display:block;color:#786d54;font-size:10px">次回更新前：'+invHistoryEsc(item.stock)+' '+invHistoryEsc(unit)+'</small>';
 }
 // Read-only evidence viewer: never writes to state, localStorage or Firebase.
 function invHistoryEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
