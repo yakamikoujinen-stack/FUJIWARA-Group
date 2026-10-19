@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FUJIWARA レシート経費 TEST</title>
+<style>
+:root{
+  --bg:#f3f5f8;--card:#fff;--ink:#18202a;--muted:#667085;--line:#d9dee7;
+  --accent:#9a7418;--dark:#171717;--ok:#0a7a45;--warn:#a15c00;--danger:#b42318;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,#111,#2a2a2a);color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px #0002}
+header h1{font-size:19px;margin:0 0 4px} header .sub{font-size:12px;color:#e6d8aa}
+.wrap{max-width:980px;margin:auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px #1018280b}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:720px){.grid,.grid3{grid-template-columns:1fr}}
+label{display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:5px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{width:100%;border:1px solid #cfd5df;border-radius:10px;padding:11px;background:#fff;color:#111}
+textarea{min-height:76px;resize:vertical}
+button{border:0;border-radius:11px;padding:11px 14px;font-weight:800;cursor:pointer}
+.primary{background:var(--dark);color:#fff}.gold{background:#b48a25;color:#fff}.ghost{background:#eef1f5;color:#222}.ok{background:var(--ok);color:#fff}.danger{background:#fee4e2;color:var(--danger)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row > *{flex:1}.row .auto{flex:0 0 auto}
+.receipt-box{border:2px dashed #c8ced8;border-radius:14px;min-height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafbfc;position:relative}
+.receipt-box img{width:100%;max-height:420px;object-fit:contain}
+.hidden{display:none!important}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}
+.pending{background:#fff4e5;color:#9a5b00}.approved{background:#e7f8ef;color:#087443}.settled{background:#e8eefc;color:#3159a7}
+.kpi{font-size:22px;font-weight:900}.kpi small{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 7px;border-bottom:1px solid #eaecf0;text-align:left;vertical-align:top}
+th{font-size:11px;color:#667085;background:#fafafa;position:sticky;top:0}
+.tablewrap{overflow:auto;max-height:520px;border:1px solid #eaecf0;border-radius:12px}
+.thumb{width:42px;height:42px;border-radius:7px;object-fit:cover;border:1px solid #ddd}
+.note{font-size:12px;color:var(--muted);line-height:1.6}
+.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{padding:7px 9px;font-size:11px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:100}
+#toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:20px;z-index:90}
+.modal img{max-width:95vw;max-height:85vh;border-radius:12px;background:#fff}
+.section-title{font-weight:900;margin:0 0 10px;font-size:15px}
+.mode-banner{padding:9px 11px;border-radius:10px;font-size:12px;font-weight:800;background:#f8f1dd;color:#684d00;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧾 FUJIWARA レシート経費 <span style="color:#e9c85d">TEST</span></h1>
+  <div class="sub">担当者入力 → KING確認 → 承認 → 精算</div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="section-title">① 利用者・モード</div>
+    <div class="grid">
+      <div>
+        <label>利用者</label>
+        <select id="user">
+          <option>藤原明裕</option><option>まゆみ</option><option>将</option><option>文太</option><option>縁笑だるまや</option>
+        </select>
+      </div>
+      <div>
+        <label>表示モード</label>
+        <select id="mode">
+          <option value="manager">担当者アプリ側</option>
+          <option value="king">KING側（管理者）</option>
+        </select>
+      </div>
+    </div>
+    <div id="modeBanner" class="mode-banner"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">② レシート撮影・経費入力</div>
+
+    <div class="receipt-box" id="receiptBox">
+      <div id="photoPlaceholder" class="note" style="text-align:center;padding:20px">📷 レシートを撮影、または写真を選択</div>
+      <img id="preview" class="hidden" alt="レシート">
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="primary" style="text-align:center;padding:11px 14px;border-radius:11px;color:white;cursor:pointer;margin:0">
+        📷 写真を撮る・選ぶ
+        <input id="photo" type="file" accept="image/*" capture="environment" class="hidden">
+      </label>
+      <button class="ghost" id="clearPhoto" type="button">写真を外す</button>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <div><label>購入日</label><input id="date" type="date"></div>
+      <div><label>店舗名</label><input id="store" placeholder="例：コストコ / ENEOS"></div>
+      <div><label>金額（税込）</label><input id="amount" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div><label>消費税（任意）</label><input id="tax" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div>
+        <label>事業区分</label>
+        <select id="business">
+          <option>イベント</option><option>建設</option><option>農業</option><option>システム</option><option>その他</option>
+        </select>
+      </div>
+      <div>
+        <label>経費科目</label>
+        <select id="category">
+          <option>仕入</option><option>燃料費</option><option>高速・交通費</option><option>消耗品費</option><option>車両費</option>
+          <option>広告宣伝費</option><option>外注費</option><option>通信費</option><option>その他</option>
+        </select>
+      </div>
+      <div>
+        <label>イベント・現場名</label>
+        <input id="event" placeholder="例：面影 / 瀬田 / ○○現場">
+      </div>
+      <div>
+        <label>支払方法</label>
+        <select id="payment">
+          <option>個人立替</option><option>現金</option><option>会社カード</option><option>銀行振込</option><option>その他</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>内容・メモ</label>
+      <textarea id="memo" placeholder="例：いか焼き材料、氷、ガソリン等"></textarea>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="save" class="gold">💾 経費を保存</button>
+      <button id="reset" class="ghost" type="button">入力をクリア</button>
+    </div>
+    <p class="note">※ テスト版はこの端末のブラウザ内にだけ保存します。本番のKING/Firebaseデータには触れません。</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">③ 経費一覧・確認</div>
+    <div class="grid3">
+      <div class="card" style="margin:0"><div class="kpi" id="totalAmount">¥0<small>表示中の経費合計</small></div></div>
+      <div class="card" style="margin:0"><div class="kpi" id="pendingAmount">¥0<small>申請中</small></div></div>
+      <div class="card" style="margin:0"><div class="kpi" id="unsettledAmount">¥0<small>未精算の個人立替</small></div></div>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <div>
+        <label>状態で絞り込み</label>
+        <select id="statusFilter"><option value="">すべて</option><option value="pending">申請中</option><option value="approved">承認済</option><option value="settled">精算済</option></select>
+      </div>
+      <div>
+        <label>検索</label>
+        <input id="search" placeholder="店舗・イベント・担当者">
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:10px">
+      <table>
+        <thead><tr><th>日付</th><th>担当</th><th>店舗 / イベント</th><th>科目</th><th>金額</th><th>状態</th><th>写真</th><th>操作</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="empty" class="note" style="padding:14px;text-align:center">まだ経費はありません。</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">④ テスト用データ操作</div>
+    <div class="row">
+      <button id="seed" class="ghost">サンプル3件を入れる</button>
+      <button id="export" class="ghost">JSONバックアップ</button>
+      <button id="wipe" class="danger">テストデータ全削除</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="imgModal" class="modal hidden"><img id="modalImg"><button id="closeModal" class="primary" style="position:absolute;top:18px;right:18px">閉じる</button></div>
+
+<script>
+const KEY='fujiwara_receipt_expense_test_v1';
+const $=id=>document.getElementById(id);
+let photoData='';
+
+function today(){
+  const d=new Date(); const z=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+}
+$('date').value=today();
+
+function load(){
+  try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}
+}
+function persist(rows){localStorage.setItem(KEY,JSON.stringify(rows))}
+function yen(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function id(){return 'R'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+function updateMode(){
+  const king=$('mode').value==='king';
+  $('modeBanner').textContent=king
+    ? '👑 KINGモード：全担当者の経費を確認・承認・精算できます。'
+    : '👨‍💼 担当者モード：自分が登録した経費だけ表示します。保存すると「申請中」になります。';
+  render();
+}
+$('mode').addEventListener('change',updateMode);
+$('user').addEventListener('change',render);
+
+$('photo').addEventListener('change',e=>{
+  const f=e.target.files?.[0]; if(!f)return;
+  const img=new Image(); const r=new FileReader();
+  r.onload=()=>{img.onload=()=>{
+    const max=1400, scale=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    photoData=c.toDataURL('image/jpeg',0.72);
+    $('preview').src=photoData;$('preview').classList.remove('hidden');$('photoPlaceholder').classList.add('hidden');
+  };img.src=r.result};r.readAsDataURL(f);
+});
+$('clearPhoto').onclick=()=>{photoData='';$('photo').value='';$('preview').src='';$('preview').classList.add('hidden');$('photoPlaceholder').classList.remove('hidden')};
+
+function resetForm(){
+  $('date').value=today(); $('store').value=''; $('amount').value=''; $('tax').value='';
+  $('business').value='イベント'; $('category').value='仕入'; $('event').value='';
+  $('payment').value='個人立替'; $('memo').value=''; $('clearPhoto').click();
+}
+$('reset').onclick=resetForm;
+
+$('save').onclick=()=>{
+  const amount=Number($('amount').value||0);
+  if(!amount){toast('金額を入力してください');$('amount').focus();return}
+  if(!$('date').value){toast('購入日を入力してください');return}
+  const rows=load();
+  rows.unshift({
+    id:id(), createdAt:new Date().toISOString(), date:$('date').value, store:$('store').value.trim(),
+    amount, tax:Number($('tax').value||0), business:$('business').value, category:$('category').value,
+    event:$('event').value.trim(), payment:$('payment').value, memo:$('memo').value.trim(),
+    user:$('user').value, status: $('mode').value==='king'?'approved':'pending', photo:photoData
+  });
+  persist(rows); resetForm(); render();
+  toast($('mode').value==='king'?'経費を保存しました':'申請中として保存しました');
+};
+
+function badge(s){
+  const m={pending:['申請中','pending'],approved:['承認済','approved'],settled:['精算済','settled']};
+  return `<span class="badge ${m[s][1]}">${m[s][0]}</span>`;
+}
+function getVisible(){
+  let rows=load();
+  if($('mode').value!=='king') rows=rows.filter(r=>r.user===$('user').value);
+  const sf=$('statusFilter').value;if(sf)rows=rows.filter(r=>r.status===sf);
+  const q=$('search').value.trim().toLowerCase();
+  if(q)rows=rows.filter(r=>[r.store,r.event,r.user,r.memo,r.category].join(' ').toLowerCase().includes(q));
+  return rows;
+}
+function render(){
+  const rows=getVisible(), king=$('mode').value==='king';
+  $('empty').classList.toggle('hidden',rows.length>0);
+  $('tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td>${esc(r.date)}</td>
+      <td>${esc(r.user)}</td>
+      <td><b>${esc(r.store||'—')}</b><br><span class="note">${esc(r.event||'—')}</span></td>
+      <td>${esc(r.category)}<br><span class="note">${esc(r.payment)}</span></td>
+      <td><b>${yen(r.amount)}</b></td>
+      <td>${badge(r.status)}</td>
+      <td>${r.photo?`<img class="thumb" src="${r.photo}" onclick="showImg('${r.id}')">`:'—'}</td>
+      <td><div class="actions">
+        ${king&&r.status==='pending'?`<button class="ok" onclick="setStatus('${r.id}','approved')">承認</button>`:''}
+        ${king&&r.status==='approved'&&r.payment==='個人立替'?`<button class="gold" onclick="setStatus('${r.id}','settled')">精算済</button>`:''}
+        ${king?`<button class="danger" onclick="removeRow('${r.id}')">削除</button>`:''}
+      </div></td>
+    </tr>`).join('');
+  const sum=rows.reduce((a,r)=>a+Number(r.amount||0),0);
+  const pen=rows.filter(r=>r.status==='pending').reduce((a,r)=>a+Number(r.amount||0),0);
+  const uns=rows.filter(r=>r.payment==='個人立替'&&r.status!=='settled').reduce((a,r)=>a+Number(r.amount||0),0);
+  $('totalAmount').firstChild.nodeValue=yen(sum);
+  $('pendingAmount').firstChild.nodeValue=yen(pen);
+  $('unsettledAmount').firstChild.nodeValue=yen(uns);
+}
+$('statusFilter').addEventListener('change',render);$('search').addEventListener('input',render);
+
+window.setStatus=(rid,status)=>{
+  const rows=load(), r=rows.find(x=>x.id===rid); if(!r)return;
+  r.status=status; r.updatedAt=new Date().toISOString(); persist(rows);render();
+  toast(status==='approved'?'承認しました':'精算済みにしました');
+};
+window.removeRow=rid=>{
+  if(!confirm('このテスト経費を削除しますか？'))return;
+  persist(load().filter(r=>r.id!==rid));render();toast('削除しました');
+};
+window.showImg=rid=>{
+  const r=load().find(x=>x.id===rid); if(!r?.photo)return;
+  $('modalImg').src=r.photo;$('imgModal').classList.remove('hidden');
+};
+$('closeModal').onclick=()=>$('imgModal').classList.add('hidden');
+$('imgModal').addEventListener('click',e=>{if(e.target===$('imgModal'))$('imgModal').classList.add('hidden')});
+
+$('seed').onclick=()=>{
+  const base=[
+    {store:'コストコ',amount:12480,business:'イベント',category:'仕入',event:'面影',payment:'個人立替',memo:'いか焼き材料',user:'文太',status:'pending'},
+    {store:'ENEOS',amount:8000,business:'イベント',category:'燃料費',event:'瀬田',payment:'個人立替',memo:'キッチンカー燃料',user:'将',status:'approved'},
+    {store:'ホームセンター',amount:3650,business:'建設',category:'消耗品費',event:'○○現場',payment:'会社カード',memo:'養生用品',user:'藤原明裕',status:'settled'}
+  ].map((x,i)=>({id:id(),createdAt:new Date().toISOString(),date:today(),tax:0,photo:'',...x}));
+  persist([...base,...load()]);render();toast('サンプルを追加しました');
+};
+$('wipe').onclick=()=>{
+  if(!confirm('テスト版の経費データをすべて削除しますか？'))return;
+  localStorage.removeItem(KEY);render();toast('全削除しました');
+};
+$('export').onclick=()=>{
+  const blob=new Blob([JSON.stringify(load(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fujiwara-receipt-expense-test.json';a.click();URL.revokeObjectURL(a.href);
+};
+updateMode();
+</script>
+</body>
+</html>
