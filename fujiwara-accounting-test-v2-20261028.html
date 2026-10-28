@@ -1,0 +1,64 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FUJIWARA Group 総合経理｜安全試験版</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#233047;background:#f4f6fa}*{box-sizing:border-box}body{margin:0}header{background:#18263e;color:white;padding:19px}header h1{margin:0;font-size:21px}header small{color:#e3c574}.wrap{max-width:1100px;margin:auto;padding:15px}.panel{background:white;border:1px solid #dfe5ee;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 3px 12px #17263e09}.warning{background:#fff8e4;border-color:#f0d69b}.flex{display:flex;flex-wrap:wrap;gap:10px;align-items:center}label{display:grid;gap:5px;font-size:13px;font-weight:700}input,select,textarea,button{font:inherit;padding:10px;border:1px solid #cbd5e1;border-radius:8px;max-width:100%}button{cursor:pointer;background:#1d446f;color:white;border:0;font-weight:700}button.alt{background:#edf1f7;color:#183451}button.danger{background:#9b3540}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px}.kpi{padding:15px;background:#eef4fc;border-radius:10px}.kpi b{display:block;font-size:22px;margin-top:8px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e5e9ef;text-align:left;padding:9px}td.num{text-align:right;white-space:nowrap}.scroll{overflow:auto}.muted{color:#66758a;font-size:12px}.tag{display:inline-block;background:#e5f3e8;color:#23613a;padding:3px 7px;border-radius:7px;font-size:11px}h2{font-size:18px;margin:0 0 12px}h3{font-size:15px}#status{font-weight:700}.hidden{display:none}@media(max-width:650px){.wrap{padding:9px}header{padding:15px}th,td{padding:7px 5px}table{font-size:12px}}
+</style></head><body><header><h1>📒 FUJIWARA Group 総合経理</h1><small>安全試験版 v2｜会社別・仕入明細の照合</small></header><main class="wrap">
+<section class="panel warning"><b>🔒 安全運用</b><p>既存の <code>fujiwara/events</code> は読み取り専用。新規の手入力は <code>fujiwara/accounting_test_v1/entries</code> にだけ保存します。イベントへの逆方向書込みは未実装です。既存データの上書き・削除はしません。</p><p class="muted">この試験版には独立したログイン機能はありません。公開URLで運用せず、Firebaseルールと認証を確認するまでは実データ入力を控えてください。</p><div class="flex"><span id="status">接続準備中…</span><button class="alt" id="refresh">再読み込み</button><button class="alt" id="export">試験仕訳CSV出力</button></div></section>
+<section class="panel"><div class="flex"><label>対象月<input type="month" id="month"></label><label>経費区分<select id="filter"><option value="">すべて</option><option>FUJIWARA Group経費</option><option>リコー工業経費</option><option>プライベートA箇所</option><option>プライベートB箇所</option><option>イベント経費</option></select></label></div><div class="grid" style="margin-top:12px"><div class="kpi">既存イベント経費（閲覧）<b id="eventSum">¥0</b></div><div class="kpi">試験仕訳合計<b id="manualSum">¥0</b></div><div class="kpi">表示合計（重複注意）<b id="totalSum">¥0</b></div></div><p class="muted">イベント経費の既存集計と手入力は別表示です。既存イベントに紐づく試験仕訳は重複防止のため合計から除外します。</p></section>
+<section class="panel"><h2>🔍 メインとの照合（読み取り専用）</h2><p class="muted">メインアプリの会社別経費と仕入先明細を読み取ります。会社別の合計とイベント総額に差がある場合は警告します。既存データは変更しません。</p><div id="audit" class="scroll"></div></section><section class="panel"><h2>✍️ 経費入力（試験用）</h2><form id="form"><div class="grid"><label>日付<input type="date" id="date" required></label><label>区分<select id="group" required></select></label><label>科目<select id="category" required></select></label><label>金額（円）<input type="number" id="amount" min="1" step="1" required></label><label>仕入先<select id="supplier"></select></label><label>イベント<select id="event"><option value="">指定なし</option></select></label><label>支払方法<select id="payment"><option>会社現金</option><option>会社口座</option><option>個人立替</option><option>その他</option></select></label><label>摘要<input id="memo" maxlength="150" placeholder="購入内容など"></label></div><p><button type="submit">💾 試験帳簿に保存</button></p></form><div class="flex"><input id="newSupplier" placeholder="新しい仕入先名"><button class="alt" id="addSupplier">＋ 仕入先追加</button></div><p class="muted">イベント経費の仕入先・経費を記録できますが、現段階では既存イベント精算への書き戻しは行いません。</p></section>
+<section class="panel"><h2>📅 既存イベント経費（Firebaseから閲覧）</h2><div class="scroll"><table><thead><tr><th>日付</th><th>イベント</th><th>仕入</th><th>場所代</th><th>交通費</th><th>その他</th><th>労務費</th><th>合計</th></tr></thead><tbody id="eventRows"></tbody></table></div></section>
+<section class="panel"><h2>🧾 試験帳簿（新規入力）</h2><div class="scroll"><table><thead><tr><th>日付</th><th>区分</th><th>科目</th><th>仕入先・摘要</th><th>イベント</th><th>金額</th><th>操作</th></tr></thead><tbody id="entries"></tbody></table></div></section>
+</main>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+"use strict";
+const config={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+const defs={"FUJIWARA Group経費":["光熱費","通信費","交通費","燃料費","雑費"],"リコー工業経費":["通信費","燃料費","交通費","雑費"],"プライベートA箇所":["通信費","光熱費","生活費","雑費"],"プライベートB箇所":["通信費","光熱費","生活費","雑費"],"イベント経費":["仕入","場所代","交通費","その他経費","労務費"]};
+const defaultSuppliers=["業務スーパー","瀬戸内食品","吉元ファーム","吉澤","アポロン","ポップコーン","その他"];
+const $=id=>document.getElementById(id), money=n=>"¥"+Math.round(Number(n)||0).toLocaleString("ja-JP"), num=n=>Number(n)||0, esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let db,events=[],entries={},suppliers=[...defaultSuppliers],canWrite=false,auditRows=[];
+function setStatus(t){$("status").textContent=t}
+function setOpts(id,arr){$(id).innerHTML=arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")}
+function onGroup(){setOpts("category",defs[$("group").value]);$("supplier").disabled=$("group").value!=="イベント経費";$("event").disabled=$("group").value!=="イベント経費"}
+function normalizeEvents(raw){
+const out=[];auditRows=[];
+for(const [key,e] of Object.entries(raw||{})){
+if(!e||typeof e!=="object")continue;
+let days=e.sales?.days||{},rows=Object.entries(days).filter(([d,r])=>r&&typeof r==="object").map(([d,r])=>({date:d,s:r.simple||r}));
+if(!rows.length&&e.sales?.simple)rows=[{date:e.date||"",s:e.sales.simple}];
+for(const row of rows){
+const simple=row.s,ex=simple.expenses||{},split=simple.accountingSplit||{},comp=split.companyExpenses||null;
+const amounts={shiire:num(ex.shiire),basho:num(ex.basho),kotsu:num(ex.kotsu),other:num(ex.other),labor:num(ex.labor?.total)};
+const date=row.date||e.date||"",name=e.name||e.title||"名称未設定";
+out.push({key,date,name,...amounts});
+const detail=split.purchaseDetails||{},fd=Array.isArray(detail.fujiwara)?detail.fujiwara:[],ad=Array.isArray(detail.amagasaki)?detail.amagasaki:[];
+const csum=c=>["shiire","basho","kotsu","other"].reduce((a,k)=>a+num(c?.[k]),0);
+const original=amounts.shiire+amounts.basho+amounts.kotsu+amounts.other;
+const companyTotal=comp?csum(comp.fujiwara)+csum(comp.amagasaki):null;
+auditRows.push({date,name,fujiwara:comp?csum(comp.fujiwara):null,amagasaki:comp?csum(comp.amagasaki):null,original,delta:companyTotal===null?null:original-companyTotal,details:fd.length+ad.length});
+}}
+return out}
+function drawAudit(){
+const rows=auditRows.filter(e=>e.date.startsWith($("month").value));
+$("audit").innerHTML='<table><thead><tr><th>日付</th><th>イベント</th><th>FUJIWARA</th><th>尼崎本社</th><th>経費計（労務費除く）</th><th>仕入明細件数</th><th>照合</th></tr></thead><tbody>'+rows.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.name)}</td><td class="num">${e.fujiwara===null?"未分類":money(e.fujiwara)}</td><td class="num">${e.amagasaki===null?"未分類":money(e.amagasaki)}</td><td class="num">${money(e.original)}</td><td class="num">${e.details}</td><td>${e.delta===null?"旧形式／要確認":e.delta===0?"一致":"⚠️ 差額 "+money(e.delta)}</td></tr>`).join("")+'</tbody></table>'}
+function draw(){drawAudit();const m=$("month").value,filter=$("filter").value,shown=events.filter(e=>e.date.startsWith(m));$("eventRows").innerHTML=shown.length?shown.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.name)}</td><td class="num">${money(e.shiire)}</td><td class="num">${money(e.basho)}</td><td class="num">${money(e.kotsu)}</td><td class="num">${money(e.other)}</td><td class="num">${money(e.labor)}</td><td class="num">${money(e.shiire+e.basho+e.kotsu+e.other+e.labor)}</td></tr>`).join(""):`<tr><td colspan="8">該当するイベント経費はありません</td></tr>`;
+const filtered=Object.entries(entries).filter(([id,e])=>e&&e.date?.startsWith(m)&&(!filter||e.group===filter)).sort((a,b)=>b[1].date.localeCompare(a[1].date));
+$("entries").innerHTML=filtered.length?filtered.map(([id,e])=>`<tr><td>${esc(e.date)}</td><td>${esc(e.group)}</td><td>${esc(e.category)}</td><td>${esc(e.supplier||"")} ${esc(e.memo||"")}</td><td>${esc(e.eventName||"")}</td><td class="num">${money(e.amount)}</td><td><button class="danger" data-id="${esc(id)}">削除</button></td></tr>`).join(""):`<tr><td colspan="7">まだ試験仕訳はありません</td></tr>`;
+const eventSum=filter&&filter!=="イベント経費"?0:shown.reduce((a,e)=>a+e.shiire+e.basho+e.kotsu+e.other+e.labor,0);
+const manualSum=filtered.reduce((a,[,e])=>a+num(e.amount),0);
+const unlinked=filtered.reduce((a,[,e])=>a+(e.group==="イベント経費"&&e.eventKey?0:num(e.amount)),0);
+$("eventSum").textContent=money(eventSum);$("manualSum").textContent=money(manualSum);$("totalSum").textContent=money(eventSum+unlinked)}
+function updateEventOptions(){const map=new Map();for(const e of events)map.set(e.key,e.name);$("event").innerHTML='<option value="">指定なし</option>'+[...map].map(([k,n])=>`<option value="${esc(k)}">${esc(n)}</option>`).join("")}
+async function init(){setOpts("group",Object.keys(defs));onGroup();const today=new Date();$("date").value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");$("month").value=$("date").value.slice(0,7);$("month").onchange=draw;$("filter").onchange=draw;$("group").onchange=onGroup;setOpts("supplier",suppliers);
+try{if(!firebase.apps.length)firebase.initializeApp(config);db=firebase.database();setStatus("Firebase接続中…");
+db.ref("fujiwara/events").on("value",s=>{events=normalizeEvents(s.val());updateEventOptions();draw();setStatus("✅ 既存イベントを読み取り中（既存データへの書込みなし）")},e=>setStatus("⚠️ イベント読取不可: "+e.message));
+db.ref("fujiwara/accounting_test_v1/entries").on("value",s=>{entries=s.val()||{};draw()},e=>setStatus("⚠️ 試験帳簿読取不可: "+e.message));
+db.ref("fujiwara/accounting_test_v1/suppliers").on("value",s=>{suppliers=[...new Set([...defaultSuppliers,...Object.values(s.val()||{})])];setOpts("supplier",suppliers)});
+canWrite=true;
+}catch(e){setStatus("⚠️ 接続エラー: "+e.message)}}
+$("form").onsubmit=async ev=>{ev.preventDefault();if(!db||!canWrite)return alert("Firebase未接続");const group=$("group").value,eventKey=group==="イベント経費"?$("event").value:"";const match=events.find(e=>e.key===eventKey);const entry={date:$("date").value,group,category:$("category").value,amount:num($("amount").value),supplier:group==="イベント経費"?$("supplier").value:"",eventKey,eventName:match?.name||"",payment:$("payment").value,memo:$("memo").value.trim(),source:"accounting_test_v1",createdAt:new Date().toISOString()};if(!entry.amount||entry.amount<0)return alert("金額を確認してください");if(eventKey&&!confirm("既存イベントに紐づく試験仕訳です。イベント本体には反映されません。保存しますか？"))return;try{await db.ref("fujiwara/accounting_test_v1/entries").push(entry);$("amount").value="";$("memo").value="";alert("試験帳簿へ保存しました。既存イベントには書き込んでいません。")}catch(e){alert("保存できません: "+e.message)}};
+$("addSupplier").onclick=async()=>{const v=$("newSupplier").value.trim();if(!v)return;if(suppliers.includes(v))return alert("登録済みです");try{await db.ref("fujiwara/accounting_test_v1/suppliers").push(v);$("newSupplier").value=""}catch(e){alert("保存できません: "+e.message)}};
+$("entries").onclick=async e=>{const id=e.target.dataset?.id;if(!id||!confirm("この試験仕訳を削除しますか？既存イベントは変更されません。"))return;try{await db.ref("fujiwara/accounting_test_v1/entries/"+id).remove()}catch(err){alert(err.message)}};
+$("refresh").onclick=()=>location.reload();
+$("export").onclick=()=>{const rows=[["日付","区分","科目","金額","仕入先","イベント","支払方法","摘要"],...Object.values(entries).filter(e=>e?.date?.startsWith($("month").value)).map(e=>[e.date,e.group,e.category,e.amount,e.supplier||"",e.eventName||"",e.payment||"",e.memo||""])];const csv="\ufeff"+rows.map(r=>r.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FUJIWARA_試験経理_"+$("month").value+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+init();
+</script></body></html>
