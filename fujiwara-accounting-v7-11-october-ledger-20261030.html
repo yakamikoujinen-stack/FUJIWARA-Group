@@ -1,0 +1,511 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FUJIWARA Group 総合経理｜開発試験版 v7.9</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#233047;background:#f4f6fa}*{box-sizing:border-box}body{margin:0}header{background:#18263e;color:white;padding:19px}header h1{margin:0;font-size:21px}header small{color:#e3c574}.wrap{max-width:1100px;margin:auto;padding:15px}.panel{background:white;border:1px solid #dfe5ee;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 3px 12px #17263e09}.warning{background:#fff8e4;border-color:#f0d69b}.flex{display:flex;flex-wrap:wrap;gap:10px;align-items:center}label{display:grid;gap:5px;font-size:13px;font-weight:700}input,select,textarea,button{font:inherit;padding:10px;border:1px solid #cbd5e1;border-radius:8px;max-width:100%}button{cursor:pointer;background:#1d446f;color:white;border:0;font-weight:700}button.alt{background:#edf1f7;color:#183451}button.danger{background:#9b3540}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px}.kpi{padding:15px;background:#eef4fc;border-radius:10px}.kpi b{display:block;font-size:22px;margin-top:8px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e5e9ef;text-align:left;padding:9px}td.num{text-align:right;white-space:nowrap}.scroll{overflow:auto}.muted{color:#66758a;font-size:12px}.tag{display:inline-block;background:#e5f3e8;color:#23613a;padding:3px 7px;border-radius:7px;font-size:11px}h2{font-size:18px;margin:0 0 12px}h3{font-size:15px}#status{font-weight:700}.hidden{display:none}@media(max-width:650px){.wrap{padding:9px}header{padding:15px}th,td{padding:7px 5px}table{font-size:12px}}
+</style></head><body><header><h1>📒 FUJIWARA Group 総合経理</h1><small>会計開発版 v7.10｜10月30日運用開始・過去分入力対応</small></header><main class="wrap">
+<section class="panel" id="loginPanel"><h2>🔐 社長専用ログイン（開発試験・v7.9）</h2><p class="muted">Firebase登録済みの社長アカウントで認証します。画面表示の制限はFirebaseサーバー側の安全性を保証しません。現在の公開ルールを必ず別途修正する必要があります。</p><div class="grid"><label>メールアドレス<input type="email" id="authEmail" autocomplete="username" placeholder="Firebase登録メール"></label><label>Firebaseパスワード<input type="password" id="authPassword" autocomplete="current-password" placeholder="KINGの4桁とは別"></label></div><p class="flex"><button id="loginBtn">社長としてログイン</button><button class="alt" id="logoutBtn" type="button">ログアウト</button></p><p id="authStatus" role="status">認証を確認しています…</p>
+<div class="panel" style="background:#f4f7fb;box-shadow:none;margin:8px 0">
+<strong>🔎 認証の状態（別々に表示）</strong>
+<div id="authDetails" style="white-space:pre-line;line-height:1.9;font-size:14px;margin-top:8px">Firebase準備中…</div>
+<p class="muted">認証済みでも、管理者UIDが一致しなければ帳簿は開きません。UIDの全桁・パスワード・認証トークンは表示しません。</p>
+<button type="button" class="alt" id="recheckAuth">現在の認証状態を再確認</button>
+</div></section>
+<div id="accountBody" hidden>
+<section class="panel" style="border:2px solid #3d688d"><h2>📘 記帳開始日：2026年10月30日</h2>
+<p><strong>2026年10月30日を運用開始日とします。過去の日付の経費も入力できます。</strong> 過去のFirebaseイベント・レシートは原本のまま閲覧し、不明な経費は「照合待ち」で管理します。過去の金額を勝手に書き換えません。</p>
+<p class="muted">運用：①当日の売上・イベント経費はメインアプリへ入力 ②会社・個人のイベント外経費は下の暗号化仮帳簿へ入力 ③レシートは会社払い・立替・メイン計上状況を確認 ④未確認は照合待ちとして保存 ⑤毎日バックアップ。端末内の仮帳簿は正式な共有帳簿ではありません。</p>
+<div class="grid"><div class="kpi">運用開始日<b>2026-10-30 開始</b></div><div class="kpi">照合待ちレシート<b id="pendingReconcileCount">仮帳簿を開いて確認</b></div></div>
+</section>
+<section class="panel warning"><b>🔒 安全運用</b><p>管理者ログイン後、既存の <code>fujiwara/events</code> を読み取り専用で表示します。会社・個人経費はこの端末の暗号化仮帳簿で試験入力します。Firebaseの会計帳簿にはまだ保存しません。イベント経費はメインアプリで入力し、こちらで閲覧してください。</p><p class="muted">【重要】Firebaseルールが公開中のため、本番の経理データは入力せず架空の金額で試験してください。URLを知っている人を制限する機能は、このHTML単体では実現できません。</p><div class="flex"><span id="status">接続準備中…</span><button class="alt" id="refresh">再読み込み</button><button class="alt" id="export">開いている仮帳簿のCSV出力</button></div></section>
+<section class="panel"><div class="flex"><label>対象月<input type="month" id="month"></label><label>経費区分<select id="filter"><option value="">すべて</option><option>FUJIWARA Group経費</option><option>リコー工業経費</option><option>プライベートA箇所</option><option>プライベートB箇所</option><option>イベント経費</option></select></label></div><div class="grid" style="margin-top:12px"><div class="kpi">既存イベント経費（閲覧）<b id="eventSum">¥0</b></div><div class="kpi">会社・個人の帳簿<b id="manualSum">¥0</b></div><div class="kpi">合計（参考）<b id="totalSum">¥0</b></div></div><p class="muted">イベント経費はメインの保存額を正とし、経理からの二重入力を禁止します。会社・個人経費の帳簿とは別管理です。</p></section>
+<section class="panel" id="octoberWork"><h2>📘 10月分の帳簿整理｜2026年10月1日〜30日</h2><p class="muted">運用開始は10月30日。過去分も実際の支払日で記録できます。イベント経費はメイン原本を閲覧し、同じ支出を仮帳簿へ二重計上しません。レシートの計上先が不明なら「照合待ち」にします。</p><div class="grid"><div class="kpi">対象月のレシート<b id="workReceiptCount">読込中</b></div><div class="kpi">照合待ち・未確認<b id="workUnresolved">🔒 確認待ち</b></div><div class="kpi">対象月の仮帳簿<b id="workEntryCount">🔒 確認待ち</b></div></div><p class="flex"><button type="button" class="alt" id="workReceipts">① 10月のレシートを見る</button><button type="button" class="alt" id="workReview">② レシートを照合する</button><button type="button" class="alt" id="workForm">③ 会社・個人経費を入力</button><button type="button" class="alt" id="workVault">④ バックアップを保存</button></p><p class="muted">※ 件数は画面に読み込まれた申請・端末内仮帳簿から計算します。レシート原本に日付がないものは別途全月表示で確認してください。仮帳簿はこの端末のみの試験保存です。</p></section>
+<section class="panel warning"><h2>運用開始前の必須確認</h2><p>① Firebase Databaseルールでリーダーだけに <code>fujiwara/accounting_v6</code> の読書きを許可すること。② 既存メインアプリはイベント全体を保存する処理があるため、経理側からイベントを書き戻す機能はまだ有効にしないこと。③ v1〜v6の試験仕訳は取り込みません。今回の帳簿は端末内の暗号化仮帳簿です。</p></section><section class="panel"><h2>🔍 メインとの照合（読み取り専用）</h2><p class="muted">メインアプリの会社別経費と仕入先明細を読み取ります。会社別の合計とイベント総額に差がある場合は警告します。既存データは変更しません。</p><div id="audit" class="scroll"></div></section><section class="panel"><h2>📦 イベント別・仕入先明細（閲覧専用）</h2><div class="flex"><label>確認するイベント<select id="detailEvent"><option value="">イベントを選択</option></select></label></div><div id="detailSummary" class="muted" style="margin:12px 0">イベントを選択してください。</div><div class="scroll" id="detailRows"></div><p class="muted">仕入先明細が未登録の場合、仕入総額を勝手に仕入先へ配分しません。メインアプリに保存された原本のみを表示します。</p></section><section class="panel"><h2>📊 仕入先別・科目別 月間集計（閲覧専用）</h2><p class="muted">保存済み明細を元に集計します。宿泊・交通費は名称から仮分類し、原本の科目や金額は変更しません。明細未登録分は「明細未登録」として別表示します。</p><div id="monthlyBreakdown" class="scroll"></div><h3>⚠️ 試験仕訳の重複候補</h3><p class="muted">同一日付・イベント・金額・科目の候補を表示します。自動削除・自動統合はしません。</p><div id="duplicateCheck" class="scroll"></div></section><section class="panel"><h2>🔁 メインへの反映プレビュー（書込みなし）</h2><p class="muted">試験帳簿のイベント経費を、既存メインアプリの保存形式へ反映する場合の候補を表示します。イベント・日付の特定、二重計上の危険、科目の対応を確認するための機能です。既存Firebaseイベントへの書込みボタンはありません。</p><div id="syncPreview" class="scroll"></div><p class="muted">「要確認」の記録は自動反映できません。会社経費・私的経費はイベントへの反映対象外です。</p></section><section class="panel"><h2>✍️ 会社・個人経費入力（端末内の暗号化仮保存）</h2><p class="muted"><strong>📅 過去分も入力できます。</strong> 下の「日付」を実際の支払日に変更してください（10月30日以前も選択可能）。保存後は上の「対象月」をその年月に変更すると一覧で確認できます。既存イベントの売上・経費はメインアプリで入力し、こちらには重複登録しないでください。</p><form id="form"><div class="grid"><label>支払日（過去日付も可）<input type="date" id="date" required></label><label>区分<select id="group" required></select></label><label>科目<select id="category" required></select></label><label>金額（円）<input type="number" id="amount" min="1" step="1" required></label><label>仕入先<select id="supplier"></select></label><label>イベント<select id="event"><option value="">指定なし</option></select></label><label>支払方法<select id="payment"><option>会社現金</option><option>会社口座</option><option>個人立替</option><option>その他</option></select></label><label>摘要<input id="memo" maxlength="150" placeholder="購入内容など"></label></div><p><button type="submit">💾 暗号化仮帳簿に保存</button></p></form><div class="flex"><input id="newSupplier" placeholder="新しい仕入先名"><button class="alt" id="addSupplier">＋ 仕入先追加</button></div><p class="muted">イベント経費はメインアプリで入力してください。ここでは二重計上を防ぐためイベント経費の新規登録を停止しています。</p></section>
+<section class="panel" id="receiptPanel"><h2>🧾 従業員レシート申請の照合（読み取り専用）</h2>
+<p class="muted">既存 <code>fujiwara/purchases</code> の申請を読み込み、申請状態・支払区分・原本との重複候補を表示します。写真そのものは表示・保存しません。申請データの承認・却下・編集・会計計上は行いません。</p>
+<div class="flex"><label>表示対象<select id="receiptFilter"><option value="all">すべて</option><option value="pending">未承認</option><option value="approved">承認済み</option><option value="rejected">却下</option><option value="other">その他・不明</option></select></label><label><input type="checkbox" id="receiptAllMonths"> 全月表示（初期は選択月のみ）</label></div>
+<p class="muted" id="receiptConnection">レシート申請：接続準備中</p>
+<div class="grid" id="receiptStats"><div class="kpi">申請件数<b id="receiptCount">0件</b></div><div class="kpi">未承認件数<b id="receiptPending">0件</b></div><div class="kpi">重複の確認候補<b id="receiptMatches">0件</b></div></div>
+<div class="scroll"><table><thead><tr><th>日付</th><th>申請者</th><th>店舗・購入内容</th><th>支払区分（申告値）</th><th>金額</th><th>申請状態</th><th>経費照合</th></tr></thead><tbody id="receiptRows"><tr><td colspan="7">認証後に読み込みます</td></tr></tbody></table></div>
+<p class="muted">※ 「重複候補」は日付・金額・イベント／仕入先の一部一致による参考表示です。重複確定や経費計上はしません。会社払い・立替の判定が曖昧な場合は「要確認」と表示します。原本に該当する項目がない場合も「未記入」と表示します。</p></section>
+<section class="panel" id="receiptApprovalPanel">
+<h2>✅ レシート申請・社長の仮審査（端末内のみ）</h2>
+<p class="muted">Firebaseの申請原本は変更しません。「承認・保留・却下」は、この端末の<strong>暗号化仮帳簿だけ</strong>に保存する試験用判断です。Firebaseの本当の承認状態には反映されません。実際の申請承認・従業員への支払い指示には使わないでください。</p>
+<div class="grid"><label>審査する申請<select id="reviewReceipt"><option value="">申請を選択してください</option></select></label><label>支払の確認結果<select id="reviewPayment"><option value="">未確認</option><option value="company">会社払い（立替精算なし）</option><option value="advance">従業員立替（要精算）</option></select></label><label>費用計上先<select id="reviewGroup"><option value="">未確認</option><option value="FUJIWARA Group経費">FUJIWARA Group経費</option><option value="リコー工業経費">リコー工業経費</option><option value="プライベートA箇所">プライベートA箇所</option><option value="プライベートB箇所">プライベートB箇所</option><option value="event">イベント経費（既存原本で照合・仮帳簿への追加禁止）</option></select></label><label>科目<select id="reviewCategory"><option value="">区分を選択してください</option></select></label></div>
+<p id="reviewReceiptDetail" class="muted">申請を選択すると、日付・金額・重複確認結果を表示します。</p>
+<label>メインアプリへの計上状況<select id="reviewMainStatus"><option value="unknown">未確認（計上禁止）</option><option value="included">メインの合算経費に含まれる（追加計上禁止）</option><option value="not_included">メインには未計上（別途原本照合が必要）</option><option value="not_applicable">イベント外の会社・個人経費（原本照合が必要）</option></select></label>
+<p class="muted">「合算に含まれる」は金額をもう一度足さず、レシートと既存の経費を紐づけるための記録です。メインの内訳まで自動確認できたという意味ではありません。</p>
+<label>審査メモ<input id="reviewMemo" maxlength="200" placeholder="支払確認・原本確認の記録"></label>
+<div class="flex" style="margin:12px 0"><button type="button" id="reviewApprove">仮承認</button><button type="button" class="alt" id="reviewHold">保留</button><button type="button" class="alt" id="reviewReject">却下</button></div>
+<p class="flex"><button type="button" class="alt" id="reviewUnknown">🟠 計上の有無が不明・照合待ちで保存</button><button type="button" class="alt" id="reviewLink">📎 メイン計上済みとして照合記録のみ保存</button></p>
+<p class="muted">「照合待ち」は金額を追加せず、過去の「計上済み」申告を未確認に訂正できます。Firebase原本・既存経費は変更しません。</p><p id="reviewStatus" role="status">🔒 仮帳簿を開くと、審査を暗号化保存できます。</p>
+<div class="panel warning" style="box-shadow:none;margin:12px 0">
+<h3>📘 仮帳簿への計上（仮承認とは別操作）</h3><p class="muted">同じレシートIDは一度しか記録できません。日付・金額が既存仕入明細や仮帳簿に一致する場合、二重計上のおそれがあるため計上できません。イベント経費は必ずメインアプリを原本として扱います。</p>
+<label><input type="checkbox" id="reviewConfirm"> 原本を確認し、同じ支出が他の帳簿へ計上されていないことを確認した</label>
+<p class="flex"><button type="button" id="reviewPost">確認した申請を仮帳簿へ計上</button></p>
+<p class="muted">立替の場合も「経費」への計上は1回だけです。立替返済は支払い管理の別処理で、この画面では返済済みにしません。</p>
+</div>
+<div class="scroll"><table><thead><tr><th>申請</th><th>Firebase原本</th><th>端末内の仮審査</th><th>仮帳簿</th></tr></thead><tbody id="reviewSummaryRows"><tr><td colspan="4">仮帳簿を開いてください</td></tr></tbody></table></div>
+</section>
+<section class="panel"><h2>📅 既存イベント経費（Firebaseから閲覧）</h2><div class="scroll"><table><thead><tr><th>日付</th><th>イベント</th><th>仕入</th><th>場所代</th><th>交通費</th><th>その他</th><th>労務費</th><th>合計</th></tr></thead><tbody id="eventRows"></tbody></table></div></section>
+<section class="panel"><h2>🧾 会社・個人の暗号化仮帳簿</h2><div class="scroll"><table><thead><tr><th>日付</th><th>区分</th><th>科目</th><th>仕入先・摘要</th><th>イベント</th><th>金額</th><th>操作</th></tr></thead><tbody id="entries"></tbody></table></div></section>
+<section class="panel warning"><h2>🔒 仮帳簿の暗号化保存</h2><p>入力した経費はこの端末内だけに暗号化して保存します。復号用パスフレーズを忘れた場合は復旧できません。端末・ブラウザを替えると自動共有されません。</p><div class="grid"><label>仮帳簿のパスフレーズ（12文字以上）<input type="password" id="vaultPass" minlength="12" autocomplete="off" placeholder="会計試験専用。Firebaseとは別"></label></div><p class="flex"><button type="button" id="unlockVault">仮帳簿を開く／作成</button><button type="button" class="alt" id="lockVault">仮帳簿を閉じる</button><button type="button" class="alt" id="exportVault">暗号化バックアップを保存</button><label class="alt">バックアップ取込<input type="file" id="importVault" accept=".json,application/json"></label></p><p id="vaultStatus">仮帳簿はロック中。入力する前に開いてください。</p>
+<div class="panel" style="background:#fff;box-shadow:none;margin-top:12px;border:1px solid #cbd5e1">
+<h3>🧪 暗号化保存・復元の実証テスト</h3>
+<p class="muted">架空の100円を<span style="font-weight:bold">テスト専用領域</span>に記録します。経費の集計・CSV・イベント原本には一切加算しません。先に仮帳簿を開いてください。</p>
+<p class="flex"><button type="button" id="probeWrite">① テスト100円を暗号化保存</button><button type="button" class="alt" id="probeCheck">② 保存内容を照合</button><button type="button" class="alt" id="probeClear">テスト記録を消す</button></p>
+<p id="probeStatus" role="status">まだテストしていません。</p>
+<p class="muted">確認手順：①保存 → ページ再読み込み → 同じパスフレーズで開く → ②照合。成功したら暗号化バックアップも保存してください。</p>
+</div></section>
+</div></main>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+"use strict";
+const config={apiKey:"AIzaSyBVu9pdWuJVrCdE8khbzIm3kfenPP4swOA",authDomain:"fujiwara-group-3a600.firebaseapp.com",databaseURL:"https://fujiwara-group-3a600-default-rtdb.firebaseio.com",projectId:"fujiwara-group-3a600",storageBucket:"fujiwara-group-3a600.firebasestorage.app",messagingSenderId:"709887362301",appId:"1:709887362301:web:5ec6b7e2a2165066956a94"};
+const defs={"FUJIWARA Group経費":["仕入費","光熱費","通信費","交通費","燃料費","雑費"],"リコー工業経費":["仕入費","通信費","燃料費","交通費","雑費"],"プライベートA箇所":["通信費","光熱費","生活費","雑費"],"プライベートB箇所":["通信費","光熱費","生活費","雑費"],"イベント経費":["仕入","場所代","交通費","その他経費","労務費"]};
+const defaultSuppliers=["業務スーパー","瀬戸内食品","吉元ファーム","吉澤","アポロン","ポップコーン","その他"];
+const $=id=>document.getElementById(id), money=n=>"¥"+Math.round(Number(n)||0).toLocaleString("ja-JP"), num=n=>Number(n)||0, esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let db,events=[],entries={},suppliers=[...defaultSuppliers],canWrite=false,auditRows=[],detailRecords=[];
+let purchases={}, purchaseRef=null, receiptError="";
+const ADMIN_UID="kIHcefxVIBS7qj6vV6NZ6c2OxwK2";
+const STORAGE_KEY="fujiwara_accounting_v7_local_encrypted";
+let vaultKey=null, vaultData=null, initialized=false;
+const bytesTo64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+const b64ToBytes = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function vaultMsg(t){$("vaultStatus").textContent=t}
+async function deriveVault(pass,salt){const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:240000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function storeVault(){if(!vaultKey||!vaultData)throw Error('仮帳簿が開いていません');const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},vaultKey,new TextEncoder().encode(JSON.stringify(vaultData)));const prev=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');const blob={version:1,salt:prev.salt,iv:bytesTo64(iv),ciphertext:bytesTo64(ct)};localStorage.setItem(STORAGE_KEY,JSON.stringify(blob));}
+async function openVault(){const pass=$("vaultPass").value;if(pass.length<12)return vaultMsg('12文字以上のパスフレーズが必要です。');try{const prev=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');const salt=prev?b64ToBytes(prev.salt):crypto.getRandomValues(new Uint8Array(16));const key=await deriveVault(pass,salt);let data={entries:{},suppliers:[]};if(prev){const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(prev.iv)},key,b64ToBytes(prev.ciphertext));data=JSON.parse(new TextDecoder().decode(clear));}else{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:1,salt:bytesTo64(salt)}))}vaultKey=key;vaultData=data;entries=data.entries||{};suppliers=[...new Set([...defaultSuppliers,...(data.suppliers||[])])];setOpts('supplier',suppliers);if(!prev?.ciphertext)await storeVault();canWrite=true;draw();refreshProbeStatus();vaultMsg('✅ この端末の暗号化仮帳簿を開きました。Firebaseの経費は変更しません。');$("vaultPass").value='';}catch(e){vaultKey=null;vaultData=null;entries={};canWrite=false;draw();vaultMsg('⚠️ 開けません。パスフレーズ・バックアップを確認してください。')}}
+function lockVault(){vaultKey=null;vaultData=null;entries={};canWrite=false;draw();vaultMsg('🔒 仮帳簿を閉じました。');$('probeStatus').textContent='🔒 ロック中。照合するには仮帳簿を開いてください。'}
+async function updateVault(){vaultData.entries=entries;vaultData.suppliers=suppliers;await storeVault();draw()}
+function saveBlob(blob,filename){const a=document.createElement('a');const u=URL.createObjectURL(blob);a.href=u;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000)}
+function closeAccount(){vaultKey=null;vaultData=null;entries={};canWrite=false;$("accountBody").hidden=true;$("loginPanel").hidden=false;initialized=false;if(db){db.ref('fujiwara/events').off();db.ref('fujiwara/purchases').off();db=null;}purchases={};receiptError='';events=[];}
+
+function setStatus(t){$("status").textContent=t}
+function setOpts(id,arr){$(id).innerHTML=arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")}
+function onGroup(){setOpts("category",defs[$("group").value]);$("supplier").disabled=$("group").value!=="イベント経費";$("event").disabled=$("group").value!=="イベント経費"}
+function normalizeEvents(raw){
+const out=[];auditRows=[];detailRecords=[];
+for(const [key,e] of Object.entries(raw||{})){
+if(!e||typeof e!=="object")continue;
+let days=e.sales?.days||{},rows=Object.entries(days).filter(([d,r])=>r&&typeof r==="object").map(([d,r])=>({date:d,s:r.simple||r}));
+if(!rows.length&&e.sales?.simple)rows=[{date:e.date||"",s:e.sales.simple}];
+for(const row of rows){
+const simple=row.s,ex=simple.expenses||{},split=simple.accountingSplit||{},comp=split.companyExpenses||null;
+const amounts={shiire:num(ex.shiire),basho:num(ex.basho),kotsu:num(ex.kotsu),other:num(ex.other),labor:num(ex.labor?.total)};
+const date=row.date||e.date||"",name=e.name||e.title||"名称未設定";
+out.push({key,date,name,...amounts});
+const detail=split.purchaseDetails||{},fd=Array.isArray(detail.fujiwara)?detail.fujiwara:[],ad=Array.isArray(detail.amagasaki)?detail.amagasaki:[];
+const csum=c=>["shiire","basho","kotsu","other"].reduce((a,k)=>a+num(c?.[k]),0);
+const original=amounts.shiire+amounts.basho+amounts.kotsu+amounts.other;
+const companyTotal=comp?csum(comp.fujiwara)+csum(comp.amagasaki):null;
+detailRecords.push({id:key+'|'+date,key,date,name,split,amounts,comp,fd,ad});
+auditRows.push({date,name,fujiwara:comp?csum(comp.fujiwara):null,amagasaki:comp?csum(comp.amagasaki):null,original,delta:companyTotal===null?null:original-companyTotal,details:fd.length+ad.length});
+}}
+return out}
+function updateDetailSelect(){
+ const el=$('detailEvent'),prior=el.value;
+ const rows=detailRecords.filter(r=>r.date.startsWith($('month').value));
+ el.innerHTML='<option value="">イベントを選択</option>'+rows.map(r=>`<option value="${esc(r.id)}">${esc(r.date+'｜'+r.name)}</option>`).join('');
+ if(rows.some(r=>r.id===prior))el.value=prior;
+ renderDetail();
+}
+function renderDetail(){
+ const r=detailRecords.find(r=>r.id===$('detailEvent').value),target=$('detailRows');
+ if(!r){$('detailSummary').textContent='イベントを選択してください。';target.innerHTML='';return}
+ const total=a=>a.reduce((n,x)=>n+num(x.amount),0),ft=total(r.fd),at=total(r.ad),fExpected=num(r.comp?.fujiwara?.shiire),aExpected=num(r.comp?.amagasaki?.shiire);
+ const notes=[];
+ if(!r.comp)notes.push('⚠️ 会社別経費が未分類（旧形式の可能性）');
+ if(r.fd.length&&ft!==fExpected)notes.push('⚠️ FUJIWARA仕入明細と仕入合計に差額 '+money(fExpected-ft));
+ if(r.ad.length&&at!==aExpected)notes.push('⚠️ 尼崎本社仕入明細と仕入合計に差額 '+money(aExpected-at));
+ if(!r.fd.length&&!r.ad.length)notes.push('仕入先明細は未登録です（仕入額が0円とは限りません）');
+ $('detailSummary').textContent='メインの仕入合計 '+money(r.amounts.shiire)+'｜FUJIWARA '+(r.comp?money(fExpected):'未分類')+'｜尼崎本社 '+(r.comp?money(aExpected):'未分類')+'｜'+(notes.join(' ／ ')||'登録済み明細を表示中');
+ const rows=[...r.fd.map(x=>({company:'FUJIWARA',...x})),...r.ad.map(x=>({company:'尼崎本社',...x}))];
+ target.innerHTML=rows.length?'<table><thead><tr><th>会社</th><th>仕入先</th><th>金額</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.company)}</td><td>${esc(x.vendor||'仕入先未記入')}</td><td class="num">${money(x.amount)}</td></tr>`).join('')+'</tbody></table>':'<p class="muted">保存された仕入先別明細はありません。</p>';
+}
+function categoryFromVendor(v){
+const name=String(v||"").replace(/\s/g,"");
+if(/宿泊|ホテル|旅館/.test(name))return "宿泊費（仮分類）";
+if(/交通|高速|駐車|通行|ガソリン|燃料/.test(name))return "交通・燃料費（仮分類）";
+return "仕入・その他（原本名）";
+}
+function drawMonthly(){
+const month=$("month").value,records=detailRecords.filter(r=>r.date.startsWith(month));
+const map=new Map(),byCat=new Map();
+function add(company,vendor,cat,amount,kind){
+const key=JSON.stringify([company,vendor,cat,kind]),old=map.get(key)||{company,vendor,cat,kind,amount:0,count:0};
+old.amount+=amount;old.count++;map.set(key,old);byCat.set(cat,(byCat.get(cat)||0)+amount)}
+for(const r of records){
+const details=[...r.fd.map(x=>({company:"FUJIWARA",...x})),...r.ad.map(x=>({company:"尼崎本社",...x}))];
+for(const d of details)add(d.company,d.vendor||"仕入先未記入",categoryFromVendor(d.vendor),num(d.amount),"保存済み明細");
+const listed=details.reduce((n,x)=>n+num(x.amount),0),missing=r.amounts.shiire-listed;
+if(missing!==0)add("要確認","明細未登録・差額","未照合",missing,"差額（要確認）");
+}
+const rows=[...map.values()].sort((a,b)=>a.company.localeCompare(b.company,"ja")||b.amount-a.amount);
+$("monthlyBreakdown").innerHTML=rows.length?'<table><thead><tr><th>会社</th><th>仕入先・項目</th><th>経理上の仮分類</th><th>件数</th><th>金額</th><th>状態</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.company)}</td><td>${esc(r.vendor)}</td><td>${esc(r.cat)}</td><td class="num">${r.count}</td><td class="num">${money(r.amount)}</td><td>${esc(r.kind)}</td></tr>`).join("")+'</tbody></table>':'<p class="muted">この月の仕入先明細はありません。</p>';
+const list=Object.values(entries).filter(e=>e?.date?.startsWith(month)&&e.group==="イベント経費");
+const candidates=[];
+for(const e of list){
+const same=records.filter(r=>r.key===e.eventKey&&r.date===e.date);
+if(same.length)candidates.push({e,reason:"既存イベントと日付が一致（手入力は合計から除外）"});
+}
+const seen=new Map();
+for(const e of list){
+const key=JSON.stringify([e.date,e.eventKey,e.category,e.amount,e.supplier]);
+if(seen.has(key))candidates.push({e,reason:"試験仕訳に同一条件の記録あり"});
+seen.set(key,true)}
+$("duplicateCheck").innerHTML=candidates.length?'<table><thead><tr><th>日付</th><th>イベント</th><th>金額</th><th>確認理由</th></tr></thead><tbody>'+candidates.map(x=>`<tr><td>${esc(x.e.date)}</td><td>${esc(x.e.eventName||"未指定")}</td><td class="num">${money(x.e.amount)}</td><td>${esc(x.reason)}</td></tr>`).join("")+'</tbody></table>':'<p class="muted">該当する重複候補はありません（重複が存在しないことの保証ではありません）。</p>';
+}
+function drawSyncPreview(){
+const month=$("month").value;
+const mapping={"仕入":"expenses.shiire","場所代":"expenses.basho","交通費":"expenses.kotsu","その他経費":"expenses.other","労務費":"expenses.labor.total"};
+const rows=Object.entries(entries).filter(([,e])=>e&&e.group==="イベント経費"&&e.date?.startsWith(month)).map(([id,e])=>{
+const matches=detailRecords.filter(r=>r.key===e.eventKey&&r.date===e.date);
+const reasons=[];
+if(!e.eventKey)reasons.push("イベント未指定");
+if(e.eventKey&&!matches.length)reasons.push("イベント日付が一致しない");
+if(matches.length!==1)reasons.push("保存先を一意に確定できない");
+if(!mapping[e.category])reasons.push("科目の対応が未定");
+if(e.category==="労務費")reasons.push("労務費は明細構造の確認が必要");
+const existing=matches[0]?num(matches[0].amounts[({仕入:"shiire",場所代:"basho",交通費:"kotsu",その他経費:"other",労務費:"labor"})[e.category]]):null;
+if(existing!==null&&existing>0)reasons.push("既存金額あり・二重計上注意");
+const siblings=Object.entries(entries).filter(([otherId,x])=>otherId!==id&&x?.date===e.date&&x?.eventKey===e.eventKey&&x?.category===e.category&&num(x?.amount)===num(e.amount)&&x?.supplier===e.supplier);
+if(siblings.length)reasons.push("試験帳簿内に同額・同条件あり");
+return {e,existing,reasons,mapping:mapping[e.category]||"未対応",destination:matches[0]?("fujiwara/events/"+matches[0].key+" / "+matches[0].date):"未確定"};
+});
+$("syncPreview").innerHTML=rows.length?'<table><thead><tr><th>日付・イベント</th><th>経費科目</th><th>試験入力</th><th>メイン現在値</th><th>反映候補</th><th>判定</th></tr></thead><tbody>'+rows.map(({e,existing,reasons,mapping,destination})=>`<tr><td>${esc(e.date)} ${esc(e.eventName||"未指定")}</td><td>${esc(e.category)}</td><td class="num">${money(e.amount)}</td><td class="num">${existing===null?"不明":money(existing)}</td><td>${esc(mapping)}<div class="muted">${esc(destination)}</div></td><td>${reasons.length?"⚠️ "+esc(reasons.join("／")):"候補確認済（未反映）"}</td></tr>`).join("")+'</tbody></table>':'<p class="muted">この月にはイベント経費の試験仕訳がありません。既存イベントは読み取り専用のままです。</p>';
+}
+function drawAudit(){
+const rows=auditRows.filter(e=>e.date.startsWith($("month").value));
+$("audit").innerHTML='<table><thead><tr><th>日付</th><th>イベント</th><th>FUJIWARA</th><th>尼崎本社</th><th>経費計（労務費除く）</th><th>仕入明細件数</th><th>照合</th></tr></thead><tbody>'+rows.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.name)}</td><td class="num">${e.fujiwara===null?"未分類":money(e.fujiwara)}</td><td class="num">${e.amagasaki===null?"未分類":money(e.amagasaki)}</td><td class="num">${money(e.original)}</td><td class="num">${e.details}</td><td>${e.delta===null?"旧形式／要確認":e.delta===0?"一致":"⚠️ 差額 "+money(e.delta)}</td></tr>`).join("")+'</tbody></table>'}
+// v7.7: Firebase purchases is an independent, read-only source. Do not merge it into entries or event totals.
+function normalizedPurchases(){
+ const raw=purchases||{};
+ return Object.entries(raw).filter(([,r])=>r&&typeof r==='object'&&!Array.isArray(r)).map(([id,r])=>({id,...r,date:String(r.date||'').slice(0,10),amount:Number(r.amount),status:String(r.reviewStatus||'').toLowerCase(),pay:String(r.pay||''),staff:String(r.staff||r.createdBy||''),store:String(r.store||''),item:String(r.item||''),eventName:String(r.eventName||''),category:String(r.category||'')}));
+}
+function receiptStatus(r){
+ if(['pending','申請中','未承認','保留'].includes(r.status))return {group:'pending',label:'未承認'};
+ if(['approved','承認済み','承認'].includes(r.status))return {group:'approved',label:'承認済み'};
+ if(['rejected','却下','否認'].includes(r.status))return {group:'rejected',label:'却下'};
+ return {group:'other',label:r.status||'状態未記入'};
+}
+function payLabel(p){
+ const x=String(p||'').toLowerCase();
+ if(!x)return '未記入・要確認';
+ if(/立替|本人|個人|employee|advance|self/.test(x))return '従業員立替（申告）';
+ if(/会社|現金|法人|company|corporate/.test(x))return '会社払い（申告）';
+ return String(p)+'（要確認）';
+}
+function compact(s){return String(s||'').replace(/[\s　・－ー_-]/g,'').toLowerCase()}
+function receiptMatch(r){
+ if(!r.date||!Number.isFinite(r.amount)||r.amount<=0)return '要確認：日付・金額不足';
+ const possibles=detailRecords.filter(d=>d.date===r.date && (!r.eventName||compact(d.name).includes(compact(r.eventName))||compact(r.eventName).includes(compact(d.name))));
+ const exactDetail=possibles.some(d=>[...d.fd,...d.ad].some(x=>Number(x.amount)===r.amount&&(!r.store||compact(x.vendor).includes(compact(r.store))||compact(r.store).includes(compact(x.vendor)))));
+ if(exactDetail)return '⚠️ 仕入明細と一致候補';
+ const sameEventAmount=possibles.some(d=>Object.values(d.amounts||{}).some(v=>Number(v)===r.amount));
+ if(sameEventAmount)return '⚠️ イベント計上額と一致候補';
+ const localMatches=Object.values(entries).some(e=>e.date===r.date&&Number(e.amount)===r.amount);
+ if(localMatches)return '⚠️ 仮帳簿に同額・同日候補';
+ if(!r.eventName)return 'イベント指定なし・要照合';
+ if(!possibles.length)return 'イベント原本未特定';
+ return '明細一致なし（未計上とは限らない）';
+}
+function drawReceipts(){
+ const el=$('receiptRows');if(!el)return;
+ const month=$('month').value, all=$('receiptAllMonths').checked,filter=$('receiptFilter').value;
+ const rows=normalizedPurchases().filter(r=>(all||r.date.startsWith(month))&&(filter==='all'||receiptStatus(r).group===filter)).sort((a,b)=>b.date.localeCompare(a.date));
+ const matches=rows.filter(r=>receiptMatch(r).includes('⚠️')).length;
+ $('receiptCount').textContent=rows.length+'件';if($('workReceiptCount'))$('workReceiptCount').textContent=normalizedPurchases().filter(r=>r.date.startsWith($('month').value)).length+'件';$('receiptPending').textContent=rows.filter(r=>receiptStatus(r).group==='pending').length+'件';$('receiptMatches').textContent=matches+'件';
+ el.innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.date||'未記入')}</td><td>${esc(r.staff||'未記入')}</td><td>${esc(r.store||'店舗未記入')}<div class="muted">${esc(r.item||r.category||'内容未記入')}${r.eventName?'｜'+esc(r.eventName):''}</div></td><td>${esc(payLabel(r.pay))}</td><td class="num">${Number.isFinite(r.amount)&&r.amount>=0?money(r.amount):'要確認'}</td><td>${esc(receiptStatus(r).label)}</td><td>${esc(receiptMatch(r))}</td></tr>`).join(''):`<tr><td colspan="7">${receiptError?esc(receiptError):'該当する申請はありません（閲覧期間・状態を確認）'}</td></tr>`;
+}
+$('receiptFilter').onchange=drawReceipts;$('receiptAllMonths').onchange=()=>{drawReceipts();renderReceiptReviews();};
+function renderOctoberWork(){
+ const month=$('month').value;
+ const rows=normalizedPurchases().filter(r=>r.date.startsWith(month));
+ $('workReceiptCount').textContent=rows.length+'件';
+ if(!canWrite){$('workUnresolved').textContent='🔒 仮帳簿ロック中';$('workEntryCount').textContent='🔒 仮帳簿ロック中';return;}
+ const reviews=reviewMap();
+ const unresolved=rows.filter(r=>{const v=reviews[receiptReviewKey(r)];return !v||v.mainStatus==='unknown'||v.status==='pending_reconciliation';}).length;
+ $('workUnresolved').textContent=unresolved+'件（未確認含む）';
+ $('workEntryCount').textContent=Object.values(entries).filter(e=>e?.date?.startsWith(month)).length+'件';
+}
+function workJump(id){const node=$(id);if(node)node.scrollIntoView({behavior:'smooth',block:'start'});}
+$('workReceipts').onclick=()=>{$('month').value='2026-10';$('receiptAllMonths').checked=false;draw();workJump('receiptPanel');};
+$('workReview').onclick=()=>{$('month').value='2026-10';$('receiptAllMonths').checked=false;draw();workJump('receiptApprovalPanel');};
+$('workForm').onclick=()=>workJump('form');
+$('workVault').onclick=()=>workJump('exportVault');
+function draw(){drawReceipts();renderReceiptReviews();renderOctoberWork();updateDetailSelect();drawAudit();drawMonthly();drawSyncPreview();const m=$("month").value,filter=$("filter").value,shown=events.filter(e=>e.date.startsWith(m));$("eventRows").innerHTML=shown.length?shown.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.name)}</td><td class="num">${money(e.shiire)}</td><td class="num">${money(e.basho)}</td><td class="num">${money(e.kotsu)}</td><td class="num">${money(e.other)}</td><td class="num">${money(e.labor)}</td><td class="num">${money(e.shiire+e.basho+e.kotsu+e.other+e.labor)}</td></tr>`).join(""):`<tr><td colspan="8">該当するイベント経費はありません</td></tr>`;
+const filtered=Object.entries(entries).filter(([id,e])=>e&&e.date?.startsWith(m)&&(!filter||e.group===filter)).sort((a,b)=>b[1].date.localeCompare(a[1].date));
+$("entries").innerHTML=filtered.length?filtered.map(([id,e])=>`<tr><td>${esc(e.date)}</td><td>${esc(e.group)}</td><td>${esc(e.category)}</td><td>${esc(e.supplier||"")} ${esc(e.memo||"")}</td><td>${esc(e.eventName||"")}</td><td class="num">${money(e.amount)}</td><td><button class="danger" data-id="${esc(id)}">削除</button></td></tr>`).join(""):`<tr><td colspan="7">まだ試験仕訳はありません</td></tr>`;
+const eventSum=filter&&filter!=="イベント経費"?0:shown.reduce((a,e)=>a+e.shiire+e.basho+e.kotsu+e.other+e.labor,0);
+const manualSum=filtered.reduce((a,[,e])=>a+num(e.amount),0);
+const unlinked=filtered.reduce((a,[,e])=>a+(e.group==="イベント経費"&&e.eventKey?0:num(e.amount)),0);
+$("eventSum").textContent=money(eventSum);$("manualSum").textContent=money(manualSum);$("totalSum").textContent=money(eventSum+unlinked)}
+function updateEventOptions(){const map=new Map();for(const e of events)map.set(e.key,e.name);$("event").innerHTML='<option value="">指定なし</option>'+[...map].map(([k,n])=>`<option value="${esc(k)}">${esc(n)}</option>`).join("")}
+async function init(){
+ setOpts('group',Object.keys(defs).filter(x=>x!=='イベント経費'));onGroup();const today=new Date();$('date').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');$('month').value=$('date').value.slice(0,7);$('month').onchange=draw;$('detailEvent').onchange=renderDetail;$('filter').onchange=draw;$('group').onchange=onGroup;setOpts('supplier',suppliers);
+ if(!firebase.auth().currentUser||firebase.auth().currentUser.uid!==ADMIN_UID)return;
+ if(initialized)return;initialized=true;
+ db=firebase.database();
+ db.ref('fujiwara/purchases').on('value',snap=>{purchases=snap.val()||{};receiptError='';$('receiptConnection').textContent='✅ 申請データの読み取り成功（書き込みなし）';drawReceipts();renderReceiptReviews();renderOctoberWork();},e=>{receiptError='申請読取不可：'+e.message;$('receiptConnection').textContent='⚠️ '+receiptError;drawReceipts();renderReceiptReviews();renderOctoberWork();});
+ db.ref('fujiwara/events').on('value',s=>{events=normalizeEvents(s.val());updateEventOptions();draw();setStatus('✅ メインイベント読み取り成功｜Firebaseへの書き込みはなし')},e=>setStatus('⚠️ イベント読取不可：'+e.message));
+}
+
+$("form").onsubmit=async ev=>{ev.preventDefault();if(!canWrite)return alert('まず暗号化仮帳簿を開いてください。');const group=$('group').value;if(group==='イベント経費')return alert('イベント経費はメイン側を原本とするため、この試験では入力しません。');const amount=Number($('amount').value);if(!Number.isInteger(amount)||amount<=0)return alert('金額を確認してください');const id='local_'+crypto.randomUUID();entries[id]={date:$('date').value,group,category:$('category').value,amount,payment:$('payment').value,memo:$('memo').value.trim(),supplier:'',eventKey:'',eventName:'',source:'local_encrypted_v7',createdAt:new Date().toISOString()};try{await updateVault();$('amount').value='';$('memo').value='';alert('✅ この端末の暗号化仮帳簿へ保存しました。Firebaseには送信していません。')}catch(e){delete entries[id];alert('保存失敗：'+e.message)}};
+$('addSupplier').onclick=async()=>{if(!canWrite)return alert('仮帳簿を開いてください');const v=$('newSupplier').value.trim();if(!v||suppliers.includes(v))return;suppliers.push(v);await updateVault();$('newSupplier').value=''};
+$('entries').onclick=async e=>{const id=e.target.dataset?.id;if(!id||!canWrite)return;if(!confirm('この端末の仮帳簿から削除しますか？'))return;const old=entries[id];delete entries[id];try{await updateVault()}catch(err){entries[id]=old;alert('保存失敗：'+err.message)}};
+
+$("refresh").onclick=()=>location.reload();
+$("export").onclick=()=>{const rows=[["日付","区分","科目","金額","仕入先","イベント","支払方法","摘要"],...Object.values(entries).filter(e=>e?.date?.startsWith($("month").value)).map(e=>[e.date,e.group,e.category,e.amount,e.supplier||"",e.eventName||"",e.payment||"",e.memo||""])];const csv="\ufeff"+rows.map(r=>r.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FUJIWARA_試験経理_"+$("month").value+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+// v7.5 テスト用の架空100円は実際の仕訳 entries と分けて保存する。
+function refreshProbeStatus(){
+ const probe=vaultData?.testProbe;
+ $('probeStatus').textContent=!vaultKey?'🔒 仮帳簿を開いてください。':probe?.kind==='storage-probe-v1'?'📌 前回のテスト記録あり。再読み込み後は「② 保存内容を照合」を押してください。':'試験記録なし。①から開始してください。';
+}
+$('probeWrite').onclick=async()=>{
+ if(!vaultKey||!vaultData)return alert('先に暗号化仮帳簿を開いてください。');
+ const old=vaultData.testProbe;
+ vaultData.testProbe={kind:'storage-probe-v1',amount:100,createdAt:new Date().toISOString(),nonce:crypto.randomUUID()};
+ try{await storeVault();$('probeStatus').textContent='✅ 架空100円を暗号化保存しました。次にページ再読み込み→仮帳簿を開き直して②照合してください。'}
+ catch(e){vaultData.testProbe=old;$('probeStatus').textContent='⚠️ 保存失敗：'+(e.message||e)}
+};
+$('probeCheck').onclick=async()=>{
+ if(!vaultKey||!vaultData)return alert('同じパスフレーズで仮帳簿を開いてください。');
+ try{
+  const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+  if(!stored?.iv||!stored?.ciphertext)throw Error('暗号化データがありません');
+  const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(stored.iv)},vaultKey,b64ToBytes(stored.ciphertext));
+  const actual=JSON.parse(new TextDecoder().decode(clear)).testProbe;
+  if(actual?.kind==='storage-probe-v1'&&actual.amount===100){$('probeStatus').textContent='✅ 暗号化データを復号して、架空100円の保存を照合できました。再読み込み後に確認した場合は復元試験も成功です。';}
+  else $('probeStatus').textContent='⚠️ テスト100円がありません。①保存からやり直してください。';
+ }catch(e){$('probeStatus').textContent='⚠️ 照合失敗：'+(e.message||e)}
+};
+$('probeClear').onclick=async()=>{
+ if(!vaultKey||!vaultData)return alert('先に仮帳簿を開いてください。');
+ const old=vaultData.testProbe;
+ if(!old)return refreshProbeStatus();
+ if(!confirm('テスト専用の100円記録だけを消しますか？ 経費仕訳は変更しません。'))return;
+ delete vaultData.testProbe;
+ try{await storeVault();refreshProbeStatus();$('probeStatus').textContent='✅ テスト記録だけ削除しました。会社・個人経費には影響ありません。';}
+ catch(e){vaultData.testProbe=old;$('probeStatus').textContent='⚠️ 削除失敗：'+(e.message||e)}
+};
+$('unlockVault').onclick=openVault;$('lockVault').onclick=lockVault;
+$('exportVault').onclick=()=>{const blob=localStorage.getItem(STORAGE_KEY);if(!blob)return alert('暗号化データがありません');saveBlob(new Blob([blob],{type:'application/json'}),'FUJIWARA_暗号化仮帳簿_'+new Date().toISOString().slice(0,10)+'.json')};
+$('importVault').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const json=JSON.parse(await f.text());if(json.version!==1||!json.salt||!json.ciphertext||!json.iv)throw Error('形式が違います');if(localStorage.getItem(STORAGE_KEY)&&!confirm('既存の暗号化仮帳簿を置き換えます。バックアップ済みですか？'))return;localStorage.setItem(STORAGE_KEY,JSON.stringify(json));lockVault();vaultMsg('取込済み。取込元のパスフレーズで開いてください。')}catch(err){alert('取込できません：'+err.message)}e.target.value=''};
+// v7.3: Firebase認証の成功と管理者UID判定、画面初期化を完全に分離する。
+const authStatus=$('authStatus'), authDetails=$('authDetails'), loginBtn=$('loginBtn');
+const auth=firebase.apps.length ? firebase.app().auth() : (firebase.initializeApp(config),firebase.auth());
+let activeLogin=false, stateReady=false, lastUser=null, detailsError='';
+function authMessage(s){authStatus.textContent=s;}
+function safeError(err){
+  const code=err?.code||'unknown';
+  const descriptions={
+    'auth/invalid-login-credentials':'メールアドレスかパスワードが一致しません。',
+    'auth/wrong-password':'パスワードを確認してください。',
+    'auth/too-many-requests':'試行回数が多いため制限中です。時間をおいてください。',
+    'auth/network-request-failed':'ネットワーク接続を確認してください。',
+    'auth/unauthorized-domain':'この公開URLがFirebaseの承認済みドメインに含まれていません。'
+  };
+  return code+'：'+(descriptions[code]||'通信または認証処理を確認してください。');
+}
+function renderAuthDetails(user,phase=''){
+  lastUser=user||null;
+  const signedIn=!!user;
+  const isEmail=signedIn&&!user.isAnonymous;
+  const uidMatch=signedIn&&user.uid===ADMIN_UID;
+  const access=isEmail&&uidMatch;
+  authDetails.textContent=[
+    '① Firebaseログイン：'+(signedIn?'✅ 成功':'❌ 未ログイン')+(phase?'（'+phase+'）':''),
+    '② 認証方式：'+(!signedIn?'―':user.isAnonymous?'匿名認証':'メール等による認証'),
+    '③ UID照合：'+(!signedIn?'―':uidMatch?'✅ 管理者UIDと一致':'❌ 管理者UIDと不一致')+(signedIn?'（末尾 '+user.uid.slice(-6)+'）':''),
+    '④ 会計画面：'+(access?'✅ 表示対象':'🔒 開かない'),
+    detailsError?('直近のエラー：'+detailsError):''
+  ].filter(Boolean).join('\n');
+  return access;
+}
+function closeView(){
+  // Detach all Firebase listeners when the account is no longer approved.
+  closeAccount();
+  try{lockVault();}catch(_){}
+}
+async function showAccountFor(user){
+  const allowed=renderAuthDetails(user);
+  if(!allowed){
+    closeView();
+    $('loginPanel').hidden=false;
+    if(!activeLogin)authMessage(user?'⚠️ 認証済みですが管理者UIDが一致しません。ログアウトして社長アカウントでログインしてください。':'未ログイン。社長のメール認証を行ってください。');
+    return;
+  }
+  // Keep status panel available even after success, for transparent troubleshooting.
+  $('loginPanel').hidden=false;
+  $('accountBody').hidden=false;
+  authMessage('✅ Firebase認証成功・管理者UID一致。会計画面を表示しています。');
+  try{await init();}
+  catch(e){
+    detailsError='会計画面の初期化：'+(e?.message||String(e));
+    renderAuthDetails(user,'画面初期化の確認が必要');
+    authMessage('⚠️ ログイン成功。ただし会計画面の初期化に問題があります。');
+    initialized=false;
+  }
+}
+function timeoutPromise(p,ms){
+  let timer;
+  return Promise.race([
+    p.finally(()=>clearTimeout(timer)),
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(Object.assign(new Error('通信応答の待機時間を超過'),{code:'auth/timeout'})),ms);})
+  ]);
+}
+loginBtn.onclick=async()=>{
+  if(activeLogin)return;
+  const email=$('authEmail').value.trim(), password=$('authPassword').value;
+  if(!email||!password){authMessage('メールアドレスとFirebase用パスワードを入力してください。');return;}
+  activeLogin=true;loginBtn.disabled=true;detailsError='';
+  authMessage('① Firebaseログイン処理中…');
+  try{
+    const result=await timeoutPromise(auth.signInWithEmailAndPassword(email,password),15000);
+    $('authPassword').value='';
+    // A resolved signIn promise proves the authentication step succeeded.
+    authMessage('✅ ① Firebaseログイン成功。② 管理者UIDを照合します。');
+    renderAuthDetails(result.user,'ログイン応答あり');
+    await showAccountFor(result.user);
+  }catch(err){
+    detailsError=safeError(err);
+    renderAuthDetails(auth.currentUser,'ログイン試行結果');
+    authMessage('⚠️ ① ログイン失敗：'+detailsError);
+  }finally{activeLogin=false;loginBtn.disabled=false;}
+};
+$('logoutBtn').onclick=async()=>{
+  try{
+    activeLogin=true;loginBtn.disabled=true;
+    await timeoutPromise(auth.signOut(),10000);
+    $('authPassword').value='';
+    closeView();renderAuthDetails(null);authMessage('ログアウトしました。');
+  }catch(err){detailsError=safeError(err);renderAuthDetails(auth.currentUser);authMessage('ログアウトエラー：'+detailsError);}
+  finally{activeLogin=false;loginBtn.disabled=false;}
+};
+$('recheckAuth').onclick=()=>{detailsError='';showAccountFor(auth.currentUser).catch(e=>authMessage('画面確認エラー：'+String(e)));};
+window.addEventListener('error',e=>{detailsError='画面エラー：'+(e.message||'unknown');renderAuthDetails(auth.currentUser);});
+window.addEventListener('unhandledrejection',e=>{detailsError='非同期エラー：'+(e.reason?.code||e.reason?.message||'unknown');renderAuthDetails(auth.currentUser);});
+authMessage('Firebaseログイン状態を確認しています…');
+auth.onAuthStateChanged(u=>{
+  stateReady=true;
+  if(activeLogin){renderAuthDetails(u,'ログイン操作中');return;}
+  showAccountFor(u).catch(e=>{detailsError='画面初期化エラー：'+(e?.message||String(e));renderAuthDetails(u);authMessage('⚠️ 認証状態の処理を確認してください。');});
+},e=>{detailsError=safeError(e);renderAuthDetails(auth.currentUser);authMessage('Firebase状態監視エラー：'+detailsError);});
+setTimeout(()=>{
+ if(!stateReady&&!activeLogin){
+   detailsError='初回認証状態の取得が遅れています。ログインボタンを使って確認できます。';
+   renderAuthDetails(auth.currentUser);
+   authMessage('⚠️ 認証状態の取得待ち。必要に応じてログイン操作を行ってください。');
+ }
+},10000);
+
+// v7.7: Local-only receipt approval workflow. Firebase purchases remain immutable in this app.
+let reviewSelection='';
+function reviewMap(){return vaultData?.receiptReviews||{};}
+function findReceipt(id){return normalizedPurchases().find(r=>String(r.id)===String(id));}
+function receiptReviewKey(r){return 'receipt:'+String(r.id);}
+function postedReceipt(r){return Object.entries(entries).find(([,e])=>e?.sourceReceiptId===String(r.id)||e?.sourceKey===receiptReviewKey(r));}
+function reviewSafeguards(r){
+ const result=[];
+ if(!r?.date||!Number.isSafeInteger(r.amount)||r.amount<=0)result.push('日付・金額が不正');
+ if(postedReceipt(r))result.push('この申請IDは仮帳簿に計上済み');
+ if(Object.values(entries).some(e=>e?.date===r.date&&Number(e.amount)===r.amount&&!e?.sourceReceiptId))result.push('同日同額の仮帳簿候補');
+ const possibleDetails=detailRecords.filter(d=>d?.date===r.date);
+ if(possibleDetails.some(d=>[...(d.fd||[]),...(d.ad||[])].some(x=>Number(x.amount)===r.amount)))result.push('同日同額のイベント仕入明細候補');
+ if(possibleDetails.some(d=>Object.values(d.amounts||{}).some(x=>Number(x)===r.amount)))result.push('同日同額のイベント経費候補');
+ return result;
+}
+function reviewSetCategories(){
+ const group=$('reviewGroup').value;
+ const cats=defs[group]||[];
+ $('reviewCategory').innerHTML='<option value="">科目を選択</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+function renderReceiptReviews(){
+ const sel=$('reviewReceipt');if(!sel)return;
+ const prev=reviewSelection||sel.value;
+ const rs=normalizedPurchases().filter(r=>$('receiptAllMonths').checked||r.date.startsWith($('month').value)).sort((a,b)=>b.date.localeCompare(a.date));
+ sel.innerHTML='<option value="">申請を選択してください</option>'+rs.map(r=>`<option value="${esc(String(r.id))}">${esc(r.date||'日付不明')}｜${esc(r.staff||'申請者不明')}｜${money(r.amount)}｜${esc(r.store||'店舗不明')}</option>`).join('');
+ sel.value=rs.some(r=>String(r.id)===String(prev))?String(prev):'';
+ reviewSelection=sel.value;
+ const reviews=reviewMap();
+ const pendingCount=Object.values(reviews).filter(v=>v?.status==='pending_reconciliation'||v?.mainStatus==='unknown').length;
+ if($('pendingReconcileCount'))$('pendingReconcileCount').textContent=canWrite?pendingCount+'件（端末内）':'🔒 仮帳簿ロック中';
+ $('reviewSummaryRows').innerHTML=rs.length?rs.map(r=>{
+   const local=reviews[receiptReviewKey(r)],posted=postedReceipt(r);
+   const status=local?.status==='approved'?'仮承認':local?.status==='held'?'保留':local?.status==='rejected'?'却下':local?.status==='reconciled'?'照合記録済み':local?.status==='pending_reconciliation'?'照合待ち':'未審査';
+   const matchNote=local?.mainStatus==='included'?'｜メイン合算計上済み（申告）':local?.mainStatus==='unknown'?'｜メイン未確認':'';
+   return `<tr><td>${esc(r.date)}｜${esc(r.staff)}<div class="muted">${money(r.amount)}・${esc(r.store)}</div></td><td>${esc(receiptStatus(r).label)}</td><td>${esc(status+matchNote)}</td><td>${posted?'✅ 仮帳簿計上済み':'未計上'}</td></tr>`;
+ }).join(''):'<tr><td colspan="4">レシート申請がありません</td></tr>';
+ if(!sel.value){$('reviewReceiptDetail').textContent='申請を選択してください。';return;}
+ const r=findReceipt(sel.value),local=reviews[receiptReviewKey(r)];
+ const guards=reviewSafeguards(r);
+ $('reviewReceiptDetail').textContent=`申請日 ${r.date}／申請者 ${r.staff}／${r.store} ${r.item}／${money(r.amount)}／申告 ${payLabel(r.pay)}／原本 ${receiptStatus(r).label}／照合：${receiptMatch(r)}${guards.length?'／注意：'+guards.join('・'):''}`;
+ if(local){
+  $('reviewPayment').value=local.payment||'';
+  $('reviewGroup').value=local.group||'';reviewSetCategories();
+  $('reviewCategory').value=local.category||'';
+  $('reviewMemo').value=local.memo||'';$('reviewMainStatus').value=local.mainStatus||'unknown';
+ }
+}
+$('reviewReceipt').onchange=()=>{reviewSelection=$('reviewReceipt').value;$('reviewPayment').value='';$('reviewGroup').value='';reviewSetCategories();$('reviewMemo').value='';$('reviewMainStatus').value='unknown';$('reviewConfirm').checked=false;renderReceiptReviews()};
+$('reviewGroup').onchange=()=>{reviewSetCategories();$('reviewConfirm').checked=false};
+async function decideReceipt(status){
+ const id=$('reviewReceipt').value,r=findReceipt(id);
+ if(!canWrite||!vaultData)return $('reviewStatus').textContent='🔒 先に暗号化仮帳簿を開いてください。';
+ if(!r)return $('reviewStatus').textContent='申請を選択してください。';
+ if(status==='approved'&&(!$('reviewPayment').value||!$('reviewGroup').value))return $('reviewStatus').textContent='支払方法と費用計上先を確認してください。';
+ const key=receiptReviewKey(r),before=structuredClone(reviewMap()[key]||null);
+ if(!vaultData.receiptReviews)vaultData.receiptReviews={};
+ vaultData.receiptReviews[key]={receiptId:String(r.id),status,payment:$('reviewPayment').value,group:$('reviewGroup').value,category:$('reviewCategory').value,memo:$('reviewMemo').value.trim(),mainStatus:$('reviewMainStatus').value,amount:r.amount,date:r.date,updatedAt:new Date().toISOString(),mode:'local_test_only'};
+ try{await storeVault();$('reviewStatus').textContent='✅ この端末内に「'+({approved:'仮承認',held:'保留',rejected:'却下'}[status])+'」を暗号化保存しました。Firebaseの承認状態は変更していません。';renderReceiptReviews();}
+ catch(e){if(before)vaultData.receiptReviews[key]=before;else delete vaultData.receiptReviews[key];$('reviewStatus').textContent='⚠️ 保存失敗：'+e.message;}
+}
+$('reviewUnknown').onclick=async()=>{
+ const r=findReceipt($('reviewReceipt').value);
+ if(!canWrite||!vaultData)return $('reviewStatus').textContent='🔒 先に暗号化仮帳簿を開いてください。';
+ if(!r)return $('reviewStatus').textContent='申請を選択してください。';
+ if(postedReceipt(r))return $('reviewStatus').textContent='⛔ 仮帳簿に計上済みの申請です。削除・変更せず確認してください。';
+ const key=receiptReviewKey(r), before=structuredClone(reviewMap()[key]||null);
+ if(!vaultData.receiptReviews)vaultData.receiptReviews={};
+ vaultData.receiptReviews[key]={receiptId:String(r.id),status:'pending_reconciliation',payment:$('reviewPayment').value,group:$('reviewGroup').value,category:$('reviewCategory').value,memo:$('reviewMemo').value.trim(),mainStatus:'unknown',amount:r.amount,date:r.date,updatedAt:new Date().toISOString(),mode:'local_pending_reconciliation_only'};
+ try{await storeVault();$('reviewMainStatus').value='unknown';$('reviewStatus').textContent='🟠 照合待ちに訂正・暗号化保存しました。追加計上なし／Firebase変更なし。';renderReceiptReviews();}
+ catch(e){if(before)vaultData.receiptReviews[key]=before;else delete vaultData.receiptReviews[key];$('reviewStatus').textContent='⚠️ 保存失敗：'+e.message;}
+};
+$('reviewLink').onclick=async()=>{
+ const r=findReceipt($('reviewReceipt').value);
+ if(!canWrite||!vaultData)return $('reviewStatus').textContent='🔒 先に暗号化仮帳簿を開いてください。';
+ if(!r)return $('reviewStatus').textContent='申請を選択してください。';
+ if($('reviewMainStatus').value!=='included')return $('reviewStatus').textContent='メインの合算経費に含まれると確認した場合だけ記録できます。';
+ if(postedReceipt(r))return $('reviewStatus').textContent='⛔ このレシートはすでに仮帳簿に計上されています。確認が必要です。';
+ const key=receiptReviewKey(r), before=structuredClone(reviewMap()[key]||null);
+ if(!vaultData.receiptReviews)vaultData.receiptReviews={};
+ vaultData.receiptReviews[key]={receiptId:String(r.id),status:'reconciled',payment:$('reviewPayment').value,group:$('reviewGroup').value,category:$('reviewCategory').value,memo:$('reviewMemo').value.trim(),mainStatus:'included',amount:r.amount,date:r.date,updatedAt:new Date().toISOString(),mode:'local_reconciliation_only'};
+ try{await storeVault();$('reviewStatus').textContent='✅ メイン合算計上済みの申告として照合メモを暗号化保存しました。経費を追加せず、Firebaseも変更していません。';renderReceiptReviews();}
+ catch(e){if(before)vaultData.receiptReviews[key]=before;else delete vaultData.receiptReviews[key];$('reviewStatus').textContent='⚠️ 保存失敗：'+e.message;}
+};
+$('reviewApprove').onclick=()=>decideReceipt('approved');
+$('reviewHold').onclick=()=>decideReceipt('held');
+$('reviewReject').onclick=()=>decideReceipt('rejected');
+$('reviewPost').onclick=async()=>{
+ const r=findReceipt($('reviewReceipt').value);
+ if(!canWrite||!vaultData)return $('reviewStatus').textContent='🔒 先に仮帳簿を開いてください。';
+ if(!r)return $('reviewStatus').textContent='申請を選択してください。';
+ const key=receiptReviewKey(r),decision=reviewMap()[key];
+ if(decision?.mainStatus!=='not_included'&&decision?.mainStatus!=='not_applicable')return $('reviewStatus').textContent='⛔ メイン計上済み・未確認の申請は追加計上できません。';
+ if(decision?.status!=='approved')return $('reviewStatus').textContent='仮承認した申請のみ計上できます。';
+ if(!$('reviewConfirm').checked)return $('reviewStatus').textContent='原本・他の帳簿との重複がないことを確認してください。';
+ if(decision.group==='event'||!!r.eventName)return $('reviewStatus').textContent='⛔ イベントに関する経費はメインが原本です。仮帳簿で追加計上できません。';
+ if(!defs[decision.group]||!defs[decision.group].includes(decision.category))return $('reviewStatus').textContent='費用区分・科目を確認し、もう一度仮承認してください。';
+ if(!['company','advance'].includes(decision.payment))return $('reviewStatus').textContent='支払区分の確認が必要です。';
+ if(!Number.isSafeInteger(r.amount)||r.amount<=0)return $('reviewStatus').textContent='申請金額が不正です。';
+ if(Number(decision.amount)!==r.amount||decision.date!==r.date)return $('reviewStatus').textContent='申請原本が更新されています。改めて審査してください。';
+ const guards=reviewSafeguards(r);
+ if(guards.length)return $('reviewStatus').textContent='⛔ 二重計上防止：'+guards.join('／')+'。原本照合が必要です。';
+ const entryId='receipt_'+encodeURIComponent(String(r.id));
+ if(entries[entryId]||postedReceipt(r))return $('reviewStatus').textContent='⛔ 同じ申請の計上は禁止です。';
+ const item={date:r.date,group:decision.group,category:decision.category,amount:r.amount,payment:decision.payment==='advance'?'従業員立替（未精算）':'会社払い',memo:[r.store,r.item,decision.memo].filter(Boolean).join('｜'),supplier:'',eventKey:'',eventName:'',source:'receipt_local_review_v7_7',sourceReceiptId:String(r.id),sourceKey:key,createdAt:new Date().toISOString()};
+ entries[entryId]=item;
+ try{await updateVault();$('reviewStatus').textContent='✅ 同じ申請IDを1件だけ仮帳簿に記録しました（Firebase書込なし）。'+(decision.payment==='advance'?'立替返済は未処理です。':'立替返済は発生しません。');renderReceiptReviews();}
+ catch(e){delete entries[entryId];$('reviewStatus').textContent='⚠️ 計上失敗：'+e.message;}
+};
+
+</script></body></html>
