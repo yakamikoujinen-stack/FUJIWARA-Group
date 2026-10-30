@@ -1,0 +1,80 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FUJIWARA スタッフレシート申請｜試験版</title><style>:root{font-family:-apple-system,BlinkMacSystemFont,'Yu Gothic',sans-serif;color:#1d2a3c;background:#f2f5fa}*{box-sizing:border-box}body{margin:0}header{background:#192c46;color:white;padding:22px 16px}main{max-width:850px;margin:auto;padding:14px}section{background:white;border:1px solid #d9e2ed;border-radius:15px;padding:18px;margin-bottom:15px}h1{font-size:22px;margin:0}h2{font-size:19px;margin:0 0 14px}p{line-height:1.65}.warn{background:#fff5dc;border:1px solid #e6c981;border-radius:12px;padding:12px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}label{display:block;font-weight:700;font-size:14px}input,select,textarea{width:100%;padding:13px;margin-top:6px;border:1px solid #b7c6d8;border-radius:9px;background:white;font-size:16px}button{border:0;border-radius:10px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer;background:#233e66;color:white;margin:5px 5px 5px 0}button.secondary{background:#e8edf5;color:#1b2b43}button.danger{background:#9b3640}img{max-width:100%;max-height:330px;object-fit:contain;border-radius:10px}.small{font-size:13px;color:#53677c}.entry{border-top:1px solid #d7e0eb;padding:12px 0}.tag{display:inline-block;background:#f4e8c5;padding:3px 8px;border-radius:8px}.status{font-weight:700;color:#126747}#photoPreview{display:none;margin-top:12px}#output{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><header><h1>🧾 FUJIWARA スタッフレシート申請</h1><div>撮影・自動読取・確認・提出準備｜OCR試験版 v1.1</div></header><main><div class="warn"><strong>⚠️ 試験版です。</strong>Firebase・既存の担当者アプリ・総合経理には一切書き込みません。申請はこの端末のブラウザに仮保存され、社長には自動送信されません。提出には下の「申請ファイルを保存」を使ってください。写真・個人情報を含むファイルの共有先に注意してください。</div><section><h2>① レシートを撮影して申請</h2><form id="form"><div class="grid"><label>スタッフ名<input id="staff" required placeholder="氏名"></label><label>購入日<input id="date" type="date" required></label><label>購入先<input id="supplier" required placeholder="例：吉澤"></label><label>金額（円）<input id="amount" type="number" min="1" step="1" required placeholder="7700"></label><label>購入区分<select id="scope"><option value="共通在庫">共通在庫（イベント未指定）</option><option value="イベント専用">イベント専用</option><option value="その他の会社経費">その他の会社経費</option></select></label><label>イベント名（イベント専用の場合）<input id="event" placeholder="任意"></label><label>支払方法<select id="payment"><option>会社現金</option><option>会社カード・口座</option><option>スタッフ立替</option><option>未払い</option></select></label><label>レシート写真（スタッフ必須）<input id="photo" type="file" accept="image/*" capture="environment" required></label></div><div style="margin:12px 0"><button type="button" id="ocrBtn">🔎 写真から自動読み取り</button><p id="ocrStatus" class="small" role="status">写真を選ぶと自動読み取りを試みます。日付・店名・金額・購入内容は必ず原本と照合してください。</p><details><summary>読み取った文字を確認</summary><pre id="ocrText" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px"></pre></details></div><label>購入内容<textarea id="details" rows="3" required placeholder="例：ポテト用スパイス"></textarea></label><img id="photoPreview" alt="レシートの確認画像"><div class="warn">共通在庫は購入時に特定イベントへ無理に割り当てません。社長が確認するまでは「申請・未承認」であり、経費への二重計上を防ぐため会計へ自動反映しません。</div><button type="submit">📥 申請をこの端末に仮保存</button></form><p id="message" class="status" role="status"></p></section><section><h2>② 保存した申請</h2><p class="small">この端末に仮保存した申請一覧。別の端末やブラウザには自動共有されません。写真は縮小して保存しますが、ブラウザの保存容量に制限があります。</p><div id="entries"></div><button id="export" type="button">📦 申請ファイル（JSON）を保存</button><button class="secondary" id="csv" type="button">📄 申請一覧CSVを保存</button><p class="small">JSONにはレシート写真が含まれます。CSVには写真が含まれません。ファイルは社長へ安全な方法で渡してください。正式な承認・計上は社長が原本を照合して行います。</p></section><section><h2>③ 社長確認用の運用</h2><p>スタッフ：撮影 → 入力 → 仮保存 → JSONファイルを提出。社長：写真・金額・支払方法・過去の計上状況を照合 → 承認 → 総合経理に一度だけ計上。立替分は返金状況を別途確認。</p><p class="small">今後、既存担当者アプリのレシート申請形式とFirebaseの権限を確認した後に、正規アプリへ統合する想定です。</p></section></main><script>
+'use strict';const KEY='fujiwara_staff_receipt_trial_v1';const $=id=>document.getElementById(id);let records=[];try{records=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(records))records=[]}catch(e){records=[]}const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));$('date').value=new Date().toLocaleDateString('sv-SE');function save(){localStorage.setItem(KEY,JSON.stringify(records))}function render(){$('entries').innerHTML=records.length?records.slice().reverse().map(r=>`<div class="entry"><strong>${esc(r.date)}｜${esc(r.supplier)}｜¥${Number(r.amount).toLocaleString('ja-JP')}</strong><br>${esc(r.staff)} ／ ${esc(r.details)}<br><span class="tag">${esc(r.scope)}・${esc(r.payment)}・未承認</span><br><span class="small">${esc(r.id)} ／ 写真あり</span><br><button type="button" class="secondary" data-view="${esc(r.id)}">写真を確認</button><button type="button" class="danger" data-remove="${esc(r.id)}">この仮申請を削除</button><div id="img-${esc(r.id)}"></div></div>`).join(''):'まだ申請はありません';}function compress(file){return new Promise((resolve,reject)=>{const rd=new FileReader;rd.onerror=()=>reject(new Error('写真を読み取れません'));rd.onload=()=>{const im=new Image;im.onerror=()=>reject(new Error('画像形式を確認してください'));im.onload=()=>{const scale=Math.min(1,1400/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*scale));c.height=Math.max(1,Math.round(im.height*scale));c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.72))};im.src=rd.result};rd.readAsDataURL(file)})}function dl(name,body,type){const u=URL.createObjectURL(new Blob([body],{type}));const a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}$('form').addEventListener('submit',async e=>{e.preventDefault();const file=$('photo').files[0];if(!file){$('message').textContent='レシート写真が必要です';return}if(file.size>20*1024*1024){$('message').textContent='画像が大きすぎます（20MB以下）';return}if($('scope').value==='イベント専用'&&!$('event').value.trim()){alert('イベント専用の場合はイベント名を入力してください');return}try{const photo=await compress(file);const id='R'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);const r={id,staff:$('staff').value.trim(),date:$('date').value,supplier:$('supplier').value.trim(),amount:Number($('amount').value),scope:$('scope').value,event:$('event').value.trim(),payment:$('payment').value,details:$('details').value.trim(),photo,createdAt:new Date().toISOString(),status:'未承認',accountingPosted:false};if(records.some(x=>x.date===r.date&&x.amount===r.amount&&x.supplier===r.supplier&&x.staff===r.staff)){if(!confirm('同じ日・金額・仕入先・スタッフの申請があります。重複して保存しますか？'))return}records.push(r);try{save()}catch(err){records.pop();throw Error('端末の保存容量が足りません。写真や保存済み申請を確認してください')}render();$('message').textContent='✅ この端末に仮保存しました。まだ社長には送信されていません。下の「申請ファイル」を保存して提出してください。';$('form').reset();$('date').value=new Date().toLocaleDateString('sv-SE');$('photoPreview').style.display='none'}catch(err){$('message').textContent='⚠️ 保存できません：'+err.message}});$('photo').addEventListener('change',()=>{const f=$('photo').files[0];if(!f)return;const u=URL.createObjectURL(f);$('photoPreview').src=u;$('photoPreview').style.display='block';$('photoPreview').onload=()=>URL.revokeObjectURL(u)});$('entries').addEventListener('click',e=>{const v=e.target.dataset.view,d=e.target.dataset.remove;if(v){const r=records.find(x=>x.id===v);const el=document.getElementById('img-'+v);if(r&&el)el.innerHTML=el.innerHTML?'':`<img src="${r.photo}" alt="レシート画像">`}if(d&&confirm('この端末の仮申請を削除しますか？提出済みファイルは削除されません。')){records=records.filter(x=>x.id!==d);save();render()}});$('export').onclick=()=>{if(!records.length){alert('保存済み申請がありません');return}dl('FUJIWARA_スタッフレシート申請_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({format:'FUJIWARA_STAFF_RECEIPT_TRIAL_V1',exportedAt:new Date().toISOString(),records},null,2),'application/json')};$('csv').onclick=()=>{const cols=['id','staff','date','supplier','amount','scope','event','payment','details','status','createdAt'];const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';dl('FUJIWARA_スタッフレシート一覧.csv','\ufeff'+[cols.join(','),...records.map(r=>cols.map(k=>quote(r[k])).join(','))].join('\r\n'),'text/csv;charset=utf-8')};render();
+
+/* OCR runs in the browser using Tesseract.js. No receipt image is sent to FUJIWARA servers.
+   The OCR library and language models are loaded from public CDN services. */
+let ocrBusy=false;
+const ocrStatus=$('ocrStatus');
+const yenDigits=v=>Number(String(v).replace(/[,，\s円￥¥]/g,''));
+function parseReceipt(t){
+  const lines=t.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const amounts=[];
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+    const ms=[...l.matchAll(/(?:[¥￥]\s*)?([0-9０-９]{1,3}(?:[,，][0-9０-９]{3})+|[0-9０-９]{4,7})(?:\s*円)?/g)];
+    for(const m of ms){
+      const n=yenDigits(m[1].replace(/[０-９]/g,ch=>String(ch.charCodeAt(0)-65296)));
+      if(n>=100&&n<=1000000){
+        const strong=/合計|お買上|お買い上|現計|税込合計|総合計|請求額|お支払額/.test(l);
+        const change=/お預り|お釣|釣銭|小計|税額|消費税|値引|ポイント|現金預り/.test(l);
+        if(!change)amounts.push({n,score:(strong?100:0)+i/Math.max(1,lines.length),line:l});
+      }
+    }
+  }
+  amounts.sort((a,b)=>b.score-a.score);
+  const dateMatch=t.match(/(?:20\d{2}|令和\s*\d{1,2})\s*[\/年.\-]\s*(\d{1,2})\s*[\/月.\-]\s*(\d{1,2})/);
+  let date='';
+  if(dateMatch){
+    const y=(dateMatch[0].match(/20\d{2}/)||[])[0]||String(2018+Number((dateMatch[0].match(/令和\s*(\d+)/)||[])[1]));
+    const m=+dateMatch[1],d=+dateMatch[2];
+    if(m>=1&&m<=12&&d>=1&&d<=31)date=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  const top=lines.slice(0,9).filter(l=>!/TEL|電話|登録番号|領収|レシート|〒|住所|20\d{2}|^\d+$|https?:/i.test(l));
+  const supplier=top.find(l=>/スーパー|ストア|商店|食品|市場|業務|ダイレックス|マルナカ|コスモス|ダイソー|ホームセンター|ドラッグ/.test(l))||top[0]||'';
+  const items=lines.filter(l=>!/(合計|小計|現金|お釣|消費税|領収|登録番号|TEL|お預り|ポイント|クレジット|税込|税抜)/.test(l)&&/[ぁ-んァ-ヶ一-龯]/.test(l)).slice(2,12).map(l=>l.slice(0,70));
+  return {date,supplier,amount:amounts[0]?.n||'',details:items.slice(0,6).join('、')};
+}
+async function loadOCR(){
+  if(window.Tesseract)return;
+  await new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    script.onload=resolve;script.onerror=()=>reject(Error('OCRライブラリを取得できません。インターネット接続を確認してください'));
+    document.head.appendChild(script);
+  });
+}
+async function runOCR(){
+  const f=$('photo').files[0];
+  if(!f){ocrStatus.textContent='先にレシート写真を選んでください。';return}
+  if(ocrBusy)return;
+  ocrBusy=true;$('ocrBtn').disabled=true;
+  try{
+    ocrStatus.textContent='日本語OCRを準備しています（初回は時間がかかります）…';
+    await loadOCR();
+    const worker=await Tesseract.createWorker('jpn+eng',1,{logger:m=>{
+      if(m.status==='recognizing text')ocrStatus.textContent='写真の文字を読み取り中… '+Math.round((m.progress||0)*100)+'%';
+    }});
+    let result;
+    try{result=await worker.recognize(f)}finally{await worker.terminate()}
+    const raw=result.data.text||'';
+    $('ocrText').textContent=raw||'文字を検出できませんでした';
+    if(!raw.trim()){ocrStatus.textContent='文字を読み取れませんでした。明るい場所でレシートを大きく撮影し直してください。';return}
+    const v=parseReceipt(raw);
+    const changes=[];
+    for(const [id,val] of [['supplier',v.supplier],['date',v.date],['amount',v.amount],['details',v.details]]){
+      if(!val)continue;
+      const el=$(id);
+      if(el.value&&el.value.trim()&&el.value.trim()!==String(val)){
+        if(!confirm(`${id==='supplier'?'購入先':id==='date'?'購入日':id==='amount'?'金額':'購入内容'}は入力済みです。\n現在: ${el.value}\n読取候補: ${val}\n読み取った候補に変更しますか？`))continue;
+      }
+      el.value=val;changes.push(id);
+    }
+    ocrStatus.textContent=changes.length
+      ?'✅ 読み取り候補を入力しました。OCRは間違えることがあります。必ずレシートと日付・店名・合計金額・購入内容を照合してください。'
+      :'文字は読み取れました。項目を特定できなかったため、下の読み取り文字を見て手入力してください。';
+  }catch(e){ocrStatus.textContent='⚠️ 自動読み取りできませんでした：'+e.message+'。手入力で申請できます。'}
+  finally{ocrBusy=false;$('ocrBtn').disabled=false}
+}
+$('ocrBtn').addEventListener('click',runOCR);
+$('photo').addEventListener('change',()=>{if($('photo').files[0])runOCR()});
+</script></body></html>
