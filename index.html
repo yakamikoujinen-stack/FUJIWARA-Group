@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
-<title>FUJIWARA GROUP 販売管理 v4.3.57 TEST｜出店形態カード安全表示版</title>
+<title>FUJIWARA GROUP 販売管理 v4.3.58｜コナン協力者区分対応</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap');
 :root{
@@ -1342,8 +1342,19 @@ function renderSettlementTags(ev){
   if(!names.length || (names.length===1 && names[0]==='売上')) return '<div class="settlement-tags"><span class="settlement-title">精算先</span><span class="settlement-tag unset">未設定</span></div>';
   return '<div class="settlement-tags"><span class="settlement-title">精算先</span>'+names.map(function(name){
     var rec=getSettlementItemRecord(ev,name), c=rec.company||'';
-    return '<span class="settlement-tag '+settlementCompanyClass(c)+'">'+escHtml(name)+'：'+settlementCompanyLabel(c)+'</span>';
+    return '<span class="settlement-tag '+settlementCompanyClass(c)+'">'+escHtml(name)+'：'+(isConanProduceEvent(ev)?escHtml(conanCollaboratorLabel(rec.conanCollaborator||'')):settlementCompanyLabel(c))+'</span>';
   }).join('')+'</div>';
+}
+
+// コナン専用の協力者区分。従来の会社別会計区分とは別に保持する。
+function isConanProduceEvent(ev){return !!ev && ['コナンプロデュース','コナンプロジュース'].indexOf(String(ev.zone||'').trim())>=0;}
+var CONAN_COLLABORATORS=[{id:'fujiwara',name:'FUJIWARA Group'},{id:'mayumi',name:'こじろうハウス（まゆみ）'},{id:'sora',name:'想良'},{id:'staff',name:'FUJIWARA Groupスタッフ'}];
+function conanCollaboratorLabel(id){var p=CONAN_COLLABORATORS.find(function(x){return x.id===id;});return p?p.name:'協力者未設定';}
+function conanCollaboratorSelect(ev,simple,key,oldKey){
+  if(!isConanProduceEvent(ev))return '';
+  var mapping=getDayAccountingSplit(simple).conanCollaborators||{};
+  var value=mapping[oldKey||key]||mapping[key]||'';
+  return '<div style="margin-top:8px"><label style="font-weight:900;color:#176955">協力者（コナン案件専用）</label><select class="simple-sales-conan-collaborator" data-key="'+escAttr(key)+'" style="font-weight:900;border-color:#60a88c"><option value="">協力者を選択</option>'+CONAN_COLLABORATORS.map(function(x){return '<option value="'+x.id+'" '+(value===x.id?'selected':'')+'>'+x.name+'</option>';}).join('')+'</select></div>';
 }
 
 function settlementCompanyOptions(value){
@@ -1427,6 +1438,7 @@ async function syncEventAccountingAllocation(ev){
       totals[b].sales+=amount;
       var sk=settlementSafeKey(name);
       if(!itemsOut[sk]) itemsOut[sk]={name:name,company:company,sales:0};
+      if(isConanProduceEvent(ev))itemsOut[sk].conanCollaborator=(split.conanCollaborators||{})[k]||'';
       itemsOut[sk].sales+=amount;
       if(company) itemsOut[sk].company=company;
     });
@@ -4573,7 +4585,7 @@ function _openSalesEditCore(id, selectedDate) {
   var html='<div class="settings-group" style="padding:12px;margin-bottom:14px;background:#fffdf6">'+dayTabs
     +'<div class="fg"><label>イベント名</label><input type="text" value="'+escAttr(ev.name||'')+'" readonly></div>'
     +'<div style="font-size:13px;font-weight:900;color:var(--gold);margin-bottom:4px">ネタ別売上</div>'
-    +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); var split=getDayAccountingSplit(simple); var company=(split.items&&split.items[key])||getExistingItemCompany(ev,name)||''; return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'">'+accountingCompanySelect(company,'simple-sales-company','data-key="'+key+'" onchange="updateCompanyAccountingSummary()"')+'</div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
+    +(function(){ var names=getEventSalesItems(ev); return names.map(function(name,idx){ var key='N'+idx, labels=simple.labels||{}, oldKey=null; Object.keys(labels).some(function(k){if(String(labels[k])===String(name)){oldKey=k;return true;}return false;}); var v=(simple.items&&typeof simple.items[key]!=='undefined')?simple.items[key]:(oldKey&&simple.items?simple.items[oldKey]:''); var split=getDayAccountingSplit(simple); var company=(split.items&&split.items[key])||getExistingItemCompany(ev,name)||''; return '<div class="fg2"><div class="fg"><label>出店ネタ</label><div style="min-height:46px;display:flex;align-items:center;padding:11px 14px;background:#fff7df;border:1.5px solid #d8bf75;border-radius:9px;font-weight:900">'+escHtml(name)+'</div><input type="hidden" class="simple-sales-label" data-key="'+key+'" value="'+escAttr(name)+'">'+accountingCompanySelect(company,'simple-sales-company','data-key="'+key+'" onchange="updateCompanyAccountingSummary()"')+conanCollaboratorSelect(ev,simple,key,oldKey)+'</div><div class="fg"><label>売上（円）</label><input type="number" class="simple-sales-input" data-key="'+key+'" min="0" oninput="updateSimpleSalesEditTotals();updateCompanyAccountingSummary()" value="'+(v||'')+'"></div></div>'; }).join(''); })()
     +'<div style="background:#eef7ff;border:1.5px solid #8db7d8;border-radius:12px;padding:12px;margin:12px 0"><div style="font-size:13px;font-weight:900;color:#1769c2;margin-bottom:8px">現金売上・売掛売上</div><div class="fg2"><div class="fg"><label>現金売上（円）</label><input type="number" id="simple-cash-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.cashSales)||'')+'"></div><div class="fg"><label>売掛売上（円）</label><input type="number" id="simple-receivable-sales" min="0" oninput="updateSimpleSalesEditTotals()" value="'+((simple.settlement&&simple.settlement.receivableSales)||'')+'"></div></div></div>'
     +'<div style="background:#fff7df;border:1.5px solid #d8bf75;border-radius:12px;padding:12px;margin:12px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:var(--gold)">この日のスタッフ支払</div><button type="button" class="btn btn-outline btn-sm" onclick="addStaffPaymentRow({})">＋スタッフ追加</button></div><div id="staff-payment-list">'+((simple.settlement&&simple.settlement.staffPayments)||[]).map(function(x,i){return settlementRowHtml(x,i);}).join('')+'</div><div class="profit-row"><span>スタッフ支払合計</span><b id="simple-auto-staffpay">¥0</b></div></div>'
     +(function(){
@@ -4631,6 +4643,7 @@ async function saveSalesEdit() {
   var previous=getDaySimpleSales(ev,ds);
   var accountingSplit={items:{},expenses:{},companyExpenses:{fujiwara:{},amagasaki:{}},purchaseDetails:{fujiwara:[],amagasaki:[]}};
   document.querySelectorAll('.simple-sales-company').forEach(function(sel){accountingSplit.items[sel.dataset.key]=sel.value||'';});
+  if(isConanProduceEvent(ev)){accountingSplit.conanCollaborators={};document.querySelectorAll('.simple-sales-conan-collaborator').forEach(function(sel){accountingSplit.conanCollaborators[sel.dataset.key]=sel.value||'';});}
   function evn(id){var el=document.getElementById(id);return el?(parseInt(el.value)||0):0;}
   accountingSplit.companyExpenses.fujiwara={
     basho:evn('fuji-exp-basho'),shiire:evn('fuji-exp-shiire'),kotsu:evn('fuji-exp-kotsu'),other:evn('fuji-exp-other')
