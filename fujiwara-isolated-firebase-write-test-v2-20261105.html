@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA｜隔離Firebase実保存試験 v2</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:#1b2940;background:#f1f5fb}
+*{box-sizing:border-box}body{margin:0}header{background:linear-gradient(120deg,#172f52,#315789);color:#fff;padding:24px 18px}header>div,main{max-width:920px;margin:auto}
+h1{font-size:clamp(22px,4.7vw,32px);margin:0 0 8px}header p{margin:0;color:#dce9ff;font-size:14px}
+main{padding:17px}section{background:white;border:1px solid #d9e2f1;border-radius:17px;padding:20px;margin-bottom:16px}
+h2{font-size:19px;margin:0 0 13px}p{line-height:1.7}
+.warn{background:#fff3ec;border-left:5px solid #d46b34;padding:12px;border-radius:9px}.info{background:#eef4fc;padding:13px;border-radius:9px}
+.good{background:#e8f7ef;color:#155f3a;padding:11px;border-radius:9px}
+label{font-weight:700;display:block;margin:12px 0 5px}input,button{font:inherit;border-radius:9px}
+input{border:1px solid #b9c8dd;width:100%;padding:12px}button{border:0;background:#274f87;color:white;padding:13px 16px;font-weight:700;margin:8px 6px 6px 0;min-height:48px;cursor:pointer}
+button.alt{background:#e8edf5;color:#24364f}button:disabled{opacity:.42;cursor:not-allowed}
+.status{background:#eef3fb;border-radius:10px;padding:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:210px}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}pre{white-space:pre-wrap;word-break:break-word;background:#edf2f8;padding:14px;border-radius:11px}
+.check{border-bottom:1px solid #e9edf4;padding:10px 0}small{color:#556983}footer{text-align:center;color:#66768b;font-size:12px;padding:18px}
+</style></head><body>
+<header><div><h1>🔐 FUJIWARA 隔離Firebase 実保存試験 v2</h1><p>2026年11月5日｜接続判定修正版｜本番データ・正規HTMLの変更なし</p></div></header>
+<main>
+<section><h2>① 今回修正したこと</h2>
+<div class="good">✅ <strong>fujiwara-security-test を正しく許可</strong>。名前に「FUJIWARA」が含まれるという理由だけで拒否しません。</div>
+<p class="warn"><strong>本番 fujiwara-group-3a600 には接続しません。</strong> このHTMLに登録した接続先は試験専用 <code>fujiwara-security-test</code> だけです。Firebaseの認証・保存もこの試験先だけで行います。試験ルールは先ほど公開した本人専用ルールを利用します。</p>
+</section>
+<section><h2>② 試験用Firebaseへ接続</h2>
+<div class="info"><strong>接続先は入力不要</strong>。2026年11月5日に確認した試験用の6項目を、このアプリに設定済み。パスワードは含まれません。</div>
+<p>プロジェクトID：<code>fujiwara-security-test</code></p>
+<p>Database：<code>https://fujiwara-security-test-default-rtdb.firebaseio.com</code></p>
+<button id="connect">🔌 試験用Firebaseへ接続</button><div id="connection" class="status">未接続</div></section>
+<section><h2>③ 試験用アカウントでログイン</h2>
+<div class="row"><div><label for="email">試験専用メールアドレス</label><input id="email" type="email" autocomplete="username" placeholder="登録したメール"></div>
+<div><label for="pass">試験専用パスワード</label><input id="pass" type="password" autocomplete="current-password" placeholder="ここだけに入力"></div></div>
+<button id="login" disabled>🔑 ログイン</button><button id="logout" class="alt" disabled>ログアウト</button>
+<div id="authStatus" class="status">接続待ち</div><p><small>パスワードは診断結果に含めず、ログイン後に入力欄を消去します。</small></p></section>
+<section><h2>④ 試験専用DBで本当に保存・再読込</h2><p>登録済みユーザー本人の <code>sandbox_auth_test_v1/(本人UID)/record</code> に、架空のデータのみ書き込みます。</p>
+<label for="memo">試験メモ</label><input id="memo" value="認証付き実保存テスト"><label for="amount">試験数字</label><input id="amount" type="number" min="0" max="999999" step="1" value="1234">
+<button id="save" disabled>💾 試験DBへ保存</button><button id="read" class="alt" disabled>🔄 DBから再読込</button>
+<div id="rwStatus" class="status">未実施</div><pre id="rwOutput">データなし</pre>
+</section>
+<section><h2>⑤ ログアウト後の読取拒否</h2>
+<p>実保存と再読込を確認した後に実施。ログアウトした状態で同じ試験データを読み、Firebase側から <code>permission_denied</code> が返るか試します。</p>
+<button id="deny" class="alt" disabled>🚫 ログアウトして拒否試験</button><div id="denyStatus" class="status">未実施</div></section>
+<section><h2>⑥ 結果</h2><div id="checks"></div>
+<button id="copy" class="alt">📋 診断結果をコピー</button><p><small>この試験で本番Firebaseの公開ルールが直るわけではありません。本番のルールは変更せず、別工程で正規アプリを移行します。</small></p>
+</section>
+</main><footer>FUJIWARA Group｜Firebase分離試験専用｜v2</footer>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+(function(){'use strict';
+const $=id=>document.getElementById(id);
+const CONFIG=Object.freeze({
+ apiKey:"AIzaSyAC7zX0F9dJM2rFPuNmOhGqlnhjsYt4naw",
+ authDomain:"fujiwara-security-test.firebaseapp.com",
+ databaseURL:"https://fujiwara-security-test-default-rtdb.firebaseio.com",
+ projectId:"fujiwara-security-test",
+ appId:"1:164334042100:web:d8e66fce941efe132297a1",
+ messagingSenderId:"164334042100"
+});
+const EXPECTED="fujiwara-security-test";
+let app=null,auth=null,db=null,uid=null,saved=null;
+const result={connected:false,authenticated:false,written:false,readback:false,anonymousDenied:false};
+const status=(id,msg)=>{$(id).textContent=msg;};
+const err=e=>e&&e.code?e.code+" / "+(e.message||""):String(e&&e.message||e);
+function verifyConfig(){
+ if(CONFIG.projectId!==EXPECTED || CONFIG.authDomain!==EXPECTED+".firebaseapp.com" ||
+ CONFIG.databaseURL!=="https://"+EXPECTED+"-default-rtdb.firebaseio.com" ||
+ CONFIG.appId!=="1:164334042100:web:d8e66fce941efe132297a1" ||
+ CONFIG.messagingSenderId!=="164334042100") throw Error("試験プロジェクト以外の設定です。接続拒否");
+}
+function buttons(){
+ $('login').disabled=!auth; $('logout').disabled=!uid;
+ $('save').disabled=!uid; $('read').disabled=!uid; $('deny').disabled=!uid||!result.readback;
+}
+function report(){
+ const checks=[["試験Firebaseへ接続",result.connected],["試験ユーザー認証",result.authenticated],["実保存",result.written],["再読込・一致",result.readback],["ログアウト後の拒否",result.anonymousDenied]];
+ $('checks').innerHTML=checks.map(([name,ok])=>'<div class="check">'+(ok?'✅':'⬜')+' '+name+'</div>').join("");
+ return "FUJIWARA 隔離Firebase保存試験 v2\n"+checks.map(([name,ok])=>(ok?'合格：':'未完了：')+name).join("\n")+"\n本番Firebaseへの接続・書き込みは実装なし";
+}
+function dbPath(id){return "sandbox_auth_test_v1/"+id+"/record";}
+$('connect').onclick=async()=>{
+ try{
+  verifyConfig();
+  if(app)throw Error("接続済み");
+  if(!window.firebase)throw Error("Firebase SDKが読み込めません");
+  app=firebase.initializeApp(CONFIG,"fujiwara-security-isolated-v2");
+  auth=app.auth(); db=app.database();
+  auth.onAuthStateChanged(user=>{
+    uid=user?user.uid:null;
+    if(user)result.authenticated=true;
+    status('authStatus',user?"✅ 認証済み（試験用の認証状態）":"未ログイン");
+    buttons();report();
+  },e=>status('authStatus',"認証確認エラー："+err(e)));
+  result.connected=true;
+  status('connection',"✅ 試験用プロジェクトへの接続初期化成功： "+EXPECTED);
+  $('connect').disabled=true;buttons();report();
+ }catch(e){status('connection',"❌ "+err(e));}
+};
+$('login').onclick=async()=>{
+ try{
+  const mail=$('email').value.trim(),pass=$('pass').value;
+  if(!mail||!pass)throw Error("メールとパスワードを入力してください");
+  await auth.signInWithEmailAndPassword(mail,pass);
+  $('pass').value='';uid=auth.currentUser.uid;
+  result.authenticated=true;
+  status('authStatus',"✅ 試験用ユーザーでログイン成功");buttons();report();
+ }catch(e){status('authStatus',"❌ "+err(e));}
+};
+$('logout').onclick=async()=>{
+ try{await auth.signOut();uid=null;status('authStatus',"ログアウトしました");buttons();}
+ catch(e){status('authStatus',"❌ "+err(e));}
+};
+$('save').onclick=async()=>{
+ try{
+  const user=auth&&auth.currentUser;
+  if(!user)throw Error("ログインが必要");
+  const memo=$('memo').value.trim(),amount=Number($('amount').value);
+  if(!memo||memo.length>120||!Number.isSafeInteger(amount)||amount<0||amount>999999)throw Error("メモ120文字以内・整数0～999999を指定");
+  const data={memo,amount,updatedAt:Date.now()};
+  await db.ref(dbPath(user.uid)).set(data);
+  saved=data;result.written=true;result.readback=false;
+  status('rwStatus',"✅ 試験Firebaseへ保存成功。次は「DBから再読込」を押してな。");
+  $('rwOutput').textContent=JSON.stringify(data,null,2);buttons();report();
+ }catch(e){status('rwStatus',"❌ 保存失敗："+err(e));}
+};
+$('read').onclick=async()=>{
+ try{
+  const user=auth&&auth.currentUser;
+  if(!user)throw Error("ログインが必要");
+  const snap=await db.ref(dbPath(user.uid)).once('value');
+  const data=snap.val();
+  if(!data)throw Error("保存データなし");
+  $('rwOutput').textContent=JSON.stringify(data,null,2);
+  if(saved && data.memo===saved.memo && data.amount===saved.amount && data.updatedAt===saved.updatedAt){
+   result.readback=true;status('rwStatus',"✅ Firebaseから再読込して完全一致したで！");
+  }else{result.readback=false;status('rwStatus',"⚠️ 読み取れたけど、直前に保存したデータと一致しません");}
+  buttons();report();
+ }catch(e){result.readback=false;status('rwStatus',"❌ 再読込失敗："+err(e));buttons();report();}
+};
+$('deny').onclick=async()=>{
+ try{
+  if(!result.readback)throw Error("まず実保存と再読込を確認してください");
+  const myUid=auth.currentUser.uid;
+  await auth.signOut();
+  uid=null;buttons();
+  await db.ref(dbPath(myUid)).once('value');
+  result.anonymousDenied=false;status('denyStatus',"❌ 未認証で読めてしまいました。ルールを確認してください！");
+ }catch(e){
+  if(e&&e.code==="PERMISSION_DENIED"){
+    result.anonymousDenied=true;status('denyStatus',"✅ 未ログインの読み取りをFirebaseが拒否しました（permission_denied）");
+  }else{status('denyStatus',"⚠️ "+err(e));}
+ }
+ buttons();report();
+};
+$('copy').onclick=async()=>{
+ try{await navigator.clipboard.writeText(report());status('denyStatus',"診断結果をコピーしました（パスワードなし）");}
+ catch(e){status('denyStatus',"コピー失敗："+err(e));}
+};
+report();
+})();
+</script></body></html>
