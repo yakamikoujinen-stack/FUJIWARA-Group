@@ -90,7 +90,7 @@ if(!row){row={name:'荒川商事',step:20,normal:!a.some(x=>x.normal),qty:null,w
 else if(!row.v40ScheduleConfirmed){row.weekday=1;row.lead=3;row.deliveryWeekday=4;row.hour='';row.deadlineUnconfirmed=true;row.v40ScheduleConfirmed=true;save()}
 }
 function v41RequiredDates(dateStr){
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr))return null;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(dateStr))return null;
  let eventDate=new Date(dateStr+'T12:00:00');if(isNaN(eventDate.getTime()))return null;
  let thu=new Date(eventDate);let back=(thu.getDay()-4+7)%7;if(back===0)back=7;thu.setDate(thu.getDate()-back);
  let mon=new Date(thu);mon.setDate(thu.getDate()-3);
