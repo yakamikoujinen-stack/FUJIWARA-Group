@@ -97,7 +97,7 @@ calcRows=function(ev){
   const base=kara?3000:4500;
   const k=key(ev.id,key(product,key('鶏肉','kg')));
   const calc=Number(target)/base;
-  rows.push({event:ev,product,target,material:'鶏肉',unit:'kg',calc,qty:dbstate.overrides[k]===undefined?Math.ceil(calc*100)/100:num(dbstate.overrides[k]),k,v74:true});
+  rows.push({event:ev,product,target,material:'鶏肉',unit:'kg',calc,qty:Math.ceil(calc*100)/100,k,v74:true});
  }
  return rows;
 };
