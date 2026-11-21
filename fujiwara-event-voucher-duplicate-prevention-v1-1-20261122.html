@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FUJIWARA イベント×会計伝票 紐付け試験 v1.0</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#33282c;background:#f9f3f4}
+*{box-sizing:border-box}body{margin:0}header{padding:28px 18px 42px;background:linear-gradient(115deg,#80142d,#c32c49);color:#fff}
+header>div,main{max-width:1050px;margin:auto}h1{margin:5px 0;font-size:clamp(24px,5vw,33px)}header p{font-size:13px;opacity:.93;line-height:1.7}main{padding:15px}
+.card{background:white;border:1px solid #eddbdf;border-radius:22px;padding:21px;margin:-13px 0 29px;box-shadow:0 8px 20px #5e132010}
+.card+.card{margin-top:0}h2{font-size:20px;color:#94233f;margin:0 0 16px}.note{background:#fff3da;border-left:5px solid #d8a24c;padding:14px;border-radius:12px;line-height:1.75}
+.ok{background:#e8f5ec;color:#176039;padding:13px;border-radius:12px}.info{background:#f7eaed;color:#7d2940;padding:13px;border-radius:12px;line-height:1.7}
+small,.small{color:#7d6e73;font-size:13px;line-height:1.7}button{font:inherit;padding:12px 16px;border-radius:13px;background:#a21e3c;color:#fff;border:0;min-height:44px;font-weight:700;cursor:pointer}button.light{background:#f7e7eb;color:#87213c}button:disabled{opacity:.45}input,select{font:inherit;min-height:46px;padding:9px 12px;border:1px solid #d9bfc6;border-radius:11px;background:#fff;width:100%;min-width:0}input[type=file]{margin:10px 0}label{font-size:13px;font-weight:700;color:#68454d;display:block;margin-bottom:5px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}.actions{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.metric{background:#fff7f8;border:1px solid #f0dce0;border-radius:14px;padding:14px}.metric b{font-size:22px;color:#9b2643;display:block;margin-top:4px}
+.tablebox{overflow-x:auto;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:720px;font-size:13px}th,td{padding:11px;text-align:left;border-bottom:1px solid #f0dfe3}th{background:#f8e9ee;color:#8c2441}td.r{text-align:right;white-space:nowrap}.chip{padding:4px 8px;border-radius:20px;display:inline-block;font-size:12px;background:#fff3df;color:#835219}
+.chip.safe{background:#e8f5ec;color:#276744}.chip.warn{background:#ffe8e4;color:#a13c31}
+button.mini{padding:6px 10px;min-height:34px;font-size:12px}.muted{color:#83777a}footer{text-align:center;color:#84767a;font-size:12px;padding:15px}
+@media(max-width:640px){.fields{grid-template-columns:1fr}.card{padding:15px}main{padding:12px}h2{font-size:18px}}
+</style></head>
+<body>
+<header><div><div style="font-size:12px;letter-spacing:.17em">FUJIWARA GROUP · CEO / LOCAL TEST</div>
+<h1>🔗 イベント × 会計伝票</h1>
+<p>独立試験 v1.1／イベントID・開催日・伝票情報を照合して、同一の試験伝票は追加前に停止する。</p></div></header>
+<main>
+<section class="card"><h2>🛡️ 既存データを守る</h2>
+<div class="note"><b>この試験版はFirebase・KING・メイン・会計v1.9に一切接続・書き込みしません。</b> 本番Firebaseから保存済みのJSONをこの端末内で読み取り、伝票との紐付けを画面内だけで試します。入力内容はリロードすると消えます。</div>
+<p class="small">実際の会計反映・売上確定・税務処理ではありません。元の伝票を二重登録しないよう、試験では架空の仕入先・金額を使用してください。秘密イベントと個人情報を含むJSONは、GitHubにアップロードしないでください。</p></section>
+
+<section class="card"><h2>① 本番Firebaseバックアップを読み取る</h2>
+<p class="small">前回と同じ「fujiwara-group-3a600-default-rtdb-export 4.json」などのFirebase Realtime Database全体バックアップを選んでください。<b>会計v1.9の暗号化JSONではありません。</b></p>
+<input id="sourceFile" type="file" accept=".json,application/json">
+<div class="actions"><button id="read">📂 イベント一覧を読み込む</button><button class="light" id="reset">試験画面を消去</button></div>
+<div id="readStatus" class="info" role="status">未読み込み。ファイルはサーバーへ送信しません。</div>
+<div id="scope" class="small"></div>
+</section>
+
+<section class="card" id="test" hidden>
+<h2>② イベントを選んで仕入伝票を照合</h2>
+<div class="fields">
+<div class="full"><label>イベント名を絞り込む（例：JA）</label><input id="eventSearch" placeholder="JA、祭り、イベント名"></div>
+<div class="full"><label>イベントID／開催日を選択</label><select id="eventSelect"><option value="">選択してください</option></select></div>
+</div>
+<div id="eventStats" class="metrics"></div>
+<div id="eventMessage" class="info">イベントを選択してください。</div>
+<hr style="border:0;border-top:1px solid #eee0e3;margin:22px 0">
+<h2>③ 仕入伝票の紐付け案（まだ登録しない）</h2>
+<div class="fields">
+<div><label>仕入先・取引先</label><input id="supplier" placeholder="例：試験仕入店"></div>
+<div><label>金額（税込・円）</label><input id="amount" type="number" min="1" step="1" placeholder="例：1200"></div>
+<div><label>伝票日付</label><input id="voucherDate" type="date"></div>
+<div><label>伝票番号（任意）</label><input id="voucherNo" placeholder="重複照合用"></div>
+<div class="full"><label>対象イベントでの用途・メモ（任意）</label><input id="memo" placeholder="例：焼きそば材料（試験）"></div>
+</div>
+<div class="actions"><button id="preview">🔎 二重計上を点検して追加</button></div>
+<div class="note"><b>重要：</b><b>同一伝票の再入力は追加前にブロックします。</b> 同じ仕入先・日付・金額でも別のレシートなら、異なる伝票番号を入れて区別してください。番号がない場合は同条件を安全側で停止します。メイン側の「仕入」が0円でも、本当に未計上とは限りません。メイン側で仕入金額が登録済みなら<b>要照合</b>。未登録・0円も<b>未確認</b>として扱い、試験伝票を自動的に損益へ加算しません。</div>
+<div id="formStatus" class="small" role="status" aria-live="polite"></div>
+<div id="blockedStatus" class="info" style="margin-top:12px" hidden></div>
+</section>
+
+<section class="card" id="draftSection" hidden><h2>④ 紐付け案の一覧（試験用）</h2>
+<div id="summary" class="metrics"></div>
+<div class="tablebox"><table><thead><tr><th>開催日・イベントID</th><th>仕入先・伝票日</th><th>金額</th><th>メイン側仕入</th><th>照合判定</th><th>操作</th></tr></thead><tbody id="draftRows"></tbody></table></div>
+<div class="actions"><button id="csv">📄 試験用一覧CSVを保存</button><button id="discard" class="light">試験伝票をすべて消す</button></div>
+<p class="small">CSVは明示的に押した時だけ、この端末に生成します。実会計へ取り込むための確定データではありません。イベントID＋開催日、仕入先、金額、伝票番号を使い、今後の正式連携で重複点検する設計資料です。</p>
+</section>
+<footer>FUJIWARA Group · 会計連動の独立試験 · 通信なし／自動保存なし／2026-11-22</footer>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), yen=v=>typeof v==='number'?'¥'+Math.round(v).toLocaleString('ja-JP'):'未登録';
+const num=v=>v===undefined||v===null||v===''?null:Number.isFinite(Number(v))?Number(v):null;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const list=v=>Array.isArray(v)?v.filter(Boolean):v&&typeof v==='object'?Object.values(v).filter(Boolean):[];
+const own=(o,k)=>o&&Object.prototype.hasOwnProperty.call(o,k);
+const amount=(o,k)=>own(o,k)?num(o[k]):null;
+const sum=a=>a.reduce((t,v)=>t+(num(v)||0),0);
+let events=[], visible=[], drafts=[], loaded=false,blocked=0;
+const dateNorm=s=>{const m=String(s||'').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):String(s||'')};
+function metrics(simple){
+ const s=simple||{},ex=s.expenses||{},st=s.settlement||{},company=s.accountingSplit&&s.accountingSplit.companyExpenses;
+ const vals=Object.values(s.items||{}).map(num).filter(v=>v!==null);
+ const sale=(num(st.cashSales)||num(st.receivableSales))?(num(st.cashSales)||0)+(num(st.receivableSales)||0):(vals.length?sum(vals):null);
+ const out={sales:sale};
+ for(const k of ['basho','shiire','kotsu','other']){
+  if(company&&typeof company==='object'){
+   const values=Object.values(company).map(v=>amount(v,k)).filter(v=>v!==null);
+   out[k]=values.length?sum(values):amount(ex,k)
+  }else out[k]=amount(ex,k);
+ }
+ const payments=list(st.staffPayments).map(p=>num(p.amount)).filter(v=>v!==null);
+ out.labor=payments.length?sum(payments):amount(ex.labor||{},'total');
+ return out;
+}
+function extract(raw){
+ const root=raw&&raw.fujiwara?raw.fujiwara:raw;
+ if(!root||!root.events)throw Error('fujiwara/events がありません。本番Firebaseバックアップを選んでください。');
+ const all=list(root.events), rows=[];let secret=0;
+ for(const e of all){if(!e||typeof e!=='object')continue;if(e.secret===true||e.isSecret===true){secret++;continue}
+  const base={id:String(e.id||''),name:String(e.name||'名称未登録'),place:String(e.place||'')};
+  const days=e.sales&&e.sales.days&&typeof e.sales.days==='object'?e.sales.days:{};
+  const parts=Object.entries(days);
+  if(parts.length)for(const [day,rec] of parts){const simple=rec&&rec.simple?rec.simple:rec;if(simple&&typeof simple==='object')rows.push({...base,day:dateNorm(day),hasDay:true,...metrics(simple)})}
+  else rows.push({...base,day:dateNorm(e.date||e.startDate||''),hasDay:false,sales:null,basho:null,shiire:null,kotsu:null,other:null,labor:null});
+ }
+ return {all:all.length,secret,rows};
+}
+function renderEvents(){
+ const query=$('eventSearch').value.trim().toLowerCase();
+ const selected=$('eventSelect').value;
+ visible=events.filter(e=>!query||e.name.toLowerCase().includes(query)).sort((a,b)=>b.day.localeCompare(a.day)||a.name.localeCompare(b.name,'ja'));
+ $('eventSelect').innerHTML='<option value="">イベントを選択してください</option>'+visible.map(e=>'<option value="'+esc(e.key)+'">'+esc(e.day+'｜'+e.name+'｜ID '+e.id)+'</option>').join('');
+ if(visible.some(e=>e.key===selected))$('eventSelect').value=selected;
+ renderSelected();
+}
+function selectedEvent(){return events.find(e=>e.key===$('eventSelect').value)}
+function renderSelected(){
+ const e=selectedEvent();
+ if(!e){$('eventStats').innerHTML='';$('eventMessage').textContent='イベント名・開催日・IDを選択してな。';return}
+ $('eventStats').innerHTML=[['売上',e.sales],['場所代',e.basho],['メイン側仕入',e.shiire],['労務費',e.labor]].map(v=>'<div class="metric">'+esc(v[0])+'<b>'+yen(v[1])+'</b></div>').join('');
+ $('eventMessage').textContent=(e.hasDay?'保存済みの日別実績':'日別実績は未登録')+'。イベントID：'+e.id+'／開催日：'+e.day+'。仕入を照合してから、経費の反映可否を判断します。';
+}
+function normalizeKey(x){return String(x||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase()}
+function isSameVoucher(old,record){
+ if(old.eventId!==record.eventId||old.eventDay!==record.eventDay)return false;
+ if(normalizeKey(old.supplier)!==normalizeKey(record.supplier))return false;
+ // 伝票番号が両方ある場合は番号を優先。伝票日・金額に修正があっても再登録を防ぐ。
+ if(old.voucherNo&&record.voucherNo)return normalizeKey(old.voucherNo)===normalizeKey(record.voucherNo);
+ // 番号が片方でもなければ、日付と金額が一致する場合だけ安全側で停止。
+ return old.voucherDate===record.voucherDate&&old.amount===record.amount;
+}
+function verdict(e,record){
+ if(e.shiire!==null&&e.shiire>0)return {status:'要照合',note:'メイン側に仕入金額が登録済み。明細との照合が必要'};
+ return {status:'未確認',note:e.shiire===null?'メイン側仕入が未登録':'メイン側仕入0円でも未計上とは断定できない'};
+}
+$('read').onclick=async()=>{
+ const f=$('sourceFile').files[0];if(!f){$('readStatus').textContent='本番FirebaseバックアップJSONを選んでください。';return}
+ if(f.size>70*1024*1024){$('readStatus').textContent='70MBを超えるJSONはこの版では読み込めません。';return}
+ $('read').disabled=true;$('readStatus').textContent='端末内で読み込み中…';
+ try{const parsed=extract(JSON.parse(await f.text()));events=parsed.rows.map((e,i)=>({...e,key:String(i)}));drafts=[];blocked=0;loaded=true;
+  $('test').hidden=false;$('draftSection').hidden=false;$('scope').textContent='元のイベント数 '+parsed.all+'件／画面から除外したシークレット設定 '+parsed.secret+'件／日別の照合候補 '+events.length+'行。';
+  $('readStatus').innerHTML='<span style="color:#176039">✅ 本番バックアップを端末内で読み取りました。</span> 通信・書き込み・自動保存はありません。';
+  $('eventSearch').value='';$('blockedStatus').hidden=true;renderEvents();renderDrafts();
+ }catch(err){events=[];drafts=[];blocked=0;$('blockedStatus').hidden=true;loaded=false;$('test').hidden=true;$('draftSection').hidden=true;$('readStatus').textContent='❌ 読み取り失敗：'+(err.message||String(err))}
+ finally{$('read').disabled=false}
+};
+$('eventSearch').oninput=renderEvents;$('eventSelect').onchange=renderSelected;
+$('preview').onclick=()=>{
+ const e=selectedEvent(),supplier=$('supplier').value.trim(),a=num($('amount').value),date=$('voucherDate').value.trim();
+ if(!e){$('formStatus').textContent='先にイベントを選択してください。';return}
+ if(!supplier||a===null||!Number.isInteger(a)||a<=0||!date){$('formStatus').textContent='仕入先・正の整数金額・伝票日付を入力してください。';return}
+ const d={id:String(Date.now())+'_'+drafts.length,eventId:e.id,eventDay:e.day,eventName:e.name,supplier,amount:a,voucherDate:date,voucherNo:$('voucherNo').value.trim(),memo:$('memo').value.trim(),mainShiire:e.shiire};
+ const duplicate=drafts.find(x=>isSameVoucher(x,d));
+ if(duplicate){
+  blocked++;renderDrafts();
+  $('blockedStatus').hidden=false;
+  $('blockedStatus').innerHTML='🛑 <b>重複登録を停止しました。</b> 同じイベント・開催日・仕入先で同じ伝票番号、または日付と金額が一致する試験伝票が既にあります。登録済み '+yen(duplicate.amount)+'／No.'+esc(duplicate.voucherNo||'番号なし')+'。別の買い物なら異なる伝票番号を入力して区別してな。';
+  $('formStatus').textContent='登録していません。試験用の合計金額は増えていません。';return;
+ }
+ $('blockedStatus').hidden=true;
+ const v=verdict(e,d);d.status=v.status;d.note=v.note;drafts.push(d);renderDrafts();
+ $('formStatus').textContent='試験用の紐付け案を追加しました。判定：'+v.status+'。正式会計・メインの金額は変更していません。';
+};
+function renderDrafts(){
+ const total=sum(drafts.map(x=>x.amount)),warn=drafts.filter(x=>x.status!=='未確認').length;
+ $('summary').innerHTML=[['試験用伝票',drafts.length+'件'],['試験用金額（未計上）',yen(total)],['要照合',warn+'件'],['重複を停止した回数',blocked+'回']].map(x=>'<div class="metric">'+x[0]+'<b>'+x[1]+'</b></div>').join('');
+ $('draftRows').innerHTML=drafts.map(d=>'<tr><td>'+esc(d.eventDay)+'<br><b>'+esc(d.eventName)+'</b><br><small>ID '+esc(d.eventId)+'</small></td><td>'+esc(d.supplier)+'<br><small>'+esc(d.voucherDate)+(d.voucherNo?' / No.'+esc(d.voucherNo):'')+'</small></td><td class="r">'+yen(d.amount)+'</td><td class="r">'+yen(d.mainShiire)+'</td><td><span class="chip '+(d.status==='重複候補'?'warn':d.status==='要照合'?'warn':'')+'">'+esc(d.status)+'</span><br><small>'+esc(d.note)+'</small></td><td><button class="light mini" data-del="'+esc(d.id)+'">削除</button></td></tr>').join('')||'<tr><td colspan="6">まだ試験伝票はありません。</td></tr>';
+ $('draftRows').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{drafts=drafts.filter(d=>d.id!==b.dataset.del);renderDrafts()});
+}
+$('discard').onclick=()=>{if(confirm('この画面の試験伝票だけを消しますか？ 本番データには影響しません。')){drafts=[];blocked=0;$('blockedStatus').hidden=true;renderDrafts()}};
+$('reset').onclick=()=>{if(!confirm('読み取ったイベント・試験伝票をこの画面から消しますか？'))return;events=[];visible=[];drafts=[];blocked=0;$('blockedStatus').hidden=true;loaded=false;$('test').hidden=true;$('draftSection').hidden=true;$('sourceFile').value='';$('scope').textContent='';$('readStatus').textContent='画面の情報を消去しました。Firebase・メイン・会計のデータは変更していません。'};
+function csvCell(x){return '"'+String(x??'').replace(/"/g,'""')+'"'}
+$('csv').onclick=()=>{if(!drafts.length){alert('試験伝票がありません。');return}
+ const headings=['イベントID','開催日','イベント名','伝票日','仕入先','金額','伝票番号','用途','メイン側仕入','判定','注意'];
+ const lines=[headings,...drafts.map(d=>[d.eventId,d.eventDay,d.eventName,d.voucherDate,d.supplier,d.amount,d.voucherNo,d.memo,d.mainShiire===null?'未登録':d.mainShiire,d.status,d.note])];
+ const blob=new Blob(['\ufeff'+lines.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='FUJIWARA_イベント会計_紐付け試験_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},1200);
+};
+})();
+</script></body></html>
