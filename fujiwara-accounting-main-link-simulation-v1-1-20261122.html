@@ -1,0 +1,187 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer">
+<title>FUJIWARA 会計v1.9×メイン照合 v1.0</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#392c32;background:#faf4f5}*{box-sizing:border-box}
+body{margin:0}header{background:linear-gradient(110deg,#7e1530,#c53251);color:white;padding:25px 15px 45px}
+.wrap{max-width:1050px;margin:0 auto;padding:0 14px}header h1{font-size:clamp(24px,5vw,33px);margin:8px 0}header p{line-height:1.6;font-size:13px}
+main{margin-top:-21px}.card{background:white;padding:19px;border:1px solid #eedce0;border-radius:23px;margin-bottom:18px;box-shadow:0 8px 25px #66112409}
+h2{color:#982846;font-size:19px;margin:0 0 15px}.hint{background:#fff2d9;border-left:5px solid #d6a148;padding:14px;border-radius:11px;line-height:1.7}
+.note{font-size:13px;color:#74646b;line-height:1.7}.msg{background:#f8edf0;padding:12px;border-radius:10px;line-height:1.6;font-size:14px;margin-top:9px}
+.ok{background:#e7f5ec;color:#176239}.alert{background:#ffeae6;color:#952e28}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.wide{grid-column:1/-1}label{font-size:13px;font-weight:700;color:#785261;display:block;margin-bottom:6px}
+input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid #dbc0c9;border-radius:12px;min-height:46px;background:white;min-width:0}
+button{border:0;font:inherit;min-height:44px;border-radius:12px;background:#a22241;color:white;padding:10px 16px;font-weight:700;cursor:pointer}
+button.alt{background:#f5e9ec;color:#8f2b43}button:disabled{opacity:.45;cursor:not-allowed}.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
+.stat{border:1px solid #ebd8de;background:#fff7f8;border-radius:14px;padding:13px}.stat small{font-size:12px;color:#79636b;display:block}.stat b{color:#a22343;font-size:22px}
+.tablewrap{overflow:auto}table{width:100%;min-width:950px;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #f1e0e5;padding:11px;vertical-align:top}th{background:#f6e6eb;color:#8f2441;text-align:left}td.n{text-align:right;white-space:nowrap}.tag{display:inline-block;border-radius:20px;background:#fff0d6;color:#7e5214;font-size:12px;padding:4px 8px;margin:3px 0}.tag.warn{background:#ffe9e6;color:#9c2e28}.tag.good{background:#e8f4ec;color:#1b6841}
+select.link{min-width:260px;max-width:440px}footer{text-align:center;color:#897980;font-size:12px;padding:20px}.mini{font-size:12px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.card{padding:15px}table{min-width:870px}}
+</style></head><body>
+<header><div class="wrap"><div style="font-size:12px;letter-spacing:.18em">FUJIWARA GROUP · CEO / OFFLINE TEST</div><h1>📊 会計v1.9 × メイン連動準備</h1><p>独立試験 v1.1｜既存伝票の照合＋架空の仕入を安全に試す（本番データ非変更）</p></div></header>
+<main class="wrap">
+<section class="card"><h2>🛡️ 本番データ保護</h2><div class="hint"><b>Firebase・KING・メイン・会計v1.9には接続も書き込みもしません。</b> Googleドライブ等から選んだJSONを、このiPad／PCのブラウザ内でだけ読み取ります。データや合言葉は送信・自動保存しません。画面を再読み込みすると照合結果は消えます。</div>
+<p class="note">秘密イベントを含むFirebaseバックアップと、社長用伝票データを使用するため、このページをスタッフに配布せず、共有PCでは使用しないでください。会計元帳の写真データは画面に表示しません。</p></section>
+<section class="card"><h2>① メイン側のイベントバックアップ</h2>
+<label>Firebase Realtime Databaseの本番JSON（例：fujiwara-group-3a600-default-rtdb-export 4.json）</label><input type="file" id="firebaseFile" accept=".json,application/json">
+<div class="btnrow"><button id="loadEvents">📂 イベントを読み込む</button></div><div class="msg" id="eventStatus">未読み込み（会計v1.9の暗号化JSONではありません）</div>
+</section>
+<section class="card"><h2>② 会計v1.9の「社長伝票」暗号化バックアップ</h2>
+<label>Googleドライブに保存した「FUJIWARA_社長伝票_暗号化バックアップ_… .json」</label><input type="file" id="ledgerFile" accept=".json,application/json">
+<div class="grid" style="margin-top:12px"><div><label>元帳を開く合言葉（この画面には保存しません）</label><input id="password" type="password" autocomplete="off" placeholder="元の伝票仮帳簿の合言葉"></div><div style="display:flex;align-items:end"><button id="loadLedger">🔐 復号して伝票を表示</button></div></div>
+<div class="msg" id="ledgerStatus">未読み込み。v1.9の「管理メモ」バックアップとは別ファイルです。</div>
+<p class="note">※今回は「元の伝票一覧」を照合します。v1.9管理メモの「試験除外」「返金予定・返金済み」はこの版には取り込みません。そのため、試験除外100円の伝票も「要除外確認」として表示する場合があります。合言葉をこのチャットに送らないでください。</p></section>
+<section class="card" id="result" hidden><h2>③ 伝票ごとにメインのイベントを紐付ける</h2>
+<div id="stats" class="statgrid"></div>
+<div class="grid"><div><label>伝票の所属先</label><select id="scope"><option value="">すべて</option><option>イベント経費</option><option>FUJIWARA Group経費</option><option>事務所経費</option><option>リコー工業経費</option><option value="プライベートA">本家</option><option value="プライベートB">分家</option></select></div>
+<div><label>取引先・イベント名で検索</label><input id="query" placeholder="例：JA、吉澤"></div></div>
+<p class="note">イベント名だけでは同名や連日開催を誤るため、必ず「イベントID・開催日」で選択してな。元の会計伝票は一切変更しません。仕入以外の請求・納品・本家・分家などはイベント経費へ自動計上しません。</p>
+<div class="tablewrap"><table><thead><tr><th>元帳の伝票</th><th>所属先・用途</th><th>金額</th><th>イベントID・開催日の候補</th><th>照合状態</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="btnrow"><button id="export">📄 照合案をCSV保存</button><button class="alt" id="clearLinks">紐付け案を解除</button></div>
+<div id="resultStatus" class="msg">紐付け先は未設定です。CSVは明示的に押したときだけ生成します。</div>
+</section>
+<section class="card" id="simulation" hidden><h2>④ 🧪 架空の仕入伝票で連動試験</h2>
+<div class="hint"><b>本物の「お金の管理 v1.9」には入力しないでな。</b> ここでは試験伝票をこの画面のメモリ内だけに追加する。二重登録は追加前に止め、本番の会計・Firebase・KING・メインの金額は一切変更しません。ページを更新すると試験伝票は消えます。</div>
+<div class="grid" style="margin-top:16px">
+ <div class="wide"><label>紐付け先イベント（イベントID・開催日）</label><select id="simEvent"><option value="">先に①を読み込んでな</option></select></div>
+ <div><label>試験仕入先</label><input id="simPartner" value="試験仕入店"></div>
+ <div><label>試験金額（税込・円）</label><input id="simAmount" inputmode="numeric" type="number" min="1" max="10000000" value="1200"></div>
+ <div><label>試験伝票の日付</label><input id="simDate" type="date" value="2026-10-16"></div>
+ <div><label>伝票番号（別の買い物は別番号）</label><input id="simNumber" value="TEST-JA-001"></div>
+ <div class="wide"><label>用途（任意）</label><input id="simDetails" value="焼きそば材料（架空の試験）"></div>
+</div>
+<div class="btnrow"><button id="addSim">🛡️ 重複を点検して試験追加</button><button class="alt" id="clearSim">試験伝票だけ消す</button></div>
+<div id="simMessage" class="msg">イベントを選んでから試験追加してな。会計v1.9の元帳には一切保存しません。</div>
+<div id="simStats" class="statgrid"></div>
+<div class="tablewrap"><table><thead><tr><th>イベント・開催日</th><th>仕入先・伝票日</th><th>金額</th><th>判定・注意</th></tr></thead><tbody id="simRows"><tr><td colspan="4">試験伝票はまだありません。</td></tr></tbody></table></div>
+<p class="note">※この重複防止は試験画面内で確認するものです。別端末・本番元帳にある伝票まで完全に防げるわけではありません。メイン側に仕入が0円でも、実際に未計上とは限らず、正式な自動反映はまだ行いません。</p>
+</section>
+<section class="card"><h2>⑤ 実用化へ進むための確認事項</h2>
+<div class="hint">この段階は<b>照合候補の作成まで</b>やで。メインの仕入が0円でも、実際に未計上とは限りません。元帳の「メインに計上済み」などの印と、仕入先・領収書番号・日付・内容の実物を確認してから、正式な連携方法を決めます。<b>CSVをメインに直接取り込まないでください。</b></div></section>
+</main><footer>FUJIWARA Group ｜ オフライン照合 v1.1 ｜ 読み取り専用・自動保存なし</footer>
+<script>
+(()=>{'use strict';const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const yen=n=>'¥'+Number(n||0).toLocaleString('ja-JP');
+const list=o=>Array.isArray(o)?o.filter(Boolean):o&&typeof o==='object'?Object.values(o).filter(Boolean):[];
+const money=x=>x===undefined||x===null||x===''?null:Number.isFinite(Number(x))?Number(x):null;
+const dateNorm=s=>{const m=String(s||'').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):String(s||'')};
+let events=[],entries=[],associations={},eventLoaded=false,ledgerLoaded=false,simRecords=[],simBlocked=0;
+function metrics(simple){
+ const s=simple||{},ex=s.expenses||{},st=s.settlement||{},co=s.accountingSplit&&s.accountingSplit.companyExpenses;
+ let shiire=money(ex.shiire);if(co&&typeof co==='object'){const vals=Object.values(co).map(x=>money(x&&x.shiire)).filter(x=>x!==null);if(vals.length)shiire=vals.reduce((a,b)=>a+b,0)}
+ return {shiire};
+}
+function parseEvents(o){
+ const root=o&&o.fujiwara?o.fujiwara:o;if(!root||!root.events)throw Error('fujiwara/events が見つかりません。本番Firebaseのバックアップを選んでな');
+ let rows=[],secret=0;const all=list(root.events);
+ for(const e of all){if(!e||typeof e!=='object')continue;if(e.secret===true||e.isSecret===true){secret++;continue}
+ const d=e.sales&&e.sales.days&&typeof e.sales.days==='object'?e.sales.days:{};
+ if(Object.keys(d).length){for(const [day,r] of Object.entries(d)){const s=r&&r.simple?r.simple:r;if(s&&typeof s==='object')rows.push({key:String(e.id||'')+'|'+dateNorm(day),id:String(e.id||''),date:dateNorm(day),name:String(e.name||'名称なし'),...metrics(s)})}}
+ else rows.push({key:String(e.id||'')+'|'+dateNorm(e.date||''),id:String(e.id||''),date:dateNorm(e.date||''),name:String(e.name||'名称なし'),shiire:null});
+ }
+ return {rows,all:all.length,secret};
+}
+const te=new TextEncoder(),td=new TextDecoder();
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decryptVault(envelope,pass){
+ if(!envelope||envelope.format!=='FUJIWARA_CEO_VOUCHER_OFFLINE_V1'||envelope.version!==1||envelope.kdf!=='PBKDF2-SHA256'||envelope.iterations!==250000||typeof envelope.payload!=='string'||envelope.payload.length>22000000)throw Error('社長伝票のバックアップ形式ではありません');
+ const salt=b64(envelope.salt),iv=b64(envelope.iv);if(salt.length!==16||iv.length!==12)throw Error('暗号化データの長さが不正です');
+ const base=await crypto.subtle.importKey('raw',te.encode(pass),'PBKDF2',false,['deriveKey']);
+ const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+ const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,b64(envelope.payload));
+ const o=JSON.parse(td.decode(plain));if(!o||o.version!==1||!Array.isArray(o.entries)||o.entries.length>4000)throw Error('伝票データの形式が違います');
+ const ids=new Set();for(const x of o.entries){if(!x||typeof x.id!=='string'||typeof x.date!=='string'||typeof x.scope!=='string'||!Number.isSafeInteger(x.amount)||x.amount<=0||typeof x.partner!=='string')throw Error('伝票データが不正です');if(ids.has(x.id))throw Error('伝票IDの重複があります');ids.add(x.id)}
+ // Explicitly exclude embedded photo data and other freeform hidden fields from our working copy
+ return o.entries.map(x=>({id:x.id,date:x.date,scope:x.scope,event:String(x.event||''),docType:String(x.docType||''),category:String(x.category||''),partner:x.partner,amount:x.amount,payment:String(x.payment||''),status:String(x.status||''),prior:String(x.prior||''),number:String(x.number||''),details:String(x.details||'')}))
+}
+async function readJSON(id,maxMB){const file=$(id).files[0];if(!file)throw Error('先にファイルを選んでな');if(file.size>maxMB*1024*1024)throw Error('ファイルが大きすぎます');return JSON.parse(await file.text())}
+$('loadEvents').onclick=async()=>{
+ const b=$('loadEvents');b.disabled=true;
+ try{const p=parseEvents(await readJSON('firebaseFile',70));events=p.rows;eventLoaded=true;associations={};simRecords=[];simBlocked=0;updateSimEventOptions();$('eventStatus').className='msg ok';$('eventStatus').textContent='✅ '+p.all+'イベントを確認。シークレット設定 '+p.secret+'件を画面から除外／イベント日別の照合候補 '+events.length+'件。本番への通信・書き込みなし。';render()}
+ catch(e){eventLoaded=false;events=[];simRecords=[];simBlocked=0;updateSimEventOptions();$('eventStatus').className='msg alert';$('eventStatus').textContent='❌ '+e.message;render()}
+ finally{b.disabled=false}
+};
+$('loadLedger').onclick=async()=>{
+ const b=$('loadLedger'),pass=$('password').value;b.disabled=true;
+ try{if(pass.length<12)throw Error('合言葉は12文字以上です');const raw=await readJSON('ledgerFile',16);entries=await decryptVault(raw,pass);ledgerLoaded=true;associations={};$('ledgerStatus').className='msg ok';$('ledgerStatus').textContent='✅ 会計v1.9の元帳バックアップから伝票 '+entries.length+'件を復号できました。元のデータは変更していません。';render()}
+ catch(e){entries=[];ledgerLoaded=false;$('ledgerStatus').className='msg alert';$('ledgerStatus').textContent='❌ 読み取れません：合言葉またはファイル形式を確認してな（'+e.message+'）';render()}
+ finally{$('password').value='';b.disabled=false}
+};
+const scopeName=s=>({'プライベートA':'本家','プライベートB':'分家'}[s]||s);
+function status(entry,ev){
+ if(entry.scope!=='イベント経費')return {name:'別区分',desc:'イベント経費ではありません。紐付け案のみ・自動計上禁止',cls:'warn'};
+ if(entry.prior.includes('計上済み'))return {name:'重複リスク',desc:'元帳に「既存計上済み」の記録あり。再加算禁止',cls:'warn'};
+ if(entry.docType==='issued_invoice'||entry.docType==='received_invoice'||entry.docType==='delivery'||entry.category==='売上・請求')return {name:'要確認',desc:'請求・納品等は支払済みの経費と断定できません',cls:'warn'};
+ if(!ev)return {name:'未紐付け',desc:'イベントID・日付の選択待ち',cls:''};
+ if(ev.shiire!==null&&ev.shiire>0)return {name:'要照合',desc:'メイン側に仕入'+yen(ev.shiire)+'の保存値があります。重複可能性を要確認',cls:'warn'};
+ return {name:'未確認',desc:'仕入0円・未登録でも未計上とは限りません',cls:''};
+}
+function options(entry){
+ const q=(entry.event||'').trim().toLowerCase();
+ const sorted=events.slice().sort((a,b)=>{
+  const sa=(q&&a.name.toLowerCase().includes(q)?1:0),sb=(q&&b.name.toLowerCase().includes(q)?1:0);
+  return sb-sa||b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'ja')
+ });
+ return '<option value="">— 紐付けなし —</option>'+sorted.map(ev=>'<option value="'+esc(ev.key)+'" '+(associations[entry.id]===ev.key?'selected':'')+'>'+esc(ev.date+'｜'+ev.name+'｜ID '+ev.id)+'</option>').join('');
+}
+function render(){
+ $('result').hidden=!ledgerLoaded; $('simulation').hidden=!eventLoaded; renderSim();
+ if(!ledgerLoaded)return;
+ const linked=Object.values(associations).filter(Boolean).length;
+ const filters=entries.filter(e=>(!$('scope').value||e.scope===$('scope').value)&&(!$('query').value.trim()||[e.event,e.partner,e.details,e.number].join(' ').toLowerCase().includes($('query').value.trim().toLowerCase())));
+ $('stats').innerHTML=[['元帳の伝票',entries.length+'件'],['イベント経費',entries.filter(e=>e.scope==='イベント経費').length+'件'],['紐付け案',linked+'件'],['メイン候補',eventLoaded?events.length+'行':'未読込']].map(x=>'<div class="stat"><small>'+x[0]+'</small><b>'+x[1]+'</b></div>').join('');
+ $('rows').innerHTML=filters.map(e=>{
+ const ev=events.find(x=>x.key===associations[e.id]);const st=status(e,ev);
+ const select=eventLoaded?'<select class="link" data-link="'+esc(e.id)+'">'+options(e)+'</select>':'<span class="note">メインJSONを先に読込</span>';
+ return '<tr><td><b>'+esc(e.partner)+'</b><br>'+esc(e.date)+'<br><span class="note">No. '+esc(e.number||'なし')+'<br>ID '+esc(e.id)+'</span></td><td>'+esc(scopeName(e.scope))+'<br>'+esc(e.category)+'<br><span class="note">'+esc(e.event)+' / '+esc(e.prior)+'</span></td><td class="n">'+yen(e.amount)+'</td><td>'+select+(ev?'<div class="note">メイン仕入：'+(ev.shiire===null?'未登録':yen(ev.shiire))+'</div>':'')+'</td><td><span class="tag '+st.cls+'">'+st.name+'</span><br><span class="note">'+esc(st.desc)+'</span></td></tr>'
+ }).join('')||'<tr><td colspan="5">対象の伝票がありません。</td></tr>';
+ $('rows').querySelectorAll('[data-link]').forEach(s=>s.onchange=()=>{if(s.value)associations[s.dataset.link]=s.value;else delete associations[s.dataset.link];render()});
+ $('resultStatus').textContent='元帳'+entries.length+'件のうち紐付け案'+linked+'件。保存済みの会計・イベントデータは一切変更していません。';
+}
+function updateSimEventOptions(){
+ const sel=$('simEvent'),was=sel.value;
+ const opts=events.slice().sort((a,b)=>a.name.localeCompare(b.name,'ja')||a.date.localeCompare(b.date));
+ sel.replaceChildren(new Option('イベントを選択してください',''),...opts.map(ev=>new Option(ev.date+'｜'+ev.name+'｜ID '+ev.id,ev.key)));
+ if(opts.some(ev=>ev.key===was))sel.value=was;
+ // For training convenience, pre-select the familiar JA Kasuga only when unambiguous.
+ else {const match=opts.filter(ev=>ev.name==='JA春日'&&ev.date==='2026-10-17');if(match.length===1)sel.value=match[0].key}
+}
+function simKey(s){
+ const base=[s.eventKey,s.partner.trim().normalize('NFKC').toLowerCase()];
+ return s.number?JSON.stringify([...base,'number',s.number.trim().normalize('NFKC').toLowerCase()]):JSON.stringify([...base,'no-number',s.date,s.amount]);
+}
+function renderSim(){
+ const total=simRecords.reduce((sum,r)=>sum+r.amount,0);
+ $('simStats').innerHTML=[['架空の試験伝票',simRecords.length+'件'],['試験だけの金額',yen(total)],['重複の停止',simBlocked+'回'],['本番データへの反映','0円']].map(v=>'<div class="stat"><small>'+v[0]+'</small><b>'+v[1]+'</b></div>').join('');
+ $('simRows').innerHTML=simRecords.map(r=>{
+ const ev=events.find(e=>e.key===r.eventKey),st=ev&&ev.shiire!==null&&ev.shiire>0?'⚠️ メイン側にも仕入保存値があります。二重計上の可能性を要確認':'未確認（メイン0円でも未計上とは断定不可）';
+ return '<tr><td>'+esc(ev?.name||'不明')+'<br>'+esc(ev?.date||'')+'<br><span class="note">ID '+esc(ev?.id||'')+'</span></td><td>'+esc(r.partner)+'<br>'+esc(r.date)+'<br>番号 '+esc(r.number||'なし')+'</td><td class="n">'+yen(r.amount)+'</td><td><span class="tag warn">本番未計上</span><br><span class="note">'+esc(st)+'</span></td></tr>';
+ }).join('')||'<tr><td colspan="4">試験伝票はまだありません。</td></tr>';
+}
+$('addSim').onclick=()=>{
+ if(!eventLoaded){$('simMessage').className='msg alert';$('simMessage').textContent='❌ 先にメイン側のJSONを読み込んでな';return}
+ const eventKey=$('simEvent').value,ev=events.find(e=>e.key===eventKey),partner=$('simPartner').value.trim(),amount=Number($('simAmount').value),date=$('simDate').value,number=$('simNumber').value.trim(),details=$('simDetails').value.trim();
+ if(!ev||!partner||!Number.isSafeInteger(amount)||amount<=0||amount>10000000||!/^\d{4}-\d{2}-\d{2}$/.test(date)){ $('simMessage').className='msg alert';$('simMessage').textContent='❌ イベント・仕入先・正しい金額・伝票日付を確認してな';return}
+ const s={eventKey,partner,amount,date,number,details};
+ const k=simKey(s),match=simRecords.find(r=>simKey(r)===k);
+ if(match){simBlocked++;$('simMessage').className='msg alert';$('simMessage').textContent='⛔ 同じイベントID・仕入先・伝票番号（番号なしの場合は同日同額）の試験伝票が既にあります。2回目は追加せず停止しました。';renderSim();return}
+ // Compare with locally decrypted accounting source where manually linked. Never mutate source.
+ const existing=entries.find(e=>e.scope==='イベント経費'&&associations[e.id]===eventKey&&e.partner.trim().normalize('NFKC').toLowerCase()===partner.normalize('NFKC').toLowerCase()&&(number?e.number.trim().normalize('NFKC').toLowerCase()===number.normalize('NFKC').toLowerCase():e.date===date&&e.amount===amount));
+ if(existing){simBlocked++;$('simMessage').className='msg alert';$('simMessage').textContent='⛔ 読み込んだ元帳の紐付け済み伝票に同一候補があります。安全のため追加しません。';renderSim();return}
+ simRecords.push(s);$('simMessage').className='msg ok';$('simMessage').textContent='✅ 架空の試験伝票を追加しました。正式会計・メイン・KINGには反映していません。次は同じ内容でもう一度押し、重複停止を確認できます。';renderSim();
+};
+$('clearSim').onclick=()=>{if(confirm('この画面で作成した架空の試験伝票だけを消しますか？')){simRecords=[];simBlocked=0;$('simMessage').className='msg';$('simMessage').textContent='架空の試験伝票を消しました。本番元帳には何も変更していません。';renderSim()}};
+$('scope').onchange=render;$('query').oninput=render;
+$('clearLinks').onclick=()=>{if(confirm('この画面の紐付け案だけを解除しますか？')){associations={};render()}};
+const csvCell=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
+$('export').onclick=()=>{
+ if(!ledgerLoaded||!eventLoaded){alert('両方のバックアップを読み込んでください');return}
+ const header=['元帳伝票ID','伝票日','所属先','科目','伝票番号','仕入先','金額','イベント名(元帳)','イベントID(候補)','開催日(候補)','イベント名(候補)','メイン側仕入','元帳の既存計上確認','照合判定'];
+ const rows=entries.map(e=>{const ev=events.find(x=>x.key===associations[e.id]),st=status(e,ev);return[e.id,e.date,scopeName(e.scope),e.category,e.number,e.partner,e.amount,e.event,ev?.id||'',ev?.date||'',ev?.name||'',ev?(ev.shiire===null?'未登録':ev.shiire):'',e.prior,st.name]});
+ const text='\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');
+ a.href=url;a.download='FUJIWARA_会計メイン照合案_未確定_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+};
+})();
+</script></body></html>
