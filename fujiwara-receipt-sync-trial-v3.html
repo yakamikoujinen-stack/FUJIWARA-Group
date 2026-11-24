@@ -72,7 +72,7 @@ async function compress(file) {
 el('config').onchange = async event => {
   try {
     const config = JSON.parse(await event.target.files[0].text());
-    if (!/^fujiwara-receipt-trial-[a-z0-9]+$/.test(config.projectId ?? '')
+    if (!/^fujiwara-receipt-trial(?:-[a-z0-9]+)?$/.test(config.projectId ?? '')
       || config.authDomain !== config.projectId + '.firebaseapp.com'
       || !config.apiKey || !config.appId) throw Error('試験専用プロジェクトの設定を選んでください。');
     const url = new URL(config.databaseURL);
