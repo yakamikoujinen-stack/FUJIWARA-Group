@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA Group レシート経費申請（試験）</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#faf6f6;color:#30252a;font:17px/1.55 system-ui,sans-serif}header{background:#821c38;color:white;padding:28px 20px}header div,main{max-width:760px;margin:auto}main{padding:20px 14px}h1,h2,p{margin:0 0 14px}h1{font-size:1.6rem}section,article{background:white;border:1px solid #e8d7dd;border-radius:15px;padding:18px;margin-bottom:14px}nav{display:flex;gap:10px;margin-bottom:16px}label{display:block;margin-bottom:13px;font-weight:600}input,select,textarea,button{font:inherit;border-radius:9px;padding:10px;min-height:44px}input,select,textarea{display:block;width:100%;border:1px solid #b78f9c;background:white;color:inherit}button{background:#821c38;color:white;border:0;cursor:pointer}button:disabled{opacity:.55}button[aria-pressed=false]{background:#f0e3e8;color:#68132c}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}img{display:block;max-width:100%;max-height:420px;margin:12px 0;object-fit:contain}.status{color:#245944}.error{color:#8c1735}.actions{display:flex;flex-wrap:wrap;gap:8px}.note{font-size:.92rem}@media(max-width:540px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div><h1>レシート経費申請</h1><p>FUJIWARA Group ・ 自動共有試験版 v3.0</p></div></header>
+<main>
+<p class="note">試験専用のFirebaseに接続し、架空の申請を試してください。</p>
+<section><label>試験用Firebase設定（JSON）<input id="config" type="file" accept=".json"></label>
+<form id="login"><label>メールアドレス<input name="email" type="email" required></label>
+<label>パスワード<input name="password" type="password" required></label><button>ログイン</button></form>
+<button id="logout" hidden>ログアウト</button></section>
+
+<p id="status" role="status"></p>
+<section id="staff" hidden>
+<h2>レシートを申請する</h2>
+<form id="application">
+<label>レシート写真（必須）<input name="photo" type="file" accept="image/*" capture="environment" required></label>
+<div class="grid">
+<label>申請者<input name="staffName" maxlength="60" required></label>
+<label>購入日<input name="date" type="date" required></label>
+<label>仕入先・取引先<input name="supplier" maxlength="100" required></label>
+<label>税込金額（円）<input name="amount" type="number" inputmode="numeric" min="1" max="999999999" step="1" required></label>
+<label>支払区分<select name="payment" required><option value="">選択してください</option><option>会社のお金で購入</option><option>スタッフ立替</option></select></label>
+<label>イベント名（任意）<input name="event" maxlength="100"></label>
+</div>
+<label>購入内容・メモ<textarea name="note" maxlength="500"></textarea></label>
+<button type="submit">試験申請を送る</button>
+</form><h2>自分の申請</h2><div id="mine"></div></section>
+<section id="ceo" hidden><h2>申請一覧</h2><div id="requests"></div></section>
+</main>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, inMemoryPersistence, setPersistence} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getDatabase, ref, get, onValue, runTransaction, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+const el = id => document.getElementById(id);
+const tell = (message, failed = false) => {
+  el('status').textContent = message;
+  el('status').className = failed ? 'error' : 'status';
+};
+let auth, db, stop, account, pending, role;
+const form = el('application');
+async function compress(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('写真を開けませんでした。JPEGまたはPNGでお試しください。'));
+      image.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    const ratio = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight));
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.72);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+el('config').onchange = async event => {
+  try {
+    const config = JSON.parse(await event.target.files[0].text());
+    if (!/^fujiwara-receipt-trial-[a-z0-9]+$/.test(config.projectId ?? '')
+      || config.authDomain !== config.projectId + '.firebaseapp.com'
+      || !config.apiKey || !config.appId) throw Error('試験専用プロジェクトの設定を選んでください。');
+    const url = new URL(config.databaseURL);
+    const host = url.hostname;
+    if (url.protocol !== 'https:' || url.port || url.username || url.password || url.pathname !== '/' || url.search || url.hash
+      || !(host === config.projectId + '-default-rtdb.firebaseio.com'
+        || new RegExp('^' + config.projectId + '-default-rtdb\\.[a-z0-9-]+\\.firebasedatabase\\.app$').test(host))) throw Error('試験専用データベースのURLを確認してください。');
+    if (auth) throw Error('設定を切り替える場合はページを開き直してください。');
+    const app = initializeApp(config);
+    auth = getAuth(app);
+    db = getDatabase(app);
+    await setPersistence(auth, inMemoryPersistence);
+    event.target.disabled = true;
+    onAuthStateChanged(auth, connect);
+    tell('設定を読み込みました。試験アカウントでログインしてください。');
+  } catch (error) { tell(error.message, true); }
+};
+el('login').onsubmit = async event => {
+  event.preventDefault();
+  if (!auth) return tell('先に設定JSONを選んでください。', true);
+  const button = event.submitter;
+  button.disabled = true;
+  const fields = new FormData(event.target);
+  try { await signInWithEmailAndPassword(auth, fields.get('email').trim(), fields.get('password')); }
+  catch { tell('ログインできませんでした。試験アカウントを確認してください。', true); }
+  finally { event.target.elements.password.value = ''; button.disabled = false; }
+};
+el('logout').onclick = async () => {
+  if (form.querySelector('button').disabled) return tell('申請の保存結果が出るまでお待ちください。', true);
+  try { await signOut(auth); } catch { tell('ログアウトできませんでした。', true); }
+};
+async function connect(user) {
+  stop?.();
+  account = user;
+  role = null;
+  pending = null;
+  form.reset();
+  for (const id of ['staff','ceo']) el(id).hidden = true;
+  for (const id of ['mine','requests']) el(id).replaceChildren();
+  el('login').hidden = !!user;
+  el('logout').hidden = !user;
+  if (!user) return;
+  try {
+    const assigned = (await get(ref(db, 'roles/' + user.uid))).val();
+    if (account !== user) return;
+    if (!['staff','ceo'].includes(assigned)) throw Error('試験アカウントに役割が設定されていません。');
+    role = assigned;
+    const ceo = role === 'ceo';
+    el(role).hidden = false;
+    tell(ceo ? '社長として接続しました。' : 'スタッフとして接続しました。');
+    stop = onValue(ref(db, ceo ? 'applications' : 'applications/' + user.uid),
+      snapshot => {
+        if (account !== user) return;
+        const data = snapshot.val() ?? {};
+        const entries = ceo ? Object.entries(data).flatMap(([uid, items]) =>
+          Object.entries(items).map(([id, value]) => ({uid,id,...value})))
+          : Object.values(data);
+        render(entries, ceo);
+      }, () => {
+        if (account !== user) return;
+        el(ceo ? 'requests' : 'mine').replaceChildren();
+        tell('申請一覧にアクセスできません。試験環境の権限を確認してください。', true);
+      });
+  } catch (error) { if (account === user) tell(error.message, true); }
+}
+form.onsubmit = async event => {
+  event.preventDefault();
+  const user = account;
+  if (!user || role !== 'staff' || event.submitter.disabled) return;
+  const button = event.submitter;
+  button.disabled = true;
+  try {
+    const fields = new FormData(form);
+    const value = name => String(fields.get(name)).trim();
+    if (!pending) {
+      const name = value('staffName'), supplier = value('supplier');
+      if (!name || !supplier) throw Error('申請者と仕入先を入力してください。');
+      const photo = await compress(fields.get('photo'));
+      if (photo.length > 2000000) throw Error('写真が大きすぎます。小さめの写真を使ってください。');
+      if (account !== user) return;
+      pending = {id:crypto.randomUUID(), entry:{
+        name,supplier,photo,date:value('date'),amount:Number(value('amount')),
+        payment:value('payment'),event:value('event'),note:value('note'),createdAt:serverTimestamp()
+      }};
+    }
+    const item = pending;
+    tell('サーバーへの保存を確認中です。');
+    const result = await runTransaction(ref(db,'applications/' + user.uid + '/' + item.id + '/submission'),
+      value => value === null ? item.entry : undefined, {applyLocally:false});
+    if (!result.committed && !result.snapshot.exists()) throw Error('保存を確認できませんでした。');
+    pending = null;
+    form.reset();
+    tell('試験申請を送信しました。');
+  } catch (error) { tell(error.message, true); }
+  finally { button.disabled = false; }
+};
+function add(parent, tag, text) {
+  const node = document.createElement(tag);
+  node.textContent = text;
+  parent.append(node);
+  return node;
+}
+function render(entries, ceo) {
+  const list = el(ceo ? 'requests' : 'mine');
+  list.replaceChildren();
+  if (!entries.length) add(list,'p','試験申請はありません。');
+  entries.sort((a,b) => b.submission.createdAt - a.submission.createdAt);
+  for (const record of entries) {
+    const item = record.submission, decision = record.decision;
+    const card = add(list,'article','');
+    add(card,'h3',item.supplier + ' ・ ¥' + item.amount.toLocaleString('ja-JP'));
+    add(card,'p',[item.date,item.name,item.payment,item.event,item.note].filter(Boolean).join(' ／ '));
+    add(card,'strong',decision?.status ?? '確認待ち');
+    if (decision?.reason) add(card,'p',decision.reason);
+    const details = add(card,'details','');
+    add(details,'summary','レシート写真を表示');
+    const image = add(details,'img','');
+    image.alt = '添付レシート';
+    if (/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(item.photo)) image.src = item.photo;
+    if (!ceo || decision?.status === '確認済み（試験）') continue;
+    const memo = add(add(card,'label','確認メモ'),'textarea','');
+    memo.maxLength = 500;
+    const controls = add(card,'div','');
+    controls.className = 'actions';
+    for (const status of ['確認済み（試験）','保留（試験）']) {
+      const button = add(controls,'button',status);
+      button.onclick = async () => {
+        const reason = memo.value.trim();
+        if (status === '保留（試験）' && !reason) return tell('保留の理由を入力してください。',true);
+        for (const control of controls.children) control.disabled = true;
+        try {
+          const result = await runTransaction(ref(db,'applications/' + record.uid + '/' + record.id + '/decision'),
+            current => (current?.revision ?? 0) !== (decision?.revision ?? 0) ? undefined :
+              {status,reason,revision:(current?.revision ?? 0)+1}, {applyLocally:false});
+          tell(result.committed ? '判断を保存しました。' : '別の画面で更新されました。', !result.committed);
+        } catch { tell('判断を保存できませんでした。',true); }
+        finally { for (const control of controls.children) control.disabled = false; }
+      };
+    }
+  }
+}
+</script></body></html>
