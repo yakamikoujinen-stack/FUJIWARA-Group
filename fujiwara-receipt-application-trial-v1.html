@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUJIWARA Group レシート経費申請（試験）</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#faf6f6;color:#30252a;font:17px/1.55 system-ui,sans-serif}header{background:#821c38;color:white;padding:28px 20px}header div,main{max-width:760px;margin:auto}main{padding:20px 14px}h1,h2,p{margin:0 0 14px}h1{font-size:1.6rem}section,article{background:white;border:1px solid #e8d7dd;border-radius:15px;padding:18px;margin-bottom:14px}nav{display:flex;gap:10px;margin-bottom:16px}label{display:block;margin-bottom:13px;font-weight:600}input,select,textarea,button{font:inherit;border-radius:9px;padding:10px;min-height:44px}input,select,textarea{display:block;width:100%;border:1px solid #b78f9c;background:white;color:inherit}button{background:#821c38;color:white;border:0;cursor:pointer}button:disabled{opacity:.55}button[aria-pressed=false]{background:#f0e3e8;color:#68132c}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}img{display:block;max-width:100%;max-height:420px;margin:12px 0;object-fit:contain}.status{color:#245944}.error{color:#8c1735}.actions{display:flex;flex-wrap:wrap;gap:8px}.note{font-size:.92rem}@media(max-width:540px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div><h1>レシート経費申請</h1><p>FUJIWARA Group ・ 独立試験版</p></div></header>
+<main>
+<p class="note">試験データ専用。同じブラウザでスタッフ画面と社長画面を切り替えて試せます。</p>
+<nav aria-label="画面切替"><button id="staffTab" type="button" aria-pressed="true">スタッフ申請</button><button id="ceoTab" type="button" aria-pressed="false">社長確認</button></nav>
+<p id="status" role="status"></p>
+<section id="staff">
+<h2>レシートを申請する</h2>
+<form id="application">
+<label>レシート写真（必須）<input name="photo" type="file" accept="image/*" capture="environment" required></label>
+<div class="grid">
+<label>申請者<input name="staffName" maxlength="60" required></label>
+<label>購入日<input name="date" type="date" required></label>
+<label>仕入先・取引先<input name="supplier" maxlength="100" required></label>
+<label>税込金額（円）<input name="amount" type="number" inputmode="numeric" min="1" max="999999999" step="1" required></label>
+<label>支払区分<select name="payment" required><option value="">選択してください</option><option>会社のお金で購入</option><option>スタッフ立替</option></select></label>
+<label>イベント名（任意）<input name="event" maxlength="100"></label>
+</div>
+<label>購入内容・メモ<textarea name="note" maxlength="500"></textarea></label>
+<button type="submit">試験申請を送る</button>
+</form></section>
+<section id="ceo" hidden><h2>申請一覧</h2><div id="requests"></div></section>
+</main>
+<script>
+'use strict';
+const key = 'fujiwara.receiptApplicationTrial.v1';
+const get = id => document.getElementById(id);
+const form = get('application');
+const status = get('status');
+const yen = new Intl.NumberFormat('ja-JP', {style:'currency', currency:'JPY'});
+
+function message(text, error = false) {
+  status.textContent = text;
+  status.className = error ? 'error' : 'status';
+}
+function read() {
+  const entries = JSON.parse(localStorage.getItem(key) ?? '[]');
+  if (!Array.isArray(entries)) throw new Error('試験データを読み取れませんでした。');
+  return entries;
+}
+function save(entries) {
+  try {
+    localStorage.setItem(key, JSON.stringify(entries));
+  } catch {
+    throw new Error('試験データを保存できませんでした。ブラウザの空き容量や設定を確認してください。');
+  }
+}
+function add(parent, tag, text) {
+  const element = document.createElement(tag);
+  element.textContent = text;
+  parent.append(element);
+  return element;
+}
+async function compress(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('写真を開けませんでした。JPEGまたはPNGでお試しください。'));
+      image.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    const ratio = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight));
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.72);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = event.submitter;
+  if (button.disabled) return;
+  button.disabled = true;
+  try {
+    const fields = new FormData(form);
+    const value = name => String(fields.get(name)).trim();
+    const staffName = value('staffName');
+    const supplier = value('supplier');
+    if (!staffName || !supplier) throw new Error('申請者と仕入先を入力してください。');
+    const photo = await compress(fields.get('photo'));
+    const entry = {
+      id: crypto.randomUUID(), staffName, supplier, photo, date: value('date'),
+      amount: Number(value('amount')), payment: value('payment'),
+      event: value('event'), note: value('note'), status:'確認待ち'
+    };
+    save([entry, ...read()]);
+    form.reset();
+    if (!get('ceo').hidden) render();
+    message('試験申請を保存しました。「社長確認」で内容を確認できます。');
+  } catch (error) {
+    message(error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+function render() {
+  const list = get('requests');
+  list.replaceChildren();
+  try {
+    const entries = read();
+    if (!entries.length) add(list, 'p', '試験申請はまだありません。');
+    for (const entry of entries) {
+      const card = add(list, 'article', '');
+      add(card, 'h3', entry.supplier + ' ・ ' + yen.format(entry.amount));
+      add(card, 'p', entry.date + ' ／ ' + entry.staffName + ' ／ ' + entry.payment);
+      if (entry.event) add(card, 'p', 'イベント　' + entry.event);
+      if (entry.note) add(card, 'p', entry.note);
+      add(card, 'strong', entry.status);
+      if (entry.reason) add(card, 'p', entry.reason);
+      const photo = add(card, 'details', '');
+      add(photo, 'summary', 'レシート写真を表示');
+      const image = add(photo, 'img', '');
+      image.alt = '申請に添付されたレシート';
+      image.src = entry.photo;
+      if (entry.status === '確認済み（試験）') continue;
+      const reason = add(card, 'label', '確認メモ');
+      const input = add(reason, 'textarea', '');
+      input.maxLength = 500;
+      const actions = add(card, 'div', '');
+      actions.className = 'actions';
+      for (const next of ['確認済み（試験）', '保留（試験）']) {
+        const button = add(actions, 'button', next);
+        button.type = 'button';
+        button.onclick = () => {
+          try {
+            const memo = input.value.trim();
+            if (next === '保留（試験）' && !memo) {
+              throw new Error('保留の理由を入力してください。');
+            }
+            const current = read();
+            const target = current.find(item => item.id === entry.id);
+            if (!target || target.status !== entry.status) {
+              render();
+              throw new Error('申請の状態が更新されました。画面を確認してください。');
+            }
+            target.status = next;
+            target.reason = memo;
+            save(current);
+            render();
+            message(next + 'として記録しました。');
+          } catch (error) {
+            message(error.message, true);
+          }
+        };
+      }
+    }
+  } catch (error) {
+    message(error.message, true);
+  }
+}
+function show(ceo) {
+  get('staff').hidden = ceo;
+  get('ceo').hidden = !ceo;
+  get('staffTab').setAttribute('aria-pressed', String(!ceo));
+  get('ceoTab').setAttribute('aria-pressed', String(ceo));
+  message('');
+  if (ceo) render();
+}
+get('staffTab').onclick = () => show(false);
+get('ceoTab').onclick = () => show(true);
+</script>
+</body>
+</html>
