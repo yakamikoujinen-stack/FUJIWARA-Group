@@ -9,7 +9,7 @@
 </style>
 </head>
 <body>
-<header><div><h1>レシート経費申請</h1><p>FUJIWARA Group ・ 独立試験版</p></div></header>
+<header><div><h1>レシート経費申請</h1><p>FUJIWARA Group ・ 独立試験版 v1.1</p></div></header>
 <main>
 <p class="note">試験データ専用。同じブラウザでスタッフ画面と社長画面を切り替えて試せます。</p>
 <nav aria-label="画面切替"><button id="staffTab" type="button" aria-pressed="true">スタッフ申請</button><button id="ceoTab" type="button" aria-pressed="false">社長確認</button></nav>
@@ -43,17 +43,57 @@ function message(text, error = false) {
   status.textContent = text;
   status.className = error ? 'error' : 'status';
 }
-function read() {
+const database = new Promise((resolve, reject) => {
+  const request = indexedDB.open(key, 1);
+  request.onupgradeneeded = () => request.result.createObjectStore('applications', {keyPath:'id'});
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+database.catch(() => {});
+
+function legacyEntries() {
   const entries = JSON.parse(localStorage.getItem(key) ?? '[]');
-  if (!Array.isArray(entries)) throw new Error('試験データを読み取れませんでした。');
+  if (!Array.isArray(entries)) throw new Error('以前の試験データを読み取れませんでした。');
   return entries;
 }
-function save(entries) {
-  try {
-    localStorage.setItem(key, JSON.stringify(entries));
-  } catch {
-    throw new Error('試験データを保存できませんでした。ブラウザの空き容量や設定を確認してください。');
-  }
+async function read() {
+  const existing = legacyEntries();
+  const db = await database;
+  const current = await new Promise((resolve, reject) => {
+    const request = db.transaction('applications').objectStore('applications').getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const entries = new Map(existing.map(entry => [entry.id, entry]));
+  for (const entry of current) entries.set(entry.id, entry);
+  return [...entries.values()].sort((a,b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+}
+async function save(entry, expectedStatus) {
+  const db = await database;
+  const previous = expectedStatus === undefined ? null : legacyEntries().find(item => item.id === entry.id);
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction('applications', 'readwrite');
+    const records = transaction.objectStore('applications');
+    let conflict = false;
+    transaction.oncomplete = resolve;
+    transaction.onabort = () => reject(new Error(conflict
+      ? '申請の状態が更新されました。社長確認を開き直してください。'
+      : '試験データの保存に失敗しました。入力内容を確認して再試行してください。'));
+    if (expectedStatus === undefined) {
+      records.add(entry);
+      return;
+    }
+    const request = records.get(entry.id);
+    request.onsuccess = () => {
+      const current = request.result ?? previous;
+      if (!current || current.status !== expectedStatus) {
+        conflict = true;
+        transaction.abort();
+        return;
+      }
+      records.put({...current, status:entry.status, reason:entry.reason});
+    };
+  });
 }
 function add(parent, tag, text) {
   const element = document.createElement(tag);
@@ -96,11 +136,11 @@ form.addEventListener('submit', async event => {
     if (!staffName || !supplier) throw new Error('申請者と仕入先を入力してください。');
     const photo = await compress(fields.get('photo'));
     const entry = {
-      id: crypto.randomUUID(), staffName, supplier, photo, date: value('date'),
+      id: crypto.randomUUID(), createdAt: Date.now(), staffName, supplier, photo, date: value('date'),
       amount: Number(value('amount')), payment: value('payment'),
       event: value('event'), note: value('note'), status:'確認待ち'
     };
-    save([entry, ...read()]);
+    await save(entry);
     form.reset();
     if (!get('ceo').hidden) render();
     message('試験申請を保存しました。「社長確認」で内容を確認できます。');
@@ -110,11 +150,14 @@ form.addEventListener('submit', async event => {
     button.disabled = false;
   }
 });
-function render() {
+let renderVersion = 0;
+async function render() {
+  const version = ++renderVersion;
   const list = get('requests');
   list.replaceChildren();
   try {
-    const entries = read();
+    const entries = await read();
+    if (version !== renderVersion || get('ceo').hidden) return;
     if (!entries.length) add(list, 'p', '試験申請はまだありません。');
     for (const entry of entries) {
       const card = add(list, 'article', '');
@@ -138,25 +181,21 @@ function render() {
       for (const next of ['確認済み（試験）', '保留（試験）']) {
         const button = add(actions, 'button', next);
         button.type = 'button';
-        button.onclick = () => {
+        button.onclick = async () => {
+          if (button.disabled) return;
+          button.disabled = true;
           try {
             const memo = input.value.trim();
             if (next === '保留（試験）' && !memo) {
               throw new Error('保留の理由を入力してください。');
             }
-            const current = read();
-            const target = current.find(item => item.id === entry.id);
-            if (!target || target.status !== entry.status) {
-              render();
-              throw new Error('申請の状態が更新されました。画面を確認してください。');
-            }
-            target.status = next;
-            target.reason = memo;
-            save(current);
+            await save({...entry, status:next, reason:memo}, entry.status);
             render();
             message(next + 'として記録しました。');
           } catch (error) {
             message(error.message, true);
+          } finally {
+            button.disabled = false;
           }
         };
       }
