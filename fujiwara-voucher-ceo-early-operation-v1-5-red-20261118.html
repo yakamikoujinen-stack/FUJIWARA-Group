@@ -76,14 +76,15 @@ a{color:#9b1b31}
 <div class="three"><div><label for="partner">取引先・仕入先 *</label><input id="partner" required maxlength="120" placeholder="例：吉澤／業務スーパー"></div><div><label for="amount">金額（税込・円） *</label><input type="number" id="amount" min="1" max="999999999" step="1" required placeholder="7700"></div><div><label for="payment">支払・入金状況</label><select id="payment"><option>会社現金払い</option><option>会社口座払い</option><option>スタッフ立替</option><option>社長個人立替</option><option>未払い・買掛</option><option>売掛・入金待ち</option><option>入金済み</option><option>未確認</option></select></div></div>
 <div class="three"><div><label for="entryStatus">照合状況</label><select id="entryStatus"><option>未照合</option><option>照合待ち</option><option>照合済み</option></select></div><div><label for="prior">既存アプリ計上の確認</label><select id="prior"><option>未確認（未計上と断定しない）</option><option>メインに計上済み</option><option>別帳簿に計上済み</option><option>未計上を確認済み</option></select></div><div><label for="number">伝票番号（任意）</label><input id="number" maxlength="80" placeholder="請求書No.など"></div></div>
 <div><label for="details">用途・伝票内容（任意）</label><textarea id="details" maxlength="800" placeholder="例：ポテト用スパイス／11月の通信費"></textarea></div><div class="grid"><div><label for="receiptFile">書類写真（任意）</label><input type="file" id="receiptFile" accept="image/*"><p class="muted">写真は縮小して暗号化保存。容量節約のため1件最大約450KB。原本写真は別途Googleドライブなどへ保管してな。</p></div><div><label for="fileName">別途保管した原本のファイル名（任意）</label><input id="fileName" maxlength="180" placeholder="例：20261116_吉澤_7700.jpg"><p class="muted">画像を登録しなくても、原本の保存先・名前を記録できるで。</p></div></div>
-<button type="submit" id="saveBtn">✅ 伝票を仮保存</button><button type="button" class="secondary" id="resetForm">入力をクリア</button></form><p class="muted">同じ伝票番号＋所属先で重複候補があれば保存前に警告します。番号がなくても日付・取引先・金額・種類が一致すると警告します。重複判定は確認補助であり、重複を完全に防ぐものではありません。</p></section>
+<button type="submit" id="saveBtn">✅ 伝票を仮保存</button><button type="button" class="secondary" id="resetForm">入力をクリア</button><p id="entryMessage" role="status" aria-live="polite" class="muted"></p></form><p class="muted">同じ伝票番号＋所属先で重複候補があれば保存前に警告します。番号がなくても日付・取引先・金額・種類が一致すると警告します。重複判定は確認補助であり、重複を完全に防ぐものではありません。</p></section>
 <section class="card"><h2>④ 伝票一覧・分類別確認</h2><div class="grid"><div><label for="filterMonth">対象月</label><input type="month" id="filterMonth"></div><div><label for="filterScope">所属先</label><select id="filterScope"><option value="">すべて</option><option>FUJIWARA Group経費</option><option>リコー工業経費</option><option>事務所経費</option><option>イベント経費</option><option value="プライベートA">本家</option><option value="プライベートB">分家</option></select></div><div><label for="search">検索</label><input id="search" placeholder="取引先・イベント・伝票番号"></div></div><div class="box" id="summary">保存後に表示します。</div><div class="scroll"><table><thead><tr><th>日付</th><th>所属先／イベント</th><th>種類・取引先</th><th>金額</th><th>支払・照合</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><button class="secondary" id="csv">📄 表示中一覧をCSV出力</button><p class="muted">CSVに写真は含みません。金額の合計は伝票の整理用で、確定損益ではありません。</p></section>
 <section class="card"><h2>⑤ バックアップと復元</h2><div class="warn"><strong>毎回、入力を終えたらバックアップを保存してください。</strong> ファイルは暗号化済みJSONです。Googleドライブ「FUJIWARA Group 総合管理 → 01アプリ開発」の管理用フォルダなど、安全な場所へ保存してください。合言葉はバックアップに含まれません。</div><button id="backup">💾 暗号化バックアップ（写真含む）</button><p class="muted">v1.4では保存のたびに時刻付きの別名ファイルにします。古いバックアップは削除しないでください。</p><div class="box" id="backupHint">現在の伝票件数と、検証後のバックアップ内件数を比較してください。</div><div class="filePanel" style="border:2px solid #bed1e5;background:#f6faff;border-radius:11px;padding:14px;margin:12px 0"><label for="verifyFile" style="font-size:16px">🧪 先にこちらでバックアップ内容を検証（復元しません）</label><p class="muted">下の「ファイルを選択」を直接押して、Googleドライブの暗号化JSONを選んでください。既存の伝票は変更しません。</p><input id="verifyFile" type="file" accept=".json,application/json" style="display:block;min-height:50px"><div id="verifySelectStatus" class="muted">ファイル未選択</div></div><details style="margin:12px 0"><summary style="font-weight:700;padding:10px;cursor:pointer">📂 復元操作（今は押さない）</summary><div class="warn">復元は現在の帳簿に追加します。まず上の検証に合格してから行ってください。</div><label for="restoreFile">復元用ファイルを選択</label><input id="restoreFile" type="file" accept=".json,application/json" style="display:block;min-height:50px"></details><p class="muted">復元は<strong>現在のデータへIDを保ったまま追加</strong>します。同じIDの内容が異なる場合は上書きせず中断します。端末内の帳簿が空でもバックアップを読めます。バックアップは別ブラウザに自動同期しません。</p><div id="backupResult" class="box">バックアップ未確認</div></section>
 </div><p class="foot">FUJIWARA Group｜独立仮帳簿。KING・メイン・Firebase・Googleドライブへ自動送信しません。</p></main>
 <script>
 (()=>{'use strict';
 const STORE='fujiwara_ceo_voucher_offline_v1', FORMAT='FUJIWARA_CEO_VOUCHER_OFFLINE_V1', $=id=>document.getElementById(id);
-const te=new TextEncoder(),td=new TextDecoder();let entries=[], password='', envelope=null, opened=false;let photoData=null, currentVault=null, lastRaw=null, conflict=false;
+const te=new TextEncoder(),td=new TextDecoder();let entries=[], password='', envelope=null, opened=false;let photoData=null, currentVault=null, lastRaw=null, conflict=false, saving=false, photoTask=null;
+const storageLimit=(message)=>new DOMException(message,'QuotaExceededError');
 const encoder=x=>Array.from(new Uint8Array(x));const b64=x=>{const a=new Uint8Array(x);let v='';for(let i=0;i<a.length;i+=16384)v+=String.fromCharCode(...a.subarray(i,i+16384));return btoa(v)};const unb64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
 const scopeLabel=x=>({'プライベートA':'本家','プライベートB':'分家'}[x]||x);
  const nameDoc={receipt:'領収書・レシート',received_invoice:'受取請求書',issued_invoice:'発行請求書',delivery:'納品書・仕入伝票',other:'その他伝票'};
@@ -92,14 +93,100 @@ const fmtErr=e=>String(e&&e.message||e);const msg=(s)=>$('message').textContent=
 async function derive(secret,salt){const material=await crypto.subtle.importKey('raw',te.encode(secret),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
 async function encrypt(obj,secret,baseSalt){const salt=baseSalt||crypto.getRandomValues(new Uint8Array(16));const iv=crypto.getRandomValues(new Uint8Array(12));const key=await derive(secret,salt);const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,te.encode(JSON.stringify(obj)));return {format:FORMAT,version:1,kdf:'PBKDF2-SHA256',iterations:250000,salt:b64(salt),iv:b64(iv),payload:b64(cipher)};}
 async function decrypt(enc,secret){if(!enc||enc.format!==FORMAT||enc.version!==1||enc.kdf!=='PBKDF2-SHA256'||enc.iterations!==250000||typeof enc.payload!=='string'||enc.payload.length>22000000)throw Error('対応していないバックアップ形式または容量です');const salt=unb64(enc.salt),iv=unb64(enc.iv);if(salt.length!==16||iv.length!==12)throw Error('暗号化ファイルの形式が不正です');const key=await derive(secret,salt);const plaintext=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,unb64(enc.payload));const o=JSON.parse(td.decode(plaintext));if(!o||o.version!==1||!Array.isArray(o.entries)||o.entries.length>4000)throw Error('帳簿データの形式が不正です');for(const e of o.entries){if(!e||typeof e.id!=='string'||typeof e.date!=='string'||typeof e.scope!=='string'||!Number.isSafeInteger(e.amount)||e.amount<=0||typeof e.partner!=='string')throw Error('伝票の形式が不正です');}return o;}
-async function persist(next){if(conflict||localStorage.getItem(STORE)!==lastRaw)throw Error('他のタブまたは画面で帳簿が更新されました。上書きを防止するため保存を停止しました。新たに保存せずバックアップと再読み込みを確認してください。');const vault={version:1,updatedAt:new Date().toISOString(),entries:next};const enc=await encrypt(vault,password);const raw=JSON.stringify(enc);if(raw.length>4500000)throw Error('保存容量に近づいています。写真を減らすかバックアップしてから整理してください');try{localStorage.setItem(STORE,raw);lastRaw=raw}catch(e){throw Error('端末内保存に失敗しました。空き容量を確認してください。')};entries=next;envelope=enc;currentVault=vault;render();}
+async function persist(next){
+  const expectedRaw=lastRaw;
+  const secret=password;
+  const vault={version:1,updatedAt:new Date().toISOString(),entries:next};
+  const enc=await encrypt(vault,secret);
+  const raw=JSON.stringify(enc);
+  if(!opened||password!==secret||conflict||lastRaw!==expectedRaw||localStorage.getItem(STORE)!==expectedRaw){
+    throw Error('別の画面で帳簿が更新されたか、帳簿が閉じられました。新しい状態を開いて確認してください。');
+  }
+  if(raw.length>4500000)throw storageLimit('仮帳簿の保存容量を超えています。');
+  try{
+    localStorage.setItem(STORE,raw);
+  }catch(error){
+    if(error.name==='QuotaExceededError')throw storageLimit('Safari内の保存容量が不足しています。');
+    throw Error('Safari内の保存に失敗しました。');
+  }
+  lastRaw=raw;
+  entries=next;
+  envelope=enc;
+  currentVault=vault;
+  render();
+}
 function lock(){opened=false;password='';entries=[];photoData=null;currentVault=null;lastRaw=null;conflict=false;$('secret').value='';$('confirmSecret').value='';$('work').classList.add('hidden');$('lockCard').classList.remove('hidden');window.addEventListener('storage',e=>{if(e.key===STORE&&opened){conflict=true;msg('⚠️ 他のタブでデータが更新されました。この画面からの保存を停止しています。現在のデータを確認してください。');}});$('confirmBlock').classList.toggle('hidden',!!localStorage.getItem(STORE));status('帳簿は閉じています。');}
 async function unlock(){const secret=$('secret').value;if(secret.length<12){status('❌ 合言葉は12文字以上で入力してください。');return;}const raw=localStorage.getItem(STORE);lastRaw=raw;conflict=false;try{if(raw){const enc=JSON.parse(raw);const vault=await decrypt(enc,secret);entries=vault.entries;currentVault=vault;envelope=enc;}else{if(secret!==$('confirmSecret').value){status('❌ 確認用の合言葉が一致しません。');return;}entries=[];currentVault={version:1,entries:[],updatedAt:new Date().toISOString()};envelope=null;}password=secret;opened=true;$('work').classList.remove('hidden');$('lockCard').classList.add('hidden');$('secret').value='';$('confirmSecret').value='';if(!raw)await persist([]);$('entryDate').value=today();$('filterMonth').value='';render();msg('✅ 仮帳簿を開きました。入力後はバックアップを保存してください。v1.3 は同じ伝票データを使用しています。');}catch(e){status('❌ 開けません：合言葉が違うか、データが破損しています。 '+fmtErr(e));}}
 function clearForm(){$('entryForm').reset();$('editId').value='';$('entryDate').value=today();photoData=null;$('saveBtn').textContent='✅ 伝票を仮保存';}
 function formValue(){const d={id:$('editId').value||id(),date:$('entryDate').value,docType:$('docType').value,scope:$('scope').value,event:$('event').value.trim(),category:$('category').value,partner:$('partner').value.trim(),amount:Number($('amount').value),payment:$('payment').value,status:$('entryStatus').value,prior:$('prior').value,number:$('number').value.trim(),details:$('details').value.trim(),fileName:$('fileName').value.trim(),photo:photoData||null,updatedAt:new Date().toISOString()};if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date))throw Error('日付を確認してください');if(!d.partner||d.partner.length>120)throw Error('取引先を入力してください');if(!Number.isSafeInteger(d.amount)||d.amount<1||d.amount>999999999)throw Error('金額は1〜999,999,999円で入力してください');if(d.scope==='イベント経費'&&!d.event)throw Error('イベント経費にはイベント名を入力してください');return d;}
 function duplicate(d){return entries.find(x=>x.id!==d.id&&x.scope===d.scope&&((d.number&&x.number&&d.number===x.number)||(x.date===d.date&&x.partner===d.partner&&x.amount===d.amount&&x.docType===d.docType)));}
 async function imageRead(file){if(!file)return null;if(!file.type.startsWith('image/'))throw Error('写真ファイルのみ対応しています');if(file.size>15*1024*1024)throw Error('写真は15MB以下にしてください');const bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas');const scale=Math.min(1,1300/Math.max(bitmap.width,bitmap.height));canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();let quality=.75,result=canvas.toDataURL('image/jpeg',quality);while(result.length>600000&&quality>.3){quality-=.1;result=canvas.toDataURL('image/jpeg',quality)}if(result.length>600000)throw Error('写真が大きすぎます。原本は別保存して、ファイル名だけ入力してください');return result;}
-async function saveEntry(ev){ev.preventDefault();if(!opened)return;try{const d=formValue();const dup=duplicate(d);if(dup&&!confirm('⚠️ 同じ伝票の可能性があります。\n既存：'+dup.date+' '+dup.partner+' '+money(dup.amount)+'\n既に計上していないか確認しましたか？\nそれでも別伝票として仮保存しますか？'))return;const index=entries.findIndex(x=>x.id===d.id),previous=entries[index];if(previous){d.createdAt=previous.createdAt;d.photo=photoData===null?previous.photo:photoData;}else{d.createdAt=new Date().toISOString();}const next=entries.slice();if(index>=0)next[index]=d;else next.push(d);await persist(next);clearForm();msg('✅ '+(index>=0?'修正':'新規')+'仮保存完了：'+d.partner+' / '+money(d.amount)+'。必ずバックアップしてください。');}catch(e){msg('❌ 保存できません：'+fmtErr(e));}}
+function entryMessage(message){
+  $('entryMessage').textContent=message;
+  msg(message);
+}
+async function saveEntry(event){
+  event.preventDefault();
+  if(!opened||saving||photoTask)return;
+  saving=true;
+  $('saveBtn').disabled=true;
+  $('resetForm').disabled=true;
+  $('receiptFile').disabled=true;
+  entryMessage('保存しています…');
+  try{
+    const record=formValue();
+    const duplicateRecord=duplicate(record);
+    if(duplicateRecord&&!confirm('同じ伝票の可能性があります。'+duplicateRecord.date+' '+duplicateRecord.partner+' '+money(duplicateRecord.amount)+'\n別の伝票として保存しますか？')){
+      entryMessage('保存を取り消しました。入力内容を確認してください。');
+      return;
+    }
+    const index=entries.findIndex(entry=>entry.id===record.id);
+    const previous=entries[index];
+    record.createdAt=previous?.createdAt??new Date().toISOString();
+    if(previous&&photoData===null)record.photo=previous.photo;
+    const next=entries.slice();
+    if(previous)next[index]=record;
+    else next.push(record);
+    let reduced=false;
+    try{
+      await persist(next);
+    }catch(error){
+      if(error.name!=='QuotaExceededError'||!record.photo||record.photo===previous?.photo)throw error;
+      const bitmap=await createImageBitmap(await (await fetch(record.photo)).blob());
+      try{
+        const canvas=document.createElement('canvas');
+        for(const [maxSize,quality] of [[1000,0.65],[800,0.52],[640,0.42]]){
+          const scale=Math.min(1,maxSize/Math.max(bitmap.width,bitmap.height));
+          canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+          canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+          canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+          const smaller=canvas.toDataURL('image/jpeg',quality);
+          if(smaller.length>=record.photo.length)continue;
+          record.photo=smaller;
+          try{
+            await persist(next);
+            reduced=true;
+            break;
+          }catch(retryError){
+            if(retryError.name!=='QuotaExceededError')throw retryError;
+          }
+        }
+      }finally{
+        bitmap.close();
+      }
+      if(!reduced)throw Error('写真を縮小してもSafari内に収まりませんでした。原本を別途保管し、写真を外して保存してください。');
+    }
+    clearForm();
+    entryMessage('✅ '+(previous?'修正':'新規')+'仮保存完了：'+record.partner+' / '+money(record.amount)+(reduced?'。縮小した写真も保存しました。':'。'));
+  }catch(error){
+    entryMessage('❌ 保存できません：'+fmtErr(error));
+  }finally{
+    saving=false;
+    $('saveBtn').disabled=false;
+    $('resetForm').disabled=false;
+    $('receiptFile').disabled=false;
+  }
+}
 function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));}
 function filtered(){const month=$('filterMonth').value,scope=$('filterScope').value,q=$('search').value.toLowerCase();return entries.filter(e=>(!month||e.date.startsWith(month))&&(!scope||e.scope===scope)&&(!q||[e.partner,e.event,e.number,e.details,e.category].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));}
 function render(){if(!opened)return;const all=entries,rows=filtered(),unresolved=all.filter(e=>e.status!=='照合済み').length,unpaid=all.filter(e=>['未払い・買掛','売掛・入金待ち'].includes(e.payment)).length;$('metrics').innerHTML=`<div class="metric">伝票件数<b>${all.length}件</b></div><div class="metric">未照合・照合待ち<b>${unresolved}件</b></div><div class="metric">未払・入金待ち<b>${unpaid}件</b></div>`;const amount=rows.reduce((x,e)=>x+e.amount,0);$('summary').textContent=`表示 ${rows.length}件 ／ 伝票金額の合算 ${money(amount)}（請求・納品を含む参考値。売上・経費の確定値ではありません）`;$('rows').innerHTML=rows.map(e=>`<tr><td>${safe(e.date)}</td><td>${safe(scopeLabel(e.scope))}<div class="muted">${safe(e.event)}</div></td><td>${safe(nameDoc[e.docType]||e.docType)}<div><b>${safe(e.partner)}</b></div><div class="muted">${safe(e.category)} ／ ${safe(e.number)}</div></td><td class="num">${money(e.amount)}</td><td>${safe(e.payment)}<div class="tag">${safe(e.status)}</div><div class="muted">${safe(e.prior)}</div></td><td class="actions"><button class="secondary" data-action="edit" data-id="${safe(e.id)}">編集</button><button class="secondary" data-action="detail" data-id="${safe(e.id)}">詳細</button><button class="danger" data-action="delete" data-id="${safe(e.id)}">削除</button></td></tr>`).join('')||'<tr><td colspan="6">まだ該当する伝票はありません。</td></tr>';}
@@ -112,7 +199,34 @@ async function importEnvelope(raw,mode){const vault=await decrypt(raw,password);
 function normalize(v){if(Array.isArray(v))return v.map(normalize);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>o[k]=normalize(v[k]));return o;}return v;}
 function csvCell(x){return '"'+String(x??'').replace(/"/g,'""')+'"'}
 function csv(){const cols=[['date','日付'],['scope','所属先'],['event','イベント・案件'],['docType','書類種別'],['category','科目'],['partner','取引先'],['amount','金額'],['payment','支払状況'],['status','照合'],['prior','既存計上'],['number','伝票番号'],['details','内容'],['fileName','原本ファイル名'],['id','ID']];let body=[cols.map(x=>csvCell(x[1])).join(',')];for(const e of filtered())body.push(cols.map(x=>csvCell(x[0]==='docType'?nameDoc[e.docType]:x[0]==='scope'?scopeLabel(e.scope):e[x[0]])).join(','));dl('FUJIWARA_社長伝票一覧_'+today()+'.csv','\ufeff'+body.join('\r\n'),'text/csv;charset=utf-8');}
-$('unlock').onclick=unlock;$('lock').onclick=lock;$('entryForm').onsubmit=saveEntry;$('resetForm').onclick=clearForm;$('receiptFile').onchange=async()=>{const f=$('receiptFile').files[0];if(!f)return;try{photoData=await imageRead(f);msg('✅ 書類写真を縮小しました。伝票の保存ボタンで一緒に暗号化保存します。')}catch(e){photoData=null;$('receiptFile').value='';msg('⚠️ '+fmtErr(e))}};
+$('unlock').onclick=unlock;
+$('lock').onclick=lock;
+$('entryForm').onsubmit=saveEntry;
+$('resetForm').onclick=()=>{clearForm();$('entryMessage').textContent='';};
+$('receiptFile').onchange=async()=>{
+  photoData=null;
+  const file=$('receiptFile').files[0];
+  if(!file)return;
+  $('saveBtn').disabled=true;
+  entryMessage('写真を読み込んでいます…');
+  const task=imageRead(file);
+  photoTask=task;
+  try{
+    const photo=await task;
+    if($('receiptFile').files[0]!==file)return;
+    photoData=photo;
+    entryMessage('写真を読み込みました。「伝票を仮保存」で一緒に保存できます。');
+  }catch(error){
+    if($('receiptFile').files[0]!==file)return;
+    $('receiptFile').value='';
+    entryMessage('⚠️ '+fmtErr(error));
+  }finally{
+    if(photoTask===task){
+      photoTask=null;
+      $('saveBtn').disabled=saving;
+    }
+  }
+};
 $('rows').onclick=async ev=>{const b=ev.target.closest('button');if(!b)return;const e=entries.find(x=>x.id===b.dataset.id);if(!e)return;if(b.dataset.action==='edit')edit(e);else if(b.dataset.action==='detail')detail(e);else if(b.dataset.action==='delete'){if(confirm('この仮帳簿から削除しますか？\n取引先：'+e.partner+'　金額：'+money(e.amount)+'\n削除後はバックアップなしでは復元できません。')){try{await persist(entries.filter(x=>x.id!==e.id));msg('削除しました。変更後のバックアップを保存してください。')}catch(ex){msg('❌ '+fmtErr(ex))}}}};
 for(const name of ['filterMonth','filterScope','search'])$(name).addEventListener('input',render);$('backup').onclick=backup;$('backupTop').onclick=backup;$('csv').onclick=csv;
 // iPad Safariでは display:none の input[type=file] に対する .click() が開かない場合があるため、画面上の実ファイル入力で選択させる。
