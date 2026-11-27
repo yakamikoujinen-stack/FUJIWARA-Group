@@ -40,6 +40,7 @@ export function bindReceipts({prepareReceipt,refreshReceiptLinks}) {
     pending = null;
     busy = false;
     form.reset();
+    for (const control of form.elements) control.disabled = false;
     for (const id of ['staff','ceo']) el(id).hidden = true;
     for (const id of ['mine','requests']) el(id).replaceChildren();
     tell('');

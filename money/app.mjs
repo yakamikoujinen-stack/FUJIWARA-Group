@@ -334,13 +334,16 @@ async function backup() {
 }
 
 let importCheck;
+let importPreviewVersion = 0;
 function resetImport() {
+  importPreviewVersion++;
   importCheck = null;
   $('importConfirm').disabled = true;
 }
 
 async function previewImport() {
   resetImport();
+  const version = importPreviewVersion;
   const active = session;
   const file = $('importFile').files[0];
   const secret = $('backupPassphrase').value;
@@ -349,7 +352,7 @@ async function previewImport() {
   try {
     if (secret.length < 12) throw Error('元の仮帳簿で使った合言葉を入力してください。');
     const {entries: rows} = await decrypt(await readFile(file), secret);
-    if (session !== active || !opened || $('importFile').files[0] !== file) return;
+    if (session !== active || !opened || version !== importPreviewVersion) return;
     const additions = packImport(rows, entries);
     if (additions.some(row => records[row.id])) throw Error('削除済みの伝票IDが含まれています。');
     importCheck = {active, rows, additions};
@@ -357,7 +360,9 @@ async function previewImport() {
     const total = rows.reduce((sum,row) => sum + row.amount,0);
     result.textContent = 'バックアップ ' + rows.length + '件（' + money(total) + '）／ 新規 ' + additions.length + '件 ／ 登録済み ' + (rows.length-additions.length) + '件';
   } catch (error) {
-    if (session === active) result.textContent = '検証できません。合言葉またはファイルをご確認ください。 ' + fmtErr(error);
+    if (session === active && version === importPreviewVersion) {
+      result.textContent = '検証できません。合言葉またはファイルをご確認ください。 ' + fmtErr(error);
+    }
   }
 }
 
