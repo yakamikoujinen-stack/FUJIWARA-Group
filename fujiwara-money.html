@@ -1,0 +1,153 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FUJIWARA Group｜お金管理</title><style>
+:root{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',Meiryo,sans-serif;background:#eef3f8;color:#1b3047}*{box-sizing:border-box}body{margin:0}header{background:#173354;color:white;padding:21px 15px}header .inner,main{max-width:1050px;margin:auto}h1{font-size:22px;margin:0 0 6px}header p{margin:0;color:#d8e8f5;font-size:13px;line-height:1.5}main{padding:12px 13px 40px}.card{background:white;border:1px solid #dce5ee;border-radius:14px;padding:16px;margin:12px 0}h2{font-size:18px;margin:0 0 12px}h3{font-size:15px;margin:16px 0 7px}.warn{background:#fff3d9;padding:12px;border-left:5px solid #d19532;border-radius:8px;line-height:1.7}.ok{background:#eaf7ef;border-left:4px solid #208450;padding:10px;border-radius:7px}.muted{color:#65778b;font-size:13px;line-height:1.65}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px}.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px}label{display:block;font-size:13px;font-weight:700;margin:9px 0 3px}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;padding:11px;border:1px solid #b7c8d9;border-radius:8px;background:white;min-height:44px}textarea{min-height:68px}button{background:#245589;color:white;border:0;border-radius:9px;padding:12px 16px;font-weight:700;min-height:44px;margin:5px 5px 5px 0}button.secondary{background:#e7eef7;color:#21496d}button.danger{background:#a13a41}button:disabled{opacity:.45}.hidden{display:none!important}.box{background:#f0f5fb;padding:12px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;margin:9px 0}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}.metric{background:#f0f5fb;border-radius:9px;padding:13px}.metric b{font-size:20px;display:block;margin-top:7px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}th,td{text-align:left;border-bottom:1px solid #e3eaf1;padding:8px}th{background:#edf3f9}td.num{text-align:right;white-space:nowrap}.tag{display:inline-block;border-radius:6px;background:#eef1f7;padding:3px 6px;font-size:12px}.actions{white-space:nowrap}.foot{font-size:12px;color:#667a8d;text-align:center;padding:12px}.intro{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.intro span{font-size:12px;background:#dfeaf5;padding:4px 8px;border-radius:9px}#message{font-weight:700;white-space:pre-wrap;line-height:1.55}a{color:#14588a}@media(max-width:600px){h1{font-size:19px}.card{padding:13px}}
+
+/* v1.4 visual refresh: presentation only, original script and data schema unchanged */
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;background:#f5f7f9;color:#243348}
+body{background:linear-gradient(180deg,#fffaf2 0,#f3f7fb 310px,#f5f7f9 100%);line-height:1.65}
+header{background:linear-gradient(115deg,#153f60,#277c91);padding:25px 20px 29px;border-radius:0 0 24px 24px;box-shadow:0 8px 24px #123d5820}
+header h1{font-size:clamp(21px,3vw,29px);font-weight:850;letter-spacing:.015em}
+header p{color:#e7f5fa;font-size:12px;line-height:1.7}
+main{max-width:1120px;padding:16px 16px 60px}
+.card{border:1px solid #e4ebef;border-radius:22px;padding:23px;margin:17px 0;box-shadow:0 6px 22px #20384d0b}
+h2{font-size:19px;letter-spacing:.01em;color:#194a61;margin-bottom:16px}
+h3{color:#22556b}
+.warn{background:#fff9e9;border-left:4px solid #e2b35a;border-radius:13px;padding:15px 17px;color:#594c34}
+.ok{background:#e9f7f1;border-left:4px solid #46a886;border-radius:12px}
+.muted{color:#718092}
+label{font-size:13px;color:#38576b;margin:13px 0 6px}
+input,select,textarea{border:1.5px solid #cbdce5;border-radius:13px;background:#fbfdff;padding:13px 14px;min-height:51px;box-shadow:0 1px 2px #122b4010;font-size:16px}
+input:focus,select:focus,textarea:focus{outline:3px solid #bce9e5;border-color:#168c8d;background:#fff}
+textarea{min-height:94px}
+button{background:linear-gradient(120deg,#207b89,#246c94);border-radius:13px;min-height:49px;padding:12px 18px;box-shadow:0 3px 8px #1b52651a;cursor:pointer}
+button.secondary{background:#edf5f7;color:#23617a;box-shadow:none}
+button.danger{background:#ad4653}
+button:active{transform:translateY(1px)}
+.box{background:#f0f7fa;border-radius:12px;padding:15px}
+.metrics{gap:12px;margin:13px 0}
+.metric{background:linear-gradient(145deg,#eaf8f4,#edf5fc);border:1px solid #dcece9;border-radius:15px;padding:17px}
+.metric b{font-size:25px;color:#1e627a}
+.intro{gap:9px}.intro strong{font-size:17px;color:#1d5266}.intro span{background:#e6f6f3;color:#2b7b77}
+.scroll{border:1px solid #e6edf2;border-radius:14px;overflow:auto}
+table{font-size:13px}th{background:#e9f3f7;color:#315c6e}th,td{padding:12px 10px}tr:nth-child(even) td{background:#fbfdff}
+.tag{background:#e8f2f5;color:#3b6270;border-radius:9px}
+.foot{color:#81909b}
+#entryForm{background:#fcfeff;border:1px solid #e5eff3;border-radius:17px;padding:13px}
+#message{font-weight:650}
+@media(max-width:650px){header{padding:21px 16px 25px}.card{padding:17px;border-radius:17px}.grid,.three{grid-template-columns:1fr}h2{font-size:18px}button{margin:5px 4px 5px 0}#entryForm{padding:10px}}
+
+/* v1.5 crimson KING-inspired visual theme: CSS-only, storage and business logic untouched */
+:root{background:#a21b2b;color:#3b2025}
+body{background:linear-gradient(155deg,#8d1426 0%,#b82d3d 30%,#95192b 70%,#7e1020 100%);background-attachment:fixed;color:#3b2025}
+header{background:linear-gradient(115deg,#650b19,#a8192c 60%,#c0443f);border-bottom:3px solid #e7b75e;box-shadow:0 8px 28px #4d091d55;border-radius:0 0 28px 28px}
+header h1{color:#fffaf3;text-shadow:0 1px 2px #4d081b88}
+header p{color:#ffe7da}
+.card{background:#fffaf7;border:1px solid #f1d9d3;box-shadow:0 8px 22px #42061730}
+h2{color:#90192a}h3{color:#8b2933}
+.warn{background:#fff2df;border-left:5px solid #d9a23f;color:#59412f}
+.ok{background:#fff2e9;border-left:4px solid #bd7b28;color:#633e23}
+.muted{color:#826b70}label{color:#753642}
+input,select,textarea{background:#fff;border:1.5px solid #dec6c5;color:#3b2025}
+input:focus,select:focus,textarea:focus{outline:3px solid #f5c8c5;border-color:#b52a40}
+button{background:linear-gradient(115deg,#9c172b,#c33140);color:#fff;box-shadow:0 4px 12px #87152b28}
+button.secondary{background:#f7e8e3;color:#872235;border:1px solid #eed4ce}
+button.danger{background:#831c2b;color:#fff}
+.box{background:#fff0e9;color:#65313a}
+.metric{background:linear-gradient(135deg,#fff7f0,#fce7e5);border:1px solid #efd1cd}
+.metric b{color:#a21d31}
+.intro strong{color:#8c1c2b}.intro span{background:#fae6db;color:#842b35}
+.scroll{border-color:#eed9d4}th{background:#f7e4df;color:#77303b}th,td{border-color:#f1dfdc}tr:nth-child(even) td{background:#fff5f0}
+.tag{background:#f9e8e3;color:#78343f}.foot{color:#ffe5dd}
+#entryForm{background:#fff8f3;border-color:#f0d9d3}
+section.card[style*="border:2px"]{border:2px solid #e3b761!important}
+a{color:#9b1b31}
+@media(max-width:650px){header{border-radius:0 0 22px 22px}}
+.paper-table{width:max-content;min-width:100%;table-layout:fixed}.paper-table th,.paper-table td{vertical-align:top}.paper-table th:first-child,.paper-table tbody th{position:sticky;left:0;z-index:1;background:#f7e7e1;min-width:158px}.paper-table td{min-width:166px;width:166px}.paper-table td input,.paper-table td select,.paper-table th input{box-sizing:border-box;width:100%;min-width:0}.paper-table [aria-invalid="true"]{outline:2px solid #a62034}.paper-table summary{cursor:pointer}.paper-table td label,.paper-table th label{font-size:12px;margin:6px 0 2px}.paper-table td input,.paper-table td select,.paper-table th input{padding:6px}.paper-table th:last-child{min-width:95px}
+[hidden]{display:none!important} .jump{display:flex;flex-wrap:wrap;gap:.65rem 1.15rem}.jump a{display:inline-flex;min-height:44px;align-items:center}
+#groupTotals li{line-height:1.8} #requests article,#mine article{border-top:1px solid #eed9d4;padding:1rem 0}
+#requests img,#mine img{max-width:min(100%,35rem)} summary{cursor:pointer;padding:.5rem 0}
+button:disabled{cursor:default;opacity:.55} #receiptStatus:empty,#loginStatus:empty,#connection:empty{display:none}
+</style></head><body><header><div class="inner"><h1>お金管理</h1><p>FUJIWARA Group</p></div></header><main>
+
+<section class="card">
+  <h2>ログイン</h2>
+  <details><summary>初回のFirebase接続設定</summary>
+    <label for="config">お金管理用の設定JSON</label>
+    <input id="config" type="file" accept=".json,application/json">
+  </details>
+  <form id="login" method="post">
+    <div class="grid">
+      <div><label for="email">メールアドレス</label><input id="email" type="email" autocomplete="username" required></div>
+      <div><label for="password">パスワード</label><input id="password" type="password" autocomplete="current-password" required></div>
+    </div>
+    <button type="submit" disabled>ログイン</button>
+  </form>
+  <button id="logout" hidden type="button" class="secondary">ログアウト</button>
+  <p id="loginStatus" role="status">共有接続を準備しています。</p>
+  <p id="connection" role="status"></p>
+  <p id="receiptStatus" role="status"></p>
+</section>
+<section id="staff" class="card" hidden>
+<h2>レシートを申請する</h2>
+<form id="application">
+<label>レシート写真（必須）<input name="photo" type="file" accept="image/*" capture="environment" required></label>
+<div class="grid">
+<label>申請者<input name="staffName" maxlength="60" required></label>
+<label>購入日<input name="date" type="date" required></label>
+<label>仕入先・取引先<input name="supplier" maxlength="100" required></label>
+<label>税込金額（円）<input name="amount" type="number" inputmode="numeric" min="1" max="999999999" step="1" required></label>
+<label>支払区分<select name="payment" required><option value="">選択してください</option><option>会社のお金で購入</option><option>スタッフ立替</option></select></label>
+<label>イベント名（任意）<input name="event" maxlength="100"></label>
+</div>
+<label>購入内容・メモ<textarea name="note" maxlength="500"></textarea></label>
+<button type="submit">レシートを送る</button>
+</form><h2>自分の申請</h2><div id="mine"></div></section>
+<div id="work" class="hidden">
+
+<section class="card">
+  <h2>共有帳簿</h2>
+  <div class="metrics" id="metrics"></div>
+  <nav class="jump"><a href="#paperEntry">まとめて入力</a><a href="#entryForm">1枚ずつ入力</a><a href="#list">伝票一覧</a><a href="#ceo">スタッフ申請</a><a href="#archive">バックアップ</a></nav>
+  <div id="message" role="status"></div>
+</section>
+<section id="paperEntry" class="card">
+<h2>紙の表からまとめて入力</h2>
+<p class="muted">所属先やイベントを行で選び、右に1枚ずつ入力します。使う枠だけに伝票日付・取引先・金額を入れてください。</p>
+<form id="paperForm" novalidate>
+<div class="scroll" tabindex="0" aria-label="伝票入力表（横にスクロールできます）">
+<table class="paper-table"><thead><tr><th scope="col">所属先・イベント</th><th scope="col">①</th><th scope="col">②</th><th scope="col">③</th><th scope="col">④</th><th scope="col">⑤</th><th scope="col">行合計</th></tr></thead><tbody id="paperRows"></tbody></table>
+</div>
+<p class="muted" id="paperTotal"></p>
+<button type="button" class="secondary" id="paperAddEvent">イベント行を追加</button>
+<button type="submit" id="paperSave">入力した伝票を仮保存</button>
+<p id="paperMessage" role="status" aria-live="polite" class="muted"></p>
+</form>
+</section>
+<section class="card"><h2>請求書・伝票を登録</h2><form id="entryForm"><input type="hidden" id="editId"><div class="three">
+<div><label for="entryDate">日付（伝票日付） *</label><input type="date" id="entryDate" required></div><div><label for="docType">書類の種類 *</label><select id="docType"><option value="receipt">領収書・レシート</option><option value="received_invoice">受取請求書</option><option value="issued_invoice">発行請求書</option><option value="delivery">納品書・仕入伝票</option><option value="other">その他伝票</option></select></div><div><label for="scope">所属先 *</label><select id="scope" required><option value="">所属先を選択</option><option>FUJIWARA Group経費</option><option>リコー工業経費</option><option>事務所経費</option><option>イベント経費</option><option value="プライベートA">本家</option><option value="プライベートB">分家</option><option>現場経費</option><option>（株）ミライソ</option><option>私物</option></select></div></div>
+<div class="grid"><div><label for="event">イベント・案件名（必要な場合）</label><input id="event" placeholder="例：〇〇まつり／〇〇現場"></div><div><label for="category">経費科目・種類 *</label><select id="category"><option>仕入</option><option>場所代</option><option>労務費</option><option>交通費</option><option>燃料費</option><option>通信費</option><option>光熱費</option><option>家賃</option><option>備品・消耗品</option><option>修繕費</option><option>外注費</option><option>生活費</option><option>売上・請求</option><option>雑費</option><option>その他</option></select></div></div>
+<div class="three"><div><label for="partner">取引先・仕入先 *</label><input id="partner" required maxlength="120" placeholder="例：吉澤／業務スーパー"></div><div><label for="amount">金額（税込・円） *</label><input type="number" id="amount" min="1" max="999999999" step="1" required placeholder="7700"></div><div><label for="payment">支払・入金状況</label><select id="payment"><option>会社現金払い</option><option>会社口座払い</option><option>スタッフ立替</option><option>社長個人立替</option><option>未払い・買掛</option><option>売掛・入金待ち</option><option>入金済み</option><option>未確認</option></select></div></div>
+<div class="three"><div><label for="entryStatus">照合状況</label><select id="entryStatus"><option>未照合</option><option>照合待ち</option><option>照合済み</option></select></div><div><label for="prior">既存アプリ計上の確認</label><select id="prior"><option>未確認（未計上と断定しない）</option><option>メインに計上済み</option><option>別帳簿に計上済み</option><option>未計上を確認済み</option></select></div><div><label for="number">伝票番号（任意）</label><input id="number" maxlength="80" placeholder="請求書No.など"></div></div>
+<div><label for="details">用途・伝票内容（任意）</label><textarea id="details" maxlength="800" placeholder="例：ポテト用スパイス／11月の通信費"></textarea></div><div class="grid"><div><label for="receiptFile">書類写真（任意）</label><input type="file" id="receiptFile" accept="image/*"><p class="muted">写真は縮小して共有帳簿に保存します。原本の保管先は右の欄に記録できます。</p></div><div><label for="fileName">別途保管した原本のファイル名（任意）</label><input id="fileName" maxlength="180" placeholder="例：20261116_吉澤_7700.jpg"><p class="muted">画像を登録しなくても、原本の保存先とファイル名を記録できます。</p></div></div>
+<button type="submit" id="saveBtn">✅ 伝票を仮保存</button><button type="button" class="secondary" id="resetForm">入力をクリア</button><p id="entryMessage" role="status" aria-live="polite" class="muted"></p></form><p class="muted">同じ伝票番号＋所属先で重複候補があれば保存前に警告します。番号がなくても日付・取引先・金額・種類が一致すると警告します。重複判定は確認補助であり、重複を完全に防ぐものではありません。</p></section>
+<section class="card" id="list"><h2>伝票一覧・分類別確認</h2><div class="grid"><div><label for="filterMonth">対象月</label><input type="month" id="filterMonth"></div><div><label for="filterScope">所属先</label><select id="filterScope"><option value="">すべて</option><option>FUJIWARA Group経費</option><option>リコー工業経費</option><option>事務所経費</option><option>イベント経費</option><option value="プライベートA">本家</option><option value="プライベートB">分家</option><option>現場経費</option><option>（株）ミライソ</option><option>私物</option></select></div><div><label for="search">検索</label><input id="search" placeholder="取引先・イベント・伝票番号"></div></div><div class="box" id="summary" role="status">読み込み中</div><details id="breakdown"><summary>表示中の月別・所属先別の内訳</summary><ul id="groupTotals"></ul></details><div class="scroll"><table><thead><tr><th>日付</th><th>所属先／イベント</th><th>種類・取引先</th><th>金額</th><th>支払・照合</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><button class="secondary" id="csv">📄 表示中一覧をCSV出力</button><p class="muted">CSVに写真は含みません。金額の合計は伝票の整理用で、確定損益ではありません。</p></section>
+
+<section class="card" id="archive">
+  <h2>暗号化バックアップ</h2>
+  <label for="backupPassphrase">バックアップ用の合言葉</label>
+  <input id="backupPassphrase" type="password" autocomplete="off" minlength="12">
+  <button id="backup" type="button">共有帳簿を書き出す</button>
+  <details>
+    <summary>仮帳簿のバックアップを取り込む</summary>
+    <p>元の合言葉で復号し、件数と合計を確認してから取り込みます。</p>
+    <label for="importFile">暗号化バックアップ（JSON）</label>
+    <input id="importFile" type="file" accept=".json,application/json">
+    <button id="importPreview" type="button" class="secondary">内容を確認</button>
+    <button id="importConfirm" type="button" disabled>共有帳簿に追加</button>
+  </details>
+  <p id="backupResult" role="status"></p>
+</section>
+</div>
+<section id="ceo" class="card" hidden><h2>スタッフのレシート申請</h2><div id="requests"></div></section>
+</main>
+<script type="module" src="./money/app.mjs"></script>
+</body></html>
